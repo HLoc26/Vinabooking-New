@@ -1,0 +1,124 @@
+version: "3.9"
+
+services:
+    accommodation-service:
+        build:
+            context: "./API/accommodation-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/.env.common
+            - ./API/accommodation-service/.env
+        ports:
+            - "3001:3001"
+        volumes:
+            - ./API/accommodation-service:/app
+            - /app/node_modules
+    auth-service:
+        build:
+            context: "./API/auth-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/.env.common
+            - ./API/auth-service/.env
+        ports:
+            - "3002:3002"
+        volumes:
+            - ./API/auth-service:/app
+            - /app/node_modules
+
+    booking-service:
+        build:
+            context: "./API/booking-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/.env.common
+            - ./API/booking-service/.env
+        ports:
+            - "3003:3003"
+        volumes:
+            - ./API/booking-service:/app
+            - /app/node_modules
+
+    review-service:
+        build:
+            context: "./API/review-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/.env.common
+            - ./API/review-service/.env
+        ports:
+            - "3004:3004"
+        volumes:
+            - ./API/review-service:/app
+            - /app/node_modules
+
+    room-service:
+        build:
+            context: "./API/room-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/.env.common
+            - ./API/room-service/.env
+        ports:
+            - "3005:3005"
+        volumes:
+            - ./API/room-service:/app
+            - /app/node_modules
+
+    user-service:
+        build:
+            context: "./API/user-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/.env.common
+            - ./API/user-service/.env
+        ports:
+            - "3006:3006"
+        volumes:
+            - ./API/user-service:/app
+            - /app/node_modules
+
+    api-gateway:
+        build:
+            context: "./API/api-gateway"
+            dockerfile: "Dockerfile"
+        ports:
+            - "3000:3000"
+        env_file:
+            - ./API/.env.common
+            - ./API/api-gateway/.env
+        depends_on:
+            - accommodation-service
+            - auth-service
+            - booking-service
+            - review-service
+            - room-service
+            - user-service
+        volumes:
+            - ./API/api-gateway:/app
+            - /app/node_modules
+
+    ui:
+        build:
+            context: ./UI
+            dockerfile: Dockerfile.dev # dev mode
+        ports:
+            - "5173:5173"
+        volumes:
+            - ./UI:/app
+            - /app/node_modules
+        depends_on:
+            - api-gateway
+
+    db:
+        image: mysql:8.4
+        container_name: mysql
+        env_file:
+            - ./API/.env.common
+        ports:
+            - "3306:3306"
+        volumes:
+            - mysql-data:/var/lib/mysql
+
+volumes:
+    mysql-data:
