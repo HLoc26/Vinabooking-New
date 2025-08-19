@@ -112,7 +112,6 @@ services:
 
     db:
         image: mysql:8.4
-        container_name: mysql
         env_file:
             - ./API/.env.common
         ports:
