@@ -18,7 +18,7 @@ export default tseslint.config([
             semi: ["error", "always"], // semi: true
             quotes: ["error", "double"], // double quotes
             "comma-dangle": ["error", "only-multiline"], // trailingComma: es5
-            indent: ["error", "tab"], // useTabs: true
+            indent: ["error", "spaces", "tabs"], // useTabs: true
             "max-len": ["error", { code: 200 }], // printWidth: 200
             "linebreak-style": ["error", "windows"], // endOfLine: crlf
         },
