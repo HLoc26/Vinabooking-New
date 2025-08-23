@@ -17,5 +17,14 @@
     "lint-staged": {
         "API/**/*.{js,ts}": "npx eslint --fix",
         "UI/src/**/*.{js,jsx,ts,tsx}": "npx eslint --fix"
+    },
+    "scripts": {
+        "migrate:accom": "cd API/accommodation-service && npx prisma migrate dev",
+        "migrate:auth": "cd API/auth-service && npx prisma migrate dev",
+        "migrate:booking": "cd API/booking-service && npx prisma migrate dev",
+        "migrate:review": "cd API/review-service && npx prisma migrate dev",
+        "migrate:room": "cd API/room-service && npx prisma migrate dev",
+        "migrate:user": "cd API/user-service && npx prisma migrate dev",
+        "migrate:all": "npm run migrate:accom && npm run migrate:auth && npm run migrate:booking && npm run migrate:review && npm run migrate:room && npm run migrate:user"
     }
 }
