@@ -5,7 +5,7 @@ app.use(express.json());
 // Base route: /reviews
 
 app.get("/health", (req, res) => {
-	res.json({ service: "Review Service", success: true });
+    res.json({ service: "Review Service", success: true });
 });
 
 const PORT = process.env.PORT || 3004;

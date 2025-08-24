@@ -1,19 +1,19 @@
 import express from "express";
 import proxy from "express-http-proxy";
 
-import "dotenv/config"
+import "dotenv/config";
 
 const app = express();
 app.use(express.json());
 
 // Middleware check auth cho tất cả request
 app.use((req, res, next) => {
-	console.log(`Incoming request: ${req.method} ${req.url}`);
-	next();
+    console.log(`Incoming request: ${req.method} ${req.url}`);
+    next();
 });
 
 app.get("/health", (req, res) => {
-	res.json({ service: "API Gateway", success: true });
+    res.json({ service: "API Gateway", success: true });
 });
 
 app.use("/accommodations", proxy(process.env.ACCOMMODATION_ENDPOINT));
