@@ -6,7 +6,7 @@ services:
             context: "./API/accommodation-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/accommodation-service/.env
         ports:
             - "3001:3001"
@@ -18,7 +18,7 @@ services:
             context: "./API/auth-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/auth-service/.env
         ports:
             - "3002:3002"
@@ -31,7 +31,7 @@ services:
             context: "./API/booking-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/booking-service/.env
         ports:
             - "3003:3003"
@@ -44,7 +44,7 @@ services:
             context: "./API/review-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/review-service/.env
         ports:
             - "3004:3004"
@@ -57,7 +57,7 @@ services:
             context: "./API/room-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/room-service/.env
         ports:
             - "3005:3005"
@@ -70,7 +70,7 @@ services:
             context: "./API/user-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/user-service/.env
         ports:
             - "3006:3006"
@@ -85,7 +85,7 @@ services:
         ports:
             - "3000:3000"
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
             - ./API/api-gateway/.env
         depends_on:
             - accommodation-service
@@ -113,7 +113,7 @@ services:
     db:
         image: mysql:8.4
         env_file:
-            - ./API/.env.common
+            - ./API/common.env
         ports:
             - "3306:3306"
         volumes:
