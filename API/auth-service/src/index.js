@@ -5,7 +5,7 @@ app.use(express.json());
 // Base route: /auth
 
 app.get("/health", (req, res) => {
-	res.json({ service: "Auth Service", success: true });
+    res.json({ service: "Auth Service", success: true });
 });
 
 const PORT = process.env.PORT || 3002;
