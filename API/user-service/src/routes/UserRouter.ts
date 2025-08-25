@@ -16,7 +16,7 @@ class UserRouter {
 
     private registerRoutes(): void {
         // health check
-        this.router.get("health", (_: Request, res: Response) => {
+        this.router.get("/health", (_: Request, res: Response) => {
             ResponseHelper.success(res, { service: "User Service", success: true });
         });
 
