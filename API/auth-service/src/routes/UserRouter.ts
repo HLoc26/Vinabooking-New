@@ -1,5 +1,6 @@
 import Router, { type Request, type Response } from "express";
 import AuthController from "../controllers/AuthController.ts";
+import ResponseHelper from "../utils/ResponseHelper.ts";
 
 // Base route: /auth
 class AuthRouter {
@@ -12,7 +13,7 @@ class AuthRouter {
 
     private registerRoutes() {
         this.router.get("/health", (_req: Request, res: Response) => {
-            res.json({ service: "Auth Service", success: true });
+            return ResponseHelper.success(res, { service: "Auth Service", success: true });
         });
 
         this.router.post("/sign-up", (req: Request, res: Response) => {
