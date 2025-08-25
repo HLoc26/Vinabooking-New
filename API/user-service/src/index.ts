@@ -9,5 +9,5 @@ app.use("/", new UserRouter().router);
 
 app.use(ErrorHandler.handle);
 
-const PORT = process.env.PORT || 3006;
+const PORT = process.env["PORT"] || 3006;
 app.listen(PORT, () => console.log(`User Service running on port ${PORT}`));
