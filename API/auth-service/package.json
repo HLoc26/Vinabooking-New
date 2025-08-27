@@ -1,10 +1,10 @@
 {
-    "name": "user-service",
+    "name": "booking-service",
     "version": "1.0.0",
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "nodemon --legacy-watch ./src/index.js"
+        "dev": "npx nodemon --legacy-watch ./src/index.js"
     },
     "keywords": [],
     "author": "",
