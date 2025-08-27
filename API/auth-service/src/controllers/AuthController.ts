@@ -1,6 +1,5 @@
 import { type Response } from "express";
-import { type AuthRequestBody } from "../types/AuthRequestBody.ts";
-import { type TypedRequest } from "../types/TypedRequest.ts";
+import { type AuthRequestBody, type TypedRequest } from "../types/Request.ts";
 import AuthService from "../services/AuthService.ts";
 import ResponseHelper from "../utils/ResponseHelper.ts";
 
