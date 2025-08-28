@@ -1,0 +1,48 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Room {
+  id              String    @id @default(uuid())
+  accommodationId String    @db.VarChar(191)
+  name            String    @db.VarChar(191)
+  description     String?   @db.Text
+  maxCapacity     Int       @db.UnsignedInt @default(1)
+  size            Decimal   @db.Decimal(10, 2)
+  price           Decimal   @db.Decimal(10, 2)
+  count           Int       @db.UnsignedInt @default(1)
+  isActive        Boolean   @default(true)
+  createdAt       DateTime  @default(now())
+  updatedAt       DateTime  @updatedAt
+
+  images          Image[]
+  roomAmenities   RoomAmenity[]
+
+  @@index([accommodationId])
+  @@index([price])
+}
+
+model Image {
+  id            String    @id @default(uuid())
+  filename      String    @db.VarChar(191)
+  roomId        String?   @db.VarChar(191)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  room          Room?     @relation(fields: [roomId], references: [id])
+}
+
+model RoomAmenity {
+  id            String    @id @default(uuid())
+  roomId        String    @db.VarChar(191)
+  amenityId     String    @db.VarChar(191)
+  createdAt     DateTime  @default(now())
+  updatedAt     DateTime  @updatedAt
+
+  room          Room      @relation(fields: [roomId], references: [id])
+}
