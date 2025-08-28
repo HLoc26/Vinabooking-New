@@ -13,3 +13,25 @@ datasource db {
   provider = "mysql"
   url      = env("DATABASE_URL")
 }
+
+model Review {
+  id         Int      @id @default(autoincrement())
+  star       Int
+  comment    String? // optional
+  reviewDate DateTime @default(now())
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  replies ReviewReply[] // relation
+}
+
+model ReviewReply {
+  id        Int      @id @default(autoincrement())
+  comment   String
+  replyDate DateTime @default(now())
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  reviewId Int
+  review   Review @relation(fields: [reviewId], references: [id])
+}
