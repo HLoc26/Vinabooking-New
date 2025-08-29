@@ -21,7 +21,11 @@ class UserRouter {
         });
 
         // Get user by Id
-        this.router.get("/:id", (req: Request<{ id: string }>, res: Response) => this.userController.getUserById(req, res));
+        this.router.get("/:id", (req: Request<{ id: string }, any, any, { withFavourites?: string }>, res: Response) => {
+            return this.userController.getUserById(req, res);
+        });
+
+        // this.router.post("/save-cache");
     }
 }
 

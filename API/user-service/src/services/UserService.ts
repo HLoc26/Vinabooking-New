@@ -1,11 +1,21 @@
-import type { User } from "../../generated/prisma/index.js";
-import PrismaSingleton from "../clients/PrismaSingleton.ts";
+import type { User as UserSchema } from "../../generated/prisma/index.js";
+import User from "../classes/User.ts";
+import UserRepository from "../repositories/UserRepository.ts";
+import type { UserWithFavourites } from "../types/User.ts";
 
 class UserService {
-    private prismaClient = PrismaSingleton.getInstance();
+    private userRepository = new UserRepository();
 
-    public async getUserById(id: string): Promise<User | null> {
-        return await this.prismaClient.user.findUnique({ where: { id } });
+    public async getUserById(id: string, withFavourites: boolean = false): Promise<User | null> {
+        console.log("in service", withFavourites);
+        const result: UserWithFavourites | UserSchema | null = await this.userRepository.getUserById(id, withFavourites);
+        if (!result) {
+            return result;
+        }
+        console.log(result);
+        const user = User.fromSchema(result);
+
+        return user;
     }
 }
 
