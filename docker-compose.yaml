@@ -7,7 +7,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/accommodation-service/.env
+            - ./API/accommodation-service/docker.env
         ports:
             - "3001:3001"
         volumes:
@@ -19,7 +19,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/auth-service/.env
+            - ./API/auth-service/docker.env
         ports:
             - "3002:3002"
         volumes:
@@ -32,7 +32,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/booking-service/.env
+            - ./API/booking-service/docker.env
         ports:
             - "3003:3003"
         volumes:
@@ -45,7 +45,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/review-service/.env
+            - ./API/review-service/docker.env
         ports:
             - "3004:3004"
         volumes:
@@ -58,7 +58,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/room-service/.env
+            - ./API/room-service/docker.env
         ports:
             - "3005:3005"
         volumes:
@@ -71,7 +71,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/user-service/.env
+            - ./API/user-service/docker.env
         ports:
             - "3006:3006"
         volumes:
