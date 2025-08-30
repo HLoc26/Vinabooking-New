@@ -1,6 +1,8 @@
 import express, { type Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper.ts";
 import UserController from "../controllers/UserController.ts";
+import type { ApiResponse, UserResponse } from "../types/Response.ts";
+import type { FindUserByIdRequest } from "../types/Request.ts";
 
 // Base route: /users
 
@@ -21,7 +23,7 @@ class UserRouter {
         });
 
         // Get user by Id
-        this.router.get("/:id", (req: Request<{ id: string }, any, any, { withFavourites?: string }>, res: Response) => {
+        this.router.get("/:id", (req: FindUserByIdRequest, res: Response<ApiResponse<UserResponse>>) => {
             return this.userController.getUserById(req, res);
         });
 
