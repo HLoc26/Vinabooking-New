@@ -1,11 +1,5 @@
 import { type Request } from "express";
 
-import type { ParamsDictionary } from "express-serve-static-core";
+import type { ApiResponse, SignUpResponse } from "./Response.ts";
 
-export interface AuthRequestBody {
-    username: string;
-    password: string;
-    email: string;
-}
-
-export type TypedRequest<T> = Request<ParamsDictionary, any, T>;
+export type SignUpRequest = Request<unknown, ApiResponse<SignUpResponse>, { username: string; password: string; email: string }, unknown>;
