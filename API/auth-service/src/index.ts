@@ -1,5 +1,5 @@
 import express from "express";
-import AuthRouter from "./routes/UserRouter.ts";
+import AuthRouter from "./routes/AuthRouter.ts";
 import session from "express-session";
 
 import "dotenv";
