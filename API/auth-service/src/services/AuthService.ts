@@ -3,6 +3,7 @@ import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-co
 import "dotenv/config";
 import CognitoClient from "../clients/CognitoIdentityProviderClient.ts";
 import EnvironmentNotSetError from "../errors/EnvironmentNotSetError.ts";
+import type { SignUpResponse } from "../types/Response.ts";
 
 class AuthService {
     private appClientID: string;
@@ -17,7 +18,7 @@ class AuthService {
         this.cognitoClient = CognitoClient.getInstance();
     }
 
-    public async signUp(username: string, password: string, email: string) {
+    public async signUp(username: string, password: string, email: string): Promise<SignUpResponse | null> {
         const command = new SignUpCommand({
             ClientId: this.appClientID,
             Username: username,
@@ -27,8 +28,7 @@ class AuthService {
 
         try {
             const response = await this.cognitoClient.send(command);
-            console.log("[DEBUG] [SIGNUP] SignUp success", response);
-            return response;
+            return { UserSub: response.UserSub };
         } catch (error) {
             console.error("[DEBUG] [SIGNUP] [ERROR]", error);
             throw error;
