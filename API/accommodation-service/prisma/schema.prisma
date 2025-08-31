@@ -7,22 +7,31 @@ generator client {
   provider = "prisma-client-js"
 }
 
-model Accommodation {
-  id            String    @id @default(uuid())
-  name          String    @db.VarChar(191)
-  description   String?   @db.Text
-  type          String?   @db.VarChar(50)
-  pricePerNight Decimal?  @db.Decimal(10, 2)
-  capacity      Int?      @db.UnsignedInt
-  isActive      Boolean   @default(true)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-  ownerId       String?   @db.VarChar(191) // Tham chiếu User.id từ user-service
+enum AmenityType {
+  WIFI
+  POOL
+  GYM
+  PARKING
+  KITCHEN
+  AC
+}
 
-  address       Address?  @relation(fields: [addressId], references: [id])
-  addressId     String?   @unique @db.VarChar(191)
-  amenities     Amenities[]
-  images        Image[]
+model Accommodation {
+  id            String   @id @default(uuid())
+  name          String   @db.VarChar(191)
+  description   String?  @db.Text
+  type          String?  @db.VarChar(50)
+  pricePerNight Decimal? @db.Decimal(10, 2)
+  capacity      Int?     @db.UnsignedInt
+  isActive      Boolean  @default(true)
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  ownerId       String?  @db.VarChar(191) // Tham chiếu User.id từ user-service
+
+  address                Address?               @relation(fields: [addressId], references: [id])
+  addressId              String?                @unique @db.VarChar(191)
+  accommodationAmenities AccommodationAmenity[]
+  images                 Image[]
 
   @@index([pricePerNight])
   @@index([type])
@@ -30,36 +39,49 @@ model Accommodation {
 }
 
 model Address {
-  id          String    @id @default(uuid())
-  addressLine String    @db.VarChar(191)
-  city        String    @db.VarChar(191)
-  state       String?   @db.VarChar(191)
-  country     String    @db.VarChar(191)
-  postalCode  String?   @db.VarChar(10)
-  latitude    Decimal?  @db.Decimal(10, 8)
-  longitude   Decimal?  @db.Decimal(11, 8)
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+  id          String   @id @default(uuid())
+  addressLine String   @db.VarChar(191)
+  city        String   @db.VarChar(191)
+  state       String?  @db.VarChar(191)
+  country     String   @db.VarChar(191)
+  postalCode  String?  @db.VarChar(10)
+  latitude    Decimal? @db.Decimal(10, 8)
+  longitude   Decimal? @db.Decimal(11, 8)
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
 
   accommodation Accommodation?
 }
 
-model Amenities {
-  id          String    @id @default(uuid())
-  name        String    @db.VarChar(191)
-  description String?   @db.Text
-  createdAt   DateTime  @default(now())
-  updatedAt   DateTime  @updatedAt
+model Amenity {
+  id          String       @id @default(uuid())
+  name        String       @db.VarChar(191)
+  description String?      @db.Text
+  type        AmenityType?
+  createdAt   DateTime     @default(now())
+  updatedAt   DateTime     @updatedAt
 
-  accommodations Accommodation[]
+  accommodationAmenities AccommodationAmenity[]
+}
+
+model AccommodationAmenity {
+  id              String       @id @default(uuid())
+  accommodationId String       @db.VarChar(191)
+  amenityId       String       @db.VarChar(191)
+  type            AmenityType?
+  createdAt       DateTime     @default(now())
+  updatedAt       DateTime     @updatedAt
+
+  accommodation Accommodation @relation(fields: [accommodationId], references: [id])
+  amenity       Amenity       @relation(fields: [amenityId], references: [id])
 }
 
 model Image {
-  id              String    @id @default(uuid())
-  filename        String    @db.VarChar(191)
-  accommodationId String?   @db.VarChar(191)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id              String   @id @default(uuid())
+  filename        String   @db.VarChar(191)
+  accommodationId String?  @db.VarChar(191)
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
 
-  accommodation   Accommodation? @relation(fields: [accommodationId], references: [id])
+  accommodation Accommodation? @relation(fields: [accommodationId], references: [id])
 }
