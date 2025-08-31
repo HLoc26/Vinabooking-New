@@ -10,12 +10,10 @@ class UserService {
     private redisClient = RedisClient.getInstance();
 
     public async getUserById(id: string, withFavourites: boolean = false): Promise<User | null> {
-        console.log("in service", withFavourites);
         const result: UserWithFavourites | UserSchema | null = await this.userRepository.getUserById(id, withFavourites);
         if (!result) {
             return result;
         }
-        console.log(result);
         const user = User.fromSchema(result);
 
         return user;
