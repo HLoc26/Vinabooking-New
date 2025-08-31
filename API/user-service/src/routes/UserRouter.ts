@@ -27,7 +27,9 @@ class UserRouter {
             return this.userController.getUserById(req, res);
         });
 
-        // this.router.post("/save-cache");
+        this.router.post("/save-cache", (req: Request, res: Response) => {
+            return this.userController.cacheUser(req, res);
+        });
     }
 }
 
