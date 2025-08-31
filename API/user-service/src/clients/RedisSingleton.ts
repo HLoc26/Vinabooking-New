@@ -5,7 +5,7 @@ class RedisClient {
 
     constructor() {}
 
-    public static async getInstance() {
+    public static getInstance() {
         if (!this.instance) {
             this.instance = createClient();
         }
