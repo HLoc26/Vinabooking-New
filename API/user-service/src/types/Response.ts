@@ -7,3 +7,5 @@ export interface ApiResponse<T> {
 }
 
 export type UserResponse = ReturnType<User["toJson"]>;
+
+export type CacheUserResponse = boolean | null;
