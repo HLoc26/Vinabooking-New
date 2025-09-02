@@ -7,7 +7,9 @@ class RedisClient {
 
     public static getInstance() {
         if (!this.instance) {
-            this.instance = createClient();
+            this.instance = createClient({
+                url: process.env["REDIS_ENDPOINT"]!,
+            });
         }
         return this.instance;
     }
