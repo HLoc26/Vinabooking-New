@@ -1,6 +1,7 @@
 import Router, { type Request, type Response } from "express";
 import AuthController from "../controllers/AuthController.ts";
 import ResponseHelper from "../utils/ResponseHelper.ts";
+import type { NextFunction } from "express-serve-static-core";
 
 // Base route: /auth
 class AuthRouter {
@@ -16,9 +17,17 @@ class AuthRouter {
             return ResponseHelper.success(res, { service: "Auth Service", success: true });
         });
 
-        this.router.post("/sign-up", (req: Request, res: Response) => {
-            return this.authController.signUp(req, res);
-        });
+        this.router.post(
+            "/sign-up",
+            // First sign up using Cognito
+            (req: Request, res: Response, next: NextFunction) => {
+                return this.authController.signUp(req, res, next);
+            },
+            // Then cache the user email and sub to cache
+            (req: Request, res: Response) => {
+                return this.authController.cacheUser(req, res);
+            }
+        );
 
         // this.router.post("/sign-up/confirm");
 
