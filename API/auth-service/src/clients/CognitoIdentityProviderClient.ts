@@ -7,6 +7,8 @@ import { Agent as HttpsAgent } from "https";
 
 class CognitoClient {
     private static instance: CognitoIdentityProviderClient;
+    public static readonly userPoolId: string = process.env["COGNITO_USER_POOL_ID"]!;
+
     constructor() {}
 
     public static getInstance() {
@@ -25,6 +27,10 @@ class CognitoClient {
                     httpAgent: new HttpAgent({ family: 4 }),
                     httpsAgent: new HttpsAgent({ family: 4 }),
                 }),
+                credentials: {
+                    accessKeyId: process.env["ACCESS_KEY_ID"]!,
+                    secretAccessKey: process.env["SECRET_ACCESS_KEY"]!,
+                },
             });
         }
         return this.instance;
