@@ -56,10 +56,10 @@ class AuthService {
         }
     }
 
-    public async deleteAccount(cognitoSub: string) {
+    public async deleteAccount(username: string) {
         const command = new AdminDeleteUserCommand({
             UserPoolId: CognitoClient.userPoolId,
-            Username: cognitoSub,
+            Username: username, // user's email
         });
         try {
             const response = await this.cognitoClient.send(command);
