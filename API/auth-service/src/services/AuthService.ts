@@ -1,4 +1,9 @@
-import { CognitoIdentityProviderClient, SignUpCommand } from "@aws-sdk/client-cognito-identity-provider";
+import {
+    AdminDeleteUserCommand,
+    CognitoIdentityProviderClient,
+    ConfirmSignUpCommand,
+    SignUpCommand,
+} from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
 import CognitoClient from "../clients/CognitoIdentityProviderClient.ts";
@@ -31,6 +36,36 @@ class AuthService {
             return { UserSub: response.UserSub };
         } catch (error) {
             console.error("[DEBUG] [SIGNUP] [ERROR]", error);
+            throw error;
+        }
+    }
+
+    public async confirmSignUp(username: string, confirmCode: string) {
+        const command = new ConfirmSignUpCommand({
+            ClientId: this.appClientID,
+            Username: username,
+            ConfirmationCode: confirmCode,
+        });
+
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [CONFIRM] [ERROR]", error);
+            throw error;
+        }
+    }
+
+    public async deleteAccount(cognitoSub: string) {
+        const command = new AdminDeleteUserCommand({
+            UserPoolId: CognitoClient.userPoolId,
+            Username: cognitoSub,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [DELETE] [ERROR]", error);
             throw error;
         }
     }
