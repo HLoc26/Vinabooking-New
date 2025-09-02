@@ -11,7 +11,7 @@ export type UserWithFavourites = { favourites: FavouriteListWithItems[] } & User
 
 // Mimics enum
 export const EUserRole = {
-    TRAVELER: "Traveler",
+    TRAVELLER: "Traveller",
     ACCOMMODATION_OWNER: "AccommodationOwner",
 } as const;
 

@@ -19,11 +19,11 @@ class User {
         this.#phone = props.phone;
 
         const roleMap: Record<string, EUserRole> = {
-            Traveler: EUserRole.TRAVELER,
+            Traveler: EUserRole.TRAVELLER,
             AccommodationOwner: EUserRole.ACCOMMODATION_OWNER,
         };
         const role = roleMap[props.role];
-        if (!role) throw new Error(`Type mismatch: role ${props.role} should be either "Traveler" or "AccommodationOwner"`);
+        if (!role) throw new Error(`Type mismatch: role ${props.role} should be either "Traveller" or "AccommodationOwner"`);
         this.#role = role;
 
         this.#favouriteLists = props.favouriteLists?.map((list) => new FavouriteList(list)) ?? new Array<FavouriteList>();
