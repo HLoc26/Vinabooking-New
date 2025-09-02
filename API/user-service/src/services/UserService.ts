@@ -20,11 +20,23 @@ class UserService {
     }
 
     public async cacheUser(cognitoSub: string, email: string): Promise<boolean> {
-        const result: string | null = await this.redisClient.set(cognitoSub, email, { expiration: { type: "EX", value: 3600 } });
+        this.redisClient.connect();
+        const result: string | null = await this.redisClient.set(cognitoSub, email);
 
         if (!result) {
             throw new RedisClientError("Failed to save user to cache");
         }
+        this.redisClient.close();
+        return true;
+    }
+
+    public async deleteCache(cognitoSub: string): Promise<boolean> {
+        this.redisClient.connect();
+        const result = await this.redisClient.del(cognitoSub);
+        if (!result) {
+            throw new RedisClientError(`Failed to delete user ${cognitoSub}`);
+        }
+        this.redisClient.close();
         return true;
     }
 }
