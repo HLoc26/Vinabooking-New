@@ -15,11 +15,11 @@ class AuthController {
     constructor() {}
 
     public async signUp(req: SignUpRequest, res: Response<ApiResponse<SignUpResponse>>, next: NextFunction) {
-        const { username, password, email } = req.body;
+        const { email, password } = req.body;
 
         // Sign up user
         const cognitoResponse = await retry(async () => {
-            const resp = await this.authService.signUp(username, password, email);
+            const resp = await this.authService.signUp(email, password);
             if (!resp || !resp.UserSub) {
                 throw new IdentityProviderError();
             }

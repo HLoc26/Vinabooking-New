@@ -23,10 +23,10 @@ class AuthService {
         this.cognitoClient = CognitoClient.getInstance();
     }
 
-    public async signUp(username: string, password: string, email: string): Promise<SignUpResponse | null> {
+    public async signUp(email: string, password: string): Promise<SignUpResponse | null> {
         const command = new SignUpCommand({
             ClientId: this.appClientID,
-            Username: username,
+            Username: email,
             Password: password,
             UserAttributes: [{ Name: "email", Value: email }],
         });
