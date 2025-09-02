@@ -41,7 +41,7 @@ class AuthController {
                     throw new Error("Failed to cache user");
                 }
             } catch (error) {
-                await this.authService.deleteAccount(cognitoResponse.UserSub!);
+                await this.authService.deleteAccount(email);
                 if (error instanceof UsernameExistsException) {
                     throw new Error("User name already exists", error);
                 }
