@@ -14,6 +14,11 @@ datasource db {
     url      = env("DATABASE_URL")
 }
 
+enum ERole {
+    Traveller
+    AccommodationOwner
+}
+
 model FavouriteList {
     id      String @id @default(uuid())
     name    String
@@ -38,7 +43,7 @@ model User {
     id    String @id // Cognito sub UUIDv4
     name  String
     phone String
-    role  String @default("Traveller")
+    role  ERole  @default(Traveller)
 
     favourites FavouriteList[]
 
