@@ -29,7 +29,17 @@ class AuthRouter {
             }
         );
 
-        // this.router.post("/sign-up/confirm");
+        this.router.post(
+            "/sign-up/confirm",
+            // First confirm the OTP code
+            (req: Request, res: Response, next: NextFunction) => {
+                return this.authController.confirmUser(req, res, next);
+            },
+            // Then if confirm success, save user to db
+            (req: Request, res: Response) => {
+                return this.authController.saveUser(req, res);
+            }
+        );
 
         // this.router.post("/sign-in");
 

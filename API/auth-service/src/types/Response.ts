@@ -9,5 +9,11 @@ export interface ApiResponse<T> {
 // export type SignUpResponse = ReturnType<AuthService["signUp"]>;
 
 export interface SignUpResponse {
-    UserSub?: string;
+    UserSub: string | undefined;
+    CodeDeliveryDestination?: string | undefined;
+    CodeDeliveryMedium?: "EMAIL" | "SMS" | undefined;
+}
+
+export interface ConfirmUserResponse {
+    success: boolean;
 }
