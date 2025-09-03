@@ -29,7 +29,7 @@ class UserController {
             throw new NotFoundError("User not found");
         }
 
-        return ResponseHelper.success(res, user.toJson());
+        return ResponseHelper.success<UserResponse>(res, user.toJson());
     }
 
     public async cacheUser(req: CacheUserRequest, res: Response<ApiResponse<CacheUserResponse>>) {
@@ -40,7 +40,7 @@ class UserController {
         if (!OK) {
             throw new RedisClientError("Failed to save user to cache");
         }
-        return ResponseHelper.success(res, { success: true });
+        return ResponseHelper.success<CacheUserResponse>(res, { success: true });
     }
 }
 
