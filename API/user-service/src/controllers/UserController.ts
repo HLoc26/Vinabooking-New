@@ -7,10 +7,11 @@ import ResponseHelper from "../utils/ResponseHelper.ts";
 
 import { type Response } from "express";
 import type User from "../classes/User.ts";
-import type { CacheUserResponse, UserResponse } from "../types/Response.ts";
-import type { CacheInfo, CacheUserRequest, FindUserByIdRequest } from "../types/Request.ts";
+import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response.ts";
+import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserRequest } from "../types/Request.ts";
 import type { ApiResponse } from "../types/Response.ts";
 import RedisClientError from "../errors/RedisClientError.ts";
+import DatabaseError from "../errors/DatabaseError.ts";
 
 class UserController {
     private userService = new UserService();
@@ -41,6 +42,17 @@ class UserController {
             throw new RedisClientError("Failed to save user to cache");
         }
         return ResponseHelper.success<CacheUserResponse>(res, { success: true });
+    }
+
+    public async saveUser(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
+        const email = req.body.email;
+
+        const OK = await this.userService.saveUser(email);
+
+        if (!OK) {
+            throw new DatabaseError("Failed to save user to database");
+        }
+        return ResponseHelper.success<SaveUserResponse>(res, { success: true });
     }
 }
 

@@ -1,10 +1,12 @@
 import type { User as UserSchema } from "../../generated/prisma/index.js";
 import User from "../classes/User.ts";
 import redisClient from "../clients/RedisSingleton.ts";
+import DatabaseError from "../errors/DatabaseError.ts";
+import NotFoundError from "../errors/NotFoundError.ts";
 import RedisClientError from "../errors/RedisClientError.ts";
 import UserRepository from "../repositories/UserRepository.ts";
 import type { CacheInfo } from "../types/Request.ts";
-import type { UserWithFavourites } from "../types/User.ts";
+import type { SaveUserInfo, UserWithFavourites } from "../types/User.ts";
 
 class UserService {
     private userRepository = new UserRepository();
@@ -38,6 +40,24 @@ class UserService {
             throw new RedisClientError(`Failed to delete user ${cognitoSub}`);
         }
         return true;
+    }
+
+    public async saveUser(email: string): Promise<UserSchema> {
+        const infoString: string | null = await redisClient.get(email);
+
+        if (!infoString) {
+            throw new NotFoundError("User not found in cache");
+        }
+
+        const info: SaveUserInfo = JSON.parse(infoString);
+
+        info.email = email;
+
+        const result = await this.userRepository.createUser(info);
+        if (!result || !result.id || !result.name || !result.email) {
+            throw new DatabaseError(`Fail to create user ${info.email}`);
+        }
+        return result;
     }
 }
 

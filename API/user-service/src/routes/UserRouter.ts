@@ -33,6 +33,10 @@ class UserRouter {
         this.router.post("/save-cache", (req: Request, res: Response) => {
             return this.userController.cacheUser(req, res);
         });
+
+        this.router.post("/save-db", (req: Request, res: Response) => {
+            return this.userController.saveUser(req, res);
+        });
     }
 }
 
