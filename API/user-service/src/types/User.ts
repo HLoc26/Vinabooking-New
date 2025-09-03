@@ -1,6 +1,7 @@
 import { type User as UserSchema } from "../../generated/prisma/index.js";
 
 import { type FavouriteListWithItems, type IFavouriteList } from "./Favourite.ts";
+import type { CacheInfo } from "./Request.ts";
 
 export type UserWithFavourites = { favourites: FavouriteListWithItems[] } & UserSchema;
 
@@ -28,3 +29,7 @@ export interface IUser {
     createdAt?: Date;
     updatedAt?: Date;
 }
+
+export type SaveUserInfo = {
+    email: string;
+} & CacheInfo["info"]; // Lấy type từ CacheInfo["info"]
