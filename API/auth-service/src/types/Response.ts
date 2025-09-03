@@ -8,6 +8,6 @@ export interface ApiResponse<T> {
 
 // export type SignUpResponse = ReturnType<AuthService["signUp"]>;
 
-export type SignUpResponse = {
-    UserSub: string | undefined;
-};
+export interface SignUpResponse {
+    UserSub?: string;
+}

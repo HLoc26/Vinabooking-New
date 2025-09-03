@@ -1,5 +1,5 @@
 import { type NextFunction, type Response, type Request } from "express";
-import { type SignUpRequest } from "../types/Request.ts";
+import { type SignUpInfo, type SignUpRequest } from "../types/Request.ts";
 import AuthService from "../services/AuthService.ts";
 import ResponseHelper from "../utils/ResponseHelper.ts";
 import type { ApiResponse, SignUpResponse } from "../types/Response.ts";
@@ -15,8 +15,8 @@ class AuthController {
 
     constructor() {}
 
-    public async signUp(req: SignUpRequest, res: Response<ApiResponse<SignUpResponse>>, next: NextFunction) {
-        const { email, password, name, phone } = req.body;
+    public async signUp(req: SignUpRequest, res: Response, next: NextFunction) {
+        const { email, password, name, phone }: SignUpInfo = req.body;
 
         // Sign up user
         const cognitoResponse = await retry(async () => {
@@ -34,7 +34,7 @@ class AuthController {
         // return ResponseHelper.success(res, cognitoResponse);
     }
 
-    public async cacheUser(_req: Request, res: Response) {
+    public async cacheUser(_req: Request, res: Response<ApiResponse<SignUpResponse>>) {
         const { cognitoResponse, email, name, phone } = res.locals;
         // Cache user
         await retry(async () => {
@@ -62,7 +62,7 @@ class AuthController {
         });
 
         // Return the sub to the client. Client will have to send this UserSub along with the OTP to confirm
-        return ResponseHelper.success(res, { UserSub: cognitoResponse.UserSub });
+        return ResponseHelper.success<SignUpResponse>(res, { UserSub: cognitoResponse.UserSub });
     }
 }
 
