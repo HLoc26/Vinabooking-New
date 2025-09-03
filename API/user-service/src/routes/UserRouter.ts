@@ -2,6 +2,7 @@ import express, { type Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper.ts";
 import UserController from "../controllers/UserController.ts";
 import type { FindUserByIdRequest } from "../types/Request.ts";
+import redisClient from "../clients/RedisSingleton.ts";
 
 // Base route: /users
 
@@ -17,8 +18,11 @@ class UserRouter {
 
     private registerRoutes(): void {
         // health check
-        this.router.get("/health", (_: Request, res: Response) => {
-            ResponseHelper.success(res, { service: "User Service", success: true });
+        this.router.get("/health", async (_: Request, res: Response) => {
+            ResponseHelper.success(res, {
+                user_service: "Healthy",
+                redis: await redisClient.ping("Healthy"),
+            });
         });
 
         // Get user by Id
