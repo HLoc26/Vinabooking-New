@@ -8,7 +8,7 @@ import ResponseHelper from "../utils/ResponseHelper.ts";
 import { type Response } from "express";
 import type User from "../classes/User.ts";
 import type { CacheUserResponse, UserResponse } from "../types/Response.ts";
-import type { CacheUserRequest, FindUserByIdRequest } from "../types/Request.ts";
+import type { CacheInfo, CacheUserRequest, FindUserByIdRequest } from "../types/Request.ts";
 import type { ApiResponse } from "../types/Response.ts";
 import RedisClientError from "../errors/RedisClientError.ts";
 
@@ -33,9 +33,9 @@ class UserController {
     }
 
     public async cacheUser(req: CacheUserRequest, res: Response<ApiResponse<CacheUserResponse>>) {
-        const { cognitoSub, email } = req.body;
+        const cacheInfo: CacheInfo = req.body;
 
-        const OK = await this.userService.cacheUser(cognitoSub, email);
+        const OK = await this.userService.cacheUser(cacheInfo);
 
         if (!OK) {
             throw new RedisClientError("Failed to save user to cache");

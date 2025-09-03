@@ -3,6 +3,7 @@ import User from "../classes/User.ts";
 import redisClient from "../clients/RedisSingleton.ts";
 import RedisClientError from "../errors/RedisClientError.ts";
 import UserRepository from "../repositories/UserRepository.ts";
+import type { CacheInfo } from "../types/Request.ts";
 import type { UserWithFavourites } from "../types/User.ts";
 
 class UserService {
@@ -18,13 +19,17 @@ class UserService {
         return user;
     }
 
-    public async cacheUser(cognitoSub: string, email: string): Promise<boolean> {
-        const result: string | null = await redisClient.set(cognitoSub, email);
-
-        if (!result) {
-            throw new RedisClientError("Failed to save user to cache");
+    public async cacheUser(cacheInfo: CacheInfo): Promise<boolean> {
+        try {
+            const result: string | null = await redisClient.set(
+                cacheInfo.email, // key
+                JSON.stringify(cacheInfo.info), //value
+                { expiration: { type: "EX", value: 300 } } // expire after 5min
+            );
+            return result === "OK";
+        } catch (err) {
+            throw new RedisClientError(`Failed to save user to cache ${err}`);
         }
-        return true;
     }
 
     public async deleteCache(cognitoSub: string): Promise<boolean> {
