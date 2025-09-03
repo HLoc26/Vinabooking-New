@@ -19,7 +19,7 @@ class User {
         this.#phone = props.phone;
 
         const roleMap: Record<string, EUserRole> = {
-            Traveler: EUserRole.TRAVELLER,
+            Traveller: EUserRole.TRAVELLER,
             AccommodationOwner: EUserRole.ACCOMMODATION_OWNER,
         };
         const role = roleMap[props.role];
