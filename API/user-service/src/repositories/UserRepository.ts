@@ -1,6 +1,7 @@
 import type { User } from "../../generated/prisma/index.js";
 import PrismaSingleton from "../clients/PrismaSingleton.ts";
 import { type UserWithFavourites, type SaveUserInfo, EUserRole } from "../types/User.ts";
+import FavouriteRepository from "./FavouriteRepository.ts";
 
 class UserRepository {
     private prismaClient = PrismaSingleton.getInstance();
@@ -27,14 +28,20 @@ class UserRepository {
     }
 
     public async createUser(info: SaveUserInfo) {
-        return await this.prismaClient.user.create({
-            data: {
-                id: info.cognitoSub,
-                name: info.name,
-                email: info.email,
-                phone: info.phone,
-                role: EUserRole.TRAVELLER,
-            },
+        return await this.prismaClient.$transaction(async (tx) => {
+            const user = tx.user.create({
+                data: {
+                    id: info.cognitoSub,
+                    name: info.name,
+                    email: info.email,
+                    phone: info.phone,
+                    role: EUserRole.TRAVELLER,
+                },
+            });
+
+            const favouriteRepository = new FavouriteRepository();
+            await favouriteRepository.createDefaultList(info.cognitoSub, tx);
+            return user;
         });
     }
 }
