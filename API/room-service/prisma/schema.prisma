@@ -8,41 +8,20 @@ generator client {
 }
 
 model Room {
-  id              String    @id @default(uuid())
-  accommodationId String    @db.VarChar(191)
-  name            String    @db.VarChar(191)
-  description     String?   @db.Text
-  maxCapacity     Int       @db.UnsignedInt @default(1)
-  size            Decimal   @db.Decimal(10, 2)
-  price           Decimal   @db.Decimal(10, 2)
-  count           Int       @db.UnsignedInt @default(1)
-  isActive        Boolean   @default(true)
-  createdAt       DateTime  @default(now())
-  updatedAt       DateTime  @updatedAt
+  id              String  @id @default(uuid())
+  accommodationId String  @db.VarChar(191) // Reference to accommodation-service
+  name            String  @db.VarChar(191)
+  description     String? @db.Text
+  maxCapacity     Int     @default(1) @db.UnsignedInt
+  size            Decimal @db.Decimal(5, 2)
+  price           Decimal @db.Decimal(10, 2)
+  count           Int     @default(1) @db.UnsignedInt
+  isActive        Boolean @default(true)
 
-  images          Image[]
-  roomAmenities   RoomAmenity[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   @@index([accommodationId])
   @@index([price])
-}
-
-model Image {
-  id            String    @id @default(uuid())
-  filename      String    @db.VarChar(191)
-  roomId        String?   @db.VarChar(191)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  room          Room?     @relation(fields: [roomId], references: [id])
-}
-
-model RoomAmenity {
-  id            String    @id @default(uuid())
-  roomId        String    @db.VarChar(191)
-  amenityId     String    @db.VarChar(191)
-  createdAt     DateTime  @default(now())
-  updatedAt     DateTime  @updatedAt
-
-  room          Room      @relation(fields: [roomId], references: [id])
+  @@map("rooms")
 }
