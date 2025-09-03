@@ -7,81 +7,55 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum AmenityType {
-  WIFI
-  POOL
-  GYM
-  PARKING
-  KITCHEN
-  AC
+enum AccommodationType {
+  HOTEL
+  APARTMENT
+  VILLA
+  HOSTEL
+  RESORT
+  HOMESTAY
 }
 
 model Accommodation {
-  id            String   @id @default(uuid())
-  name          String   @db.VarChar(191)
-  description   String?  @db.Text
-  type          String?  @db.VarChar(50)
-  pricePerNight Decimal? @db.Decimal(10, 2)
-  capacity      Int?     @db.UnsignedInt
-  isActive      Boolean  @default(true)
-  createdAt     DateTime @default(now())
-  updatedAt     DateTime @updatedAt
-  ownerId       String?  @db.VarChar(191) // Tham chiếu User.id từ user-service
+  id            String             @id @default(uuid())
+  name          String             @db.VarChar(191)
+  description   String?            @db.Text
+  type          AccommodationType?
+  pricePerNight Decimal?           @db.Decimal(10, 2)
+  capacity      Int?               @db.UnsignedInt
+  isActive      Boolean            @default(true)
+  ownerId       String             @db.VarChar(191) // Reference to user-service
 
-  address                Address?               @relation(fields: [addressId], references: [id])
-  addressId              String?                @unique @db.VarChar(191)
-  accommodationAmenities AccommodationAmenity[]
-  images                 Image[]
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
-  @@index([pricePerNight])
+  address   Address? @relation(fields: [addressId], references: [id])
+  addressId String?  @unique @db.VarChar(191)
+
   @@index([type])
+  @@index([pricePerNight])
   @@index([ownerId])
+  @@map("accommodations")
 }
 
 model Address {
-  id          String   @id @default(uuid())
-  addressLine String   @db.VarChar(191)
-  city        String   @db.VarChar(191)
-  state       String?  @db.VarChar(191)
-  country     String   @db.VarChar(191)
-  postalCode  String?  @db.VarChar(10)
-  latitude    Decimal? @db.Decimal(10, 8)
-  longitude   Decimal? @db.Decimal(11, 8)
-  createdAt   DateTime @default(now())
-  updatedAt   DateTime @updatedAt
+  id         String  @id @default(uuid())
+  street     String  @db.VarChar(255)
+  city       String  @db.VarChar(100)
+  state      String? @db.VarChar(100)
+  postalCode String? @db.VarChar(20)
+  country    String  @db.VarChar(100)
+
+  latitude  Decimal? @db.Decimal(9, 6)
+  longitude Decimal? @db.Decimal(9, 6)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
 
   accommodation Accommodation?
-}
 
-model Amenity {
-  id          String       @id @default(uuid())
-  name        String       @db.VarChar(191)
-  description String?      @db.Text
-  type        AmenityType?
-  createdAt   DateTime     @default(now())
-  updatedAt   DateTime     @updatedAt
-
-  accommodationAmenities AccommodationAmenity[]
-}
-
-model AccommodationAmenity {
-  id              String       @id @default(uuid())
-  accommodationId String       @db.VarChar(191)
-  amenityId       String       @db.VarChar(191)
-  type            AmenityType?
-  createdAt       DateTime     @default(now())
-  updatedAt       DateTime     @updatedAt
-
-  accommodation Accommodation @relation(fields: [accommodationId], references: [id])
-  amenity       Amenity       @relation(fields: [amenityId], references: [id])
-}
-
-model Image {
-  id              String   @id @default(uuid())
-  filename        String   @db.VarChar(191)
-  accommodationId String?  @db.VarChar(191)
-  createdAt       DateTime @default(now())
-  updatedAt       DateTime @updatedAt
-
-  accommodation Accommodation? @relation(fields: [accommodationId], references: [id])
+  @@index([city])
+  @@index([postalCode])
+  @@index([latitude, longitude])
+  @@map("addresses")
 }
