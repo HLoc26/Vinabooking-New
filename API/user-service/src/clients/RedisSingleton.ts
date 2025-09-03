@@ -1,18 +1,29 @@
 import { createClient, type RedisClientType } from "redis";
 
 class RedisClient {
-    private static instance: RedisClientType;
+    private static instance: RedisClientType | null = null;
+    private static connected: boolean = false;
 
-    constructor() {}
+    private constructor() {}
 
-    public static getInstance() {
+    public static async getInstance(): Promise<RedisClientType> {
         if (!this.instance) {
             this.instance = createClient({
                 url: process.env["REDIS_ENDPOINT"]!,
             });
+
+            this.instance.on("error", (err) => console.error("Redis Client Error", err));
+
+            await this.instance.connect();
+            this.connected = true;
+        } else if (!this.connected) {
+            await this.instance.connect();
+            this.connected = true;
         }
+
         return this.instance;
     }
 }
 
-export default RedisClient;
+const redisClient = await RedisClient.getInstance();
+export default redisClient;
