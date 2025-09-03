@@ -19,6 +19,17 @@ class UserService {
         if (!cacheResponse.data) throw new Error("Failed to cache user");
         return cacheResponse;
     }
+
+    public async saveUser(email: string) {
+        try {
+            const saveResponse = await this.axiosInstance.post("/save-db", { email });
+
+            if (!saveResponse.data) throw new Error("Failed to save user");
+            return saveResponse.data;
+        } catch (error) {
+            throw new Error(`Error when saving user to database: ${error}`);
+        }
+    }
 }
 
 export default UserService;

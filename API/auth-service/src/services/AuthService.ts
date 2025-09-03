@@ -33,14 +33,18 @@ class AuthService {
 
         try {
             const response = await this.cognitoClient.send(command);
-            return { UserSub: response.UserSub };
+            return {
+                UserSub: response.UserSub,
+                CodeDeliveryDestination: response.CodeDeliveryDetails?.Destination,
+                CodeDeliveryMedium: response.CodeDeliveryDetails?.DeliveryMedium,
+            };
         } catch (error) {
             console.error("[DEBUG] [SIGNUP] [ERROR]", error);
             throw error;
         }
     }
 
-    public async confirmSignUp(username: string, confirmCode: string) {
+    public async confirmSignUp(username: string, confirmCode: string): Promise<boolean> {
         const command = new ConfirmSignUpCommand({
             ClientId: this.appClientID,
             Username: username,
@@ -49,7 +53,7 @@ class AuthService {
 
         try {
             const response = await this.cognitoClient.send(command);
-            return response;
+            return response.$metadata.httpStatusCode == 200;
         } catch (error) {
             console.error("[DEBUG] [CONFIRM] [ERROR]", error);
             throw error;

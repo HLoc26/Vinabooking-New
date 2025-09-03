@@ -1,8 +1,8 @@
 import { type NextFunction, type Response, type Request } from "express";
-import { type SignUpInfo, type SignUpRequest } from "../types/Request.ts";
+import { type ConfirmUserInfo, type ConfirmUserRequest, type SignUpInfo, type SignUpRequest } from "../types/Request.ts";
 import AuthService from "../services/AuthService.ts";
 import ResponseHelper from "../utils/ResponseHelper.ts";
-import type { ApiResponse, SignUpResponse } from "../types/Response.ts";
+import type { ApiResponse, ConfirmUserResponse, SignUpResponse } from "../types/Response.ts";
 import IdentityProviderError from "../errors/IdentityProviderError.ts";
 import UserService from "../services/UserService.ts";
 import { retry } from "../utils/RetryHelper.ts";
@@ -62,7 +62,33 @@ class AuthController {
         });
 
         // Return the sub to the client. Client will have to send this UserSub along with the OTP to confirm
-        return ResponseHelper.success<SignUpResponse>(res, { UserSub: cognitoResponse.UserSub });
+        return ResponseHelper.success<SignUpResponse>(res, cognitoResponse);
+    }
+
+    public async confirmUser(req: ConfirmUserRequest, res: Response, next: NextFunction) {
+        const { email, confirmCode }: ConfirmUserInfo = req.body;
+
+        const response: boolean = await this.authService.confirmSignUp(email, confirmCode);
+
+        if (!response) {
+            throw new IdentityProviderError("Invalid OTP Code");
+        }
+
+        res.locals["email"] = email;
+
+        next();
+    }
+
+    public async saveUser(_req: Request, res: Response<ApiResponse<ConfirmUserResponse>>) {
+        const email = res.locals["email"];
+
+        const response = await this.userService.saveUser(email);
+
+        if (!response) {
+            throw new Error("Fail to save user to db");
+        }
+
+        return ResponseHelper.success<ConfirmUserResponse>(res, { success: true });
     }
 }
 
