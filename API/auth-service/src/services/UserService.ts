@@ -1,5 +1,5 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
-import type { CacheUserRequest, CacheUserResponse } from "../types/Axios.ts";
+import type { CacheInfo, CacheUserResponse } from "../types/Axios.ts";
 import { UserAxiosClient } from "../clients/UserServiceClient.ts";
 
 class UserService {
@@ -7,12 +7,12 @@ class UserService {
 
     constructor() {}
 
-    public async cacheUser(cognitoSub: string, email: string) {
-        const cacheResponse = await this.axiosInstance.post<CacheUserResponse, AxiosResponse<CacheUserResponse, CacheUserRequest>, CacheUserRequest>(
+    public async cacheUser(cacheInfo: CacheInfo) {
+        const cacheResponse = await this.axiosInstance.post<CacheUserResponse, AxiosResponse<CacheUserResponse, CacheInfo>, CacheInfo>(
             "/save-cache",
             {
-                cognitoSub,
-                email,
+                email: cacheInfo.email,
+                info: cacheInfo.info,
             }
         );
 

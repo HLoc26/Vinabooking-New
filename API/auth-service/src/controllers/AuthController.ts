@@ -7,6 +7,7 @@ import IdentityProviderError from "../errors/IdentityProviderError.ts";
 import UserService from "../services/UserService.ts";
 import { retry } from "../utils/RetryHelper.ts";
 import { UsernameExistsException } from "@aws-sdk/client-cognito-identity-provider";
+import type { CacheInfo } from "../types/Axios.ts";
 
 class AuthController {
     private authService = new AuthService();
@@ -15,7 +16,7 @@ class AuthController {
     constructor() {}
 
     public async signUp(req: SignUpRequest, res: Response<ApiResponse<SignUpResponse>>, next: NextFunction) {
-        const { email, password } = req.body;
+        const { email, password, name, phone } = req.body;
 
         // Sign up user
         const cognitoResponse = await retry(async () => {
@@ -27,16 +28,26 @@ class AuthController {
         });
         res.locals["cognitoResponse"] = cognitoResponse;
         res.locals["email"] = email;
+        res.locals["name"] = name;
+        res.locals["phone"] = phone;
         next();
         // return ResponseHelper.success(res, cognitoResponse);
     }
 
     public async cacheUser(_req: Request, res: Response) {
-        const { cognitoResponse, email } = res.locals;
+        const { cognitoResponse, email, name, phone } = res.locals;
         // Cache user
         await retry(async () => {
             try {
-                const success = await this.userService.cacheUser(cognitoResponse.UserSub!, email);
+                const cacheInfo: CacheInfo = {
+                    email,
+                    info: {
+                        cognitoSub: cognitoResponse.UserSub,
+                        name: name,
+                        phone: phone,
+                    },
+                };
+                const success = await this.userService.cacheUser(cacheInfo);
                 if (!success) {
                     throw new Error("Failed to cache user");
                 }
