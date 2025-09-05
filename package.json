@@ -25,6 +25,7 @@
         "migrate:review": "cd API/review-service && npx prisma migrate dev",
         "migrate:room": "cd API/room-service && npx prisma migrate dev",
         "migrate:user": "cd API/user-service && npx prisma migrate dev",
-        "migrate:all": "npm run migrate:accom && npm run migrate:auth && npm run migrate:booking && npm run migrate:review && npm run migrate:room && npm run migrate:user"
+        "migrate:image": "cd API/image-service && npx prisma migrate dev",
+        "migrate:all": "npm run migrate:accom && npm run migrate:auth && npm run migrate:booking && npm run migrate:review && npm run migrate:room && npm run migrate:user && npm run migrate:image"
     }
 }
