@@ -48,7 +48,7 @@ class AuthService {
         const command = new ConfirmSignUpCommand({
             ClientId: this.appClientID,
             Username: username,
-            ConfirmationCode: confirmCode,
+            ConfirmationCode: String(confirmCode),
         });
 
         try {
