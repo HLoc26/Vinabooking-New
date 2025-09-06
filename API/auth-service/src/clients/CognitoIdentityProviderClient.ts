@@ -19,7 +19,7 @@ class CognitoClient {
 
         if (!this.instance) {
             this.instance = new CognitoIdentityProviderClient({
-                endpoint: "http://host.docker.internal:4566", // Use this if testing on local
+                // endpoint: "http://host.docker.internal:4566", // Use this if testing on local
                 region: region,
                 requestHandler: new NodeHttpHandler({
                     connectionTimeout: 10000,
