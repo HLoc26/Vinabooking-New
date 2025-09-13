@@ -6,14 +6,14 @@ export class UserAxiosClient {
     constructor() {}
 
     public static getInstance() {
-        if (!this.#axiosInstance) {
-            this.#axiosInstance = axios.create({
+        if (!UserAxiosClient.#axiosInstance) {
+            UserAxiosClient.#axiosInstance = axios.create({
                 baseURL: process.env["USER_ENDPOINT"]!,
                 responseType: "json",
                 timeout: 10000,
             });
         }
-        return this.#axiosInstance;
+        return UserAxiosClient.#axiosInstance;
     }
 }
 

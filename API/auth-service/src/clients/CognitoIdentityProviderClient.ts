@@ -17,8 +17,8 @@ class CognitoClient {
             throw new EnvironmentNotSetError("Missing COGNITO_REGION");
         }
 
-        if (!this.instance) {
-            this.instance = new CognitoIdentityProviderClient({
+        if (!CognitoClient.instance) {
+            CognitoClient.instance = new CognitoIdentityProviderClient({
                 // endpoint: "http://host.docker.internal:4566", // Use this if testing on local
                 region: region,
                 requestHandler: new NodeHttpHandler({
@@ -33,7 +33,7 @@ class CognitoClient {
                 },
             });
         }
-        return this.instance;
+        return CognitoClient.instance;
     }
 }
 
