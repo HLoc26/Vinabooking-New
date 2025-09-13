@@ -22,5 +22,6 @@ app.use("/bookings", proxy(process.env.BOOKING_ENDPOINT));
 app.use("/reviews", proxy(process.env.REVIEW_ENDPOINT));
 app.use("/rooms", proxy(process.env.ROOM_ENDPOINT));
 app.use("/users", proxy(process.env.USER_ENDPOINT));
+app.use("/images", proxy(process.env.IMAGE_ENDPOINT));
 
 app.listen(3000, () => console.log("API Gateway running on port 3000"));
