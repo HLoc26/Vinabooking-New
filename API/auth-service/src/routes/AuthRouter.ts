@@ -1,7 +1,6 @@
-import Router, { type Request, type Response } from "express";
+import Router, { type Request, type Response, type NextFunction } from "express";
 import AuthController from "../controllers/AuthController.ts";
 import ResponseHelper from "../utils/ResponseHelper.ts";
-import type { NextFunction } from "express-serve-static-core";
 
 // Base route: /auth
 class AuthRouter {
