@@ -1,0 +1,53 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+    output   = "../generated/prisma"
+}
+
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+enum ERole {
+    Traveller
+    AccommodationOwner
+}
+
+model FavouriteList {
+    id      String @id @default(uuid())
+    name    String
+    owner   User   @relation(fields: [ownerId], references: [id])
+    ownerId String
+
+    createdAt     DateTime        @default(now())
+    updatedAt     DateTime        @updatedAt
+    FavouriteItem FavouriteItem[]
+}
+
+model FavouriteItem {
+    id String @id @default(uuid())
+
+    favouriteList FavouriteList @relation(fields: [listId], references: [id])
+    listId        String
+
+    accommodationId String
+}
+
+model User {
+    id    String @id // Cognito sub UUIDv4
+    email String @unique
+    name  String
+    phone String
+    role  ERole  @default(Traveller)
+
+    favourites FavouriteList[]
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+}
