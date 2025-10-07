@@ -1,0 +1,26 @@
+-- CreateTable
+CREATE TABLE `Review` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `star` INTEGER NOT NULL,
+    `comment` VARCHAR(191) NULL,
+    `reviewDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- CreateTable
+CREATE TABLE `ReviewReply` (
+    `id` INTEGER NOT NULL AUTO_INCREMENT,
+    `comment` VARCHAR(191) NOT NULL,
+    `replyDate` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `createdAt` DATETIME(3) NOT NULL DEFAULT CURRENT_TIMESTAMP(3),
+    `updatedAt` DATETIME(3) NOT NULL,
+    `reviewId` INTEGER NOT NULL,
+
+    PRIMARY KEY (`id`)
+) DEFAULT CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+
+-- AddForeignKey
+ALTER TABLE `ReviewReply` ADD CONSTRAINT `ReviewReply_reviewId_fkey` FOREIGN KEY (`reviewId`) REFERENCES `Review`(`id`) ON DELETE RESTRICT ON UPDATE CASCADE;

@@ -15,7 +15,7 @@
         "typescript-eslint": "^8.39.1"
     },
     "lint-staged": {
-        "API/**/*.{js,ts}": "npx eslint --fix",
+        "API/**/*.js": "npx eslint --fix",
         "UI/src/**/*.{js,jsx,ts,tsx}": "npx eslint --fix"
     },
     "scripts": {
