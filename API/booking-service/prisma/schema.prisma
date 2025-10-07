@@ -12,52 +12,37 @@ datasource db {
 }
 
 model Booking {
-  id         Int           @id @default(autoincrement())
-  startDate  DateTime
-  endDate    DateTime
-  guestCount Int           @default(1)
-  status     BookingStatus @default(BOOKED)
+  id          String        @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime
+  guestCount  Int           @default(1)
+  referenceNo Int           @unique @default(autoincrement())
+  status      BookingStatus @default(BOOKED)
 
   // Relations
-  items  BookingItem[]
-  userId Int
-  User   User          @relation(fields: [userId], references: [id])
-
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
+  items     BookingItem[]
+  userId    String // who made the booking (traveler)
+  createdAt DateTime      @default(now())
+  updatedAt DateTime      @updatedAt
 }
 
 model BookingItem {
-  id    Int @id @default(autoincrement())
-  count Int @default(1)
+  id    String  @id @default(uuid())
+  count Int     @default(1)
+  note  String?
 
   // Relations
-  bookingId Int
-  roomId    Int
-  Booking   Booking @relation(fields: [bookingId], references: [id])
-  Room      Room    @relation(fields: [roomId], references: [id])
-
+  bookingId String
+  Booking   Booking  @relation(fields: [bookingId], references: [id])
+  roomId    String
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 }
 
-model Room {
-  id       Int           @id @default(autoincrement())
-  name     String
-  capacity Int
-  price    Float
-  items    BookingItem[]
-}
-
-model User {
-  id       Int       @id @default(autoincrement())
-  email    String    @unique
-  name     String
-  bookings Booking[]
-}
-
 enum BookingStatus {
-  BOOKED
+  DRAFT
+  PENDING // waiting for payment, confirmation from accommodation owner
   CANCELLED
-  COMPLETED
+  BOOKED // successfully paid and confirmed
+  COMPLETED // stay completed, review can be left
 }
