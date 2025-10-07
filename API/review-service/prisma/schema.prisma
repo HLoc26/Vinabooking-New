@@ -15,23 +15,15 @@ datasource db {
 }
 
 model Review {
-  id         Int      @id @default(autoincrement())
-  star       Int
-  comment    String? // optional
-  reviewDate DateTime @default(now())
-  createdAt  DateTime @default(now())
-  updatedAt  DateTime @updatedAt
-
-  replies ReviewReply[] // relation
-}
-
-model ReviewReply {
-  id        Int      @id @default(autoincrement())
-  comment   String
-  replyDate DateTime @default(now())
-  createdAt DateTime @default(now())
-  updatedAt DateTime @updatedAt
-
-  reviewId Int
-  review   Review @relation(fields: [reviewId], references: [id])
+  id              String   @id @default(uuid()) // id của review đó
+  star            Int?
+  comment         String   @db.Text // optional
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+  acoommodationId String
+  userId          String // user id của người đăng review
+  // Self relation
+  parentId        String?
+  parent          Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
+  replies         Review[] @relation("ReviewToReplies")
 }
