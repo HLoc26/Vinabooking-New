@@ -7,30 +7,30 @@ generator client {
   provider = "prisma-client-js"
 }
 
-enum AccommodationType {
-  Hotel
-  Apartment
-  Villa
-  VacationHome
-  GuestHouse
-  Hostel
-  BedAndBreakfast
-  Homestay
-  Campground
-  CountryHouse
-  Boat
-  LuxuryTent
-  Cabin
-  Motel
-  Resort
-  FarmStay
-  CapsuleHotel
-  Treehouse
-  Townhouse
-  Other
+enum EAccommodationType {
+  HOTEL
+  APARTMENT
+  VILLA
+  VACATIONHOME
+  GUESTHOUSE
+  HOSTEL
+  BEDANDBREAKFAST
+  HOMESTAY
+  CAMPGROUND
+  COUNTRYHOUSE
+  BOAT
+  LUXURYTENT
+  CABIN
+  MOTEL
+  RESORT
+  FARMSTAY
+  CAPSULEHOTEL
+  TREEHOUSE
+  TOWNHOUSE
+  OTHER
 }
 
-enum RentalType {
+enum ERentalType {
   ENTIRE_PLACE
   PRIVATE_ROOM
   SHARED_ROOM
@@ -40,8 +40,8 @@ model Accommodation {
   id          String             @id @default(uuid())
   name        String             @db.VarChar(191)
   description String?            @db.Text
-  type        AccommodationType?
-  rentalType  RentalType?        @default(ENTIRE_PLACE)
+  type        EAccommodationType?
+  rentalType  ERentalType?        @default(ENTIRE_PLACE)
   isActive    Boolean            @default(true)
   ownerId     String             @db.VarChar(191) // Reference to user-service
 
