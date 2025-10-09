@@ -8,23 +8,42 @@ generator client {
 }
 
 enum AccommodationType {
-  HOTEL
-  APARTMENT
-  VILLA
-  HOSTEL
-  RESORT
-  HOMESTAY
+  Hotel
+  Apartment
+  Villa
+  VacationHome
+  GuestHouse
+  Hostel
+  BedAndBreakfast
+  Homestay
+  Campground
+  CountryHouse
+  Boat
+  LuxuryTent
+  Cabin
+  Motel
+  Resort
+  FarmStay
+  CapsuleHotel
+  Treehouse
+  Townhouse
+  Other
+}
+
+enum RentalType {
+  ENTIRE_PLACE
+  PRIVATE_ROOM
+  SHARED_ROOM
 }
 
 model Accommodation {
-  id            String             @id @default(uuid())
-  name          String             @db.VarChar(191)
-  description   String?            @db.Text
-  type          AccommodationType?
-  pricePerNight Decimal?           @db.Decimal(10, 2)
-  capacity      Int?               @db.UnsignedInt
-  isActive      Boolean            @default(true)
-  ownerId       String             @db.VarChar(191) // Reference to user-service
+  id          String             @id @default(uuid())
+  name        String             @db.VarChar(191)
+  description String?            @db.Text
+  type        AccommodationType?
+  rentalType  RentalType?        @default(ENTIRE_PLACE)
+  isActive    Boolean            @default(true)
+  ownerId     String             @db.VarChar(191) // Reference to user-service
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -32,8 +51,9 @@ model Accommodation {
   address   Address? @relation(fields: [addressId], references: [id])
   addressId String?  @unique @db.VarChar(191)
 
+  facilities AccommodationFacility[]
+
   @@index([type])
-  @@index([pricePerNight])
   @@index([ownerId])
   @@map("accommodations")
 }
@@ -58,4 +78,29 @@ model Address {
   @@index([postalCode])
   @@index([latitude, longitude])
   @@map("addresses")
+}
+
+model Facility {
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(100)
+  description String? @db.Text
+  icon        String? @db.VarChar(255) // URL or icon name
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accommodations AccommodationFacility[]
+
+  @@map("facilities")
+}
+
+model AccommodationFacility {
+  accommodation   Accommodation @relation(fields: [accommodationId], references: [id])
+  accommodationId String        @db.VarChar(191)
+  facility        Facility      @relation(fields: [facilityId], references: [id])
+  facilityId      String        @db.VarChar(191)
+
+  @@id([accommodationId, facilityId])
+  @@index([facilityId])
+  @@map("accommodation_facilities")
 }
