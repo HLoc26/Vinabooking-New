@@ -3,7 +3,7 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/booking" // client output folder, specific for booking service
+  output   = "../generated/prisma" // client output folder, specific for booking service
 }
 
 datasource db {
