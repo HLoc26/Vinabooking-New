@@ -1,0 +1,129 @@
+openapi: 3.0.0
+info: 
+  title: Image Service API
+  version: 1.0.0
+  description: "API documentation for Image Service"
+
+servers:
+  - url: http://localhost:3007
+
+paths:
+  /health:
+    get:
+      summary: Checking if service is working
+      tags:
+        - health
+      responses:
+        "200":
+          description: Service is working normally
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponseSuccess"
+                  - type: object
+                    properties:
+                      data:
+                        type: object
+                        properties:
+                          service:
+                            type: string
+                            example: Image Service
+                          success:
+                            type: boolean
+                            example: true
+
+  /{type}/{id}:
+    post:
+      summary: Upload images onto the server
+      tags:
+        - upload images
+      parameters:
+        - name: type
+          in: path
+          required: true
+          schema:
+            type: string
+          description: Type of entity that the images belong to. Could be "profile" | "accommodation" | "room" | "review"
+        - name: id
+          in: path
+          required: true
+          schema:
+            type: string
+          description: ID of the entity, in the form of UUIDv4
+      requestBody:
+        required: true
+        content:
+          multipart/form-data:
+            schema:
+              $ref: "#/components/schemas/UploadRequest"
+      responses:
+        "200":
+          description: Upload successfully
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponseSuccess"
+                  - type: object
+                    properties:
+                      data:
+                        $ref: "#/components/schemas/UploadResponse"
+        "400":
+          description: Bad Request - Invalid file buffer
+          content:
+            application/json:
+              schema:
+                allOf:
+                  - $ref: "#/components/schemas/ApiResponseError"
+                  - type: object
+                    properties:
+                      error:
+                        type: string
+                        example: "Invalid file buffer"
+
+components:
+  schemas:
+    ApiResponseSuccess:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        data:
+          nullable: true
+          description: The actual response data
+        error:
+          nullable: true
+          description: Error message if any
+          example: null
+
+    ApiResponseError:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          nullable: true
+          description: The actual response data
+        error:
+          nullable: true
+          description: Error message if any
+          example: "Bad Request"
+
+    UploadRequest:
+      type: object
+      properties:
+        files:
+          type: array
+          items:
+            type: string
+            format: binary
+
+    UploadResponse:
+      type: object
+      properties:
+        success: 
+          type: boolean
+          example: true
