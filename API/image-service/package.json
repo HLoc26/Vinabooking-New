@@ -13,7 +13,7 @@
     "description": "",
     "dependencies": {
         "@aws-sdk/client-s3": "^3.884.0",
-        "@prisma/client": "^6.15.0",
+        "@prisma/client": "^6.17.1",
         "cors": "^2.8.5",
         "dotenv": "^17.2.2",
         "express": "^5.1.0",
@@ -26,7 +26,7 @@
         "@types/multer": "^2.0.0",
         "@types/node": "^24.3.1",
         "nodemon": "^3.1.10",
-        "prisma": "^6.15.0",
+        "prisma": "^6.17.1",
         "ts-node": "^10.9.2",
         "typescript": "^5.9.2"
     }
