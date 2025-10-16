@@ -7,24 +7,26 @@ generator client {
   provider = "prisma-client-js"
 }
 
+// ============= ENUMS =============
+
 enum EAccommodationType {
   HOTEL
   APARTMENT
   VILLA
-  VACATIONHOME
+  VACATION_HOME
   GUESTHOUSE
   HOSTEL
-  BEDANDBREAKFAST
+  BED_AND_BREAKFAST
   HOMESTAY
   CAMPGROUND
-  COUNTRYHOUSE
+  COUNTRY_HOUSE
   BOAT
-  LUXURYTENT
+  LUXURY_TENT
   CABIN
   MOTEL
   RESORT
   FARMSTAY
-  CAPSULEHOTEL
+  CAPSULE_HOTEL
   TREEHOUSE
   TOWNHOUSE
   OTHER
@@ -36,14 +38,32 @@ enum ERentalType {
   SHARED_ROOM
 }
 
+enum EFacilityType {
+  GENERAL           // Free WiFi, Heating, Elevator, Non-smoking property
+  FOOD_AND_DRINK    // Breakfast included, Restaurant on-site, Bar, Vending machine (drinks)
+  PUBLIC_FACILITIES // Swimming pool, Shared lounge/TV area, Luggage storage, Picnic area
+  SERVICES          // 24-hour front desk, Laundry service, Concierge, Shuttle service
+  SAFETY            // Security alarm, First aid kit, CCTV in common areas, Key card access
+  ACCESSIBILITY     // Wheelchair accessible, Braille signage, Elevator for upper floors, Emergency cord in common areas
+  ENTERTAINMENT     // Board games, Library, Game room, Movie nights
+  OUTDOOR           // Garden, Terrace, Outdoor furniture, BBQ facilities, Beachfront access
+  TRANSPORTATION    // Free parking, Airport shuttle, Bicycle rental, Electric vehicle charging station, Valet parking
+  WELLNESS          // Spa, Fitness center, Sauna, Hot tub
+  SPECIAL_AMENITIES // Children's playground, Babysitting service, Pet-friendly (pets allowed), Kids' club
+  SUSTAINABILITY    // Solar panels, Recycling bins in common areas, Energy-efficient lighting, Water conservation measures
+  OTHER             // Gift shop, Chapel/shrine, Ticket service, ATM on site
+}
+
+// ============= MODELS =============
+
 model Accommodation {
   id          String             @id @default(uuid())
-  name        String             @db.VarChar(191)
+  name        String             @db.VarChar(255)
   description String?            @db.Text
-  type        EAccommodationType?
+  type        EAccommodationType
   rentalType  ERentalType?        @default(ENTIRE_PLACE)
   isActive    Boolean            @default(true)
-  ownerId     String             @db.VarChar(191) // Reference to user-service
+  ownerId     String             @db.VarChar(36) // Reference to user-service
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
@@ -51,9 +71,10 @@ model Accommodation {
   address   Address? @relation(fields: [addressId], references: [id])
   addressId String?  @unique @db.VarChar(191)
 
-  facilities AccommodationFacility[]
+  facilities FacilityConfig[]
 
   @@index([type])
+  @@index([rentalType])
   @@index([ownerId])
   @@map("accommodations")
 }
@@ -61,46 +82,66 @@ model Accommodation {
 model Address {
   id         String  @id @default(uuid())
   street     String  @db.VarChar(255)
-  city       String  @db.VarChar(100)
-  state      String? @db.VarChar(100)
-  postalCode String? @db.VarChar(20)
+  ward       String? @db.VarChar(100) // Phường/Xã
+  district   String? @db.VarChar(100) // Quận/Huyện (có thể bỏ vì đã sáp nhập)
+  city       String  @db.VarChar(100) // Thành phố/Tỉnh
   country    String  @db.VarChar(100)
+  countryCode String  @db.Char(2) // ISO 3166-1: "VN"
+  postalCode String? @db.VarChar(20)
 
-  latitude  Decimal? @db.Decimal(9, 6)
-  longitude Decimal? @db.Decimal(9, 6)
+  // Geolocation (High precision for GPS)
+  latitude  Decimal? @db.Decimal(10, 8)
+  longitude Decimal? @db.Decimal(11, 8)
+
+  // Display & Integration
+  fullAddress String  @db.VarChar(500) // Pre-computed (Địa chỉ đầy đủ, dùng để hiển thị)
+  placeId     String? @db.VarChar(255) // Google Place ID hoặc tương tự
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
   accommodation Accommodation?
 
-  @@index([city])
-  @@index([postalCode])
+  @@index([city, ward])
+  @@index([countryCode, city])
   @@index([latitude, longitude])
+  @@index([postalCode])
   @@map("addresses")
 }
 
 model Facility {
-  id          String  @id @default(uuid())
-  name        String  @db.VarChar(100)
-  description String? @db.Text
-  icon        String? @db.VarChar(255) // URL or icon name
+  id          String        @id @default(uuid())
+  name        String        @db.VarChar(191)
+  type        EFacilityType @default(GENERAL)
+  description String?       @db.Text
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
 
-  accommodations AccommodationFacility[]
+  configs FacilityConfig[]
 
+  @@unique([name])
+  @@index([type])
   @@map("facilities")
 }
 
-model AccommodationFacility {
-  accommodation   Accommodation @relation(fields: [accommodationId], references: [id])
-  accommodationId String        @db.VarChar(191)
-  facility        Facility      @relation(fields: [facilityId], references: [id])
-  facilityId      String        @db.VarChar(191)
+model FacilityConfig {
+  id        String        @id @default(uuid())
+  fee       Decimal?      @db.Decimal(10, 2) @default(0) // Fee for using the facility, if applicable
+  note      String?       @db.Text
+  isAvailable Boolean     @default(true)
 
-  @@id([accommodationId, facilityId])
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+  accommodationId String        @db.VarChar(191)
+
+  facility   Facility @relation(fields: [facilityId], references: [id])
+  facilityId String   @db.VarChar(191)
+
+  @@unique([accommodationId, facilityId])
+  @@index([accommodationId])
   @@index([facilityId])
-  @@map("accommodation_facilities")
+  @@map("facility_configs")
 }
