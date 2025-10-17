@@ -1,0 +1,54 @@
+// prisma/schema.prisma
+// Booking Service Prisma schema
+
+generator client {
+  provider = "prisma-client-js"
+  output   = "../generated/prisma" // client output folder, specific for booking service
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL") // separate DB connection for booking service
+}
+
+model Booking {
+  id          String         @id @default(uuid())
+  startDate   DateTime
+  endDate     DateTime
+  guestCount  Int            @default(1)
+  referenceNo Int            @unique
+  status      EBookingStatus @default(BOOKED)
+
+  // Relations
+  details   BookingDetail[]
+  userId    String // who made the booking (traveler)
+  createdAt DateTime        @default(now())
+  updatedAt DateTime        @updatedAt
+}
+
+model BookingDetail {
+  id    String  @id @default(uuid())
+  count Int     @default(1)
+  note  String?
+
+  // Relations
+  bookingId String
+  Booking   Booking   @relation(fields: [bookingId], references: [id])
+  itemId    String // itemType
+  itemType  EItemType
+  createdAt DateTime  @default(now())
+  updatedAt DateTime  @updatedAt
+}
+
+enum EBookingStatus {
+  DRAFT
+  PENDING // waiting for payment, confirmation from accommodation owner
+  CANCELLED
+  BOOKED // successfully paid and confirmed
+  COMPLETED // stay completed, review can be left
+}
+
+enum EItemType {
+  ROOM
+  BED
+}

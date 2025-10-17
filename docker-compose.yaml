@@ -78,6 +78,19 @@ services:
             - ./API/user-service:/app
             - /app/node_modules
 
+    image-service:
+        build:
+            context: "./API/image-service"
+            dockerfile: "Dockerfile"
+        env_file:
+            - ./API/common.env
+            - ./API/image-service/docker.env
+        ports:
+            - "3007:3007"
+        volumes:
+            - ./API/image-service:/app
+            - /app/node_modules
+
     api-gateway:
         build:
             context: "./API/api-gateway"
