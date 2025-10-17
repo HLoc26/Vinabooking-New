@@ -25,5 +25,10 @@ class RedisClient {
     }
 }
 
-const redisClient = await RedisClient.getInstance();
-export default redisClient;
+let redisClient: RedisClientType;
+export async function getRedisClient() {
+    if (!redisClient) {
+        redisClient = await RedisClient.getInstance();
+    }
+    return redisClient;
+}
