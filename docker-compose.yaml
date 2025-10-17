@@ -90,7 +90,6 @@ services:
             - "50057:50057"
         volumes:
             - ./API/image-service:/app
-            - ./generated/grpc:/app/generated/grpc
             - /app/node_modules
 
     api-gateway:
