@@ -1,4 +1,4 @@
-import AppError from "./AppError.ts";
+import AppError from "./AppError";
 
 class DatabaseError extends AppError {
     constructor(message = "Unknown problem with database") {

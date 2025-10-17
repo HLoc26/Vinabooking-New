@@ -1,17 +1,17 @@
-import UserService from "../services/UserService.ts";
+import UserService from "../services/UserService";
 
-import BadRequestError from "../errors/BadRequestError.ts";
-import NotFoundError from "../errors/NotFoundError.ts";
+import BadRequestError from "../errors/BadRequestError";
+import NotFoundError from "../errors/NotFoundError";
 
-import ResponseHelper from "../utils/ResponseHelper.ts";
+import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
-import type User from "../classes/User.ts";
-import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response.ts";
-import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserRequest } from "../types/Request.ts";
-import type { ApiResponse } from "../types/Response.ts";
-import RedisClientError from "../errors/RedisClientError.ts";
-import DatabaseError from "../errors/DatabaseError.ts";
+import type User from "../classes/User";
+import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
+import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserRequest } from "../types/Request";
+import type { ApiResponse } from "../types/Response";
+import RedisClientError from "../errors/RedisClientError";
+import DatabaseError from "../errors/DatabaseError";
 
 class UserController {
     private userService = new UserService();

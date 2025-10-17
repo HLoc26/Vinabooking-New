@@ -1,4 +1,4 @@
-import { type IFavouriteItem } from "../types/Favourite.ts";
+import { type IFavouriteItem } from "../types/Favourite";
 
 class FavouriteItem {
     #id: string;

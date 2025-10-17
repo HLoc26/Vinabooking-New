@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import type { ApiResponse, UserResponse, CacheUserResponse, SaveUserResponse } from "./Response.ts";
+import type { ApiResponse, UserResponse, CacheUserResponse, SaveUserResponse } from "./Response";
 
 export type FindUserByIdRequest = Request<{ id: string }, ApiResponse<UserResponse>, unknown, { withFavourites?: string }>;
 

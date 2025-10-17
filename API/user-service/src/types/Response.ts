@@ -1,4 +1,4 @@
-import type User from "../classes/User.ts";
+import type User from "../classes/User";
 
 export interface ApiResponse<T> {
     success: boolean;

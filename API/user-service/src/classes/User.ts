@@ -1,6 +1,6 @@
-import FavouriteList from "./FavouriteList.ts";
+import FavouriteList from "./FavouriteList";
 import type { User as UserSchema } from "../../generated/prisma/index.js";
-import { EUserRole, type IUser, type UserWithFavourites } from "../types/User.ts";
+import { EUserRole, type IUser, type UserWithFavourites } from "../types/User";
 
 class User {
     #id: string;

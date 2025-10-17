@@ -1,12 +1,12 @@
 import type { User as UserSchema } from "../../generated/prisma/index.js";
-import User from "../classes/User.ts";
-import redisClient from "../clients/RedisSingleton.ts";
-import DatabaseError from "../errors/DatabaseError.ts";
-import NotFoundError from "../errors/NotFoundError.ts";
-import RedisClientError from "../errors/RedisClientError.ts";
-import UserRepository from "../repositories/UserRepository.ts";
-import type { CacheInfo } from "../types/Request.ts";
-import type { SaveUserInfo, UserWithFavourites } from "../types/User.ts";
+import User from "../classes/User";
+import redisClient from "../clients/RedisSingleton";
+import DatabaseError from "../errors/DatabaseError";
+import NotFoundError from "../errors/NotFoundError";
+import RedisClientError from "../errors/RedisClientError";
+import UserRepository from "../repositories/UserRepository";
+import type { CacheInfo } from "../types/Request";
+import type { SaveUserInfo, UserWithFavourites } from "../types/User";
 
 class UserService {
     private userRepository = new UserRepository();
