@@ -20,7 +20,7 @@ restApp.listen(PORT, () => console.log(`Image Service running on port ${PORT}`))
 // ============================================================================================== //
 
 import { Server, ServerCredentials } from "@grpc/grpc-js";
-import { ImageServiceService } from "../generated/grpc/image-service";
+import { ImageServiceService } from "../generated/grpc/image-service/image-service";
 import { getHealthHandler } from "./handlers/getHealthHandler";
 const server = new Server();
 
