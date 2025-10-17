@@ -13,12 +13,15 @@ export default tseslint.config([
         languageOptions: {
             ecmaVersion: 2020,
             globals: globals.browser,
+            parserOptions: {
+                tsconfigRootDir: new URL(".", import.meta.url).pathname,
+            },
         },
         rules: {
             semi: ["error", "always"], // semi: true
             quotes: ["error", "double"], // double quotes
             "comma-dangle": ["error", "only-multiline"], // trailingComma: es5
-            indent: ["error", 4], // use 4 spaces for tabs
+            indent: ["error", 4, { SwitchCase: 1 }], // use 4 spaces for tabs
             "max-len": ["error", { code: 200 }], // printWidth: 200
             "linebreak-style": ["error", "windows"], // endOfLine: crlf
         },
@@ -31,6 +34,9 @@ export default tseslint.config([
         languageOptions: {
             ecmaVersion: 2020,
             globals: globals.browser,
+            parserOptions: {
+                tsconfigRootDir: new URL(".", import.meta.url).pathname,
+            },
         },
         rules: {
             semi: ["error", "always"], // semi: true
