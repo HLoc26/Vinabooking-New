@@ -80,8 +80,8 @@ services:
 
     image-service:
         build:
-            context: "./API/image-service"
-            dockerfile: "Dockerfile"
+            context: "./"
+            dockerfile: "./API/image-service/Dockerfile"
         env_file:
             - ./API/common.env
             - ./API/image-service/docker.env
@@ -90,6 +90,7 @@ services:
             - "50057:50057"
         volumes:
             - ./API/image-service:/app
+            - ./generated/grpc:/app/generated/grpc
             - /app/node_modules
 
     api-gateway:
