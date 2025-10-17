@@ -1,5 +1,5 @@
 import sharp from "sharp";
-import type { ImageProcessingOptions, ImageProcessingResultKey } from "../types/Image.ts";
+import type { ImageProcessingOptions, ImageProcessingResultKey } from "../types/Image";
 
 class ImageProcessor {
     public static async createVariants(imageBuffer: Buffer, options: ImageProcessingOptions) {

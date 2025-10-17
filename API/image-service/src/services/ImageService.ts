@@ -1,5 +1,5 @@
-import ImageRepostory from "../repositories/ImageRepository.ts";
-import type { FileType, UploadResult } from "../types/Image.ts";
+import ImageRepostory from "../repositories/ImageRepository";
+import type { FileType, UploadResult } from "../types/Image";
 
 class ImageService {
     private imageRepository = new ImageRepostory();

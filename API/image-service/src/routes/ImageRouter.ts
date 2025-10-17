@@ -1,8 +1,8 @@
 import { Router, type Request, type Response } from "express";
-import ResponseHelper from "../utils/ResponseHelper.ts";
-import ImageController from "../controllers/ImageController.ts";
-import type { UploadRequest } from "../types/Request.ts";
-import UploadClient from "../clients/UploadClient.ts";
+import ResponseHelper from "../utils/ResponseHelper";
+import ImageController from "../controllers/ImageController";
+import type { UploadRequest } from "../types/Request";
+import UploadClient from "../clients/UploadClient";
 
 // Base route: /images
 class ImageRouter {

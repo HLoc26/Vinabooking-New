@@ -1,6 +1,6 @@
 import { EEntityType, EVariantType } from "../../generated/prisma/index.js";
-import PrismaSingleton from "../clients/PrismaSingleton.ts";
-import type { FileType, UploadResult } from "../types/Image.ts";
+import PrismaSingleton from "../clients/PrismaSingleton";
+import type { FileType, UploadResult } from "../types/Image";
 
 class ImageRepostory {
     private prisma = PrismaSingleton.getInstance();

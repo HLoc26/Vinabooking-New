@@ -1,13 +1,13 @@
 import { EEntityType } from "../../generated/prisma/index.js";
-import ImageService from "../services/ImageService.ts";
-import { ImageUploadMapper, type ImageUploadType, type UploadRequest } from "../types/Request.ts";
-import type { ApiResponse, UploadResponse } from "../types/Response.ts";
+import ImageService from "../services/ImageService";
+import { ImageUploadMapper, type ImageUploadType, type UploadRequest } from "../types/Request";
+import type { ApiResponse, UploadResponse } from "../types/Response";
 import type { Response } from "express";
-import ResponseHelper from "../utils/ResponseHelper.ts";
-import type { FileType } from "../types/Image.ts";
-import BadRequestError from "../errors/BadRequestError.ts";
-import S3Service from "../services/S3Service.ts";
-import ImageProcessor from "../utils/ImageProcessor.ts";
+import ResponseHelper from "../utils/ResponseHelper";
+import type { FileType } from "../types/Image";
+import BadRequestError from "../errors/BadRequestError";
+import S3Service from "../services/S3Service";
+import ImageProcessor from "../utils/ImageProcessor";
 
 class ImageController {
     private imageService = new ImageService();

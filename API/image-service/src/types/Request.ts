@@ -1,6 +1,6 @@
 import { type Request } from "express";
 import { EEntityType } from "../../generated/prisma/index.js";
-import type { ApiResponse, UploadResponse } from "./Response.ts";
+import type { ApiResponse, UploadResponse } from "./Response";
 
 export type ImageUploadType = "profile" | "accommodation" | "room" | "review";
 
