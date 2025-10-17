@@ -29,7 +29,7 @@ class UserRepository {
 
     public async createUser(info: SaveUserInfo) {
         return await this.prismaClient.$transaction(async (tx) => {
-            const user = tx.user.create({
+            const user = await tx.user.create({
                 data: {
                     id: info.cognitoSub,
                     name: info.name,
