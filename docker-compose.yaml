@@ -87,6 +87,7 @@ services:
             - ./API/image-service/docker.env
         ports:
             - "3007:3007"
+            - "50057:50057"
         volumes:
             - ./API/image-service:/app
             - /app/node_modules
