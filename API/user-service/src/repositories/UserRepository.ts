@@ -1,7 +1,7 @@
 import type { User } from "../../generated/prisma/index.js";
-import PrismaSingleton from "../clients/PrismaSingleton.ts";
-import { type UserWithFavourites, type SaveUserInfo, EUserRole } from "../types/User.ts";
-import FavouriteRepository from "./FavouriteRepository.ts";
+import PrismaSingleton from "../clients/PrismaSingleton";
+import { type UserWithFavourites, type SaveUserInfo, EUserRole } from "../types/User";
+import FavouriteRepository from "./FavouriteRepository";
 
 class UserRepository {
     private prismaClient = PrismaSingleton.getInstance();

@@ -1,8 +1,8 @@
 import express, { type Router, type Request, type Response } from "express";
-import ResponseHelper from "../utils/ResponseHelper.ts";
-import UserController from "../controllers/UserController.ts";
-import type { FindUserByIdRequest } from "../types/Request.ts";
-import redisClient from "../clients/RedisSingleton.ts";
+import ResponseHelper from "../utils/ResponseHelper";
+import UserController from "../controllers/UserController";
+import type { FindUserByIdRequest } from "../types/Request";
+import redisClient from "../clients/RedisSingleton";
 
 // Base route: /users
 

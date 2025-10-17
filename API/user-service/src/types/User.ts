@@ -1,7 +1,7 @@
 import { type User as UserSchema } from "../../generated/prisma/index.js";
 
-import { type FavouriteListWithItems, type IFavouriteList } from "./Favourite.ts";
-import type { CacheInfo } from "./Request.ts";
+import { type FavouriteListWithItems, type IFavouriteList } from "./Favourite";
+import type { CacheInfo } from "./Request";
 
 export type UserWithFavourites = { favourites: FavouriteListWithItems[] } & UserSchema;
 

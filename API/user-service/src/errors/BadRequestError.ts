@@ -1,4 +1,4 @@
-import AppError from "./AppError.ts";
+import AppError from "./AppError";
 
 class BadRequestError extends AppError {
     constructor(message = "Bad request") {

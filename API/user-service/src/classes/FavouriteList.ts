@@ -1,6 +1,6 @@
-import FavouriteItem from "./FavouriteItem.ts";
+import FavouriteItem from "./FavouriteItem";
 
-import { type IFavouriteList, type FavouriteListWithItems } from "../types/Favourite.ts";
+import { type IFavouriteList, type FavouriteListWithItems } from "../types/Favourite";
 
 class FavouriteList {
     #id: string;

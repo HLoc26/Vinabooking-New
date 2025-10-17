@@ -1,5 +1,5 @@
 import type { Prisma, PrismaClient } from "@prisma/client/extension";
-import PrismaSingleton from "../clients/PrismaSingleton.ts";
+import PrismaSingleton from "../clients/PrismaSingleton";
 
 class FavouriteRepository {
     private prismaClient = PrismaSingleton.getInstance();

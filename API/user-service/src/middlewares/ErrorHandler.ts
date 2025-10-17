@@ -1,6 +1,6 @@
 import { type NextFunction, type Request, type Response } from "express";
-import ResponseHelper from "../utils/ResponseHelper.ts";
-import type AppError from "../errors/AppError.ts";
+import ResponseHelper from "../utils/ResponseHelper";
+import type AppError from "../errors/AppError";
 
 class ErrorHandler {
     public static handle(err: AppError, _req: Request, res: Response, _next: NextFunction) {
