@@ -2,10 +2,9 @@ import express, { type Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import UserController from "../controllers/UserController";
 import type { FindUserByIdRequest } from "../types/Request";
-import redisClient from "../clients/RedisSingleton";
+import { getRedisClient } from "../clients/RedisSingleton"; // thay đổi từ default export sang function
 
 // Base route: /users
-
 class UserRouter {
     public router: Router;
     private userController: UserController;
@@ -19,9 +18,11 @@ class UserRouter {
     private registerRoutes(): void {
         // health check
         this.router.get("/health", async (_: Request, res: Response) => {
+            const redis = await getRedisClient();
+            const ping = await redis.ping("Healthy");
             ResponseHelper.success(res, {
                 user_service: "Healthy",
-                redis: await redisClient.ping("Healthy"),
+                redis: ping,
             });
         });
 
