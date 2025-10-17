@@ -1,7 +1,7 @@
 import express from "express";
-import ImageRouter from "./routes/ImageRouter.ts";
-import ErrorHandler from "./middlewares/ErrorHandler.ts";
-import { setupSwagger } from "./configs/swagger.ts";
+import ImageRouter from "./routes/ImageRouter";
+import ErrorHandler from "./middlewares/ErrorHandler";
+import { setupSwagger } from "./configs/swagger";
 const app = express();
 app.use(express.json());
 

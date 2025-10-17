@@ -1,4 +1,4 @@
-import AppError from "./AppError.ts";
+import AppError from "./AppError";
 
 class BufferError extends AppError {
     constructor(message = "Unknown problem with image buffer") {

@@ -1,4 +1,4 @@
-import AppError from "./AppError.ts";
+import AppError from "./AppError";
 
 class NotFoundError extends AppError {
     constructor(message = "The requested resource was not found") {

@@ -1,4 +1,4 @@
-import type { IImage } from "../types/Image.ts";
+import type { IImage } from "../types/Image";
 
 class Image {
     #id: string;
