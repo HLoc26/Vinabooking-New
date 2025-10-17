@@ -24,6 +24,7 @@ export default tseslint.config([
             indent: ["error", 4, { SwitchCase: 1 }], // use 4 spaces for tabs
             "max-len": ["error", { code: 200 }], // printWidth: 200
             "linebreak-style": ["error", "windows"], // endOfLine: crlf
+            "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
         },
     },
     // UI config
