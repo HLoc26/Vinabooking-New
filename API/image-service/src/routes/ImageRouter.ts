@@ -2,15 +2,31 @@ import { Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import ImageController from "../controllers/ImageController";
 import type { UploadRequest } from "../types/Request";
+import multer from "multer";
+import S3Service from "../services/S3Service";
+import ImageRepository from "../repositories/ImageRepository";
+import { UploadService } from "../services/UploadService";
 import UploadClient from "../clients/UploadClient";
+
+class ImageRouterFactory {
+    static createImageRouter() {
+        const s3Service = new S3Service();
+        const imageRepository = new ImageRepository();
+        const uploadService = new UploadService(s3Service, imageRepository);
+        const imageController = new ImageController(uploadService);
+        const uploadClient = UploadClient.getInstance();
+        const imageRouter = new ImageRouter(imageController, Router(), uploadClient);
+        return imageRouter.router;
+    }
+}
 
 // Base route: /images
 class ImageRouter {
-    public router = Router();
-    private imageController = new ImageController();
-    private uploadClient = UploadClient.getInstance();
-
-    constructor() {
+    constructor(
+        private readonly imageController: ImageController,
+        public readonly router: Router,
+        private readonly uploadClient: multer.Multer
+    ) {
         this.registerRoutes();
     }
 
@@ -26,4 +42,4 @@ class ImageRouter {
     }
 }
 
-export default ImageRouter;
+export default ImageRouterFactory;

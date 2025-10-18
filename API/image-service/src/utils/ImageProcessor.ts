@@ -1,39 +1,76 @@
 import sharp from "sharp";
-import type { ImageProcessingOptions, ImageProcessingResultKey } from "../types/Image";
+import type { ImageProcessingResult } from "../types/Image";
+import NotFoundError from "../errors/NotFoundError";
 
-class ImageProcessor {
-    public static async createVariants(imageBuffer: Buffer, options: ImageProcessingOptions) {
-        const tasks: [ImageProcessingResultKey, Promise<Buffer>][] = [];
+export class ImageProcessingPipeline {
+    private steps: ImageProcessingStep[] = [];
 
-        tasks.push(["ORIGINAL", Promise.resolve(imageBuffer)]);
-
-        if (options.thumbnail) {
-            tasks.push(["THUMBNAIL", this.createThumbnail(imageBuffer)]);
-        }
-        if (options.webp) {
-            tasks.push(["WEBP", this.createWebp(imageBuffer)]);
-        }
-        if (options.optimized) {
-            tasks.push(["OPTIMIZED", this.createOptimized(imageBuffer)]);
-        }
-
-        const results = await Promise.all(
-            tasks.map(([key, promise]) => promise.then((buffer) => [key, buffer] as [ImageProcessingResultKey, Buffer]))
-        );
-        return new Map(results);
+    addStep(step: ImageProcessingStep): this {
+        this.steps.push(step);
+        return this;
     }
 
-    private static async createThumbnail(imageBuffer: Buffer) {
-        return sharp(imageBuffer).resize(200, 200).jpeg().toBuffer();
-    }
+    async execute(original: Buffer): Promise<ImageProcessingResult> {
+        const results: ImageProcessingResult = new Map();
+        results.set("ORIGINAL", original);
 
-    private static async createWebp(imageBuffer: Buffer) {
-        return sharp(imageBuffer).webp().toBuffer();
-    }
+        let currentResults = results;
+        for (const step of this.steps) {
+            currentResults = await step.execute(currentResults);
+        }
 
-    private static async createOptimized(imageBuffer: Buffer) {
-        return sharp(imageBuffer).resize({ width: 1080 }).jpeg({ quality: 70 }).toBuffer();
+        return currentResults;
     }
 }
 
-export default ImageProcessor;
+export interface ImageProcessingStep {
+    execute(results: ImageProcessingResult): Promise<ImageProcessingResult>;
+}
+
+export class CreateThumbnail implements ImageProcessingStep {
+    constructor(
+        private width: number = 200,
+        private height: number = 200
+    ) {}
+
+    async execute(results: ImageProcessingResult): Promise<ImageProcessingResult> {
+        const original = results.get("ORIGINAL");
+        if (!original) {
+            throw new NotFoundError("Original image not foumd");
+        }
+
+        const thumbnailBuffer = await sharp(original).resize(this.width, this.height).jpeg().toBuffer();
+        results.set("THUMBNAIL", thumbnailBuffer);
+        return results;
+    }
+}
+
+export class CreateWEBP implements ImageProcessingStep {
+    async execute(results: ImageProcessingResult): Promise<ImageProcessingResult> {
+        const original = results.get("ORIGINAL");
+        if (!original) {
+            throw new NotFoundError("Original image not foumd");
+        }
+
+        const webpBuffer = await sharp(original).webp().toBuffer();
+        results.set("WEBP", webpBuffer);
+        return results;
+    }
+}
+
+export class CreateOptimized implements ImageProcessingStep {
+    constructor(
+        private width: number = 1080,
+        private quality: number = 70
+    ) {}
+    async execute(results: ImageProcessingResult): Promise<ImageProcessingResult> {
+        const original = results.get("ORIGINAL");
+        if (!original) {
+            throw new NotFoundError("Original image not foumd");
+        }
+
+        const optimizedBuffer = await sharp(original).resize({ width: this.width }).jpeg({ quality: this.quality }).toBuffer();
+        results.set("OPTIMIZED", optimizedBuffer);
+        return results;
+    }
+}
