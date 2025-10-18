@@ -50,6 +50,7 @@ model ImageReference {
 }
 
 enum EVariantType {
+    ORIGINAL
     THUMBNAIL // smaller image for thumbnail 
     WEBP // use webp
     OPTIMIZED // optimized for phone (idk if we need this)
