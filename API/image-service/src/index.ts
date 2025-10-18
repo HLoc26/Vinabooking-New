@@ -1,16 +1,15 @@
 import express from "express";
-import ImageRouter from "./routes/ImageRouter";
 import ErrorHandler from "./middlewares/ErrorHandler";
 import { setupSwagger } from "./configs/swagger";
+import ImageRouterFactory from "./routes/ImageRouter";
 
 const restApp = express();
 restApp.use(express.json());
 
-// Base route: /image
-
 setupSwagger(restApp);
 
-restApp.use(new ImageRouter().router);
+// Base route: /image
+restApp.use(ImageRouterFactory.createImageRouter());
 
 restApp.use(ErrorHandler.handle);
 

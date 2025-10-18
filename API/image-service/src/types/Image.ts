@@ -12,12 +12,12 @@ export interface IImage {
 export type FileType = Express.Multer.File;
 
 // Image processing
-export type ImageProcessingResultKey = "ORIGINAL" | EVariantType;
+export type ImageProcessingResultKey = EVariantType;
 
 export type ImageProcessingResult = Map<ImageProcessingResultKey, Buffer>;
 
-export const ImageProcessingResultName: Record<ImageProcessingResultKey, EVariantType | "ORIGINAL"> = {
-    ORIGINAL: "ORIGINAL",
+export const ImageProcessingResultName: Record<ImageProcessingResultKey, EVariantType> = {
+    ORIGINAL: EVariantType.ORIGINAL,
     THUMBNAIL: EVariantType.THUMBNAIL,
     WEBP: EVariantType.WEBP,
     OPTIMIZED: EVariantType.OPTIMIZED,
