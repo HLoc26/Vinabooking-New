@@ -26,10 +26,9 @@ message UploadResponse{
 }
 
 message UploadedImage {
-    string originalName = 1;
+    string id = 1;
     string s3Key = 2;
-    string url = 3;
-    string variant = 4; // THUMBNAIL, WEBP, OPTIMIZED
+    string variant = 3; // THUMBNAIL, WEBP, OPTIMIZED
 }
 
 message FileData {
