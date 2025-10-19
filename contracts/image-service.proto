@@ -7,6 +7,7 @@ import "google/protobuf/empty.proto";
 service ImageService {
     rpc GetHealth(google.protobuf.Empty) returns (HealthResponse);
     rpc UploadImages(UploadRequest) returns (UploadResponse);
+    rpc GetImages(GetImageRequest) returns (GetImageResponse);
 }
 
 message HealthResponse {
@@ -42,4 +43,27 @@ enum EEntityType{
     ACCOMMODATION = 1;
     ROOM = 2;
     REVIEW = 3;
+}
+
+message GetImageRequest{
+    EEntityType entityType = 1;
+    string id = 2;
+}
+
+message GetImageResponse {
+    repeated ResponseImage images = 1;
+}
+
+message ResponseImage {
+    string id = 1;
+    string url = 2;
+    EVariantType variant = 3;
+    string imageId = 4;
+}
+
+enum EVariantType {
+    ORIGINAL = 0;
+    THUMBNAIL = 1;
+    WEBP = 2;
+    OPTIMIZED = 3; 
 }
