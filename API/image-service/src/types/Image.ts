@@ -9,6 +9,8 @@ export interface IImage {
     createdAt?: Date;
 }
 
+export type UploadedImage = Omit<IImage, "contentType" | "size" | "createdAt" | "filename"> & { variant: EVariantType };
+
 export type FileType = Express.Multer.File;
 
 // Image processing
