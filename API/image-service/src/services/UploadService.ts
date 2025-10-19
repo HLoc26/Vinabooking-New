@@ -68,7 +68,7 @@ export class UploadService {
         }
     }
 
-    async handleUserProfileUpload(userId: string, original: FileType) {
+    private async handleUserProfileUpload(userId: string, original: FileType) {
         return this.processAndUpload(
             userId,
             original,
@@ -77,7 +77,7 @@ export class UploadService {
         );
     }
 
-    async handleAccommodationUpload(accommodationId: string, originals: FileType[]) {
+    private async handleAccommodationUpload(accommodationId: string, originals: FileType[]) {
         await Promise.all(
             originals.map((file) =>
                 this.processAndUpload(
@@ -91,7 +91,7 @@ export class UploadService {
         return true;
     }
 
-    async handleRoomUpload(roomId: string, originals: FileType[]) {
+    private async handleRoomUpload(roomId: string, originals: FileType[]) {
         await Promise.all(
             originals.map((file) =>
                 this.processAndUpload(
@@ -105,7 +105,7 @@ export class UploadService {
         return true;
     }
 
-    async handleReviewUpload(reviewId: string, originals: FileType[]) {
+    private async handleReviewUpload(reviewId: string, originals: FileType[]) {
         await Promise.all(
             originals.map((file) =>
                 this.processAndUpload(
