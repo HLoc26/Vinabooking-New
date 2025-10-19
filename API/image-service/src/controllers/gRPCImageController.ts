@@ -1,6 +1,6 @@
 import { sendUnaryData, ServerErrorResponse, ServerUnaryCall, StatusObject } from "@grpc/grpc-js";
 import { Empty } from "../../generated/grpc/image-service/google/protobuf/empty";
-import { HealthResponse, UploadRequest, UploadResponse } from "../../generated/grpc/image-service/image-service";
+import { HealthResponse, UploadedImage, UploadRequest, UploadResponse } from "../../generated/grpc/image-service/image-service";
 import { UploadService } from "../services/UploadService";
 import { FileType } from "../types/Image";
 import { Readable } from "stream";
@@ -33,9 +33,8 @@ class GrpcImageController {
                 buffer: Buffer.from(f.data),
             }));
 
-            const result = await this.uploadService.handleUploadByEntity(entityType, entityId, filesList);
-            const response: UploadResponse = { success: false, images: [] };
-            response.success = Boolean(result);
+            const result: UploadedImage[] = await this.uploadService.handleUploadByEntity(entityType, entityId, filesList);
+            const response: UploadResponse = { success: false, images: result };
             callback(null, response);
         } catch (error: unknown) {
             callback(error as Partial<StatusObject> | ServerErrorResponse | null, null);
