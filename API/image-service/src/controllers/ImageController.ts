@@ -1,4 +1,3 @@
-import { EEntityType } from "../../generated/prisma/index.js";
 import { ImageUploadMapper, type ImageUploadType, type UploadRequest } from "../types/Request";
 import type { ApiResponse, UploadResponse } from "../types/Response";
 import type { Response } from "express";
@@ -20,26 +19,7 @@ class ImageController {
         const entityType = ImageUploadMapper[type];
         if (!entityType) throw new BadRequestError(`Invalid upload type: ${type}`);
 
-        switch (entityType) {
-            case EEntityType.USER_PROFILE:
-                await this.uploadService.handleUserProfileUpload(id, files[0]);
-                break;
-
-            case EEntityType.ACCOMMODATION:
-                await this.uploadService.handleAccommodationUpload(id, files);
-                break;
-
-            case EEntityType.ROOM:
-                await this.uploadService.handleRoomUpload(id, files);
-                break;
-
-            case EEntityType.REVIEW:
-                await this.uploadService.handleReviewUpload(id, files);
-                break;
-
-            default:
-                throw new BadRequestError("Unsupported entity type");
-        }
+        await this.uploadService.handleUploadByEntity(entityType, id, files);
 
         return ResponseHelper.success(res, { success: true });
     }
