@@ -79,7 +79,6 @@ model Room {
 
   viewType        EViewType @default(NONE)
   viewDescription String?   @db.VarChar(191) // e.g., "Ocean view from the balcony", "Partial ocean view from balcony", "Facing golf course"
-  floor           String?   @db.VarChar(50) // e.g., "5th Floor", "Ground Floor"
 
   price       Decimal?     @db.Decimal(10, 2) // e.g., 150.00
   pricingType EPricingType @default(PER_NIGHT)
