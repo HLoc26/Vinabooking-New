@@ -6,6 +6,7 @@ import S3Service from "./S3Service";
 import { EEntityType, EVariantType } from "../../generated/prisma/index.js";
 
 import { EEntityType as GRPC_EEntityType } from "../../generated/grpc/image-service/image-service";
+import MappingUtil from "../utils/MappingUtil";
 
 export class UploadService {
     constructor(
@@ -41,7 +42,7 @@ export class UploadService {
     async handleUploadByEntity(entityType: EEntityType | GRPC_EEntityType, entityId: string, files: FileType[]): Promise<UploadedImage[]> {
         if (!files?.length) throw new BadRequestError("Empty files");
 
-        const type = this.entityTypeMapping(entityType);
+        const type = MappingUtil.entityTypeMapping(entityType);
 
         const uploadFn = this.s3Service.uploadEntityImages.bind(this.s3Service, type);
         const saveFn = this.imageRepository.saveEntityImage.bind(this.imageRepository, type);
@@ -53,20 +54,5 @@ export class UploadService {
 
         const results = await Promise.all(tasks);
         return results.flat();
-    }
-
-    private entityTypeMapping(type: EEntityType | GRPC_EEntityType): EEntityType {
-        switch (type) {
-            case GRPC_EEntityType.USER_PROFILE:
-                return EEntityType.USER_PROFILE;
-            case GRPC_EEntityType.ACCOMMODATION:
-                return EEntityType.ACCOMMODATION;
-            case GRPC_EEntityType.ROOM:
-                return EEntityType.ROOM;
-            case GRPC_EEntityType.REVIEW:
-                return EEntityType.REVIEW;
-            default:
-                return type as EEntityType;
-        }
     }
 }
