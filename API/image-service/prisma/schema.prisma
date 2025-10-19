@@ -57,12 +57,12 @@ enum EVariantType {
 }
 
 model ImageVariant {
-    id    String       @id @default(uuid())
-    s3Key String
-    type  EVariantType
+    id      String       @id @default(uuid())
+    s3Key   String
+    variant EVariantType
 
     imageId String
     image   Image  @relation(fields: [imageId], references: [id])
 
-    @@index([type, imageId])
+    @@index([variant, imageId])
 }
