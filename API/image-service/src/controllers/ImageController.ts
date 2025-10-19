@@ -19,9 +19,9 @@ class ImageController {
         const entityType = ImageUploadMapper[type];
         if (!entityType) throw new BadRequestError(`Invalid upload type: ${type}`);
 
-        await this.uploadService.handleUploadByEntity(entityType, id, files);
+        const images = await this.uploadService.handleUploadByEntity(entityType, id, files);
 
-        return ResponseHelper.success(res, { success: true });
+        return ResponseHelper.success<UploadResponse>(res, { success: true, images });
     }
 }
 

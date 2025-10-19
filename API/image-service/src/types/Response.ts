@@ -1,3 +1,5 @@
+import { UploadedImage } from "./Image";
+
 export interface ApiResponse<T> {
     success: boolean;
     data: T | null;
@@ -6,4 +8,5 @@ export interface ApiResponse<T> {
 
 export interface UploadResponse {
     success: boolean;
+    images: UploadedImage[];
 }
