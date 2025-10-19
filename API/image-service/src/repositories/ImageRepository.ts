@@ -36,4 +36,21 @@ export default class ImageRepository {
 
         return variants;
     }
+
+    public async getEntityImage(entityType: EEntityType, entityId: string) {
+        const images = await this.prisma.image.findMany({
+            where: {
+                references: {
+                    some: {
+                        entityId: entityId,
+                        entityType: entityType,
+                    },
+                },
+            },
+            include: {
+                variants: true,
+            },
+        });
+        return images;
+    }
 }
