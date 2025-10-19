@@ -45,53 +45,21 @@ export class UploadService {
             case EEntityType.USER_PROFILE:
             case GRPC_EEntityType.USER_PROFILE:
                 // User chỉ upload 1 file
-                return this.processAndUpload(
-                    entityId,
-                    files[0],
-                    this.s3Service.uploadProfileImage.bind(this.s3Service),
-                    this.imageRepository.saveProfileImage.bind(this.imageRepository)
-                );
+                return this.handleUserProfileUpload(entityId, files[0]);
 
             case EEntityType.ACCOMMODATION:
             case GRPC_EEntityType.ACCOMMODATION:
-                await Promise.all(
-                    files.map((file) =>
-                        this.processAndUpload(
-                            entityId,
-                            file,
-                            this.s3Service.uploadAccommodationImages.bind(this.s3Service),
-                            this.imageRepository.saveEntityImage.bind(this.imageRepository, EEntityType.ACCOMMODATION)
-                        )
-                    )
-                );
+                await this.handleAccommodationUpload(entityId, files);
                 return true;
 
             case EEntityType.ROOM:
             case GRPC_EEntityType.ROOM:
-                await Promise.all(
-                    files.map((file) =>
-                        this.processAndUpload(
-                            entityId,
-                            file,
-                            this.s3Service.uploadRoomImages.bind(this.s3Service),
-                            this.imageRepository.saveEntityImage.bind(this.imageRepository, EEntityType.ROOM)
-                        )
-                    )
-                );
+                await this.handleRoomUpload(entityId, files);
                 return true;
 
             case EEntityType.REVIEW:
             case GRPC_EEntityType.REVIEW:
-                await Promise.all(
-                    files.map((file) =>
-                        this.processAndUpload(
-                            entityId,
-                            file,
-                            this.s3Service.uploadReviewImages.bind(this.s3Service),
-                            this.imageRepository.saveEntityImage.bind(this.imageRepository, EEntityType.REVIEW)
-                        )
-                    )
-                );
+                await this.handleReviewUpload(entityId, files);
                 return true;
 
             default:
