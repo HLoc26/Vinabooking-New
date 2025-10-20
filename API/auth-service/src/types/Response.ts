@@ -22,7 +22,7 @@ export interface LogInResponse {
     accessToken: string;
     idToken: string;
     refreshToken: string;
-    expiresAt: number;
+    expiresIn: number;
     tokenType: string | "Bearer";
 }
 

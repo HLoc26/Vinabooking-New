@@ -118,15 +118,12 @@ class AuthController {
         ) {
             throw new Error("Invalid response from auth provider");
         }
-        const issuedAt = Date.now(); // ms
-        const expiresIn = auth.ExpiresIn; // seconds
-        const expiresAt = issuedAt + expiresIn * 1000;
 
         const response: LogInResponse = {
             accessToken: auth.AccessToken,
             idToken: auth.IdToken,
             refreshToken: auth.RefreshToken,
-            expiresAt: expiresAt,
+            expiresIn: auth.ExpiresIn,
             tokenType: auth.TokenType,
         };
 
@@ -178,14 +175,11 @@ class AuthController {
         ) {
             throw new Error("Invalid response from auth provider");
         }
-        const issuedAt = Date.now(); // ms
-        const expiresIn = auth.ExpiresIn; // seconds
-        const expiresAt = issuedAt + expiresIn * 1000;
 
-        const response: Omit<LogInResponse, "refreshToken"> = {
+        const response: RefreshResponse = {
             accessToken: auth.AccessToken,
             idToken: auth.IdToken,
-            expiresAt: expiresAt,
+            expiresIn: auth.ExpiresIn,
             tokenType: auth.TokenType,
         };
         return ResponseHelper.success<RefreshResponse>(res, response);
