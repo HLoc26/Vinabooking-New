@@ -153,12 +153,14 @@ class AuthController {
             throw new Error("Empty payload");
         }
 
+        const username = (type === ETokenType.ACCESS ? payload.username : payload["cognito:username"]) as string;
+
         const userInfo = {
             id: payload.sub,
-            username: payload.username,
+            username: username,
         };
 
-        return ResponseHelper.success(res, { user: userInfo });
+        return ResponseHelper.success<VerifyResponse>(res, { user: userInfo });
     }
 }
 
