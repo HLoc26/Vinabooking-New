@@ -1,6 +1,8 @@
-import { app } from "./app.js";
+import app from "./app";
+import config from "./config";
 
-const PORT = Number(process.env.PORT) || 3001;
-app.listen(PORT, () =>
-    console.log(`Accommodation Service running on port ${PORT}`)
-);
+const PORT = config.port;
+
+app.listen(PORT, () => {
+    console.log(`Accommodation Service running on port ${PORT}`);
+});
