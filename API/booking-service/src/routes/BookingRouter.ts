@@ -31,6 +31,9 @@ class BookingRouter {
         this.router.get("/:id", (req: Request, res: Response) => {
             return this.bookingController.getBookingById(req, res);
         });
+        this.router.get("/user/:userId", (req: Request, res: Response) => {
+            return this.bookingController.getBookingsByUserId(req, res);
+        });        
     }
 }
 
