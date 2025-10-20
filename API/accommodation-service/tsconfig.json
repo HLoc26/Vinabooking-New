@@ -7,7 +7,14 @@
         "rootDir": "src",
         "strict": true,
         "esModuleInterop": true,
-        "skipLibCheck": true
+        "allowSyntheticDefaultImports": true,
+        "skipLibCheck": true,
+        "resolveJsonModule": true,
+        "baseUrl": ".",
+        "paths": {
+            "@prisma/client": ["generated/prisma"],
+            "@src/*": ["src/*"]
+        }
     },
     "include": ["src"],
     "exclude": ["node_modules"]
