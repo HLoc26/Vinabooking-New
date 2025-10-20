@@ -27,15 +27,17 @@ class BookingRouter {
         this.router.get("/health", (_req: Request, res: Response) => {
             return ResponseHelper.success(res, { service: "Booking Service", success: true });
         });
-
         this.router.get("/", (req: Request, res: Response) => {
             return this.bookingController.getBookings(req, res);
         });
         this.router.post("/", (req: Request, res: Response) => {
             return this.bookingController.createBooking(req, res);
         });
+        this.router.post("/draft", (req: Request, res: Response) => {
+            return this.bookingController.createDraftBooking(req, res);
+        }
+    )};
     }
 
-}
 
 export default BookingRouterFactory;
