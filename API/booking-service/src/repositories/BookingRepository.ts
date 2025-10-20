@@ -32,9 +32,17 @@ export default class BookingRepository {
     // }
 
     public async createBooking(data: any) {
+        // Force the status to PENDING
+        const bookingData = {
+            ...data,
+            status: "PENDING" // always set to PENDING
+        };
+
         return await this.prisma.booking.create({
-            data,
-            include: { details: true },
+            data: bookingData,
+            include: {
+                details: true
+            }
         });
     }
 }
