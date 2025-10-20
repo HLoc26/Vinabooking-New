@@ -17,3 +17,11 @@ export interface SignUpResponse {
 export interface ConfirmUserResponse {
     success: boolean;
 }
+
+export interface LogInResponse {
+    accessToken: string;
+    idToken: string;
+    refreshToken: string;
+    expiresAt: number;
+    tokenType: string | "Bearer";
+}
