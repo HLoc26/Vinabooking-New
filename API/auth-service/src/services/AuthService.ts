@@ -3,6 +3,7 @@ import {
     CognitoIdentityProviderClient,
     ConfirmSignUpCommand,
     SignUpCommand,
+    AdminInitiateAuthCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
@@ -70,6 +71,25 @@ class AuthService {
             return response;
         } catch (error) {
             console.error("[DEBUG] [DELETE] [ERROR]", error);
+            throw error;
+        }
+    }
+
+    public async logIn(email: string, password: string) {
+        const command = new AdminInitiateAuthCommand({
+            UserPoolId: CognitoClient.userPoolId,
+            AuthFlow: "ADMIN_USER_PASSWORD_AUTH",
+            ClientId: this.appClientID,
+            AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password,
+            },
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [LOG IN]", error);
             throw error;
         }
     }

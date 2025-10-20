@@ -40,7 +40,9 @@ class AuthRouter {
             }
         );
 
-        // this.router.post("/sign-in");
+        this.router.post("/log-in", (req: Request, res: Response) => {
+            return this.authController.logIn(req, res);
+        });
 
         // this.router.get("/refresh-token");
 

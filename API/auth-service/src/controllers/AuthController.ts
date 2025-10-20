@@ -1,8 +1,8 @@
 import { type NextFunction, type Response, type Request } from "express";
-import { type ConfirmUserInfo, type ConfirmUserRequest, type SignUpInfo, type SignUpRequest } from "../types/Request.ts";
+import { type ConfirmUserInfo, type ConfirmUserRequest, type LogInRequest, type SignUpInfo, type SignUpRequest } from "../types/Request.ts";
 import AuthService from "../services/AuthService.ts";
 import ResponseHelper from "../utils/ResponseHelper.ts";
-import type { ApiResponse, ConfirmUserResponse, SignUpResponse } from "../types/Response.ts";
+import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "../types/Response.ts";
 import IdentityProviderError from "../errors/IdentityProviderError.ts";
 import UserService from "../services/UserService.ts";
 import { retry } from "../utils/RetryHelper.ts";
@@ -89,6 +89,36 @@ class AuthController {
         }
 
         return ResponseHelper.success<ConfirmUserResponse>(res, { success: true });
+    }
+
+    public async logIn(req: LogInRequest, res: Response<ApiResponse<LogInResponse>>) {
+        const { username, password } = req.body;
+
+        const awsResponse = await this.authService.logIn(username, password);
+        const auth = awsResponse.AuthenticationResult;
+        if (
+            !auth || //
+            !auth.AccessToken ||
+            !auth.IdToken ||
+            !auth.RefreshToken ||
+            !auth.ExpiresIn ||
+            !auth.TokenType
+        ) {
+            throw new Error("Invalid response from auth provider");
+        }
+        const issuedAt = Date.now(); // ms
+        const expiresIn = auth.ExpiresIn; // seconds
+        const expiresAt = issuedAt + expiresIn * 1000;
+
+        const response: LogInResponse = {
+            accessToken: auth.AccessToken,
+            idToken: auth.IdToken,
+            refreshToken: auth.RefreshToken,
+            expiresAt: expiresAt,
+            tokenType: auth.TokenType,
+        };
+
+        return ResponseHelper.success<LogInResponse>(res, response);
     }
 }
 
