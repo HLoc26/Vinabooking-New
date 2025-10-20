@@ -27,5 +27,8 @@ export interface LogInResponse {
 }
 
 export interface VerifyResponse {
-    valid: boolean;
+    user: {
+        id: string;
+        username: string;
+    };
 }
