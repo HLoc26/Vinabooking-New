@@ -1,0 +1,34 @@
+syntax = "proto3";
+
+package auth;
+
+import "google/protobuf/empty.proto";
+
+service AuthService{ 
+    rpc GetHealth(google.protobuf.Empty) returns (HealthResponse);
+    rpc VerifyToken(VerifyRequest) returns (VerifyResponse);
+}
+
+message HealthResponse {
+    string service = 1;
+    bool success = 2;
+}
+
+message VerifyRequest {
+    string token = 1;
+    ETokenType tokenType = 2;
+}
+
+message VerifyResponse {
+    VerifyInfo user = 1;
+}
+
+message VerifyInfo {
+    string id = 1;
+    string username = 2;
+}
+
+enum ETokenType{
+    ACCESS = 0;
+    ID = 1;
+}
