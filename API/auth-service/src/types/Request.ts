@@ -24,3 +24,15 @@ export interface LogInInfo {
 }
 
 export type LogInRequest = Request<unknown, ApiResponse<LogInResponse>, LogInInfo, unknown>;
+
+export interface VerifyInfo {
+    token: string;
+    tokenType: ETokenType;
+}
+
+export enum ETokenType {
+    ACCESS = "ACCESS",
+    ID = "ID",
+}
+
+export type VerifyRequest = Request<unknown, ApiResponse<VerifyRequest>, VerifyInfo, unknown>;

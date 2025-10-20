@@ -25,3 +25,7 @@ export interface LogInResponse {
     expiresAt: number;
     tokenType: string | "Bearer";
 }
+
+export interface VerifyResponse {
+    valid: boolean;
+}
