@@ -60,11 +60,21 @@ export default class BookingController {
     }
     public async createBooking(req: Request, res: Response<ApiResponse>) {
         try {
-            const bookingData = req.body;
+            const bookingData = {...req.body, status: "PENDING" };
             const newBooking = await this.bookingService.createBooking(bookingData);
             return ResponseHelper.success(res, { booking: newBooking }, 201);
         } catch (err: any) {
             return ResponseHelper.error(res, err.message);
         }
-}
+    }
+    public async createDraftBooking(req: Request, res: Response<ApiResponse>) {
+        try {
+            const bookingData = { ...req.body, status: "DRAFT" };
+            const newBooking = await this.bookingService.createBooking(bookingData);
+            return ResponseHelper.success(res, { booking: newBooking }, 201);
+        } catch (err: any) {
+            return ResponseHelper.error(res, err.message);
+        }
+
+    }
 }
