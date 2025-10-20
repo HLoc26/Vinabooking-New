@@ -4,12 +4,12 @@
     "main": "index.js",
     "scripts": {
         "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "npx nodemon --legacy-watch ./src/index.js"
+        "dev": "npx nodemon --legacy-watch --exec npx ts-node ./src/index.ts"
     },
     "keywords": [],
     "author": "",
     "license": "ISC",
-    "type": "module",
+    "type": "commonjs",
     "description": "This is the Booking Service",
     "dependencies": {
         "@prisma/client": "^6.15.0",
@@ -19,6 +19,9 @@
         "nodemon": "^3.1.10"
     },
     "devDependencies": {
+        "@types/cors": "^2.8.19",
+        "@types/express": "^5.0.3",
+        "@types/node": "^24.8.1",
         "prisma": "^6.15.0"
     }
 }
