@@ -1,4 +1,4 @@
-// import type AuthService from "../services/AuthService.ts";
+// import type AuthService from "../services/AuthService";
 
 export interface ApiResponse<T> {
     success: boolean;

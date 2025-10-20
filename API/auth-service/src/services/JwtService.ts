@@ -1,5 +1,5 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
-import CognitoClient from "../clients/CognitoIdentityProviderClient.ts";
+import CognitoClient from "../clients/CognitoIdentityProviderClient";
 
 class JwtService {
     public static async verifyAccessToken(token: string) {

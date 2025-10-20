@@ -1,4 +1,4 @@
-import AppError from "./AppError.ts";
+import AppError from "./AppError";
 
 class IdentityProviderError extends AppError {
     constructor(message = "Unknown error with identity provider") {
