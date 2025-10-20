@@ -9,6 +9,7 @@ export const startGrpc = () => {
 
     server.addService(AuthServiceService, {
         getHealth: grpcAuthController.getHealth,
+        verifyToken: grpcAuthController.verifyToken,
     });
 
     server.bindAsync("0.0.0.0:50052", ServerCredentials.createInsecure(), (error, port) => {
