@@ -28,13 +28,14 @@ class BookingRouter {
             return ResponseHelper.success(res, { service: "Booking Service", success: true });
         });
 
-        this.router.get("/:id", (req: Request, res: Response) => {
-            return this.bookingController.getBookingById(req, res);
+        this.router.get("/", (req: Request, res: Response) => {
+            return this.bookingController.getBookings(req, res);
         });
-        this.router.get("/user/:userId", (req: Request, res: Response) => {
-            return this.bookingController.getBookingsByUserId(req, res);
-        });        
+        this.router.post("/", (req: Request, res: Response) => {
+            return this.bookingController.createBooking(req, res);
+        });
     }
+
 }
 
 export default BookingRouterFactory;
