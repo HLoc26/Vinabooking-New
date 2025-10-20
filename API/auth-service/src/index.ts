@@ -1,9 +1,9 @@
 import express from "express";
-import AuthRouter from "./routes/AuthRouter.ts";
+import AuthRouter from "./routes/AuthRouter";
 import session from "express-session";
 
 import "dotenv";
-import ErrorHandler from "./middlewares/ErrorHandler.ts";
+import ErrorHandler from "./middlewares/ErrorHandler";
 
 const app = express();
 app.use(express.json());

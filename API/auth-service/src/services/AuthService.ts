@@ -7,9 +7,9 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
-import CognitoClient from "../clients/CognitoIdentityProviderClient.ts";
-import EnvironmentNotSetError from "../errors/EnvironmentNotSetError.ts";
-import type { SignUpResponse } from "../types/Response.ts";
+import CognitoClient from "../clients/CognitoIdentityProviderClient";
+import EnvironmentNotSetError from "../errors/EnvironmentNotSetError";
+import type { SignUpResponse } from "../types/Response";
 
 class AuthService {
     private appClientID: string;

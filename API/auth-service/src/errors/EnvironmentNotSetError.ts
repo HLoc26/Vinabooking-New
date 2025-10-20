@@ -1,4 +1,4 @@
-import AppError from "./AppError.ts";
+import AppError from "./AppError";
 
 class EnvironmentNotSetError extends AppError {
     constructor(message = "Missing environment variable") {
