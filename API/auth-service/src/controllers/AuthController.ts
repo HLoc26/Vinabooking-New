@@ -1,13 +1,24 @@
 import { type NextFunction, type Response, type Request } from "express";
-import { type ConfirmUserInfo, type ConfirmUserRequest, type LogInRequest, type SignUpInfo, type SignUpRequest } from "../types/Request";
+import {
+    ETokenType,
+    VerifyRequest,
+    type ConfirmUserInfo,
+    type ConfirmUserRequest,
+    type LogInRequest,
+    type SignUpInfo,
+    type SignUpRequest,
+} from "../types/Request";
 import AuthService from "../services/AuthService";
 import ResponseHelper from "../utils/ResponseHelper";
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "../types/Response";
+import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse, VerifyResponse } from "../types/Response";
 import IdentityProviderError from "../errors/IdentityProviderError";
 import UserService from "../services/UserService";
 import { retry } from "../utils/RetryHelper";
 import { UsernameExistsException } from "@aws-sdk/client-cognito-identity-provider";
 import type { CacheInfo } from "../types/Axios";
+import JwtService from "../services/JwtService";
+import BadRequestError from "../errors/BadRequestError";
+import MappingUtil from "../utils/MappingUtil";
 
 class AuthController {
     private authService = new AuthService();
@@ -119,6 +130,35 @@ class AuthController {
         };
 
         return ResponseHelper.success<LogInResponse>(res, response);
+    }
+
+    public async verifyToken(req: VerifyRequest, res: Response<ApiResponse<VerifyResponse>>) {
+        const { token, tokenType } = req.body;
+
+        const type = MappingUtil.tokenTypeMapping(tokenType);
+
+        let payload;
+        switch (type) {
+            case ETokenType.ACCESS:
+                payload = await JwtService.verifyAccessToken(token);
+                break;
+            case ETokenType.ID:
+                payload = await JwtService.verifyIdToken(token);
+                break;
+            default:
+                throw new BadRequestError(`Invalid token type: ${tokenType}`);
+        }
+
+        if (!payload) {
+            throw new Error("Empty payload");
+        }
+
+        const userInfo = {
+            id: payload.sub,
+            username: payload.username,
+        };
+
+        return ResponseHelper.success(res, { user: userInfo });
     }
 }
 
