@@ -22,6 +22,7 @@ services:
             - ./API/auth-service/docker.env
         ports:
             - "3002:3002"
+            - "50052:50052"
         volumes:
             - ./API/auth-service:/app
             - /app/node_modules
