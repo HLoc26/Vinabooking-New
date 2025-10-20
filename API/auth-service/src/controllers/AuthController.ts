@@ -1,13 +1,13 @@
 import { type NextFunction, type Response, type Request } from "express";
-import { type ConfirmUserInfo, type ConfirmUserRequest, type LogInRequest, type SignUpInfo, type SignUpRequest } from "../types/Request.ts";
-import AuthService from "../services/AuthService.ts";
-import ResponseHelper from "../utils/ResponseHelper.ts";
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "../types/Response.ts";
-import IdentityProviderError from "../errors/IdentityProviderError.ts";
-import UserService from "../services/UserService.ts";
-import { retry } from "../utils/RetryHelper.ts";
+import { type ConfirmUserInfo, type ConfirmUserRequest, type LogInRequest, type SignUpInfo, type SignUpRequest } from "../types/Request";
+import AuthService from "../services/AuthService";
+import ResponseHelper from "../utils/ResponseHelper";
+import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "../types/Response";
+import IdentityProviderError from "../errors/IdentityProviderError";
+import UserService from "../services/UserService";
+import { retry } from "../utils/RetryHelper";
 import { UsernameExistsException } from "@aws-sdk/client-cognito-identity-provider";
-import type { CacheInfo } from "../types/Axios.ts";
+import type { CacheInfo } from "../types/Axios";
 
 class AuthController {
     private authService = new AuthService();

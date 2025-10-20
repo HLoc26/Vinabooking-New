@@ -1,7 +1,7 @@
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 import "dotenv";
-import EnvironmentNotSetError from "../errors/EnvironmentNotSetError.ts";
+import EnvironmentNotSetError from "../errors/EnvironmentNotSetError";
 import { Agent as HttpAgent } from "http";
 import { Agent as HttpsAgent } from "https";
 

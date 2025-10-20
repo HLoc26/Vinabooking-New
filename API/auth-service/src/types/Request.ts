@@ -1,6 +1,6 @@
 import { type Request } from "express";
 
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "./Response.ts";
+import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "./Response";
 
 export interface SignUpInfo {
     email: string;
