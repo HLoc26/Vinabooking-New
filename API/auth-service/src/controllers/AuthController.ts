@@ -1,6 +1,7 @@
 import { type NextFunction, type Response, type Request } from "express";
 import {
     ETokenType,
+    RefreshRequest,
     VerifyRequest,
     type ConfirmUserInfo,
     type ConfirmUserRequest,
@@ -10,7 +11,7 @@ import {
 } from "../types/Request";
 import AuthService from "../services/AuthService";
 import ResponseHelper from "../utils/ResponseHelper";
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse, VerifyResponse } from "../types/Response";
+import type { ApiResponse, ConfirmUserResponse, LogInResponse, RefreshResponse, SignUpResponse, VerifyResponse } from "../types/Response";
 import IdentityProviderError from "../errors/IdentityProviderError";
 import UserService from "../services/UserService";
 import { retry } from "../utils/RetryHelper";
@@ -161,6 +162,33 @@ class AuthController {
         };
 
         return ResponseHelper.success<VerifyResponse>(res, { user: userInfo });
+    }
+
+    public async refreshToken(req: RefreshRequest, res: Response<ApiResponse<RefreshResponse>>) {
+        const { refreshToken } = req.body;
+        const awsResponse = await this.authService.refreshToken(refreshToken);
+        const auth = awsResponse.AuthenticationResult;
+        if (
+            !auth || //
+            !auth.AccessToken ||
+            !auth.IdToken ||
+            !auth.RefreshToken ||
+            !auth.ExpiresIn ||
+            !auth.TokenType
+        ) {
+            throw new Error("Invalid response from auth provider");
+        }
+        const issuedAt = Date.now(); // ms
+        const expiresIn = auth.ExpiresIn; // seconds
+        const expiresAt = issuedAt + expiresIn * 1000;
+
+        const response: Omit<LogInResponse, "refreshToken"> = {
+            accessToken: auth.AccessToken,
+            idToken: auth.IdToken,
+            expiresAt: expiresAt,
+            tokenType: auth.TokenType,
+        };
+        return ResponseHelper.success<RefreshResponse>(res, response);
     }
 }
 

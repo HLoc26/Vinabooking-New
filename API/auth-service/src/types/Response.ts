@@ -32,3 +32,5 @@ export interface VerifyResponse {
         username: string;
     };
 }
+
+export type RefreshResponse = Omit<LogInResponse, "refreshToken">;
