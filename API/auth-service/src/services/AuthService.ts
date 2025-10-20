@@ -93,6 +93,25 @@ class AuthService {
             throw error;
         }
     }
+
+    public async refreshToken(refreshToken: string) {
+        const command = new AdminInitiateAuthCommand({
+            UserPoolId: CognitoClient.userPoolId,
+            AuthFlow: "REFRESH_TOKEN_AUTH",
+            ClientId: this.appClientID,
+            AuthParameters: {
+                REFRESH_TOKEN: refreshToken,
+            },
+        });
+
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [REFRESH]", error);
+            throw error;
+        }
+    }
 }
 
 export default AuthService;

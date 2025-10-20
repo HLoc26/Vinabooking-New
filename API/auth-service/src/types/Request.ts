@@ -1,6 +1,6 @@
 import { type Request } from "express";
 
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, SignUpResponse } from "./Response";
+import type { ApiResponse, ConfirmUserResponse, LogInResponse, RefreshResponse, SignUpResponse, VerifyResponse } from "./Response";
 
 export interface SignUpInfo {
     email: string;
@@ -35,4 +35,10 @@ export enum ETokenType {
     ID = "ID",
 }
 
-export type VerifyRequest = Request<unknown, ApiResponse<VerifyRequest>, VerifyInfo, unknown>;
+export type VerifyRequest = Request<unknown, ApiResponse<VerifyResponse>, VerifyInfo, unknown>;
+
+export interface RefreshInfo {
+    refreshToken: string;
+}
+
+export type RefreshRequest = Request<unknown, ApiResponse<RefreshResponse>, RefreshInfo, unknown>;

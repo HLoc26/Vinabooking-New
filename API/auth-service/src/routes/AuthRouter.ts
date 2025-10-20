@@ -44,11 +44,13 @@ class AuthRouter {
             return this.authController.logIn(req, res);
         });
 
+        this.router.post("/refresh", (req: Request, res: Response) => {
+            return this.authController.refreshToken(req, res);
+        });
+
         this.router.post("/verify", (req: Request, res: Response) => {
             return this.authController.verifyToken(req, res);
         });
-
-        // this.router.get("/refresh-token");
 
         // this.router.post("/sign-out");
     }
