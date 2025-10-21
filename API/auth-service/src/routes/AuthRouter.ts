@@ -1,6 +1,7 @@
 import Router, { type Request, type Response, type NextFunction } from "express";
 import AuthController from "../controllers/AuthController";
 import ResponseHelper from "../utils/ResponseHelper";
+import { GetOTPRequest } from "../types/Request";
 
 // Base route: /auth
 class AuthRouter {
@@ -27,6 +28,11 @@ class AuthRouter {
                 return this.authController.cacheUser(req, res);
             }
         );
+
+        this.router.get("/otp", (req: Request, res: Response) => {
+            const request = req as unknown as GetOTPRequest;
+            return this.authController.getNewOtp(request, res);
+        });
 
         this.router.post(
             "/sign-up/confirm",

@@ -34,3 +34,8 @@ export interface VerifyResponse {
 }
 
 export type RefreshResponse = Omit<LogInResponse, "refreshToken">;
+
+export type GetOTPResponse = {
+    CodeDeliveryDestination?: string;
+    CodeDeliveryMedium?: string;
+};
