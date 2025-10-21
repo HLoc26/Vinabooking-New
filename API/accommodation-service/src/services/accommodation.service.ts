@@ -1,16 +1,41 @@
+import axios from "axios";
 import { accommodationRepository } from "../repositories/accommodation.repository";
+import { NotFoundError } from "../errors";
+import config from "../config";
 //import { AccommodationDetailDto } from '../types/accommodation';
 //import { UserClient, RoomClient, ImageClient, ReviewClient } from "../clients";
 
 export class AccommodationService {
     async getAccommodationById(id: string) {
+        // 1. Get accommodation from repository
         const accommodation = await accommodationRepository.findById(id);
 
         if (!accommodation) {
-            throw new Error("Accommodation not found");
+            throw new NotFoundError(`Accommodation with ID ${id} not found`);
         }
 
-        return accommodation;
+        // 2. Call API from Room Service to get room list
+        let rooms = [];
+        const roomServiceUrl = `${config.roomEndpoint}/accommodation/${id}`;
+
+        try {
+            console.log(
+                `[AccommodationService] Fetching rooms from: ${roomServiceUrl}`
+            );
+            const response = await axios.get(roomServiceUrl);
+            rooms = response.data;
+        } catch (error) {
+            console.error(
+                `[AccommodationService] Error fetching rooms for accomm ID ${id}:`,
+                error
+            );
+        }
+
+        // 3. Combine data and return
+        return {
+            ...accommodation,
+            rooms: rooms,
+        };
     }
 
     // Nghiên cứu sau
