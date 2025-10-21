@@ -1,6 +1,6 @@
 import { type Request } from "express";
 
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, RefreshResponse, SignUpResponse, VerifyResponse } from "./Response";
+import type { ApiResponse, ConfirmUserResponse, GetOTPResponse, LogInResponse, RefreshResponse, SignUpResponse, VerifyResponse } from "./Response";
 
 export interface SignUpInfo {
     email: string;
@@ -42,3 +42,5 @@ export interface RefreshInfo {
 }
 
 export type RefreshRequest = Request<unknown, ApiResponse<RefreshResponse>, RefreshInfo, unknown>;
+
+export type GetOTPRequest = Request<unknown, ApiResponse<GetOTPResponse>, unknown, { email: string }>;

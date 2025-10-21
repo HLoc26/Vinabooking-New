@@ -1,6 +1,7 @@
 import { type NextFunction, type Response, type Request } from "express";
 import {
     ETokenType,
+    GetOTPRequest,
     RefreshRequest,
     VerifyRequest,
     type ConfirmUserInfo,
@@ -11,7 +12,15 @@ import {
 } from "../types/Request";
 import AuthService from "../services/AuthService";
 import ResponseHelper from "../utils/ResponseHelper";
-import type { ApiResponse, ConfirmUserResponse, LogInResponse, RefreshResponse, SignUpResponse, VerifyResponse } from "../types/Response";
+import type {
+    ApiResponse,
+    ConfirmUserResponse,
+    GetOTPResponse,
+    LogInResponse,
+    RefreshResponse,
+    SignUpResponse,
+    VerifyResponse,
+} from "../types/Response";
 import IdentityProviderError from "../errors/IdentityProviderError";
 import UserService from "../services/UserService";
 import { retry } from "../utils/RetryHelper";
@@ -49,29 +58,27 @@ class AuthController {
     public async cacheUser(_req: Request, res: Response<ApiResponse<SignUpResponse>>) {
         const { cognitoResponse, email, name, phone } = res.locals;
         // Cache user
-        await retry(async () => {
-            try {
-                const cacheInfo: CacheInfo = {
-                    email,
-                    info: {
-                        cognitoSub: cognitoResponse.UserSub,
-                        name: name,
-                        phone: phone,
-                    },
-                };
-                const success = await this.userService.cacheUser(cacheInfo);
-                if (!success) {
-                    throw new Error("Failed to cache user");
-                }
-            } catch (error) {
-                await this.authService.deleteAccount(email);
-                if (error instanceof UsernameExistsException) {
-                    throw new Error("User name already exists", error);
-                }
-
-                throw new Error(error as string);
+        try {
+            const cacheInfo: CacheInfo = {
+                email,
+                info: {
+                    cognitoSub: cognitoResponse.UserSub,
+                    name: name,
+                    phone: phone,
+                },
+            };
+            const success = await this.userService.cacheUser(cacheInfo);
+            if (!success) {
+                throw new Error("Failed to cache user");
             }
-        });
+        } catch (error) {
+            await this.authService.deleteAccount(email);
+            if (error instanceof UsernameExistsException) {
+                throw new Error("User name already exists", error);
+            }
+
+            throw new Error(error as string);
+        }
 
         // Return the sub to the client. Client will have to send this UserSub along with the OTP to confirm
         return ResponseHelper.success<SignUpResponse>(res, cognitoResponse);
@@ -183,6 +190,19 @@ class AuthController {
             tokenType: auth.TokenType,
         };
         return ResponseHelper.success<RefreshResponse>(res, response);
+    }
+
+    public async getNewOtp(req: GetOTPRequest, res: Response<ApiResponse<GetOTPResponse>>) {
+        const username = req.query.email;
+        console.log(username);
+        const cognitoResponse = await this.authService.getOtpCode(username);
+
+        const response: GetOTPResponse = {
+            CodeDeliveryDestination: cognitoResponse.CodeDeliveryDetails?.Destination,
+            CodeDeliveryMedium: cognitoResponse.CodeDeliveryDetails?.DeliveryMedium,
+        };
+
+        return ResponseHelper.success<GetOTPResponse>(res, response);
     }
 }
 

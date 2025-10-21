@@ -4,6 +4,7 @@ import {
     ConfirmSignUpCommand,
     SignUpCommand,
     AdminInitiateAuthCommand,
+    ResendConfirmationCodeCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
@@ -109,6 +110,20 @@ class AuthService {
             return response;
         } catch (error) {
             console.error("[DEBUG] [REFRESH]", error);
+            throw error;
+        }
+    }
+
+    public async getOtpCode(username: string) {
+        const command = new ResendConfirmationCodeCommand({
+            ClientId: CognitoClient.clientId,
+            Username: username,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [RESEND OTP]", error);
             throw error;
         }
     }
