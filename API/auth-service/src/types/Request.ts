@@ -12,7 +12,7 @@ export interface SignUpInfo {
 export type SignUpRequest = Request<unknown, ApiResponse<SignUpResponse>, SignUpInfo, unknown>;
 
 export interface ConfirmUserInfo {
-    email: string;
+    username: string;
     confirmCode: string;
 }
 
