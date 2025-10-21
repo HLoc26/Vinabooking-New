@@ -86,4 +86,11 @@ export default class S3Service {
     public uploadAccommodationImages = this.createUploader(EEntityType.ACCOMMODATION);
     public uploadRoomImages = this.createUploader(EEntityType.ROOM);
     public uploadReviewImages = this.createUploader(EEntityType.REVIEW);
+
+    public getS3Url(s3Key: string) {
+        const bucket = this.bucket;
+        const region = S3ClientSingleton.region;
+
+        return `https://${bucket}.s3.${region}.amazonaws.com/${s3Key}`;
+    }
 }
