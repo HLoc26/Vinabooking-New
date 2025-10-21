@@ -8,12 +8,12 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/", roomRoutes);
-
 // Health check
 app.get("/health", (_, res) => {
     res.json({ service: "Room Service", success: true });
 });
+
+// Routes
+app.use("/", roomRoutes);
 
 export default app;
