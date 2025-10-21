@@ -34,3 +34,11 @@ export interface ImageProcessingOptions {
 // Image Upload
 export type UploadResultProperties = "id" | "s3Key";
 export type UploadResult = Map<ImageProcessingResultKey, Map<UploadResultProperties, string>>;
+
+// Image retrieval
+export interface ResponseImage {
+    id: string;
+    url: string;
+    variant: EVariantType;
+    imageId: string; // original id
+}

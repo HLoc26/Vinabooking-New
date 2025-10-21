@@ -20,17 +20,15 @@ restApp.listen(PORT, () => console.log(`Image Service running on port ${PORT}`))
 
 import { Server, ServerCredentials } from "@grpc/grpc-js";
 import { ImageServiceService } from "../generated/grpc/image-service/image-service";
-import GrpcImageController from "./controllers/gRPCImageController";
-import { UploadService } from "./services/UploadService";
-import S3Service from "./services/S3Service";
-import ImageRepository from "./repositories/ImageRepository";
+import { GrpcImageControllerFactory } from "./controllers/gRPCImageController";
 const server = new Server();
 
-const grpcImageController = new GrpcImageController(new UploadService(new S3Service(), new ImageRepository()));
+const grpcImageController = GrpcImageControllerFactory.createGrpcController();
 
 server.addService(ImageServiceService, {
     getHealth: grpcImageController.getHealth,
     uploadImages: grpcImageController.uploadImages.bind(grpcImageController),
+    getImages: grpcImageController.getImages.bind(grpcImageController),
 });
 
 server.bindAsync("0.0.0.0:50057", ServerCredentials.createInsecure(), (error, port) => {
