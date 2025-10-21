@@ -9,13 +9,13 @@ const app = express();
 app.use(cors());
 app.use(express.json());
 
-// Routes
-app.use("/", accommodationRoutes);
-
 // Health check
 app.get("/health", (_, res) => {
     res.json({ service: "Accommodation Service", success: true });
 });
+
+// Routes
+app.use("/", accommodationRoutes);
 
 // Global error handling
 //app.use(errorMiddleware);
