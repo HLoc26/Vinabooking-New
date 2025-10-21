@@ -172,11 +172,11 @@ class AuthController {
         const { refreshToken } = req.body;
         const awsResponse = await this.authService.refreshToken(refreshToken);
         const auth = awsResponse.AuthenticationResult;
+        console.log(auth);
         if (
             !auth || //
             !auth.AccessToken ||
             !auth.IdToken ||
-            !auth.RefreshToken ||
             !auth.ExpiresIn ||
             !auth.TokenType
         ) {
