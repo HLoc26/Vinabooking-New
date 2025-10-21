@@ -80,13 +80,14 @@ services:
 
     image-service:
         build:
-            context: "./API/image-service"
-            dockerfile: "Dockerfile"
+            context: "./"
+            dockerfile: "./API/image-service/Dockerfile"
         env_file:
             - ./API/common.env
             - ./API/image-service/docker.env
         ports:
             - "3007:3007"
+            - "50057:50057"
         volumes:
             - ./API/image-service:/app
             - /app/node_modules
