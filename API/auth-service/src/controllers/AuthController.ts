@@ -85,7 +85,7 @@ class AuthController {
     }
 
     public async confirmUser(req: ConfirmUserRequest, res: Response, next: NextFunction) {
-        const { email, confirmCode }: ConfirmUserInfo = req.body;
+        const { username: email, confirmCode }: ConfirmUserInfo = req.body;
 
         const response: boolean = await this.authService.confirmSignUp(email, confirmCode);
 
