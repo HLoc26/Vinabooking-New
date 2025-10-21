@@ -7,10 +7,9 @@ app.use(express.json());
 
 function createProxy(target) {
     return proxy(target, {
-        userResDecorator: async (proxyRes, proxyResData, _userReq, _userRes) => {
+        userResDecorator: async (proxyRes, proxyResData) => {
             const contentType = proxyRes.headers["content-type"] || "";
 
-            // Nếu là HTML hoặc text thuần => lỗi từ downstream
             if (contentType.includes("text/html") || contentType.includes("text/plain")) {
                 const text = proxyResData.toString("utf8");
                 return JSON.stringify({
@@ -21,34 +20,50 @@ function createProxy(target) {
             }
 
             try {
-                const data = JSON.parse(proxyResData.toString("utf8"));
+                const raw = JSON.parse(proxyResData.toString("utf8"));
 
-                // Nếu đã đúng format chuẩn
-                if (data && typeof data === "object" && "success" in data && "data" in data && "error" in data) {
-                    return JSON.stringify(data);
+                // Nếu đã đúng chuẩn ApiResponse
+                if (raw && typeof raw === "object" && "success" in raw && "data" in raw && "error" in raw) {
+                    return JSON.stringify(raw);
                 }
 
-                // Trường hợp JSON raw
+                if (raw && typeof raw === "object" && "success" in raw) {
+                    if (raw.success === true) {
+                        // success: true => mọi field khác là data
+                        const { success, ...rest } = raw;
+                        return JSON.stringify({
+                            success: true,
+                            data: Object.keys(rest).length ? rest : null,
+                            error: null,
+                        });
+                    } else {
+                        // success: false => lấy message nếu có
+                        return JSON.stringify({
+                            success: false,
+                            data: null,
+                            error: raw.message || "Unknown error",
+                        });
+                    }
+                }
+
+                // Trường hợp JSON raw bình thường
                 return JSON.stringify({
                     success: true,
-                    data,
+                    data: raw,
                     error: null,
                 });
-            } catch (err) {
-                // Không parse được JSON → xem như lỗi
+            } catch {
                 return JSON.stringify({
                     success: false,
                     data: null,
-                    error: `Invalid or non-JSON response from service ${err}`,
+                    error: "Invalid or non-JSON response from service",
                 });
             }
         },
     });
 }
 
-// Helper: trích lỗi từ HTML
 function extractErrorMessage(html) {
-    // Express mặc định trả kiểu: "<!DOCTYPE html>...Cannot GET /xxx"
     const match = html.match(/Cannot\s+\w+\s+\/[^\s<]+/i);
     if (match) return match[0];
     if (html.includes("Error")) return "Internal Server Error";
