@@ -5,12 +5,13 @@ datasource db {
 
 generator client {
   provider = "prisma-client-js"
-    output   = "../generated/prisma"
+  output   = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
 }
 
-// ============= ENUMS =============
+  // ============= ENUMS =============
 
-enum EAccommodationType {
+  enum EAccommodationType {
   HOTEL
   APARTMENT
   VILLA
@@ -40,19 +41,19 @@ enum ERentalType {
 }
 
 enum EFacilityType {
-  GENERAL           // Free WiFi, Heating, Elevator, Non-smoking property
-  FOOD_AND_DRINK    // Breakfast included, Restaurant on-site, Bar, Vending machine (drinks)
+  GENERAL // Free WiFi, Heating, Elevator, Non-smoking property
+  FOOD_AND_DRINK // Breakfast included, Restaurant on-site, Bar, Vending machine (drinks)
   PUBLIC_FACILITIES // Swimming pool, Shared lounge/TV area, Luggage storage, Picnic area
-  SERVICES          // 24-hour front desk, Laundry service, Concierge, Shuttle service
-  SAFETY            // Security alarm, First aid kit, CCTV in common areas, Key card access
-  ACCESSIBILITY     // Wheelchair accessible, Braille signage, Elevator for upper floors, Emergency cord in common areas
-  ENTERTAINMENT     // Board games, Library, Game room, Movie nights
-  OUTDOOR           // Garden, Terrace, Outdoor furniture, BBQ facilities, Beachfront access
-  TRANSPORTATION    // Free parking, Airport shuttle, Bicycle rental, Electric vehicle charging station, Valet parking
-  WELLNESS          // Spa, Fitness center, Sauna, Hot tub
+  SERVICES // 24-hour front desk, Laundry service, Concierge, Shuttle service
+  SAFETY // Security alarm, First aid kit, CCTV in common areas, Key card access
+  ACCESSIBILITY // Wheelchair accessible, Braille signage, Elevator for upper floors, Emergency cord in common areas
+  ENTERTAINMENT // Board games, Library, Game room, Movie nights
+  OUTDOOR // Garden, Terrace, Outdoor furniture, BBQ facilities, Beachfront access
+  TRANSPORTATION // Free parking, Airport shuttle, Bicycle rental, Electric vehicle charging station, Valet parking
+  WELLNESS // Spa, Fitness center, Sauna, Hot tub
   SPECIAL_AMENITIES // Children's playground, Babysitting service, Pet-friendly (pets allowed), Kids' club
-  SUSTAINABILITY    // Solar panels, Recycling bins in common areas, Energy-efficient lighting, Water conservation measures
-  OTHER             // Gift shop, Chapel/shrine, Ticket service, ATM on site
+  SUSTAINABILITY // Solar panels, Recycling bins in common areas, Energy-efficient lighting, Water conservation measures
+  OTHER // Gift shop, Chapel/shrine, Ticket service, ATM on site
 }
 
 // ============= MODELS =============
@@ -62,7 +63,7 @@ model Accommodation {
   name        String             @db.VarChar(255)
   description String?            @db.Text
   type        EAccommodationType
-  rentalType  ERentalType?        @default(ENTIRE_PLACE)
+  rentalType  ERentalType?       @default(ENTIRE_PLACE)
   isActive    Boolean            @default(true)
   ownerId     String             @db.VarChar(36) // Reference to user-service
 
@@ -81,14 +82,14 @@ model Accommodation {
 }
 
 model Address {
-  id         String  @id @default(uuid())
-  street     String  @db.VarChar(255)
-  ward       String? @db.VarChar(100) // Phường/Xã
-  district   String? @db.VarChar(100) // Quận/Huyện (có thể bỏ vì đã sáp nhập)
-  city       String  @db.VarChar(100) // Thành phố/Tỉnh
-  country    String  @db.VarChar(100)
+  id          String  @id @default(uuid())
+  street      String  @db.VarChar(255)
+  ward        String? @db.VarChar(100) // Phường/Xã
+  district    String? @db.VarChar(100) // Quận/Huyện (có thể bỏ vì đã sáp nhập)
+  city        String  @db.VarChar(100) // Thành phố/Tỉnh
+  country     String  @db.VarChar(100)
   countryCode String  @db.Char(2) // ISO 3166-1: "VN"
-  postalCode String? @db.VarChar(20)
+  postalCode  String? @db.VarChar(20)
 
   // Geolocation (High precision for GPS)
   latitude  Decimal? @db.Decimal(10, 8)
@@ -127,10 +128,10 @@ model Facility {
 }
 
 model FacilityConfig {
-  id        String        @id @default(uuid())
-  fee       Decimal?      @db.Decimal(10, 2) @default(0) // Fee for using the facility, if applicable
-  note      String?       @db.Text
-  isAvailable Boolean     @default(true)
+  id          String   @id @default(uuid())
+  fee         Decimal? @default(0) @db.Decimal(10, 2) // Fee for using the facility, if applicable
+  note        String?  @db.Text
+  isAvailable Boolean  @default(true)
 
   createdAt DateTime @default(now())
   updatedAt DateTime @updatedAt
