@@ -1,6 +1,7 @@
 import Router, { type Request, type Response, type NextFunction } from "express";
-import AuthController from "../controllers/AuthController.ts";
-import ResponseHelper from "../utils/ResponseHelper.ts";
+import AuthController from "../controllers/AuthController";
+import ResponseHelper from "../utils/ResponseHelper";
+import { GetOTPRequest } from "../types/Request";
 
 // Base route: /auth
 class AuthRouter {
@@ -28,6 +29,11 @@ class AuthRouter {
             }
         );
 
+        this.router.get("/otp", (req: Request, res: Response) => {
+            const request = req as unknown as GetOTPRequest;
+            return this.authController.getNewOtp(request, res);
+        });
+
         this.router.post(
             "/sign-up/confirm",
             // First confirm the OTP code
@@ -40,9 +46,17 @@ class AuthRouter {
             }
         );
 
-        // this.router.post("/sign-in");
+        this.router.post("/log-in", (req: Request, res: Response) => {
+            return this.authController.logIn(req, res);
+        });
 
-        // this.router.get("/refresh-token");
+        this.router.post("/refresh", (req: Request, res: Response) => {
+            return this.authController.refreshToken(req, res);
+        });
+
+        this.router.post("/verify", (req: Request, res: Response) => {
+            return this.authController.verifyToken(req, res);
+        });
 
         // this.router.post("/sign-out");
     }

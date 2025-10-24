@@ -3,12 +3,14 @@ import {
     CognitoIdentityProviderClient,
     ConfirmSignUpCommand,
     SignUpCommand,
+    AdminInitiateAuthCommand,
+    ResendConfirmationCodeCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
-import CognitoClient from "../clients/CognitoIdentityProviderClient.ts";
-import EnvironmentNotSetError from "../errors/EnvironmentNotSetError.ts";
-import type { SignUpResponse } from "../types/Response.ts";
+import CognitoClient from "../clients/CognitoIdentityProviderClient";
+import EnvironmentNotSetError from "../errors/EnvironmentNotSetError";
+import type { SignUpResponse } from "../types/Response";
 
 class AuthService {
     private appClientID: string;
@@ -70,6 +72,58 @@ class AuthService {
             return response;
         } catch (error) {
             console.error("[DEBUG] [DELETE] [ERROR]", error);
+            throw error;
+        }
+    }
+
+    public async logIn(email: string, password: string) {
+        const command = new AdminInitiateAuthCommand({
+            UserPoolId: CognitoClient.userPoolId,
+            AuthFlow: "ADMIN_USER_PASSWORD_AUTH",
+            ClientId: this.appClientID,
+            AuthParameters: {
+                USERNAME: email,
+                PASSWORD: password,
+            },
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [LOG IN]", error);
+            throw error;
+        }
+    }
+
+    public async refreshToken(refreshToken: string) {
+        const command = new AdminInitiateAuthCommand({
+            UserPoolId: CognitoClient.userPoolId,
+            AuthFlow: "REFRESH_TOKEN_AUTH",
+            ClientId: this.appClientID,
+            AuthParameters: {
+                REFRESH_TOKEN: refreshToken,
+            },
+        });
+
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [REFRESH]", error);
+            throw error;
+        }
+    }
+
+    public async getOtpCode(username: string) {
+        const command = new ResendConfirmationCodeCommand({
+            ClientId: CognitoClient.clientId,
+            Username: username,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [RESEND OTP]", error);
             throw error;
         }
     }

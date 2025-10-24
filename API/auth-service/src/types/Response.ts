@@ -1,4 +1,4 @@
-// import type AuthService from "../services/AuthService.ts";
+// import type AuthService from "../services/AuthService";
 
 export interface ApiResponse<T> {
     success: boolean;
@@ -17,3 +17,25 @@ export interface SignUpResponse {
 export interface ConfirmUserResponse {
     success: boolean;
 }
+
+export interface LogInResponse {
+    accessToken: string;
+    idToken: string;
+    refreshToken: string;
+    expiresIn: number;
+    tokenType: string | "Bearer";
+}
+
+export interface VerifyResponse {
+    user: {
+        id: string;
+        username: string;
+    };
+}
+
+export type RefreshResponse = Omit<LogInResponse, "refreshToken">;
+
+export type GetOTPResponse = {
+    CodeDeliveryDestination?: string;
+    CodeDeliveryMedium?: string;
+};
