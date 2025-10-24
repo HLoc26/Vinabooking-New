@@ -2,8 +2,9 @@
 // Booking Service Prisma schema
 
 generator client {
-  provider = "prisma-client-js"
-  output   = "../generated/prisma" // client output folder, specific for booking service
+  provider      = "prisma-client-js"
+  output        = "../generated/prisma" // client output folder, specific for booking service
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"] // for compatibility with alpine-based docker images
 }
 
 datasource db {
