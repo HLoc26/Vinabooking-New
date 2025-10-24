@@ -5,7 +5,7 @@ export default class ResponseHelper {
     static success<T>(res: Response<ApiResponse<T>>, data: T, statusCode = 200) {
         return res.status(statusCode).json({
             success: true,
-            ...data,
+            data: data,
         });
     }
 
