@@ -1,6 +1,6 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
-import type { CacheInfo, CacheUserResponse } from "../types/Axios.ts";
-import { UserAxiosClient } from "../clients/UserServiceClient.ts";
+import type { CacheInfo, CacheUserResponse } from "../types/Axios";
+import { UserAxiosClient } from "../clients/UserServiceClient";
 
 class UserService {
     private axiosInstance: AxiosInstance = UserAxiosClient.getInstance();
