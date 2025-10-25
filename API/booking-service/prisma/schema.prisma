@@ -22,7 +22,8 @@ model Booking {
 
   // Relations
   details   BookingDetail[]
-  userId    String // who made the booking (traveler)
+  userId    String // who made the booking (traveler)   
+  phone     String? // optional for the booking
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 }
