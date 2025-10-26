@@ -5,19 +5,19 @@ import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
-// Base middlewares
-app.use(cors());
-app.use(express.json());
+// === Base middlewares ===
+app.use(cors()); // Cross-origin
+app.use(express.json()); // Parse JSON bodies
 
-// Health check
+// === Health check ===
 app.get("/health", (_, res) => {
     res.json({ service: "Room Service", success: true });
 });
 
-// Routes
+// === API Routes ===
 app.use("/", roomRoutes);
 
-// Error handler
+// === Error handler ===
 app.use(errorMiddleware);
 
 export default app;
