@@ -1,5 +1,6 @@
 import { Request, Response, NextFunction } from "express";
 import { roomService } from "../services/room.service";
+import { sendSuccess, sendCreated, sendNoContent } from "../utils";
 
 export class RoomController {
     // --- Quản lý Room ---
@@ -12,7 +13,7 @@ export class RoomController {
         try {
             const roomId = req.params.id;
             const room = await roomService.getRoomById(roomId);
-            res.json(room);
+            sendSuccess(res, room);
         } catch (error) {
             next(error);
         }
@@ -32,7 +33,7 @@ export class RoomController {
             const accommodationId = req.params.accommodationId;
             const rooms =
                 await roomService.getRoomsByAccommodationId(accommodationId);
-            res.json(rooms);
+            sendSuccess(res, rooms);
         } catch (error) {
             next(error);
         }
@@ -45,7 +46,7 @@ export class RoomController {
     async createRoom(req: Request, res: Response, next: NextFunction) {
         try {
             const newRoom = await roomService.createRoom(req.body);
-            res.status(201).json(newRoom); // 201 Created
+            sendCreated(res, newRoom);
         } catch (error) {
             next(error);
         }
@@ -60,7 +61,7 @@ export class RoomController {
             const roomId = req.params.id;
             const data = req.body;
             const updatedRoom = await roomService.updateRoom(roomId, data);
-            res.json(updatedRoom);
+            sendSuccess(res, updatedRoom);
         } catch (error) {
             next(error);
         }
@@ -74,7 +75,7 @@ export class RoomController {
         try {
             const roomId = req.params.id;
             await roomService.deleteRoom(roomId);
-            res.status(204).send(); // 204 No Content
+            sendNoContent(res);
         } catch (error) {
             next(error);
         }
@@ -91,7 +92,7 @@ export class RoomController {
             const roomId = req.params.roomId;
             const bedData = req.body;
             const newBed = await roomService.addBedToRoom(roomId, bedData);
-            res.status(201).json(newBed);
+            sendCreated(res, newBed);
         } catch (error) {
             next(error);
         }
@@ -106,7 +107,7 @@ export class RoomController {
             const bedId = req.params.bedId;
             const bedData = req.body;
             const updatedBed = await roomService.updateBed(bedId, bedData);
-            res.json(updatedBed);
+            sendSuccess(res, updatedBed);
         } catch (error) {
             next(error);
         }
@@ -120,7 +121,7 @@ export class RoomController {
         try {
             const bedId = req.params.bedId;
             await roomService.removeBed(bedId);
-            res.status(204).send();
+            sendNoContent(res);
         } catch (error) {
             next(error);
         }
@@ -148,7 +149,7 @@ export class RoomController {
                     note,
                 }
             );
-            res.status(201).json(newConfig);
+            sendCreated(res, newConfig);
         } catch (error) {
             next(error);
         }
@@ -166,7 +167,7 @@ export class RoomController {
         try {
             const { roomId, amenityId } = req.params; // Lấy cả 2 params từ route
             await roomService.removeAmenityFromRoom(roomId, amenityId);
-            res.status(204).send();
+            sendNoContent(res);
         } catch (error) {
             next(error);
         }
