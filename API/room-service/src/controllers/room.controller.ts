@@ -1,6 +1,7 @@
 import { Request, Response, NextFunction } from "express";
 import { roomService } from "../services/room.service";
 import { sendSuccess, sendCreated, sendNoContent } from "../utils";
+import { BadRequestError } from "../errors";
 
 export class RoomController {
     // --- Quản lý Room ---
@@ -139,7 +140,7 @@ export class RoomController {
             const { amenityId, note } = req.body; // Tách amenityId và note từ body
 
             if (!amenityId) {
-                throw new Error("amenityId is required in the body");
+                throw new BadRequestError("amenityId is required in the body");
             }
 
             const newConfig = await roomService.addAmenityToRoom(
