@@ -1,8 +1,10 @@
-import { Router, type Request, type Response } from "express";
+import { NextFunction, Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import BookingController from "../controllers/BookingController";
 import BookingRepository from "../repositories/BookingRepository";
 import BookingService from "../services/BookingService";
+import { AuthMiddleware } from "../middleware/AuthMiddleware";
+import { AuthenticatedRequest } from "../types/Request";
 
 class BookingRouterFactory {
     static createBookingRouter() {
@@ -30,8 +32,10 @@ class BookingRouter {
         this.router.get("/", (req: Request, res: Response) => {
             return this.bookingController.getBookings(req, res);
         });
-        this.router.post("/", (req: Request, res: Response) => {
-            return this.bookingController.createBooking(req, res);
+        this.router.post("/", (req,res: Response, next: NextFunction)=>{
+            return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next)
+        },(req, res: Response) => { 
+            return this.bookingController.createBooking(req as AuthenticatedRequest , res);
         });
         this.router.post("/draft", (req: Request, res: Response) => {
             return this.bookingController.createDraftBooking(req, res);

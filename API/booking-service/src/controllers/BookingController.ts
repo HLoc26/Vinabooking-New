@@ -2,6 +2,7 @@ import type { Request, Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import type { ApiResponse } from "../types/Response";
 import BookingService from "../services/BookingService";
+import { AuthenticatedRequest } from "../types/Request";
 
 export default class BookingController {
     constructor(private readonly bookingService: BookingService) {}
@@ -58,15 +59,25 @@ export default class BookingController {
             return ResponseHelper.error(res, err.message);
         }
     }
-    public async createBooking(req: Request, res: Response<ApiResponse>) {
-        try {
-            const bookingData = {...req.body, status: "PENDING" };
-            const newBooking = await this.bookingService.createBooking(bookingData);
-            return ResponseHelper.success(res, { booking: newBooking }, 201);
-        } catch (err: any) {
-            return ResponseHelper.error(res, err.message);
+public async createBooking(req: AuthenticatedRequest, res: Response<ApiResponse>) {
+    try {
+        const userId = req.user?.id; // comes from middleware
+        if (!userId) {
+            return ResponseHelper.error(res, "User not authenticated");
         }
+
+        const bookingData = {
+            ...req.body,
+            userId, // attach authenticated user
+            status: "PENDING",
+        };
+
+        const newBooking = await this.bookingService.createBooking(bookingData);
+        return ResponseHelper.success(res, { booking: newBooking }, 201);
+    } catch (err: any) {
+        return ResponseHelper.error(res, err.message);
     }
+}
     public async createDraftBooking(req: Request, res: Response<ApiResponse>) {
         try {
             const bookingData = { ...req.body, status: "DRAFT" };
