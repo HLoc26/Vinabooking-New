@@ -135,7 +135,6 @@ class AuthController {
         const response: LogInResponse = {
             accessToken: auth.AccessToken,
             idToken: auth.IdToken,
-            refreshToken: auth.RefreshToken,
             expiresIn: auth.ExpiresIn,
             tokenType: auth.TokenType,
             user: {
@@ -144,6 +143,12 @@ class AuthController {
                 email: username, // user will use their email to login -> email = username
             },
         };
+        res.cookie("refresh_token", auth.RefreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
 
         return ResponseHelper.success<LogInResponse>(res, response);
     }
