@@ -4,7 +4,7 @@ import NotFoundError from "../errors/NotFoundError";
 import { AxiosError } from "axios";
 
 class UserService {
-    constructor(private axiosInstance: AxiosInstance) {}
+    constructor(private axiosInstance: AxiosInstance) { }
 
     public async cacheUser(cacheInfo: CacheInfo) {
         const cacheResponse = await this.axiosInstance.post<
