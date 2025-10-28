@@ -6,13 +6,13 @@ export type FindUserRequest = Request<unknown, ApiResponse<UserResponse>, unknow
 export type FindUserByIdRequest = Request<{ id: string }, ApiResponse<UserResponse>, unknown, { withFavourites?: string }>;
 
 export interface CacheInfo {
-    email: string; // key
-    info: {
-        cognitoSub: string;
-        name: string;
-        phone: string | null;
-        userType: "TRAVELLER" | "ACCOMMODATION_OWNER";
-    };
+        email: string; // key
+        info: {
+                cognitoSub: string;
+                name: string;
+                phone: string | null;
+                userType: "TRAVELLER" | "ACCOMMODATION_OWNER";
+        };
 }
 
 export type CacheUserRequest = Request<unknown, ApiResponse<CacheUserResponse>, CacheInfo, unknown>;
