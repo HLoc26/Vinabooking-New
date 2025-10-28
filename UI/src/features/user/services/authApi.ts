@@ -28,6 +28,20 @@ export const authApi = {
 		username: string; //
 		password: string;
 	}) => api.post<ApiResponse<LogInResponse>>("/auth/log-in", payload).then((r) => r.data),
+
+	signOut: (accessToken: string) =>
+		api
+			.post<ApiResponse<{ success: boolean }>>(
+				"/auth/sign-out",
+				{},
+				{
+					withCredentials: true,
+					headers: {
+						Authorization: `Bearer ${accessToken}`,
+					},
+				}
+			)
+			.then((r) => r.data),
 };
 
 export default authApi;
