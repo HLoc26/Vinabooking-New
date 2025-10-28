@@ -36,7 +36,6 @@ class UserService {
         try {
             const userResponse = await this.axiosInstance.get(`/${id}`);
             if (!userResponse.data.data) throw new NotFoundError("User not found" + userResponse.data.error);
-            console.log(userResponse);
             return userResponse.data.data;
         } catch (error) {
             throw new Error(`Error when getting user id ${id}: ${error}`);
