@@ -9,6 +9,7 @@ export interface CacheInfo {
         cognitoSub: string;
         name: string;
         phone: string;
+        userType: "TRAVELLER" | "ACCOMMODATION_OWNER";
     };
 }
 
