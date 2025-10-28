@@ -1,6 +1,6 @@
 import type { User } from "../../generated/prisma/index.js";
 import PrismaSingleton from "../clients/PrismaSingleton";
-import { type UserWithFavourites, type SaveUserInfo, EUserRole } from "../types/User";
+import { type UserWithFavourites, type SaveUserInfo } from "../types/User";
 import { userRoleMapper } from "../utils/UserRoleMapper.js";
 import FavouriteRepository from "./FavouriteRepository";
 
