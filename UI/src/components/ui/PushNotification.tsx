@@ -4,8 +4,8 @@ import { motion, AnimatePresence } from "framer-motion";
 import { type Notification } from "../../hooks/usePushNotification";
 
 interface PushNotificationProps {
-    notifications: Notification[];
-    onClose: (id: string) => void;
+	notifications: Notification[];
+	onClose: (id: string) => void;
 }
 
 export const PushNotification: React.FC<PushNotificationProps> = ({ notifications, onClose }) => {
