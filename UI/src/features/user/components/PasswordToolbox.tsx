@@ -5,9 +5,9 @@ import CloseIcon from "@mui/icons-material/Close";
 import type { PasswordChecklist } from "../utils/validatePassword";
 
 interface PasswordToolboxProps {
-    anchorEl: HTMLElement | null;
-    open: boolean;
-    checklist: PasswordChecklist;
+	anchorEl: HTMLElement | null;
+	open: boolean;
+	checklist: PasswordChecklist;
 }
 
 const PasswordToolbox: React.FC<PasswordToolboxProps> = ({ anchorEl, open, checklist }) => {
@@ -41,8 +41,7 @@ const PasswordToolbox: React.FC<PasswordToolboxProps> = ({ anchorEl, open, check
 								height: 0,
 								borderTop: "8px solid transparent",
 								borderBottom: "8px solid transparent",
-								borderRight: (theme) =>
-									`8px solid ${theme.palette.background.paper}`,
+								borderRight: (theme) => `8px solid ${theme.palette.background.paper}`,
 								filter: "drop-shadow(-2px 0 2px rgba(0,0,0,0.2))",
 								zIndex: 1,
 							}}
@@ -60,17 +59,12 @@ const PasswordToolbox: React.FC<PasswordToolboxProps> = ({ anchorEl, open, check
 							}}
 						>
 							<Typography variant="subtitle2" fontWeight={600} mb={1}>
-                                Password requirements
+								Password requirements
 							</Typography>
 							<Stack spacing={0.5}>
 								{items.map((item) => (
-									<Box
-										key={item.label}
-										display="flex"
-										alignItems="center"
-										gap={1}
-									>
-										<Typography
+									<Box key={item.label} display="flex" alignItems="center" gap={1}>
+										<Typography //
 											variant="body2"
 											color={item.valid ? "success.main" : "text.secondary"}
 											display="flex"

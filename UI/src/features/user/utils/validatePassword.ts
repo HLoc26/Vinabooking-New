@@ -1,9 +1,9 @@
 export interface PasswordChecklist {
-    length: boolean;
-    upper: boolean;
-    lower: boolean;
-    number: boolean;
-    special: boolean;
+	length: boolean;
+	upper: boolean;
+	lower: boolean;
+	number: boolean;
+	special: boolean;
 }
 
 export function getPasswordChecklist(password: string): PasswordChecklist {

@@ -7,44 +7,41 @@ export const useRegister = () => {
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState<string | null>(null);
 
-	const register = React.useCallback(
-		async (name: string, email: string, password: string, phone: string, userType: string) => {
-			setLoading(true);
-			setError(null);
-			try {
-				const response: ApiResponse<SignUpResponse> = await authApi.register({
-					name,
-					email,
-					password,
-					phone,
-					userType,
-				});
+	const register = React.useCallback(async (name: string, email: string, password: string, phone: string, userType: string) => {
+		setLoading(true);
+		setError(null);
+		try {
+			const response: ApiResponse<SignUpResponse> = await authApi.register({
+				name,
+				email,
+				password,
+				phone,
+				userType,
+			});
 
-				if (!response.data) {
-					console.log(response.error);
-					throw new Error(response.error as string);
-				}
-				const data = response.data;
-
-				setLoading(false);
-				return {
-					destination: data.CodeDeliveryDestination || "your email",
-					medium: data.CodeDeliveryMedium || "EMAIL",
-				};
-			} catch (e: unknown) {
-				setLoading(false);
-				if (e instanceof AxiosError) {
-					setError(e.response?.data.error);
-					throw new Error(e.response?.data.error);
-				} else {
-					const err = e as Error;
-					setError(err.message || "Error while register");
-					throw new Error(err.message || "Error while register");
-				}
+			if (!response.data) {
+				console.log(response.error);
+				throw new Error(response.error as string);
 			}
-		},
-		[],
-	);
+			const data = response.data;
+
+			setLoading(false);
+			return {
+				destination: data.CodeDeliveryDestination || "your email",
+				medium: data.CodeDeliveryMedium || "EMAIL",
+			};
+		} catch (e: unknown) {
+			setLoading(false);
+			if (e instanceof AxiosError) {
+				setError(e.response?.data.error);
+				throw new Error(e.response?.data.error);
+			} else {
+				const err = e as Error;
+				setError(err.message || "Error while register");
+				throw new Error(err.message || "Error while register");
+			}
+		}
+	}, []);
 
 	const resendOtp = React.useCallback(async (email: string) => {
 		try {
