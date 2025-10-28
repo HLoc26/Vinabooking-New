@@ -218,6 +218,25 @@ class AuthController {
 
         return ResponseHelper.success<GetOTPResponse>(res, response);
     }
+
+    public async signOut(req: Request, res: Response) {
+        const authHeader = req.headers.authorization;
+        console.log(req.headers);
+        if (!authHeader?.startsWith("Bearer ")) {
+            throw new Error("Access token missing");
+        }
+
+        const accessToken = authHeader.split(" ")[1];
+
+        const response = await this.authService.signOut(accessToken);
+        const statusCode = response.$metadata?.httpStatusCode;
+
+        if (statusCode !== 200) {
+            throw new Error(`Error while signing out with code ${statusCode}`);
+        }
+
+        return ResponseHelper.success(res, { success: true });
+    }
 }
 
 export default AuthController;
