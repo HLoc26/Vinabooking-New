@@ -7,8 +7,10 @@ import { useNavigate } from "react-router-dom";
 
 export const HomePage = () => {
 	const navigate = useNavigate();
-	const { logout } = useAuth();
+	const { logout, getCurrentUser } = useAuth();
 	const { pushNotification } = usePushNotificationContext();
+
+	const user = getCurrentUser();
 
 	const handleLogout = async () => {
 		try {
@@ -30,7 +32,7 @@ export const HomePage = () => {
 			<Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
 				<Paper elevation={4} sx={{ p: 4, borderRadius: 4, backgroundColor: "background.paper" }}>
 					<Typography variant="h3" gutterBottom sx={{ fontWeight: 700, color: "primary.main" }}>
-						🚀 Welcome Gúy
+						🚀 Welcome {user?.name ?? "Guest"}
 					</Typography>
 					<Typography variant="h5" sx={{ mt: 5, mb: 2, fontWeight: 500 }}>
 						<Palette sx={{ mb: -0.5, mr: 1, color: "secondary.main" }} />
@@ -55,6 +57,30 @@ export const HomePage = () => {
 						<Grid size={{ xs: 6, sm: 3 }}>
 							<Button fullWidth variant="outlined" color="primary">
 								Text Color
+							</Button>
+						</Grid>
+						<Grid size={{ xs: 6, sm: 3 }}>
+							<Button
+								fullWidth
+								variant="contained"
+								color="success"
+								onClick={() => {
+									navigate("/login");
+								}}
+							>
+								Log In
+							</Button>
+						</Grid>
+						<Grid size={{ xs: 6, sm: 3 }}>
+							<Button
+								fullWidth
+								variant="contained"
+								color="info"
+								onClick={() => {
+									navigate("/register");
+								}}
+							>
+								Register
 							</Button>
 						</Grid>
 						<Grid size={{ xs: 6, sm: 3 }}>
