@@ -3,8 +3,7 @@ import { Palette } from '@mui/icons-material';
 
 export const HomePage = () => (
     <Box sx={{ flexGrow: 1 }}>
-        <AppBar position="static" color="primary" elevation={1}>
-        </AppBar>
+        <AppBar position="static" color="primary" elevation={1}></AppBar>
         <Container maxWidth="md" sx={{ mt: 5, mb: 5 }}>
             <Paper
                 elevation={4}
