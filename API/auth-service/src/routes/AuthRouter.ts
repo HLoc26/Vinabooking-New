@@ -58,7 +58,7 @@ class AuthRouter {
             return this.authController.verifyToken(req, res);
         });
 
-        // this.router.post("/sign-out");
+        this.router.post("/sign-out", this.authController.signOut.bind(this.authController));
     }
 }
 
