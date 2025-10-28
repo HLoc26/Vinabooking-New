@@ -128,12 +128,21 @@ class AuthController {
             throw new Error("Invalid response from auth provider");
         }
 
+        const userFromCognito = await JwtService.verifyIdToken(auth.IdToken);
+        const userId = userFromCognito.sub;
+        const userInDb = await this.userService.getUser(userId);
+
         const response: LogInResponse = {
             accessToken: auth.AccessToken,
             idToken: auth.IdToken,
             refreshToken: auth.RefreshToken,
             expiresIn: auth.ExpiresIn,
             tokenType: auth.TokenType,
+            user: {
+                id: userId,
+                name: userInDb.name,
+                email: username, // user will use their email to login -> email = username
+            },
         };
 
         return ResponseHelper.success<LogInResponse>(res, response);
@@ -151,6 +160,7 @@ class AuthController {
                 break;
             case ETokenType.ID:
                 payload = await JwtService.verifyIdToken(token);
+                console.log(payload.identities);
                 break;
             default:
                 throw new BadRequestError(`Invalid token type: ${tokenType}`);

@@ -1,6 +1,7 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
 import type { CacheInfo, CacheUserResponse } from "../types/Axios";
 import { UserAxiosClient } from "../clients/UserServiceClient";
+import NotFoundError from "../errors/NotFoundError";
 
 class UserService {
     private axiosInstance: AxiosInstance = UserAxiosClient.getInstance();
@@ -28,6 +29,17 @@ class UserService {
             return saveResponse.data;
         } catch (error) {
             throw new Error(`Error when saving user to database: ${error}`);
+        }
+    }
+
+    public async getUser(id: string) {
+        try {
+            const userResponse = await this.axiosInstance.get(`/${id}`);
+            if (!userResponse.data.data) throw new NotFoundError("User not found" + userResponse.data.error);
+            console.log(userResponse);
+            return userResponse.data.data;
+        } catch (error) {
+            throw new Error(`Error when getting user id ${id}: ${error}`);
         }
     }
 }
