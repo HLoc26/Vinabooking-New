@@ -7,7 +7,7 @@ import FavouriteRepository from "./FavouriteRepository";
 class UserRepository {
     private prismaClient = PrismaSingleton.getInstance();
 
-    constructor() {}
+    constructor() { }
 
     public async getUserByEmail(email: string, withFavourites: boolean = false): Promise<UserWithFavourites | User | null> {
         const queryOptions = {
