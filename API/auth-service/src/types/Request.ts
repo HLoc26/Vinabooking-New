@@ -7,6 +7,7 @@ export interface SignUpInfo {
     password: string;
     name: string;
     phone: string;
+    userType: "TRAVELLER" | "ACCOMMODATION_OWNER";
 }
 
 export type SignUpRequest = Request<unknown, ApiResponse<SignUpResponse>, SignUpInfo, unknown>;
