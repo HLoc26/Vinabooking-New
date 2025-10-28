@@ -5,9 +5,7 @@ import { MuiTelInput } from "mui-tel-input";
 import { useNavigate } from "react-router-dom";
 
 import useRegister from "../hooks/useRegister";
-
-import { usePushNotification } from "../../../hooks/usePushNotification";
-import { PushNotification } from "../../../components/ui/PushNotification";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 import UserSwitcher from "./UserSwitcher";
 import PasswordToolbox from "./PasswordToolbox";
@@ -31,7 +29,7 @@ const RegisterForm: React.FC = () => {
 
 	const { register, loading } = useRegister();
 	const navigate = useNavigate();
-	const { notifications, pushNotification, removeNotification } = usePushNotification();
+	const { pushNotification } = usePushNotificationContext();
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		const { name, value } = e.target;
@@ -164,8 +162,6 @@ const RegisterForm: React.FC = () => {
 					Login
 				</Link>
 			</Typography>
-
-			<PushNotification notifications={notifications} onClose={removeNotification} />
 		</Box>
 	);
 };
