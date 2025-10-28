@@ -1,8 +1,8 @@
 import { useCallback, useState } from "react";
 import { authApi } from "../services/authApi";
 import type { ApiResponse, LogInResponse } from "../types/Response";
-import { usePushNotification } from "../../../hooks/usePushNotification";
 import { AxiosError } from "axios";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const USER_KEY = import.meta.env.VITE_USER_KEY;
@@ -10,7 +10,7 @@ const USER_KEY = import.meta.env.VITE_USER_KEY;
 export const useAuth = () => {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const { pushNotification } = usePushNotification();
+	const { pushNotification } = usePushNotificationContext();
 
 	const login = useCallback(async (email: string, password: string) => {
 		setLoading(true);

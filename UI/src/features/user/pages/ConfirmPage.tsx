@@ -4,13 +4,12 @@ import { useLocation, useNavigate } from "react-router-dom";
 import type { OtpLocationState } from "../types/LocationState";
 import useRegister from "../hooks/useRegister";
 import OtpInput from "../components/OtpInput";
-import { PushNotification } from "../../../components/ui/PushNotification";
-import { usePushNotification } from "../../../hooks/usePushNotification";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 const ConfirmOTPPage: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const { notifications, pushNotification, removeNotification } = usePushNotification();
+	const { pushNotification } = usePushNotificationContext();
 	const state = location.state as OtpLocationState | undefined;
 
 	const [otp, setOtp] = useState("");
@@ -39,7 +38,10 @@ const ConfirmOTPPage: React.FC = () => {
 
 		try {
 			const success = await confirmOtp(state.email, otp);
-			if (success) navigate("/login");
+			if (success) {
+				pushNotification("Success! Please wait for the redirect.");
+				navigate("/login");
+			}
 		} catch (e) {
 			const error = e as Error;
 			pushNotification(error.message, "error");
@@ -106,7 +108,6 @@ const ConfirmOTPPage: React.FC = () => {
 					</Link>
 				</Typography>
 			</Box>
-			<PushNotification notifications={notifications} onClose={removeNotification} />
 		</Box>
 	);
 };
