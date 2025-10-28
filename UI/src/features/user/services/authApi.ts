@@ -2,9 +2,9 @@ import axios from "axios";
 import {
 	type GetOTPResponse,
 	type ApiResponse,
-	type AuthResponse,
 	type SignUpResponse,
 	type ConfirmUserResponse,
+	type LogInResponse,
 } from "../types/Response";
 
 const api = axios.create({
@@ -29,8 +29,8 @@ export const authApi = {
 			.post<ApiResponse<ConfirmUserResponse>>("/auth/sign-up/confirm", payload)
 			.then((r) => r.data),
 
-	login: (payload: { email: string; password: string; userType: string }) =>
-		api.post<AuthResponse>("/auth/log-in", payload).then((r) => r.data),
+	login: (payload: { username: string; password: string }) =>
+		api.post<ApiResponse<LogInResponse>>("/auth/log-in", payload).then((r) => r.data),
 };
 
 export default authApi;
