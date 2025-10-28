@@ -2,8 +2,8 @@ import React, { useRef, useState } from "react";
 import { Box, TextField } from "@mui/material";
 
 interface OtpInputProps {
-    length?: number;
-    onChange?: (otp: string) => void;
+	length?: number;
+	onChange?: (otp: string) => void;
 }
 
 const OtpInput: React.FC<OtpInputProps> = ({ length = 6, onChange }) => {
