@@ -4,7 +4,7 @@ import LoginForm from "../components/LoginForm";
 
 const LoginPage: React.FC = () => {
 	return (
-		<Box
+		<Box //
 			display="flex"
 			justifyContent="center"
 			alignItems="center"
@@ -13,13 +13,13 @@ const LoginPage: React.FC = () => {
 		>
 			<Card sx={{ width: 400, p: 2, boxShadow: 3 }}>
 				<CardContent>
-					<Typography
+					<Typography //
 						variant="h5"
 						fontWeight="bold"
 						textAlign="center"
 						color="text.primary"
 					>
-                        Log In
+						Log In
 					</Typography>
 					<Box mt={3}>
 						<LoginForm />

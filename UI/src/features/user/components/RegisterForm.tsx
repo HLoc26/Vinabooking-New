@@ -60,31 +60,16 @@ const RegisterForm: React.FC = () => {
 	const handleSubmit = async (e: React.FormEvent) => {
 		e.preventDefault();
 
-		if (!values.name)
-			return pushNotification("Accommodation owner might want to know your name", "error");
-		if (!values.email)
-			return pushNotification(
-				"We need your email to send you updates about your bookings",
-				"error",
-			);
+		if (!values.name) return pushNotification("Accommodation owner might want to know your name", "error");
+		if (!values.email) return pushNotification("We need your email to send you updates about your bookings", "error");
 
 		const message = validatePassword(values.password);
 		if (message !== null) return pushNotification(message, "error");
 
-		if (values.password !== values.confirmPassword)
-			return pushNotification(
-				"Woah, make sure the two passwords you just typed in are the same",
-				"error",
-			);
+		if (values.password !== values.confirmPassword) return pushNotification("Woah, make sure the two passwords you just typed in are the same", "error");
 
 		try {
-			const response = await register(
-				values.name,
-				values.email,
-				values.password,
-				values.phone,
-				values.userType,
-			);
+			const response = await register(values.name, values.email, values.password, values.phone, values.userType);
 			if (!response) throw new Error("");
 			navigate("/otp", {
 				state: {
@@ -103,13 +88,10 @@ const RegisterForm: React.FC = () => {
 	return (
 		<Box component="form" onSubmit={handleSubmit}>
 			<Box display="flex" justifyContent="center">
-				<UserSwitcher
-					value={values.userType}
-					onChange={(v) => setValues((s) => ({ ...s, userType: v }))}
-				/>
+				<UserSwitcher value={values.userType} onChange={(v) => setValues((s) => ({ ...s, userType: v }))} />
 			</Box>
 
-			<TextField
+			<TextField //
 				fullWidth
 				margin="normal"
 				label="Fullname"
@@ -131,7 +113,7 @@ const RegisterForm: React.FC = () => {
 				fullWidth
 			/>
 
-			<TextField
+			<TextField //
 				fullWidth
 				margin="normal"
 				label="Email"
@@ -140,7 +122,7 @@ const RegisterForm: React.FC = () => {
 				value={values.email}
 				onChange={handleChange}
 			/>
-			<TextField
+			<TextField //
 				fullWidth
 				margin="normal"
 				label="Password"
@@ -155,7 +137,7 @@ const RegisterForm: React.FC = () => {
 			{/* Toolbox popup */}
 			<PasswordToolbox anchorEl={anchorEl} open={showToolbox} checklist={checklist} />
 
-			<TextField
+			<TextField //
 				fullWidth
 				margin="normal"
 				label="Retype password"
@@ -165,7 +147,7 @@ const RegisterForm: React.FC = () => {
 				onChange={handleChange}
 			/>
 
-			<Button
+			<Button //
 				fullWidth
 				variant="contained"
 				color="secondary"
@@ -177,9 +159,9 @@ const RegisterForm: React.FC = () => {
 			</Button>
 
 			<Typography variant="body2" textAlign="center" mt={2}>
-                Already have an account?{" "}
+				Already have an account?{" "}
 				<Link component="button" onClick={() => navigate("/login")} color="primary">
-                    Login
+					Login
 				</Link>
 			</Typography>
 
