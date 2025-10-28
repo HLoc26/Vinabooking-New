@@ -178,7 +178,6 @@ class AuthController {
                 break;
             case ETokenType.ID:
                 payload = await JwtService.verifyIdToken(token);
-                console.log(payload.identities);
                 break;
             default:
                 throw new BadRequestError(`Invalid token type: ${tokenType}`);
