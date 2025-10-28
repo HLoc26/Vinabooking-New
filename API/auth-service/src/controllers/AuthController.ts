@@ -165,7 +165,6 @@ class AuthController {
                 break;
             case ETokenType.ID:
                 payload = await JwtService.verifyIdToken(token);
-                console.log(payload.identities);
                 break;
             default:
                 throw new BadRequestError(`Invalid token type: ${tokenType}`);
@@ -189,7 +188,6 @@ class AuthController {
         const { refreshToken } = req.body;
         const awsResponse = await this.authService.refreshToken(refreshToken);
         const auth = awsResponse.AuthenticationResult;
-        console.log(auth);
         if (
             !auth || //
             !auth.AccessToken ||
@@ -211,7 +209,6 @@ class AuthController {
 
     public async getNewOtp(req: GetOTPRequest, res: Response<ApiResponse<GetOTPResponse>>) {
         const username = req.query.email;
-        console.log(username);
         const cognitoResponse = await this.authService.getOtpCode(username);
 
         const response: GetOTPResponse = {
