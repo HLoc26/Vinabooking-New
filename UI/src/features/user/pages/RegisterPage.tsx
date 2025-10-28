@@ -4,7 +4,7 @@ import RegisterForm from "../components/RegisterForm";
 
 const RegisterPage: React.FC = () => {
 	return (
-		<Box
+		<Box //
 			display="flex"
 			justifyContent="center"
 			alignItems="center"
@@ -13,13 +13,13 @@ const RegisterPage: React.FC = () => {
 		>
 			<Card sx={{ width: 450, p: 3, boxShadow: 3 }}>
 				<CardContent>
-					<Typography
+					<Typography //
 						variant="h5"
 						fontWeight="bold"
 						textAlign="center"
 						color="text.primary"
 					>
-                        Register
+						Register
 					</Typography>
 					<Box mt={3}>
 						<RegisterForm />

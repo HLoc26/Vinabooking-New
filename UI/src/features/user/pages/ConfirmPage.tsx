@@ -58,7 +58,7 @@ const ConfirmOTPPage: React.FC = () => {
 	};
 
 	return (
-		<Box
+		<Box //
 			display="flex"
 			flexDirection="column"
 			alignItems="center"
@@ -79,16 +79,16 @@ const ConfirmOTPPage: React.FC = () => {
 				}}
 			>
 				<Typography variant="h5" textAlign="center" mb={2}>
-                    Confirm OTP
+					Confirm OTP
 				</Typography>
 
 				<Typography variant="body2" textAlign="center" color="text.secondary" mb={2}>
-                    An OTP has been sent to <strong>{state.destination}</strong>.
+					An OTP has been sent to <strong>{state.destination}</strong>.
 				</Typography>
 
 				<OtpInput length={6} onChange={setOtp} />
 
-				<Button
+				<Button //
 					fullWidth
 					variant="contained"
 					color="primary"
@@ -100,9 +100,9 @@ const ConfirmOTPPage: React.FC = () => {
 				</Button>
 
 				<Typography textAlign="center" variant="body2" mt={2}>
-                    Didn't receive the code?{" "}
+					Didn't receive the code?{" "}
 					<Link component="button" onClick={handleResend} color="primary">
-                        Resend
+						Resend
 					</Link>
 				</Typography>
 			</Box>
