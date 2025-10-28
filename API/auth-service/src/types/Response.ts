@@ -24,6 +24,11 @@ export interface LogInResponse {
     refreshToken: string;
     expiresIn: number;
     tokenType: string | "Bearer";
+    user: {
+        id: string;
+        name: string;
+        email: string;
+    };
 }
 
 export interface VerifyResponse {
@@ -33,7 +38,7 @@ export interface VerifyResponse {
     };
 }
 
-export type RefreshResponse = Omit<LogInResponse, "refreshToken">;
+export type RefreshResponse = Omit<LogInResponse, "refreshToken" | "user">;
 
 export type GetOTPResponse = {
     CodeDeliveryDestination?: string;
