@@ -3,9 +3,8 @@ import { Box, Button, TextField, Typography, Link } from "@mui/material";
 import UserSwitcher from "./UserSwitcher";
 import useAuth from "../hooks/useAuth";
 import type { EUserType } from "../types/UserDto";
-import { usePushNotification } from "../../../hooks/usePushNotification";
-import { PushNotification } from "../../../components/ui/PushNotification";
 import { useNavigate } from "react-router-dom";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 const LoginForm: React.FC = () => {
 	const navigate = useNavigate();
@@ -16,7 +15,7 @@ const LoginForm: React.FC = () => {
 	});
 	const { login, loading } = useAuth();
 
-	const { notifications, pushNotification, removeNotification } = usePushNotification();
+	const { pushNotification } = usePushNotificationContext();
 
 	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
 		return setValues((s) => ({ ...s, [e.target.name]: e.target.value }));
@@ -84,7 +83,6 @@ const LoginForm: React.FC = () => {
 					Register now
 				</Link>
 			</Typography>
-			<PushNotification notifications={notifications} onClose={removeNotification} />
 		</Box>
 	);
 };
