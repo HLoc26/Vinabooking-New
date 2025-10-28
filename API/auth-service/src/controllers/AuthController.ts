@@ -37,7 +37,7 @@ class AuthController {
     constructor() {}
 
     public async signUp(req: SignUpRequest, res: Response, next: NextFunction) {
-        const { email, password, name, phone }: SignUpInfo = req.body;
+        const { email, password, name, phone, userType }: SignUpInfo = req.body;
 
         // Sign up user
         const cognitoResponse = await retry(async () => {
@@ -51,12 +51,13 @@ class AuthController {
         res.locals["email"] = email;
         res.locals["name"] = name;
         res.locals["phone"] = phone;
+        res.locals["userType"] = userType;
         next();
         // return ResponseHelper.success(res, cognitoResponse);
     }
 
     public async cacheUser(_req: Request, res: Response<ApiResponse<SignUpResponse>>) {
-        const { cognitoResponse, email, name, phone } = res.locals;
+        const { cognitoResponse, email, name, phone, userType } = res.locals;
         // Cache user
         try {
             const cacheInfo: CacheInfo = {
@@ -65,6 +66,7 @@ class AuthController {
                     cognitoSub: cognitoResponse.UserSub,
                     name: name,
                     phone: phone,
+                    userType: userType,
                 },
             };
             const success = await this.userService.cacheUser(cacheInfo);
