@@ -46,5 +46,8 @@
         "gen:grpc:review-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/review-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/review-service.proto",
         "gen:grpc:accommodation-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/accommodation-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/accommodation-service.proto",
         "gen:grpc:all": "npm run gen:grpc:image-service && npm run gen:grpc:user-service && npm run gen:grpc:booking-service && npm run gen:grpc:auth-service && npm run gen:grpc:room-service && npm run gen:grpc:review-service && npm run gen:grpc:accommodation-service"
+    },
+    "dependencies": {
+        "qrcode": "^1.5.4"
     }
 }
