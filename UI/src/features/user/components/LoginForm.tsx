@@ -18,8 +18,9 @@ const LoginForm: React.FC = () => {
 
 	const { notifications, pushNotification, removeNotification } = usePushNotification();
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) =>
-		setValues((s) => ({ ...s, [e.target.name]: e.target.value }));
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		return setValues((s) => ({ ...s, [e.target.name]: e.target.value }));
+	};
 
 	const handleUserType = (v: EUserType) => setValues((s) => ({ ...s, userType: v }));
 
@@ -46,7 +47,7 @@ const LoginForm: React.FC = () => {
 				<UserSwitcher value={values.userType} onChange={handleUserType} />
 			</Box>
 
-			<TextField
+			<TextField //
 				fullWidth
 				margin="normal"
 				label="Email"
@@ -56,7 +57,7 @@ const LoginForm: React.FC = () => {
 				onChange={handleChange}
 			/>
 
-			<TextField
+			<TextField //
 				fullWidth
 				margin="normal"
 				label="Password"
@@ -66,7 +67,7 @@ const LoginForm: React.FC = () => {
 				onChange={handleChange}
 			/>
 
-			<Button
+			<Button //
 				fullWidth
 				variant="contained"
 				color="primary"
@@ -78,9 +79,9 @@ const LoginForm: React.FC = () => {
 			</Button>
 
 			<Typography textAlign="center" variant="body2" mt={2}>
-                Chưa có tài khoản?{" "}
+				Doesn't have an account?{" "}
 				<Link href="/register" color="primary">
-                    Register now
+					Register now
 				</Link>
 			</Typography>
 			<PushNotification notifications={notifications} onClose={removeNotification} />
