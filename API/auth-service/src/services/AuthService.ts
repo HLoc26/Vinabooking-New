@@ -5,6 +5,7 @@ import {
     SignUpCommand,
     AdminInitiateAuthCommand,
     ResendConfirmationCodeCommand,
+    GlobalSignOutCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
@@ -124,6 +125,19 @@ class AuthService {
             return response;
         } catch (error) {
             console.error("[DEBUG] [RESEND OTP]", error);
+            throw error;
+        }
+    }
+
+    public async signOut(accessToken: string) {
+        const command = new GlobalSignOutCommand({
+            AccessToken: accessToken,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [SIGN OUT]", error);
             throw error;
         }
     }
