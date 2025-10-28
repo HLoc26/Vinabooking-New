@@ -7,20 +7,15 @@ export function useConfirmBooking() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState<string | null>(null);
 
-  const confirmBooking = async (booking: BookingDto) => {
-    setLoading(true);
-    setError(null);
-    try {
-      const result = await bookingApi.createBooking(booking);
-      return result;
-    } catch (err: any) {
-      console.error("Error confirming booking:", err);
-      setError(err.message ?? "Unknown error");
-      throw err;
-    } finally {
-      setLoading(false);
-    }
-  };
+const confirmBooking = async (booking: BookingDto) => {
+  try {
+    const response = await bookingApi.createBooking(booking);
+    console.log("Booking created:", response);
+  } catch (err) {
+    console.error("Error confirming booking:", err);
+  }
+};
+
 
   return { confirmBooking, loading, error };
 }
