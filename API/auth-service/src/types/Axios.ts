@@ -4,6 +4,7 @@ export type CacheInfo = {
         cognitoSub: string;
         name: string;
         phone: string;
+        userType: "TRAVELLER" | "ACCOMMODATION_OWNER";
     };
 };
 
