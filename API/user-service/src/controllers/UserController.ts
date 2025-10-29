@@ -8,7 +8,7 @@ import ResponseHelper from "../utils/ResponseHelper";
 import { type Response } from "express";
 import type User from "../classes/User";
 import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserRequest } from "../types/Request";
+import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
@@ -31,6 +31,16 @@ class UserController {
         }
 
         return ResponseHelper.success<UserResponse>(res, user.toJson());
+    }
+
+    public async saveUserDirect(req: SaveUserDirectRequest, res: Response<ApiResponse<boolean>>) {
+        const { cognitoSub, email, name } = req.body;
+        const OK = await this.userService.saveUser(cognitoSub, email, name);
+
+        if (!OK) {
+            throw new DatabaseError("Failed to save user to database");
+        }
+        return ResponseHelper.success<SaveUserResponse>(res, { success: true });
     }
 
     public async cacheUser(req: CacheUserRequest, res: Response<ApiResponse<CacheUserResponse>>) {

@@ -60,6 +60,22 @@ class UserService {
 
         return result;
     }
+
+    public async saveUser(id: string, email: string, name: string) {
+        const info: SaveUserInfo = {
+            cognitoSub: id,
+            email: email,
+            name: name,
+            userType: "TRAVELLER",
+        };
+        const result = await this.userRepository.createUser(info);
+
+        if (!result || !result.id || !result.name || !result.email) {
+            throw new DatabaseError(`Fail to create user ${info.email}`);
+        }
+
+        return result;
+    }
 }
 
 export default UserService;
