@@ -41,7 +41,7 @@ class UserService {
         }
     }
 
-    public async saveUser(email: string): Promise<UserSchema> {
+    public async saveUserFromCache(email: string): Promise<UserSchema> {
         const redisClient = await getRedisClient();
         const infoString: string | null = await redisClient.get(email);
 

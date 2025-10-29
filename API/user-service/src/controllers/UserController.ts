@@ -44,10 +44,10 @@ class UserController {
         return ResponseHelper.success<CacheUserResponse>(res, { success: true });
     }
 
-    public async saveUser(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
+    public async saveUserFromCache(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
         const email = req.body.email;
 
-        const OK = await this.userService.saveUser(email);
+        const OK = await this.userService.saveUserFromCache(email);
 
         if (!OK) {
             throw new DatabaseError("Failed to save user to database");
