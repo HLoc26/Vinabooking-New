@@ -6,6 +6,12 @@ import {
     AdminInitiateAuthCommand,
     ResendConfirmationCodeCommand,
     GlobalSignOutCommand,
+    AdminCreateUserCommand,
+    AdminSetUserPasswordCommand,
+    AdminUpdateUserAttributesCommand,
+    AdminGetUserCommand,
+    GetUserCommand,
+    UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
@@ -16,7 +22,7 @@ import type { SignUpResponse } from "../types/Response";
 class AuthService {
     private appClientID: string;
     private cognitoClient: CognitoIdentityProviderClient;
-
+    private GOOGLE_CLIENT_SECRET;
     constructor() {
         if (!process.env["COGNITO_APP_CLIENT_ID"]) {
             throw new EnvironmentNotSetError("Missing COGNITO_APP_CLIENT_ID");
@@ -24,6 +30,10 @@ class AuthService {
 
         this.appClientID = process.env["COGNITO_APP_CLIENT_ID"];
         this.cognitoClient = CognitoClient.getInstance();
+        if (!process.env["GOOGLE_CLIENT_SECRET"]) {
+            throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_SECRET");
+        }
+        this.GOOGLE_CLIENT_SECRET = process.env["GOOGLE_CLIENT_SECRET"];
     }
 
     public async signUp(email: string, password: string): Promise<SignUpResponse | null> {
@@ -43,6 +53,79 @@ class AuthService {
             };
         } catch (error) {
             console.error("[DEBUG] [SIGNUP] [ERROR]", error);
+            throw error;
+        }
+    }
+
+    public async createUserWithoutVerification(email: string, password: string) {
+        try {
+            // 1. Create user with preset password
+            const createCommand = new AdminCreateUserCommand({
+                UserPoolId: CognitoClient.userPoolId,
+                Username: email,
+                TemporaryPassword: password,
+                UserAttributes: [{ Name: "email", Value: email }],
+                MessageAction: "SUPPRESS",
+            });
+            const createResponse = await this.cognitoClient.send(createCommand);
+
+            // 2. Set password permanent
+            const setPwdCommand = new AdminSetUserPasswordCommand({
+                UserPoolId: CognitoClient.userPoolId,
+                Username: email,
+                Password: password,
+                Permanent: true,
+            });
+            await this.cognitoClient.send(setPwdCommand);
+
+            // 3. Mark email is verified
+            const updateAttrsCommand = new AdminUpdateUserAttributesCommand({
+                UserPoolId: CognitoClient.userPoolId,
+                Username: email,
+                UserAttributes: [{ Name: "email_verified", Value: "true" }],
+            });
+
+            await this.cognitoClient.send(updateAttrsCommand);
+
+            //4. Get user to get userSub
+            const getUserCommand = new AdminGetUserCommand({
+                UserPoolId: CognitoClient.userPoolId,
+                Username: email,
+            });
+            const getUserResponse = await this.cognitoClient.send(getUserCommand);
+
+            const subAttr = getUserResponse.UserAttributes?.find((a) => a.Name === "sub")?.Value;
+
+            return {
+                UserSub: subAttr ?? getUserResponse.Username ?? createResponse.User?.Username,
+            };
+        } catch (error) {
+            console.error("[DEBUG] [CREATE_USER_NO_VERIF] [ERROR]", error);
+            throw error;
+        }
+    }
+
+    public async oAuthSignUp(email: string) {
+        return this.createUserWithoutVerification(email, this.GOOGLE_CLIENT_SECRET);
+    }
+
+    public async oAuthLogin(email: string) {
+        return this.logIn(email, this.GOOGLE_CLIENT_SECRET);
+    }
+
+    public async findUser(username: string) {
+        const command = new AdminGetUserCommand({
+            Username: username,
+            UserPoolId: CognitoClient.userPoolId,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [FIND_USER] [ERROR]", error);
+            if (error instanceof UserNotFoundException) {
+                return null;
+            }
             throw error;
         }
     }
