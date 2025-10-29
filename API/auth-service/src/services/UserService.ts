@@ -21,7 +21,7 @@ class UserService {
         return cacheResponse;
     }
 
-    public async saveUser(email: string) {
+    public async saveUserFromCache(email: string) {
         try {
             const saveResponse = await this.axiosInstance.post("/save-db", { email });
 
