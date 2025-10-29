@@ -1,7 +1,7 @@
 import express, { type Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import UserController from "../controllers/UserController";
-import type { FindUserByIdRequest } from "../types/Request";
+import type { FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
 import { getRedisClient } from "../clients/RedisSingleton"; // thay đổi từ default export sang function
 
 // Base route: /users
@@ -24,6 +24,10 @@ class UserRouter {
                 user_service: "Healthy",
                 redis: ping,
             });
+        });
+
+        this.router.post("/", (req: SaveUserDirectRequest, res: Response) => {
+            return this.userController.saveUserDirect(req, res);
         });
 
         // Get user by Id
