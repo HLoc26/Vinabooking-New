@@ -103,7 +103,7 @@ class AuthController {
     public async saveUser(_req: Request, res: Response<ApiResponse<ConfirmUserResponse>>) {
         const email = res.locals["email"];
 
-        const response = await this.userService.saveUser(email);
+        const response = await this.userService.saveUserFromCache(email);
 
         if (!response) {
             throw new Error("Fail to save user to db");
