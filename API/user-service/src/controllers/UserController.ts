@@ -8,13 +8,27 @@ import ResponseHelper from "../utils/ResponseHelper";
 import { type Response } from "express";
 import type User from "../classes/User";
 import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
+import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
 
 class UserController {
     private userService = new UserService();
+
+    public async getUser(req: FindUserRequest, res: Response<ApiResponse<UserResponse>>) {
+        const { id, email } = req.query;
+        const withFavourites = req.query.withFavourites === "true";
+        if (!id && !email) {
+            throw new BadRequestError("Specify at least an email an an id");
+        }
+        const user: User | null = await this.userService.getUser({ id, email }, withFavourites);
+        if (!user) {
+            throw new NotFoundError("User not found");
+        }
+
+        return ResponseHelper.success<UserResponse>(res, user.toJson());
+    }
 
     public async getUserById(req: FindUserByIdRequest, res: Response<ApiResponse<UserResponse>>) {
         const id = req.params.id;
