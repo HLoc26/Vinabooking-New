@@ -8,7 +8,7 @@ export interface CacheInfo {
     info: {
         cognitoSub: string;
         name: string;
-        phone: string;
+        phone?: string;
         userType: "TRAVELLER" | "ACCOMMODATION_OWNER";
     };
 }
@@ -16,3 +16,5 @@ export interface CacheInfo {
 export type CacheUserRequest = Request<unknown, ApiResponse<CacheUserResponse>, CacheInfo, unknown>;
 
 export type SaveUserRequest = Request<unknown, ApiResponse<SaveUserResponse>, { email: string }, unknown>;
+
+export type SaveUserDirectRequest = Request<unknown, ApiResponse<SaveUserResponse>, { cognitoSub: string; email: string; name: string }, unknown>;

@@ -21,7 +21,7 @@ export type EUserRole = (typeof EUserRole)[keyof typeof EUserRole];
 export interface IUser {
     id: string;
     name: string;
-    phone: string;
+    phone?: string;
     role: string;
 
     favouriteLists: Array<IFavouriteList>;
