@@ -59,6 +59,8 @@ class AuthRouter {
         });
 
         this.router.post("/sign-out", this.authController.signOut.bind(this.authController));
+
+        this.router.get("/google/callback", this.authController.googleCallback.bind(this.authController));
     }
 }
 
