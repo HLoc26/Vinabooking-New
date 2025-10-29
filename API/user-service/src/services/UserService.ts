@@ -65,6 +65,7 @@ class UserService {
         const info: SaveUserInfo = {
             cognitoSub: id,
             email: email,
+            phone: null,
             name: name,
             userType: "TRAVELLER",
         };
