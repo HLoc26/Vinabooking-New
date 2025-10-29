@@ -1,6 +1,8 @@
 import type { Request } from "express";
 import type { ApiResponse, UserResponse, CacheUserResponse, SaveUserResponse } from "./Response";
 
+export type FindUserRequest = Request<unknown, ApiResponse<UserResponse>, unknown, { withFavourites?: string; email?: string; id?: string }>;
+
 export type FindUserByIdRequest = Request<{ id: string }, ApiResponse<UserResponse>, unknown, { withFavourites?: string }>;
 
 export interface CacheInfo {
