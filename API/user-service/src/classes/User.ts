@@ -5,7 +5,7 @@ import { EUserRole, type IUser, type UserWithFavourites } from "../types/User";
 class User {
     #id: string;
     #name: string;
-    #phone: string;
+    #phone: string | null;
     #role: EUserRole;
 
     #favouriteLists?: Array<FavouriteList>;
@@ -16,7 +16,7 @@ class User {
     constructor(props: IUser) {
         this.#id = props.id;
         this.#name = props.name;
-        this.#phone = props.phone ?? "";
+        this.#phone = props.phone ?? null;
 
         const roleMap: Record<string, EUserRole> = {
             Traveller: EUserRole.TRAVELLER,
@@ -68,7 +68,7 @@ class User {
         return this.#name;
     }
     get phone() {
-        return this.#phone;
+        return this.#phone ?? "";
     }
     get role() {
         return this.#role;
