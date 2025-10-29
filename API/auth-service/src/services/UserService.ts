@@ -9,13 +9,14 @@ class UserService {
     constructor() {}
 
     public async cacheUser(cacheInfo: CacheInfo) {
-        const cacheResponse = await this.axiosInstance.post<CacheUserResponse, AxiosResponse<CacheUserResponse, CacheInfo>, CacheInfo>(
-            "/save-cache",
-            {
-                email: cacheInfo.email,
-                info: cacheInfo.info,
-            }
-        );
+        const cacheResponse = await this.axiosInstance.post<
+            CacheUserResponse, //
+            AxiosResponse<CacheUserResponse, CacheInfo>,
+            CacheInfo
+        >("/cache", {
+            email: cacheInfo.email,
+            info: cacheInfo.info,
+        });
 
         if (!cacheResponse.data) throw new Error("Failed to cache user");
         return cacheResponse;
@@ -23,7 +24,7 @@ class UserService {
 
     public async saveUserFromCache(email: string) {
         try {
-            const saveResponse = await this.axiosInstance.post("/save-db", { email });
+            const saveResponse = await this.axiosInstance.post("/db", { email });
 
             if (!saveResponse.data) throw new Error("Failed to save user");
             return saveResponse.data;
