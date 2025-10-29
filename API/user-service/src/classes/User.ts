@@ -16,7 +16,7 @@ class User {
     constructor(props: IUser) {
         this.#id = props.id;
         this.#name = props.name;
-        this.#phone = props.phone;
+        this.#phone = props.phone ?? "";
 
         const roleMap: Record<string, EUserRole> = {
             Traveller: EUserRole.TRAVELLER,
@@ -40,7 +40,7 @@ class User {
         return new User({
             id: schema.id,
             name: schema.name,
-            phone: schema.phone,
+            phone: schema.phone ?? "",
             role: schema.role,
             favouriteLists: favourites ?? [],
             createdAt: schema.createdAt,
