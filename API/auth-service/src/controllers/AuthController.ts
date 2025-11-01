@@ -30,11 +30,14 @@ import JwtService from "../services/JwtService";
 import BadRequestError from "../errors/BadRequestError";
 import MappingUtil from "../utils/MappingUtil";
 import OAuthService from "../services/OAuthService";
+import { EProvider } from "../../generated/prisma/enums";
+import AuthRepository from "../repositories/AuthRespository";
 
 class AuthController {
     private authService = new AuthService();
     private userService = new UserService();
     private oauthService = new OAuthService();
+    private authRepository = new AuthRepository();
 
     constructor() {}
 
@@ -97,6 +100,8 @@ class AuthController {
             throw new IdentityProviderError("Invalid OTP Code");
         }
 
+        await this.authRepository.createUserProvider(email, EProvider.Credentials);
+
         res.locals["email"] = email;
 
         next();
@@ -116,6 +121,12 @@ class AuthController {
 
     public async logIn(req: LogInRequest, res: Response<ApiResponse<LogInResponse>>) {
         const { username, password } = req.body;
+
+        const userAuthProvider = (await this.authRepository.getUserProvider(username)).provider;
+
+        if (userAuthProvider === EProvider.Google) {
+            throw new Error("This account was registered using Google, please try login again with your Google Account");
+        }
 
         const awsResponse = await this.authService.logIn(username, password);
         const auth = awsResponse.AuthenticationResult;
@@ -246,17 +257,30 @@ class AuthController {
         const userInfo: GoogleOAuthResponse = await this.oauthService.exchangeUserInfo(code as string);
         const email = userInfo.email;
         const name = userInfo.name;
+
         const userExsitsInDb = await this.userService.getUser({ email: email });
         const userExistsInCognito = await this.authService.findUser(email);
 
         // If not exist, create one
         if (!userExsitsInDb && !userExistsInCognito) {
+            const provider = await this.authRepository.createUserProvider(email, EProvider.Google);
+            console.log("Hello I am creating user here");
             const cognitoSub = (await this.authService.oAuthSignUp(email)).UserSub;
             if (!cognitoSub) {
                 throw new Error("Error while creating user");
             }
             await this.userService.saveUserDirect(cognitoSub, email, name);
+            console.log(provider);
         }
+
+        // If existed, we have 2 cases: 1. used google; 2. used password
+        const userAuthProvider = (await this.authRepository.getUserProvider(email)).provider;
+        // If used password, ask user to login with password instead
+        if (userAuthProvider == EProvider.Credentials) {
+            const message = encodeURIComponent("This account was registered using password, please try login again with your password");
+            return res.redirect(`http://localhost:5173/oauth/error?message=${message}`);
+        }
+
         const awsResponse = await this.authService.oAuthLogin(email);
 
         const auth = awsResponse.AuthenticationResult;
