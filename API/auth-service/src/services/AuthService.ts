@@ -10,7 +10,6 @@ import {
     AdminSetUserPasswordCommand,
     AdminUpdateUserAttributesCommand,
     AdminGetUserCommand,
-    GetUserCommand,
     UserNotFoundException,
 } from "@aws-sdk/client-cognito-identity-provider";
 
@@ -22,7 +21,7 @@ import type { SignUpResponse } from "../types/Response";
 class AuthService {
     private appClientID: string;
     private cognitoClient: CognitoIdentityProviderClient;
-    private GOOGLE_CLIENT_SECRET;
+    private GOOGLE_CLIENT_SECRET: string;
     constructor() {
         if (!process.env["COGNITO_APP_CLIENT_ID"]) {
             throw new EnvironmentNotSetError("Missing COGNITO_APP_CLIENT_ID");
