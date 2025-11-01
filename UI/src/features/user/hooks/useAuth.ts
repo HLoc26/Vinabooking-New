@@ -44,10 +44,30 @@ export const useAuth = () => {
 		}
 	}, []);
 
-	const logout = useCallback(() => {
-		cookieStore.delete(ACCESS_TOKEN_KEY);
-		localStorage.removeItem(USER_KEY);
-		// optional: trigger redirect outside
+	const logout = useCallback(async () => {
+		try {
+			const accessToken = await cookieStore.get(ACCESS_TOKEN_KEY);
+			if (!accessToken || !accessToken.value) {
+				throw new Error("You are not logged in.");
+			}
+			const response = await authApi.signOut(accessToken.value);
+
+			if (!response.data?.success) {
+				throw new Error(response.error as string);
+			}
+			cookieStore.delete(ACCESS_TOKEN_KEY);
+			localStorage.removeItem(USER_KEY);
+			return true;
+		} catch (e: unknown) {
+			if (e instanceof AxiosError) {
+				setError(e.response?.data.error);
+				throw new Error(e.response?.data.error);
+			} else {
+				const err = e as Error;
+				setError(err.message || "Error while signing out");
+				throw new Error(err.message || "Error while signing out");
+			}
+		}
 	}, []);
 
 	const getCurrentUser = useCallback(() => {
