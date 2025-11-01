@@ -1,13 +1,10 @@
 import type { AxiosInstance, AxiosResponse } from "axios";
 import type { CacheInfo, CacheUserResponse } from "../types/Axios";
-import { UserAxiosClient } from "../clients/UserServiceClient";
 import NotFoundError from "../errors/NotFoundError";
 import { AxiosError } from "axios";
 
 class UserService {
-    private axiosInstance: AxiosInstance = UserAxiosClient.getInstance();
-
-    constructor() {}
+    constructor(private axiosInstance: AxiosInstance) {}
 
     public async cacheUser(cacheInfo: CacheInfo) {
         const cacheResponse = await this.axiosInstance.post<

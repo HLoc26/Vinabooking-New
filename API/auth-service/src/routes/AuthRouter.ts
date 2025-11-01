@@ -1,14 +1,14 @@
-import Router, { type Request, type Response, type NextFunction } from "express";
+import { type Router, type Request, type Response, type NextFunction } from "express";
 import AuthController from "../controllers/AuthController";
 import ResponseHelper from "../utils/ResponseHelper";
 import { GetOTPRequest } from "../types/Request";
 
 // Base route: /auth
 class AuthRouter {
-    public router = Router();
-    private authController = new AuthController();
-
-    constructor() {
+    constructor(
+        public router: Router,
+        private authController: AuthController
+    ) {
         this.registerRoutes();
     }
 

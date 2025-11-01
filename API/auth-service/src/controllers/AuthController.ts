@@ -34,12 +34,12 @@ import { EProvider } from "../../generated/prisma/enums";
 import AuthRepository from "../repositories/AuthRespository";
 
 class AuthController {
-    private authService = new AuthService();
-    private userService = new UserService();
-    private oauthService = new OAuthService();
-    private authRepository = new AuthRepository();
-
-    constructor() {}
+    constructor(
+        private authService: AuthService,
+        private userService: UserService,
+        private oauthService: OAuthService,
+        private authRepository: AuthRepository
+    ) {}
 
     public async signUp(req: SignUpRequest, res: Response, next: NextFunction) {
         const { email, password, name, phone, userType }: SignUpInfo = req.body;
