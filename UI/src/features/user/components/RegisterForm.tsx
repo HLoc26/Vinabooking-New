@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, TextField, Typography, Link } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import { MuiTelInput } from "mui-tel-input";
 
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ import PasswordToolbox from "./PasswordToolbox";
 import type { EUserType } from "../types/UserDto";
 
 import { validatePassword, getPasswordChecklist } from "../utils/validatePassword";
+import { GoogleAuthButton } from "./GoogleAuthButton";
 
 const RegisterForm: React.FC = () => {
 	const [values, setValues] = useState({
@@ -155,6 +156,17 @@ const RegisterForm: React.FC = () => {
 					Login
 				</Link>
 			</Typography>
+			<Box display="flex" flexDirection="column" alignItems="center" width="100%">
+				<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
+					<Divider sx={{ flexGrow: 1 }} />
+					<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
+						or
+					</Typography>
+					<Divider sx={{ flexGrow: 1 }} />
+				</Box>
+
+				<GoogleAuthButton />
+			</Box>
 		</Box>
 	);
 };
