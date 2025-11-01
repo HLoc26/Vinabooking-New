@@ -2,9 +2,9 @@ import { useState, useCallback } from "react";
 import type { AlertColor } from "@mui/material";
 
 export interface Notification {
-    id: string;
-    message: string;
-    severity: AlertColor;
+	id: string;
+	message: string;
+	severity: AlertColor;
 }
 
 const MAX_NOTIFICATIONS = 5;
