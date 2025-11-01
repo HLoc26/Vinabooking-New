@@ -69,7 +69,7 @@ const RegisterForm: React.FC = () => {
 		try {
 			const response = await register(values.name, values.email, values.password, values.phone, values.userType);
 			if (!response) throw new Error("");
-			navigate("/otp", {
+			navigate("/auth/otp", {
 				state: {
 					destination: response.destination,
 					medium: response.medium,
@@ -88,7 +88,6 @@ const RegisterForm: React.FC = () => {
 			<Box display="flex" justifyContent="center">
 				<UserSwitcher value={values.userType} onChange={(v) => setValues((s) => ({ ...s, userType: v }))} />
 			</Box>
-
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -97,7 +96,6 @@ const RegisterForm: React.FC = () => {
 				value={values.name}
 				onChange={handleChange}
 			/>
-
 			<MuiTelInput
 				value={values.phone}
 				onChange={(value, info) => {
@@ -110,7 +108,6 @@ const RegisterForm: React.FC = () => {
 				margin="normal"
 				fullWidth
 			/>
-
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -131,10 +128,8 @@ const RegisterForm: React.FC = () => {
 				onFocus={handleFocus}
 				onBlur={handleBlur}
 			/>
-
 			{/* Toolbox popup */}
 			<PasswordToolbox anchorEl={anchorEl} open={showToolbox} checklist={checklist} />
-
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -144,7 +139,6 @@ const RegisterForm: React.FC = () => {
 				value={values.confirmPassword}
 				onChange={handleChange}
 			/>
-
 			<Button //
 				fullWidth
 				variant="contained"
@@ -155,10 +149,9 @@ const RegisterForm: React.FC = () => {
 			>
 				{loading ? "Processing..." : "Register"}
 			</Button>
-
 			<Typography variant="body2" textAlign="center" mt={2}>
 				Already have an account?{" "}
-				<Link component="button" onClick={() => navigate("/login")} color="primary">
+				<Link component="button" onClick={() => navigate("/auth/login")} color="primary">
 					Login
 				</Link>
 			</Typography>

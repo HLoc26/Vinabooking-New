@@ -66,7 +66,7 @@ export const HomePage = () => {
 								variant="contained"
 								color="success"
 								onClick={() => {
-									navigate("/login");
+									navigate("/auth/login");
 								}}
 							>
 								Log In
@@ -78,7 +78,7 @@ export const HomePage = () => {
 								variant="contained"
 								color="info"
 								onClick={() => {
-									navigate("/register");
+									navigate("/auth/register");
 								}}
 							>
 								Register
