@@ -28,7 +28,7 @@ export const useOAuthCallback = () => {
 				const decoded = decodeURIComponent(message);
 				setError(decoded);
 				pushNotification(decoded, "error");
-				navigate("/login");
+				navigate("/auth/login");
 				return;
 			}
 
@@ -51,7 +51,7 @@ export const useOAuthCallback = () => {
 			const e = err as Error;
 			setError(e.message);
 			pushNotification(e.message, "error");
-			setTimeout(() => navigate("/login"), 1000);
+			setTimeout(() => navigate("/auth/login"), 1000);
 		} finally {
 			setLoading(false);
 		}

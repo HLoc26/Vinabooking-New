@@ -80,7 +80,7 @@ const LoginForm: React.FC = () => {
 
 			<Typography textAlign="center" variant="body2" mt={2}>
 				Doesn't have an account?{" "}
-				<Link href="/register" color="primary">
+				<Link href="/auth/register" color="primary">
 					Register now
 				</Link>
 			</Typography>
