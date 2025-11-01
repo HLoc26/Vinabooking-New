@@ -1,7 +1,7 @@
 import { Box, Button, Typography, AppBar, Container, Paper, Grid } from "@mui/material";
 import { Palette } from "@mui/icons-material";
 
-import { useAuth } from "../../user/hooks/useAuth"; // đường dẫn tuỳ project
+import { useAuth } from "../../user/hooks/useAuth";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useNavigate } from "react-router-dom";
 
