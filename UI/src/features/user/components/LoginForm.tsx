@@ -1,10 +1,11 @@
 import React, { useState } from "react";
-import { Box, Button, TextField, Typography, Link } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import UserSwitcher from "./UserSwitcher";
 import useAuth from "../hooks/useAuth";
 import type { EUserType } from "../types/UserDto";
 import { useNavigate } from "react-router-dom";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
+import { GoogleAuthButton } from "./GoogleAuthButton";
 
 const LoginForm: React.FC = () => {
 	const navigate = useNavigate();
@@ -83,6 +84,17 @@ const LoginForm: React.FC = () => {
 					Register now
 				</Link>
 			</Typography>
+			<Box display="flex" flexDirection="column" alignItems="center" width="100%">
+				<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
+					<Divider sx={{ flexGrow: 1 }} />
+					<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
+						or
+					</Typography>
+					<Divider sx={{ flexGrow: 1 }} />
+				</Box>
+
+				<GoogleAuthButton />
+			</Box>
 		</Box>
 	);
 };
