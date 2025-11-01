@@ -1,31 +1,45 @@
-import React from "react";
+import { Box, Paper, Typography, CircularProgress } from "@mui/material";
 import { useOAuthCallback } from "../hooks/useOAuthCallback";
 
 export const OAuthSuccessPage = () => {
-	const { loading, error } = useOAuthCallback();
-
-	if (loading) {
-		return (
-			<div style={{ textAlign: "center", marginTop: "30vh" }}>
-				<h2>Đang xử lý đăng nhập...</h2>
-				<p>Vui lòng chờ trong giây lát.</p>
-			</div>
-		);
-	}
-
-	if (error) {
-		return (
-			<div style={{ textAlign: "center", marginTop: "30vh", color: "red" }}>
-				<h2>Đăng nhập thất bại</h2>
-				<p>{error}</p>
-			</div>
-		);
-	}
+	const { loading } = useOAuthCallback();
 
 	return (
-		<div style={{ textAlign: "center", marginTop: "30vh" }}>
-			<h2>Đăng nhập thành công</h2>
-			<p>Đang chuyển hướng...</p>
-		</div>
+		<Box
+			sx={{
+				display: "flex",
+				justifyContent: "center",
+				alignItems: "center",
+				minHeight: "100vh",
+				backgroundColor: "#FFF7ED",
+			}}
+		>
+			<Paper
+				elevation={3}
+				sx={{
+					p: 5,
+					borderRadius: "2xl",
+					textAlign: "center",
+					maxWidth: 480,
+				}}
+			>
+				{loading ? (
+					<>
+						<CircularProgress color="primary" sx={{ mb: 3 }} />
+						<Typography variant="h5" gutterBottom>
+							Processing...
+						</Typography>
+						<Typography variant="body1">Please kindly wait.</Typography>
+					</>
+				) : (
+					<>
+						<Typography variant="h5" gutterBottom color="success.main">
+							Successfully logged in
+						</Typography>
+						<Typography variant="body1">Redirecting...</Typography>
+					</>
+				)}
+			</Paper>
+		</Box>
 	);
 };
