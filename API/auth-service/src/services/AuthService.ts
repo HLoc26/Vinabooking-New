@@ -15,29 +15,27 @@ import {
 
 import "dotenv/config";
 import CognitoClient from "../clients/CognitoIdentityProviderClient";
-import EnvironmentNotSetError from "../errors/EnvironmentNotSetError";
 import type { SignUpResponse } from "../types/Response";
 
-class AuthService {
-    private appClientID: string;
-    private cognitoClient: CognitoIdentityProviderClient;
-    private GOOGLE_CLIENT_SECRET: string;
-    constructor() {
-        if (!process.env["COGNITO_APP_CLIENT_ID"]) {
-            throw new EnvironmentNotSetError("Missing COGNITO_APP_CLIENT_ID");
-        }
+export interface AuthServiceConfig {
+    cognitoAppClientId: string;
+    cognitoClient: CognitoIdentityProviderClient;
+    googleClientSecret: string;
+}
 
-        this.appClientID = process.env["COGNITO_APP_CLIENT_ID"];
-        this.cognitoClient = CognitoClient.getInstance();
-        if (!process.env["GOOGLE_CLIENT_SECRET"]) {
-            throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_SECRET");
-        }
-        this.GOOGLE_CLIENT_SECRET = process.env["GOOGLE_CLIENT_SECRET"];
+class AuthService {
+    private readonly cognitoAppClientId: string;
+    private readonly cognitoClient: CognitoIdentityProviderClient;
+    private readonly googleClientSecret: string;
+    constructor(config: AuthServiceConfig) {
+        this.cognitoAppClientId = config.cognitoAppClientId;
+        this.cognitoClient = config.cognitoClient;
+        this.googleClientSecret = config.googleClientSecret;
     }
 
     public async signUp(email: string, password: string): Promise<SignUpResponse | null> {
         const command = new SignUpCommand({
-            ClientId: this.appClientID,
+            ClientId: this.cognitoAppClientId,
             Username: email,
             Password: password,
             UserAttributes: [{ Name: "email", Value: email }],
@@ -105,11 +103,11 @@ class AuthService {
     }
 
     public async oAuthSignUp(email: string) {
-        return this.createUserWithoutVerification(email, this.GOOGLE_CLIENT_SECRET);
+        return this.createUserWithoutVerification(email, this.googleClientSecret);
     }
 
     public async oAuthLogin(email: string) {
-        return this.logIn(email, this.GOOGLE_CLIENT_SECRET);
+        return this.logIn(email, this.googleClientSecret);
     }
 
     public async findUser(username: string) {
@@ -131,7 +129,7 @@ class AuthService {
 
     public async confirmSignUp(username: string, confirmCode: string): Promise<boolean> {
         const command = new ConfirmSignUpCommand({
-            ClientId: this.appClientID,
+            ClientId: this.cognitoAppClientId,
             Username: username,
             ConfirmationCode: String(confirmCode),
         });
@@ -163,7 +161,7 @@ class AuthService {
         const command = new AdminInitiateAuthCommand({
             UserPoolId: CognitoClient.userPoolId,
             AuthFlow: "ADMIN_USER_PASSWORD_AUTH",
-            ClientId: this.appClientID,
+            ClientId: this.cognitoAppClientId,
             AuthParameters: {
                 USERNAME: email,
                 PASSWORD: password,
@@ -182,7 +180,7 @@ class AuthService {
         const command = new AdminInitiateAuthCommand({
             UserPoolId: CognitoClient.userPoolId,
             AuthFlow: "REFRESH_TOKEN_AUTH",
-            ClientId: this.appClientID,
+            ClientId: this.cognitoAppClientId,
             AuthParameters: {
                 REFRESH_TOKEN: refreshToken,
             },
