@@ -4,6 +4,7 @@ import LoginPage from "../features/user/pages/LoginPage";
 import RegisterPage from "../features/user/pages/RegisterPage";
 import ConfirmOTPPage from "../features/user/pages/ConfirmPage";
 import { OAuthSuccessPage } from "../features/user/pages/OAuthSuccessPage";
+import { OAuthErrorPage } from "../features/user/pages/OAuthErrorPage";
 
 export const AppRouter = () => (
 	<BrowserRouter>
@@ -13,6 +14,7 @@ export const AppRouter = () => (
 			<Route path="/register" element={<RegisterPage />} />
 			<Route path="/otp" element={<ConfirmOTPPage />} />
 			<Route path="/oauth/success" element={<OAuthSuccessPage />} />
+			<Route path="/oauth/error" element={<OAuthErrorPage />} />
 		</Routes>
 	</BrowserRouter>
 );

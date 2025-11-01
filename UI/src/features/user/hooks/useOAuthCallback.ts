@@ -21,6 +21,17 @@ export const useOAuthCallback = () => {
 	const handleOAuthCallback = useCallback(async () => {
 		try {
 			const params = new URLSearchParams(window.location.search);
+			const message = params.get("message");
+
+			// Have message in params means it is redirected from /oauth/error
+			if (message) {
+				const decoded = decodeURIComponent(message);
+				setError(decoded);
+				pushNotification(decoded, "error");
+				navigate("/login");
+				return;
+			}
+
 			const accessToken = params.get("accessToken");
 			const idToken = params.get("idToken");
 			const userRaw = params.get("user");
@@ -31,7 +42,6 @@ export const useOAuthCallback = () => {
 
 			const user: OAuthUser = JSON.parse(decodeURIComponent(userRaw));
 
-			// Lưu lại token và user
 			await cookieStore.set(ACCESS_TOKEN_KEY, accessToken);
 			localStorage.setItem(USER_KEY, JSON.stringify(user));
 
