@@ -17,7 +17,7 @@ const ConfirmOTPPage: React.FC = () => {
 
 	React.useEffect(() => {
 		if (!state || !state.destination) {
-			navigate("/register");
+			navigate("/auth/register");
 		}
 	}, [state, navigate]);
 
@@ -40,7 +40,7 @@ const ConfirmOTPPage: React.FC = () => {
 			const success = await confirmOtp(state.email, otp);
 			if (success) {
 				pushNotification("Success! Please wait for the redirect.");
-				navigate("/login");
+				navigate("/auth/login");
 			}
 		} catch (e) {
 			const error = e as Error;
