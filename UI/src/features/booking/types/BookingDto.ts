@@ -1,29 +1,24 @@
-export type BookingStatus =
-  | "DRAFT"
-  | "PENDING"
-  | "CANCELLED"
-  | "BOOKED"
-  | "COMPLETED";
-
-export type ItemType = "ROOM" | "BED";
-
 export interface RoomDetail {
   id: string;
-  itemId: string;
-  itemType: ItemType;
-  count: number;
+  name: string;
+  type: "ROOM" | "BED";
   note?: string;
 }
 
 export interface BookingDto {
   id: string;
-  startDate: string; // ISO string from backend
-  endDate: string;
+  startDate: Date ;
+  endDate: Date ;
   guestCount: number;
   referenceNo: number;
-  status: BookingStatus;
-  userId: string;
+  user: {
+    name: string;
+    email: string;
+    phone: string;
+  };
+  accommodation: {
+    name: string;
+    address: string;
+  };
   rooms: RoomDetail[];
-  createdAt: string;
-  updatedAt: string;
 }
