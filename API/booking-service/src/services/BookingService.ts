@@ -31,4 +31,11 @@ export default class BookingService {
     //     return bookings;
     // }
 
+    public async createBooking(data: any) {
+        try {
+            return await this.bookingRepository.createBooking(data);
+        } catch (err) {
+            throw err;
+        }
+    }
 }
