@@ -238,11 +238,11 @@ class AuthService {
         }
     }
 
-    public async confirmForgotPassword(code: string, email: string, newPassword: string) {
+    public async confirmForgotPassword(email: string, code: string, newPassword: string) {
         const command = new ConfirmForgotPasswordCommand({
             ClientId: this.cognitoAppClientId,
-            ConfirmationCode: code,
             Username: email,
+            ConfirmationCode: code,
             Password: newPassword,
         });
         try {
