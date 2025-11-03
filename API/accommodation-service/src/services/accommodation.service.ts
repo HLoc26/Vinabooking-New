@@ -1,7 +1,5 @@
-import axios from "axios";
 import { accommodationRepository } from "../repositories/accommodation.repository";
 import { NotFoundError } from "../errors";
-import config from "../config";
 //import { AccommodationDetailDto } from '../types/accommodation';
 //import { UserClient, RoomClient, ImageClient, ReviewClient } from "../clients";
 import { roomClient } from "../clients/room.client";
@@ -17,14 +15,12 @@ export class AccommodationService {
 
         // 2. Call API from Room Service to get room list
         let rooms = [];
-        const roomServiceUrl = `${config.roomEndpoint}/accommodation/${id}`;
-
+        // const roomServiceUrl = `${config.roomEndpoint}/accommodation/${id}`;
         try {
             console.log(
-                `[AccommodationService] Fetching rooms from: ${roomServiceUrl}`
+                `[AccommodationService] Fetching rooms from RoomClient for accomm ID: ${id}`
             );
-            const response = await axios.get(roomServiceUrl);
-            rooms = response.data;
+            rooms = await roomClient.getRoomsByAccommodationId(id);
         } catch (error) {
             console.error(
                 `[AccommodationService] Error fetching rooms for accomm ID ${id}:`,
