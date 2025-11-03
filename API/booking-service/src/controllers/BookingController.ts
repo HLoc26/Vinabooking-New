@@ -78,6 +78,7 @@ export default class BookingController {
                 ...req.body,
                 userId, // attach authenticated user
                 status: "PENDING",
+                referenceNo: Number(`${Date.now()}${Math.floor(Math.random() * 100)}`)
             };
 
             const newBooking = await this.bookingRepository.createBooking(bookingData);
@@ -88,12 +89,11 @@ export default class BookingController {
         }
     public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
         try {
-            const bookingData = { ...req.body, status: "DRAFT" };
-            const newBooking = await this.bookingRepository.createBooking(bookingData);
-            return ResponseHelper.success(res, newBooking, 201);
-        } catch (err: unknown) {
-            const e = err as Error;
-            return ResponseHelper.error(res, e.message);
+            const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number(`${Date.now()}${Math.floor(Math.random() * 100)}`) };
+            const newBooking = await this.bookingService.createBooking(bookingData);
+            return ResponseHelper.success(res, { booking: newBooking }, 201);
+        } catch (err: any) {
+            return ResponseHelper.error(res, err.message);
         }
     }
 }
