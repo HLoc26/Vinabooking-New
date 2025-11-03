@@ -29,15 +29,13 @@ class ImageClient {
     async getImagesForEntity(entityId: string): Promise<ImageDto[]> {
         const entityType = "ACCOMMODATION";
 
-        try {
-            console.log(
-                `[ImageClient] Calling Image Service: GET /images?entityType=${entityType}&entityId=${entityId}`
-            );
+        const url = `/${entityType}/${entityId}`;
 
-            const response = await this.client.get<ApiResponse<ImageDto[]>>(
-                "/images",
-                { params: { entityType, entityId } }
-            );
+        try {
+            console.log(`[ImageClient] Calling Image Service: GET ${url}`);
+
+            const response =
+                await this.client.get<ApiResponse<ImageDto[]>>(url);
 
             if (response.data && response.data.success) {
                 return response.data.data || [];
