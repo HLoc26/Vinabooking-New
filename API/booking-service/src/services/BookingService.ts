@@ -33,7 +33,7 @@ export default class BookingService {
 
     public async createBooking(data: any) {
         try {
-        return this.bookingRepository.createBooking(data);
+        return await this.bookingRepository.createBooking(data);
         } catch (err) {
             throw err;
         }
