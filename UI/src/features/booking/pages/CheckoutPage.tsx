@@ -44,13 +44,16 @@ export default function CheckoutPage() {
 					<strong>Address:</strong> {booking.accommodation.address}
 				</p>
 				<p>
-					<strong>Check-in:</strong> {booking.startDate}
+					<strong>Check-in:</strong> {booking.startDate.toISOString()}
 				</p>
 				<p>
-					<strong>Check-out:</strong> {booking.endDate}
+					<strong>Check-out:</strong> {booking.endDate.toISOString()}
 				</p>
 				<p>
 					<strong>Guests:</strong> {booking.guestCount}
+				</p>
+				<p>
+					<strong>Reference No:</strong> {booking.referenceNo}
 				</p>
 				<h4>Rooms / Beds</h4>
 				<ul>
