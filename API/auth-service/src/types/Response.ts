@@ -43,3 +43,8 @@ export type GetOTPResponse = {
     CodeDeliveryDestination?: string;
     CodeDeliveryMedium?: string;
 };
+export type ForgotPasswordResponse = GetOTPResponse;
+
+export interface ConfirmForgotPasswordResponse {
+    success: boolean;
+}

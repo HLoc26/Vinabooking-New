@@ -11,6 +11,8 @@ import {
     AdminUpdateUserAttributesCommand,
     AdminGetUserCommand,
     UserNotFoundException,
+    ForgotPasswordCommand,
+    ConfirmForgotPasswordCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
 import "dotenv/config";
@@ -218,6 +220,36 @@ class AuthService {
             return response;
         } catch (error) {
             console.error("[DEBUG] [SIGN OUT]", error);
+            throw error;
+        }
+    }
+
+    public async forgotPassword(email: string) {
+        const command = new ForgotPasswordCommand({
+            ClientId: this.cognitoAppClientId,
+            Username: email,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [FORGOT PASSWORD]", error);
+            throw error;
+        }
+    }
+
+    public async confirmForgotPassword(code: string, email: string, newPassword: string) {
+        const command = new ConfirmForgotPasswordCommand({
+            ClientId: this.cognitoAppClientId,
+            ConfirmationCode: code,
+            Username: email,
+            Password: newPassword,
+        });
+        try {
+            const response = await this.cognitoClient.send(command);
+            return response;
+        } catch (error) {
+            console.error("[DEBUG] [CONFIRM FORGOT PASSWORD]", error);
             throw error;
         }
     }

@@ -1,6 +1,16 @@
 import { type Request } from "express";
 
-import type { ApiResponse, ConfirmUserResponse, GetOTPResponse, LogInResponse, RefreshResponse, SignUpResponse, VerifyResponse } from "./Response";
+import type {
+    ApiResponse,
+    ConfirmForgotPasswordResponse,
+    ConfirmUserResponse,
+    ForgotPasswordResponse,
+    GetOTPResponse,
+    LogInResponse,
+    RefreshResponse,
+    SignUpResponse,
+    VerifyResponse,
+} from "./Response";
 
 export interface SignUpInfo {
     email: string;
@@ -45,3 +55,13 @@ export interface RefreshInfo {
 export type RefreshRequest = Request<unknown, ApiResponse<RefreshResponse>, RefreshInfo, unknown>;
 
 export type GetOTPRequest = Request<unknown, ApiResponse<GetOTPResponse>, unknown, { email: string }>;
+
+export type ForgotPasswordRequest = Request<unknown, ApiResponse<ForgotPasswordResponse>, { email: string }, unknown>;
+
+export interface ConfirmForgotPayload {
+    email: string;
+    code: string;
+    newPassword: string;
+}
+
+export type ConfirmForgotPasswordRequest = Request<unknown, ApiResponse<ConfirmForgotPasswordResponse>, ConfirmForgotPayload, unknown>;
