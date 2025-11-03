@@ -78,6 +78,12 @@ const LoginForm: React.FC = () => {
 				{loading ? "Processing..." : "Log in"}
 			</Button>
 
+			<Typography textAlign="center" variant="body2" mt={1}>
+				<Link href="/auth/forgot-password" color="primary">
+					Forgot your password?
+				</Link>
+			</Typography>
+
 			<Typography textAlign="center" variant="body2" mt={2}>
 				Doesn't have an account?{" "}
 				<Link href="/auth/register" color="primary">
