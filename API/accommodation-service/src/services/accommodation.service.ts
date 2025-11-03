@@ -4,6 +4,7 @@ import { NotFoundError } from "../errors";
 import config from "../config";
 //import { AccommodationDetailDto } from '../types/accommodation';
 //import { UserClient, RoomClient, ImageClient, ReviewClient } from "../clients";
+import { roomClient } from "../clients/room.client";
 
 export class AccommodationService {
     async getAccommodationById(id: string) {
@@ -36,6 +37,27 @@ export class AccommodationService {
             ...accommodation,
             rooms: rooms,
         };
+    }
+    
+    /**
+     * Gets Accommodation details by a Room ID.
+     */
+    async getAccommodationByRoomId(roomId: string) {
+        console.log(
+            `[AccommodationService] Finding accommodation for room ID: ${roomId}`
+        );
+        // 1. Call Room Service Client to get the Accommodation ID
+        const accommodationId =
+            await roomClient.getAccommodationIdByRoomId(roomId);
+        console.log(
+            `[AccommodationService] Found accommodation ID: ${accommodationId} for room ID: ${roomId}`
+        );
+
+        // 2. Use the existing getAccommodationById to fetch details (which includes fetching rooms again)
+        const accommodationDetails =
+            await this.getAccommodationById(accommodationId);
+
+        return accommodationDetails;
     }
 
     // Nghiên cứu sau
