@@ -4,6 +4,7 @@ import { Palette } from "@mui/icons-material";
 import { useAuth } from "../../user/hooks/useAuth";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useNavigate } from "react-router-dom";
+import { GoogleAuthButton } from "../../user/components/GoogleAuthButton";
 
 export const HomePage = () => {
 	const navigate = useNavigate();
@@ -65,7 +66,7 @@ export const HomePage = () => {
 								variant="contained"
 								color="success"
 								onClick={() => {
-									navigate("/login");
+									navigate("/auth/login");
 								}}
 							>
 								Log In
@@ -77,7 +78,7 @@ export const HomePage = () => {
 								variant="contained"
 								color="info"
 								onClick={() => {
-									navigate("/register");
+									navigate("/auth/register");
 								}}
 							>
 								Register
@@ -87,6 +88,9 @@ export const HomePage = () => {
 							<Button fullWidth variant="contained" color="error" onClick={handleLogout}>
 								Sign Out
 							</Button>
+						</Grid>
+						<Grid size={{ xs: 6, sm: 3 }}>
+							<GoogleAuthButton />
 						</Grid>
 					</Grid>
 				</Paper>

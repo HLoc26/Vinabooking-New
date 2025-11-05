@@ -1,9 +1,9 @@
 import express from "express";
-import AuthRouter from "./routes/AuthRouter";
 import session from "express-session";
 
 import "dotenv";
 import ErrorHandler from "./middlewares/ErrorHandler";
+import AuthRouterFactory from "./routes/AuthRouterFactory";
 
 export const startRest = () => {
     const app = express();
@@ -18,7 +18,7 @@ export const startRest = () => {
         })
     );
 
-    app.use("/", new AuthRouter().router);
+    app.use("/", AuthRouterFactory.createAuthRouter());
 
     app.use(ErrorHandler.handle);
 
