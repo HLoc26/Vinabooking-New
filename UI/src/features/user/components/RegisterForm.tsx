@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Box, Button, TextField, Typography, Link } from "@mui/material";
+import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import { MuiTelInput } from "mui-tel-input";
 
 import { useNavigate } from "react-router-dom";
@@ -12,6 +12,7 @@ import PasswordToolbox from "./PasswordToolbox";
 import type { EUserType } from "../types/UserDto";
 
 import { validatePassword, getPasswordChecklist } from "../utils/validatePassword";
+import { GoogleAuthButton } from "./GoogleAuthButton";
 
 const RegisterForm: React.FC = () => {
 	const [values, setValues] = useState({
@@ -69,7 +70,7 @@ const RegisterForm: React.FC = () => {
 		try {
 			const response = await register(values.name, values.email, values.password, values.phone, values.userType);
 			if (!response) throw new Error("");
-			navigate("/otp", {
+			navigate("/auth/otp", {
 				state: {
 					destination: response.destination,
 					medium: response.medium,
@@ -88,7 +89,6 @@ const RegisterForm: React.FC = () => {
 			<Box display="flex" justifyContent="center">
 				<UserSwitcher value={values.userType} onChange={(v) => setValues((s) => ({ ...s, userType: v }))} />
 			</Box>
-
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -97,7 +97,6 @@ const RegisterForm: React.FC = () => {
 				value={values.name}
 				onChange={handleChange}
 			/>
-
 			<MuiTelInput
 				value={values.phone}
 				onChange={(value, info) => {
@@ -110,7 +109,6 @@ const RegisterForm: React.FC = () => {
 				margin="normal"
 				fullWidth
 			/>
-
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -131,10 +129,8 @@ const RegisterForm: React.FC = () => {
 				onFocus={handleFocus}
 				onBlur={handleBlur}
 			/>
-
 			{/* Toolbox popup */}
 			<PasswordToolbox anchorEl={anchorEl} open={showToolbox} checklist={checklist} />
-
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -144,7 +140,6 @@ const RegisterForm: React.FC = () => {
 				value={values.confirmPassword}
 				onChange={handleChange}
 			/>
-
 			<Button //
 				fullWidth
 				variant="contained"
@@ -155,13 +150,23 @@ const RegisterForm: React.FC = () => {
 			>
 				{loading ? "Processing..." : "Register"}
 			</Button>
-
 			<Typography variant="body2" textAlign="center" mt={2}>
 				Already have an account?{" "}
-				<Link component="button" onClick={() => navigate("/login")} color="primary">
+				<Link component="button" onClick={() => navigate("/auth/login")} color="primary">
 					Login
 				</Link>
 			</Typography>
+			<Box display="flex" flexDirection="column" alignItems="center" width="100%">
+				<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
+					<Divider sx={{ flexGrow: 1 }} />
+					<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
+						or
+					</Typography>
+					<Divider sx={{ flexGrow: 1 }} />
+				</Box>
+
+				<GoogleAuthButton />
+			</Box>
 		</Box>
 	);
 };

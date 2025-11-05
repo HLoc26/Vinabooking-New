@@ -1,7 +1,7 @@
 import express, { type Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import UserController from "../controllers/UserController";
-import type { FindUserByIdRequest } from "../types/Request";
+import type { FindUserByIdRequest, FindUserRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
 import { getRedisClient } from "../clients/RedisSingleton"; // thay đổi từ default export sang function
 
 // Base route: /users
@@ -26,17 +26,25 @@ class UserRouter {
             });
         });
 
+        this.router.post("/", (req: SaveUserDirectRequest, res: Response) => {
+            return this.userController.saveUserDirect(req, res);
+        });
+
+        this.router.get("/", (req: FindUserRequest, res: Response) => {
+            return this.userController.getUser(req, res);
+        });
+
         // Get user by Id
         this.router.get("/:id", (req: FindUserByIdRequest, res: Response) => {
             return this.userController.getUserById(req, res);
         });
 
-        this.router.post("/save-cache", (req: Request, res: Response) => {
+        this.router.post("/cache", (req: Request, res: Response) => {
             return this.userController.cacheUser(req, res);
         });
 
-        this.router.post("/save-db", (req: Request, res: Response) => {
-            return this.userController.saveUser(req, res);
+        this.router.post("/db", (req: Request, res: Response) => {
+            return this.userController.saveUserFromCache(req, res);
         });
     }
 }
