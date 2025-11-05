@@ -2,6 +2,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import type { BookingDto } from "../types/BookingDto";
 import { useState, useEffect } from "react";
+import { Snackbar, Alert } from "@mui/material";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
@@ -11,10 +12,17 @@ export default function CheckoutPage() {
 	const { confirmBooking, loading } = useConfirmBooking();
 	const [qrUrl, setQrUrl] = useState("");
 
+	// snackbar state
+	const [snackbar, setSnackbar] = useState<{
+		open: boolean;
+		message: string;
+		severity: "success" | "error";
+	}>({ open: false, message: "", severity: "success" });
+
 	useEffect(() => {
 		// generate a random fake QR code
 		const randomId = Math.floor(Math.random() * 1_000_000_000);
-		setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=BOOKING_${randomId}`);
+		setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=BOOKING_${booking.id}`);
 	}, []);
 
 	if (!booking) return <p style={{ textAlign: "center", marginTop: "2rem" }}>No booking found</p>;
@@ -22,10 +30,19 @@ export default function CheckoutPage() {
 	const handleConfirm = async () => {
 		try {
 			await confirmBooking(booking);
-			alert("🎉 Booking confirmed successfully!");
-			navigate("/bookings", { state: { booking } });
+			setSnackbar({
+				open: true,
+				message: "Booking confirmed successfully!, please check your booking history ",
+				severity: "success",
+			});
+			// navigate after a short delay
+			setTimeout(() => navigate("/", { state: { booking } }), 1500);
 		} catch {
-			alert("❌ Failed to confirm booking. Please try again.");
+			setSnackbar({
+				open: true,
+				message: "Failed to confirm booking. Please try again.",
+				severity: "error",
+			});
 		}
 	};
 
@@ -52,9 +69,7 @@ export default function CheckoutPage() {
 				<p>
 					<strong>Guests:</strong> {booking.guestCount}
 				</p>
-				<p>
-					<strong>Reference No:</strong> {booking.referenceNo}
-				</p>
+
 				<h4>Rooms / Beds</h4>
 				<ul>
 					{booking.rooms.map((room) => (
@@ -79,6 +94,13 @@ export default function CheckoutPage() {
 			>
 				{loading ? "Processing..." : "Confirm Booking"}
 			</button>
+
+			{/* ✅ Snackbar notification */}
+			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
+				<Alert onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
+					{snackbar.message}
+				</Alert>
+			</Snackbar>
 		</div>
 	);
 }
