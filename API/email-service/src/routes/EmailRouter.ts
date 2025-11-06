@@ -22,6 +22,10 @@ class EmailRouter {
                 redis: ping,
             });
         });
+
+        this.router.post("/", async (req: Request, res: Response) => {
+            return this.emailController.sendMail(req, res);
+        });
     }
 }
 
