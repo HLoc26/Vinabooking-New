@@ -1,0 +1,137 @@
+openapi: 3.0.3
+info:
+  title: Vinabooking Email Service API
+  version: 1.0.0
+  description: API for sending emails through Gmail using SMTP, used internally within the Vinabooking system.
+
+servers:
+  - url: http://localhost:3000/email
+
+paths:
+  /:
+    post:
+      summary: Send an email
+      description: Sends an email using Gmail SMTP. Supports both plain text and HTML content.
+      operationId: sendMail
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              $ref: '#/components/schemas/SendMailRequestPayload'
+            example:
+              to: "user@example.com"
+              subject: "OTP Verification Code"
+              message: "Your OTP code is 123456"
+              html: "<p><strong>OTP:</strong> 123456</p>"
+      responses:
+        '200':
+          description: Email sent successfully
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiResponseSendMailResponsePayload'
+              example:
+                success: true
+                data:
+                  accepted: ["user@example.com"]
+                  rejected: []
+                  envelope:
+                    from: "vinabooking.hcmute@gmail.com"
+                    to: ["user@example.com"]
+                  messageId: "<cf15ad69-deca-7a36-4d2e-3edc8c42c0ca@gmail.com>"
+                  response: "250 2.0.0 OK 1762420849 ..."
+                error: null
+        '400':
+          description: Invalid request
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+        '500':
+          description: Internal server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/ApiErrorResponse'
+
+components:
+  schemas:
+    SendMailRequestPayload:
+      type: object
+      required:
+        - to
+        - subject
+        - message
+      properties:
+        to:
+          type: string
+          format: email
+          description: Recipient email address
+        subject:
+          type: string
+          description: Email subject line
+        message:
+          type: string
+          description: Plain text email body
+        html:
+          type: string
+          description: Optional HTML email body
+
+    SentMessageInfo:
+      type: object
+      properties:
+        envelope:
+          type: object
+          properties:
+            from:
+              type: string
+              format: email
+            to:
+              type: array
+              items:
+                type: string
+                format: email
+        messageId:
+          type: string
+        accepted:
+          type: array
+          items:
+            type: string
+        rejected:
+          type: array
+          items:
+            type: string
+        pending:
+          type: array
+          items:
+            type: string
+        response:
+          type: string
+
+    SendMailResponsePayload:
+      $ref: '#/components/schemas/SentMessageInfo'
+
+    ApiResponseSendMailResponsePayload:
+      type: object
+      properties:
+        success:
+          type: boolean
+        data:
+          $ref: '#/components/schemas/SendMailResponsePayload'
+        error:
+          type: string
+          nullable: true
+
+    ApiErrorResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        data:
+          type: "null"
+          example: null
+        error:
+          type: string
+          example: "Internal Server Error"
