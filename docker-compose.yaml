@@ -96,6 +96,19 @@ services:
             - ./API/image-service:/app
             - /app/node_modules
 
+    email-service:
+        build:
+            context: "./"
+            dockerfile: "./API/email-service/Dockerfile"
+        env_file:
+            - ./API/common.env
+            - ./API/email-service/docker.env
+        ports:
+            - "3008:3008"
+        volumes:
+            - ./API/email-service:/app
+            - /app/node_modules
+
     api-gateway:
         build:
             context: "./API/api-gateway"
