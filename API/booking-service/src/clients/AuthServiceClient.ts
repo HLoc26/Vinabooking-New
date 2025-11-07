@@ -1,5 +1,5 @@
 import axios from "axios";
-import { UserPayload } from "../types/Request";
+import { UserPayload } from "../types/User";
 class AuthServiceClient {
     private readonly axiosInstance;
     constructor() {
