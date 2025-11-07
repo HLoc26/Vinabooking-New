@@ -18,7 +18,7 @@ class SmtpClient implements IMailClient {
         });
     }
 
-    public async send(to: string, subject: string, message: string, html?: string) {
+    public async send(to: string[] | string, subject: string, message: string, html?: string) {
         try {
             const info = await this.transporter.sendMail({
                 from: `"Vinabooking" <${process.env["GMAIL_APP_USER"]}>`,

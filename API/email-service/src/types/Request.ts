@@ -2,7 +2,7 @@ import { Request } from "express";
 import { SendMailResponse } from "./Response";
 
 export type SendMailRequestPayload = {
-    to: string;
+    to: string[] | string;
     subject: string;
     message: string;
     html?: string;
