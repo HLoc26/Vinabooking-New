@@ -8,13 +8,27 @@ import ResponseHelper from "../utils/ResponseHelper";
 import { type Response } from "express";
 import type User from "../classes/User";
 import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserRequest } from "../types/Request";
+import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
 
 class UserController {
     private userService = new UserService();
+
+    public async getUser(req: FindUserRequest, res: Response<ApiResponse<UserResponse>>) {
+        const { id, email } = req.query;
+        const withFavourites = req.query.withFavourites === "true";
+        if (!id && !email) {
+            throw new BadRequestError("Specify at least an email an an id");
+        }
+        const user: User | null = await this.userService.getUser({ id, email }, withFavourites);
+        if (!user) {
+            throw new NotFoundError("User not found");
+        }
+
+        return ResponseHelper.success<UserResponse>(res, user.toJson());
+    }
 
     public async getUserById(req: FindUserByIdRequest, res: Response<ApiResponse<UserResponse>>) {
         const id = req.params.id;
@@ -33,6 +47,16 @@ class UserController {
         return ResponseHelper.success<UserResponse>(res, user.toJson());
     }
 
+    public async saveUserDirect(req: SaveUserDirectRequest, res: Response<ApiResponse<boolean>>) {
+        const { cognitoSub, email, name } = req.body;
+        const OK = await this.userService.saveUser(cognitoSub, email, name);
+
+        if (!OK) {
+            throw new DatabaseError("Failed to save user to database");
+        }
+        return ResponseHelper.success<SaveUserResponse>(res, { success: true });
+    }
+
     public async cacheUser(req: CacheUserRequest, res: Response<ApiResponse<CacheUserResponse>>) {
         const cacheInfo: CacheInfo = req.body;
 
@@ -44,10 +68,10 @@ class UserController {
         return ResponseHelper.success<CacheUserResponse>(res, { success: true });
     }
 
-    public async saveUser(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
+    public async saveUserFromCache(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
         const email = req.body.email;
 
-        const OK = await this.userService.saveUser(email);
+        const OK = await this.userService.saveUserFromCache(email);
 
         if (!OK) {
             throw new DatabaseError("Failed to save user to database");
