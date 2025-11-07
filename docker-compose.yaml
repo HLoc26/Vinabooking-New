@@ -105,6 +105,7 @@ services:
             - ./API/email-service/docker.env
         ports:
             - "3008:3008"
+            - "50058:50058"
         volumes:
             - ./API/email-service:/app
             - /app/node_modules
