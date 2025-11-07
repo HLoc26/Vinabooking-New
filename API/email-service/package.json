@@ -20,6 +20,9 @@
         "yamljs": "^0.3.0"
     },
     "devDependencies": {
+        "@bufbuild/buf": "^1.59.0",
+        "@bufbuild/protoc-gen-es": "^2.10.0",
+        "@grpc/grpc-js": "^1.14.0",
         "@types/express": "^5.0.3",
         "@types/node": "^24.3.0",
         "@types/nodemailer": "^7.0.3",
