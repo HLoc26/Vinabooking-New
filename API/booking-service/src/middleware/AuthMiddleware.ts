@@ -3,11 +3,9 @@ import { AuthenticatedRequest } from "../types/Request";
 import AuthServiceClient from "../clients/AuthServiceClient";
 
 export class AuthMiddleware {
-    private static authServiceClient: AuthServiceClient;
+    public static authServiceClient = new AuthServiceClient();
     constructor() {
-        AuthMiddleware.authServiceClient = new AuthServiceClient();
     }
-
     static async verifyUser(req: AuthenticatedRequest, res: Response, next: NextFunction) {
         try {
             const authHeader = req.headers.authorization;
