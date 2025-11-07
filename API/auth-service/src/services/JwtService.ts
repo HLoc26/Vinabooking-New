@@ -21,6 +21,10 @@ class JwtService {
         const payload = await verifier.verify(token);
         return payload;
     }
+
+    public static parseJwt(token: string) {
+        return JSON.parse(Buffer.from(token.split(".")[1], "base64").toString());
+    }
 }
 
 export default JwtService;

@@ -1,12 +1,32 @@
 import type { User } from "../../generated/prisma/index.js";
 import PrismaSingleton from "../clients/PrismaSingleton";
-import { type UserWithFavourites, type SaveUserInfo, EUserRole } from "../types/User";
+import { type UserWithFavourites, type SaveUserInfo } from "../types/User";
+import { userRoleMapper } from "../utils/userRoleMapper";
 import FavouriteRepository from "./FavouriteRepository";
 
 class UserRepository {
     private prismaClient = PrismaSingleton.getInstance();
 
     constructor() {}
+
+    public async getUserByEmail(email: string, withFavourites: boolean = false): Promise<UserWithFavourites | User | null> {
+        const queryOptions = {
+            where: { email },
+            include: {},
+        };
+
+        if (withFavourites) {
+            queryOptions.include = {
+                favourites: {
+                    include: {
+                        items: true,
+                    },
+                },
+            };
+        }
+
+        return await this.prismaClient.user.findUnique(queryOptions);
+    }
 
     public async getUserById(id: string, withFavourites: boolean = false): Promise<UserWithFavourites | User | null> {
         const queryOptions = {
@@ -35,7 +55,7 @@ class UserRepository {
                     name: info.name,
                     email: info.email,
                     phone: info.phone,
-                    role: EUserRole.TRAVELLER,
+                    role: userRoleMapper(info.userType),
                 },
             });
 

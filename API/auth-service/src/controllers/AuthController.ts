@@ -25,19 +25,24 @@ import IdentityProviderError from "../errors/IdentityProviderError";
 import UserService from "../services/UserService";
 import { retry } from "../utils/RetryHelper";
 import { UsernameExistsException } from "@aws-sdk/client-cognito-identity-provider";
-import type { CacheInfo } from "../types/Axios";
+import type { CacheInfo, GoogleOAuthResponse } from "../types/Axios";
 import JwtService from "../services/JwtService";
 import BadRequestError from "../errors/BadRequestError";
 import MappingUtil from "../utils/MappingUtil";
+import OAuthService from "../services/OAuthService";
+import { EProvider } from "../../generated/prisma/enums";
+import AuthRepository from "../repositories/AuthRespository";
 
 class AuthController {
-    private authService = new AuthService();
-    private userService = new UserService();
-
-    constructor() {}
+    constructor(
+        private authService: AuthService,
+        private userService: UserService,
+        private oauthService: OAuthService,
+        private authRepository: AuthRepository
+    ) {}
 
     public async signUp(req: SignUpRequest, res: Response, next: NextFunction) {
-        const { email, password, name, phone }: SignUpInfo = req.body;
+        const { email, password, name, phone, userType }: SignUpInfo = req.body;
 
         // Sign up user
         const cognitoResponse = await retry(async () => {
@@ -51,12 +56,13 @@ class AuthController {
         res.locals["email"] = email;
         res.locals["name"] = name;
         res.locals["phone"] = phone;
+        res.locals["userType"] = userType;
         next();
         // return ResponseHelper.success(res, cognitoResponse);
     }
 
     public async cacheUser(_req: Request, res: Response<ApiResponse<SignUpResponse>>) {
-        const { cognitoResponse, email, name, phone } = res.locals;
+        const { cognitoResponse, email, name, phone, userType } = res.locals;
         // Cache user
         try {
             const cacheInfo: CacheInfo = {
@@ -65,6 +71,7 @@ class AuthController {
                     cognitoSub: cognitoResponse.UserSub,
                     name: name,
                     phone: phone,
+                    userType: userType,
                 },
             };
             const success = await this.userService.cacheUser(cacheInfo);
@@ -93,6 +100,8 @@ class AuthController {
             throw new IdentityProviderError("Invalid OTP Code");
         }
 
+        await this.authRepository.createUserProvider(email, EProvider.Credentials);
+
         res.locals["email"] = email;
 
         next();
@@ -101,7 +110,7 @@ class AuthController {
     public async saveUser(_req: Request, res: Response<ApiResponse<ConfirmUserResponse>>) {
         const email = res.locals["email"];
 
-        const response = await this.userService.saveUser(email);
+        const response = await this.userService.saveUserFromCache(email);
 
         if (!response) {
             throw new Error("Fail to save user to db");
@@ -112,6 +121,12 @@ class AuthController {
 
     public async logIn(req: LogInRequest, res: Response<ApiResponse<LogInResponse>>) {
         const { username, password } = req.body;
+
+        const userAuthProvider = (await this.authRepository.getUserProvider(username)).provider;
+
+        if (userAuthProvider === EProvider.Google) {
+            throw new Error("This account was registered using Google, please try login again with your Google Account");
+        }
 
         const awsResponse = await this.authService.logIn(username, password);
         const auth = awsResponse.AuthenticationResult;
@@ -126,13 +141,27 @@ class AuthController {
             throw new Error("Invalid response from auth provider");
         }
 
+        const userFromCognito = await JwtService.verifyIdToken(auth.IdToken);
+        const userId = userFromCognito.sub;
+        const userInDb = await this.userService.getUserById(userId);
+
         const response: LogInResponse = {
             accessToken: auth.AccessToken,
             idToken: auth.IdToken,
-            refreshToken: auth.RefreshToken,
             expiresIn: auth.ExpiresIn,
             tokenType: auth.TokenType,
+            user: {
+                id: userId,
+                name: userInDb.name,
+                email: username, // user will use their email to login -> email = username
+            },
         };
+        res.cookie("refresh_token", auth.RefreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
 
         return ResponseHelper.success<LogInResponse>(res, response);
     }
@@ -172,7 +201,6 @@ class AuthController {
         const { refreshToken } = req.body;
         const awsResponse = await this.authService.refreshToken(refreshToken);
         const auth = awsResponse.AuthenticationResult;
-        console.log(auth);
         if (
             !auth || //
             !auth.AccessToken ||
@@ -194,7 +222,6 @@ class AuthController {
 
     public async getNewOtp(req: GetOTPRequest, res: Response<ApiResponse<GetOTPResponse>>) {
         const username = req.query.email;
-        console.log(username);
         const cognitoResponse = await this.authService.getOtpCode(username);
 
         const response: GetOTPResponse = {
@@ -203,6 +230,92 @@ class AuthController {
         };
 
         return ResponseHelper.success<GetOTPResponse>(res, response);
+    }
+
+    public async signOut(req: Request, res: Response) {
+        const authHeader = req.headers.authorization;
+        console.log(req.headers);
+        if (!authHeader?.startsWith("Bearer ")) {
+            throw new Error("Access token missing");
+        }
+
+        const accessToken = authHeader.split(" ")[1];
+
+        const response = await this.authService.signOut(accessToken);
+        const statusCode = response.$metadata?.httpStatusCode;
+
+        if (statusCode !== 200) {
+            throw new Error(`Error while signing out with code ${statusCode}`);
+        }
+
+        return ResponseHelper.success(res, { success: true });
+    }
+
+    public async googleCallback(req: Request, res: Response) {
+        const { code } = req.query;
+        if (!code) throw new BadRequestError("Missing code");
+        const userInfo: GoogleOAuthResponse = await this.oauthService.exchangeUserInfo(code as string);
+        const email = userInfo.email;
+        const name = userInfo.name;
+
+        const userExsitsInDb = await this.userService.getUser({ email: email });
+        const userExistsInCognito = await this.authService.findUser(email);
+
+        // If not exist, create one
+        if (!userExsitsInDb && !userExistsInCognito) {
+            const provider = await this.authRepository.createUserProvider(email, EProvider.Google);
+            console.log("Hello I am creating user here");
+            const cognitoSub = (await this.authService.oAuthSignUp(email)).UserSub;
+            if (!cognitoSub) {
+                throw new Error("Error while creating user");
+            }
+            await this.userService.saveUserDirect(cognitoSub, email, name);
+            console.log(provider);
+        }
+
+        // If existed, we have 2 cases: 1. used google; 2. used password
+        const userAuthProvider = (await this.authRepository.getUserProvider(email)).provider;
+        // If used password, ask user to login with password instead
+        if (userAuthProvider == EProvider.Credentials) {
+            const message = encodeURIComponent("This account was registered using password, please try login again with your password");
+            return res.redirect(`http://localhost:5173/oauth/error?message=${message}`);
+        }
+
+        const awsResponse = await this.authService.oAuthLogin(email);
+
+        const auth = awsResponse.AuthenticationResult;
+        if (
+            !auth || //
+            !auth.AccessToken ||
+            !auth.IdToken ||
+            !auth.RefreshToken ||
+            !auth.ExpiresIn ||
+            !auth.TokenType
+        ) {
+            throw new Error("Invalid response from auth provider");
+        }
+
+        const userFromCognito = await JwtService.verifyIdToken(auth.IdToken);
+        const userId = userFromCognito.sub;
+
+        res.cookie("refresh_token", auth.RefreshToken, {
+            httpOnly: true,
+            secure: true,
+            sameSite: "strict",
+            maxAge: 7 * 24 * 60 * 60 * 1000, // 7 days
+        });
+
+        const encodedUser = encodeURIComponent(
+            JSON.stringify({
+                id: userId,
+                email,
+                name: name,
+            })
+        );
+
+        res.redirect(
+            `http://localhost:5173/oauth/success?accessToken=${auth.AccessToken}&idToken=${auth.IdToken}&expiresIn=${auth.ExpiresIn}&user=${encodedUser}`
+        );
     }
 }
 
