@@ -1,7 +1,7 @@
 openapi: 3.0.3
 info:
   title: Vinabooking Email Service API
-  version: 1.0.0
+  version: 1.0.1
   description: API for sending emails through Gmail using SMTP, used internally within the Vinabooking system.
 
 servers:
@@ -11,7 +11,7 @@ paths:
   /:
     post:
       summary: Send an email
-      description: Sends an email using Gmail SMTP. Supports both plain text and HTML content.
+      description: Sends an email using Gmail SMTP. Supports both plain text and HTML content, and allows multiple recipients.
       operationId: sendMail
       requestBody:
         required: true
@@ -19,11 +19,19 @@ paths:
           application/json:
             schema:
               $ref: '#/components/schemas/SendMailRequestPayload'
-            example:
-              to: "user@example.com"
-              subject: "OTP Verification Code"
-              message: "Your OTP code is 123456"
-              html: "<p><strong>OTP:</strong> 123456</p>"
+            examples:
+              single:
+                summary: Send to a single recipient
+                value:
+                  to: "user@example.com"
+                  subject: "OTP Verification Code"
+                  message: "Your OTP code is 123456"
+              multiple:
+                summary: Send to multiple recipients
+                value:
+                  to: ["user1@example.com", "user2@example.com"]
+                  subject: "System Notification"
+                  message: "Your booking has been confirmed."
       responses:
         '200':
           description: Email sent successfully
@@ -31,17 +39,6 @@ paths:
             application/json:
               schema:
                 $ref: '#/components/schemas/ApiResponseSendMailResponsePayload'
-              example:
-                success: true
-                data:
-                  accepted: ["user@example.com"]
-                  rejected: []
-                  envelope:
-                    from: "vinabooking.hcmute@gmail.com"
-                    to: ["user@example.com"]
-                  messageId: "<cf15ad69-deca-7a36-4d2e-3edc8c42c0ca@gmail.com>"
-                  response: "250 2.0.0 OK 1762420849 ..."
-                error: null
         '400':
           description: Invalid request
           content:
@@ -65,9 +62,14 @@ components:
         - message
       properties:
         to:
-          type: string
-          format: email
-          description: Recipient email address
+          description: Recipient email address(es)
+          oneOf:
+            - type: string
+              format: email
+            - type: array
+              items:
+                type: string
+                format: email
         subject:
           type: string
           description: Email subject line

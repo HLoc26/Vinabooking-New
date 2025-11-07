@@ -11,5 +11,5 @@ export interface IMailClient {
      * @param message the message text (email body)
      * @param html (optional) the message text, but in html version. If this is specified, the client will send html instead of message
      */
-    send(to: string, subject: string, message: string, html?: string): Promise<SentMessageInfo>;
+    send(to: string[] | string, subject: string, message: string, html?: string): Promise<SentMessageInfo>;
 }
