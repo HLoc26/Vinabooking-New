@@ -10,7 +10,7 @@ class BookingRouterFactory {
     static createBookingRouter() {
         const bookingRepository = new BookingRepository();
         const bookingService = new BookingService(bookingRepository);
-        const bookingController = new BookingController(bookingService);
+        const bookingController = new BookingController(bookingService, bookingRepository);
 
         const bookingRouter = new BookingRouter(bookingController, Router());
         return bookingRouter.router;
@@ -25,30 +25,31 @@ class BookingRouter {
         this.registerRoutes();
     }
 
-        private registerRoutes() {
-            this.router.get("/health", (_req: Request, res: Response) => {
-                return ResponseHelper.success(res, { service: "Booking Service", success: true });
-            });
-		this.router.get(
-			"/",
-			(req: Request, res: Response, next: NextFunction) => {
-				return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
-			},
-			(req: Request, res: Response) => {
-				return this.bookingController.getBookings(req as AuthenticatedRequest, res);
-			}
-		);
-            this.router.post("/", (req,res: Response, next: NextFunction)=>{
-                return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next)
-            },(req, res: Response) => { 
-                return this.bookingController.createBooking(req as AuthenticatedRequest , res);
-            });
-            this.router.post("/draft", (req,res: Response, next: NextFunction)=>{
-                return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next)
-            },(req, res: Response) => { 
-                return this.bookingController.createDraftBooking(req as AuthenticatedRequest , res);
-            })};
-    }
+    private registerRoutes() {
+        this.router.get("/health", (_req: Request, res: Response) => {
+            return ResponseHelper.success(res, { service: "Booking Service", success: true });
+        });
+        this.router.get(
+            "/",
+            (req: Request, res: Response, next: NextFunction) => {
+                return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
+            },
+            (req: Request, res: Response) => {
+                return this.bookingController.getBookings(req as AuthenticatedRequest, res);
+            }
+        );
+        this.router.post("/", (req, res: Response, next: NextFunction) => {
+            return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
+        }, (req, res: Response) => {
+            return this.bookingController.createBooking(req as AuthenticatedRequest, res);
+        });
+        this.router.post("/draft", (req, res: Response, next: NextFunction) => {
+            return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
+        }, (req, res: Response) => {
+            return this.bookingController.createDraftBooking(req as AuthenticatedRequest, res);
+        });
+    };
+}
 
 
 export default BookingRouterFactory;
