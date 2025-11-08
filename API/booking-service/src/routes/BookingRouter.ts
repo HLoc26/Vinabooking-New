@@ -5,6 +5,7 @@ import BookingRepository from "../repositories/BookingRepository";
 import BookingService from "../services/BookingService";
 import { AuthMiddleware } from "../middleware/AuthMiddleware";
 import { AuthenticatedRequest } from "../types/Request";
+import accommodationClient from "../clients/AccommodationServiceClient";
 
 class BookingRouterFactory {
     static createBookingRouter() {
@@ -40,12 +41,22 @@ class BookingRouter {
             return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
         });
 
-        this.router.get("/", (req: Request, res: Response) => {
-            return this.bookingController.getBookings(
-                req as AuthenticatedRequest,
-                res
-            );
-        });
+        this.router.get(
+            "/",
+            async (req, res, next) => {
+                if (req.query.entity === "accommodation") {
+                    try {
+                        const data = await accommodationClient.getAccommodationsByRoomId(String(req.query.id));
+                        console.log("Accommodation info:", data);
+                    } catch (err) {
+                        console.error(err);
+                        return ResponseHelper.error(res, "Failed to fetch accommodation info");
+                    }
+                }
+                next();
+            },
+            (req, res) => this.bookingController.getBookings(req, res)
+        );
 
         this.router.post("/", (req, res: Response) => {
             return this.bookingController.createBooking(
