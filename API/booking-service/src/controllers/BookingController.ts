@@ -5,6 +5,8 @@ import BookingService from "../services/BookingService";
 import { AuthenticatedRequest, BookingRequest } from "../types/Request";
 import BookingRepository from "../repositories/BookingRepository";
 import { BookingResponse } from "../types/Response";
+import AccommodationServiceClient from "../clients/AccommodationServiceClient";
+
 export default class BookingController {
     constructor(private readonly bookingService: BookingService, private readonly bookingRepository: BookingRepository) { }
     // public async getBookingById(req: Request, res: Response<ApiResponse>) {
@@ -40,15 +42,15 @@ export default class BookingController {
             let bookings;
 
             switch (entity) {
+                // case "accommodation":
+                //     bookings = await AccommodationServiceClient.getAccommodationsByRoomId(String(id));
+                //     break;
                 case "user":
                     bookings = await this.bookingService.getBookingsByUserId(String(id));
                     break;
                 case "room":
                     bookings = await this.bookingService.getBookingsByRoomId(String(id));
                     break;
-                // case "accommodation":
-                //     bookings = await this.bookingService.getBookingsByAccommodationId(String(id));
-                //     break;
                 case "booking":
                 case "id":
                     bookings = await this.bookingService.getBookingById(String(id));
@@ -56,7 +58,6 @@ export default class BookingController {
                 default:
                     return ResponseHelper.error(res, `Invalid entity type: ${entity}`);
             }
-
             return ResponseHelper.success(res, bookings);
         } catch (err: unknown) {
             const e = err as Error;
