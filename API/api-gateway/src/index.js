@@ -38,5 +38,6 @@ app.use(
         limit: "50mb",
     })
 );
+app.use("/email", proxy(process.env.EMAIL_ENDPOINT));
 
 app.listen(3000, () => console.log("API Gateway running on port 3000"));
