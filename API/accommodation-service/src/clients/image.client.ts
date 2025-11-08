@@ -8,6 +8,10 @@ interface ApiResponse<T> {
     error: string | null;
 }
 
+interface ImageServiceData {
+    images: ImageDto[];
+}
+
 class ImageClient {
     private client: AxiosInstance;
 
@@ -27,7 +31,7 @@ class ImageClient {
      * GET /images?entityType=ACCOMMODATION&entityId=:id
      */
     async getImagesForEntity(entityId: string): Promise<ImageDto[]> {
-        const entityType = "ACCOMMODATION";
+        const entityType = "accommodation";
 
         const url = `/${entityType}/${entityId}`;
 
@@ -35,10 +39,10 @@ class ImageClient {
             console.log(`[ImageClient] Calling Image Service: GET ${url}`);
 
             const response =
-                await this.client.get<ApiResponse<ImageDto[]>>(url);
+                await this.client.get<ApiResponse<ImageServiceData>>(url);
 
-            if (response.data && response.data.success) {
-                return response.data.data || [];
+            if (response.data.success && response.data.data?.images) {
+                return response.data.data.images;
             }
             return [];
         } catch (error) {
