@@ -86,7 +86,6 @@ export default class BookingController {
             const e = err as Error;
             return ResponseHelper.error(res, e.message);
         }
-    }
     public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
         try {
             const bookingData = { ...req.body, status: "DRAFT" };

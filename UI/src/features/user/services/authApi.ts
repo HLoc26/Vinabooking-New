@@ -1,5 +1,5 @@
 import axios from "axios";
-import { type GetOTPResponse, type ApiResponse, type SignUpResponse, type ConfirmUserResponse, type LogInResponse } from "../types/Response";
+import { type GetOTPResponse, type ApiResponse, type SignUpResponse, type ConfirmUserResponse, type LogInResponse, type ForgotPasswordSendOtpResponse } from "../types/Response";
 
 const api = axios.create({
 	baseURL: import.meta.env.VITE_API_URL || "http://localhost:3000",
@@ -41,6 +41,19 @@ export const authApi = {
 					},
 				}
 			)
+			.then((r) => r.data),
+	forgotPassword: (email: string) =>
+		api
+			.post<ApiResponse<ForgotPasswordSendOtpResponse>>("/auth/forgot-password", { email }) //
+			.then((r) => r.data),
+
+	confirmForgotPassword: (payload: {
+		email: string; //
+		code: string;
+		newPassword: string;
+	}) =>
+		api
+			.post<ApiResponse<{ success: boolean }>>("/auth/forgot-password/confirm", payload) //
 			.then((r) => r.data),
 };
 

@@ -61,6 +61,14 @@ class AuthRouter {
         this.router.post("/sign-out", this.authController.signOut.bind(this.authController));
 
         this.router.get("/google/callback", this.authController.googleCallback.bind(this.authController));
+
+        this.router.post("/forgot-password", (req: Request, res: Response) => {
+            return this.authController.forgotPassword(req, res);
+        });
+
+        this.router.post("/forgot-password/confirm", (req: Request, res: Response) => {
+            return this.authController.confirmForgotPassword(req, res);
+        });
     }
 }
 
