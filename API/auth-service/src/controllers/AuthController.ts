@@ -1,6 +1,8 @@
 import { type NextFunction, type Response, type Request } from "express";
 import {
+    ConfirmForgotPasswordRequest,
     ETokenType,
+    ForgotPasswordRequest,
     GetOTPRequest,
     RefreshRequest,
     VerifyRequest,
@@ -14,7 +16,9 @@ import AuthService from "../services/AuthService";
 import ResponseHelper from "../utils/ResponseHelper";
 import type {
     ApiResponse,
+    ConfirmForgotPasswordResponse,
     ConfirmUserResponse,
+    ForgotPasswordResponse,
     GetOTPResponse,
     LogInResponse,
     RefreshResponse,
@@ -316,6 +320,41 @@ class AuthController {
         res.redirect(
             `http://localhost:5173/oauth/success?accessToken=${auth.AccessToken}&idToken=${auth.IdToken}&expiresIn=${auth.ExpiresIn}&user=${encodedUser}`
         );
+    }
+
+    public async forgotPassword(req: ForgotPasswordRequest, res: Response<ApiResponse<ForgotPasswordResponse>>) {
+        const { email } = req.body;
+        if (!email) {
+            throw new BadRequestError("Missing email");
+        }
+
+        // Cognito send OTP to email
+        const result = await this.authService.forgotPassword(email);
+        if (!result.CodeDeliveryDetails) {
+            throw new IdentityProviderError("Failed to send reset code");
+        }
+
+        const response = {
+            CodeDeliveryDestination: result.CodeDeliveryDetails.Destination,
+            CodeDeliveryMedium: result.CodeDeliveryDetails.DeliveryMedium?.toString(),
+        };
+
+        return ResponseHelper.success<ForgotPasswordResponse>(res, response);
+    }
+
+    public async confirmForgotPassword(req: ConfirmForgotPasswordRequest, res: Response<ApiResponse<ConfirmForgotPasswordResponse>>) {
+        const { email, code, newPassword } = req.body;
+        if (!email || !code || !newPassword) {
+            throw new BadRequestError("Missing required fields");
+        }
+
+        // Confirm OTP and update new password
+        const result = await this.authService.confirmForgotPassword(email, code, newPassword);
+        if (!result) {
+            throw new IdentityProviderError("Invalid or expired reset code");
+        }
+
+        return ResponseHelper.success<ConfirmForgotPasswordResponse>(res, { success: true });
     }
 }
 

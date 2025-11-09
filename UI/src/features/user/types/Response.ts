@@ -40,3 +40,8 @@ export interface ApiResponse<T> {
 	data?: T;
 	error?: string | null;
 }
+
+export interface ForgotPasswordSendOtpResponse {
+	CodeDeliveryDestination?: string;
+	CodeDeliveryMedium?: string;
+}
