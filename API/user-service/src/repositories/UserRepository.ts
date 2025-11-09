@@ -27,26 +27,6 @@ class UserRepository {
 
         return await this.prismaClient.user.findUnique(queryOptions);
     }
-
-    public async getUserByEmail(email: string, withFavourites: boolean = false): Promise<UserWithFavourites | User | null> {
-        const queryOptions = {
-            where: { email },
-            include: {},
-        };
-
-        if (withFavourites) {
-            queryOptions.include = {
-                favourites: {
-                    include: {
-                        items: true,
-                    },
-                },
-            };
-        }
-
-        return await this.prismaClient.user.findUnique(queryOptions);
-    }
-
     public async getUserById(id: string, withFavourites: boolean = false): Promise<UserWithFavourites | User | null> {
         const queryOptions = {
             where: { id },
