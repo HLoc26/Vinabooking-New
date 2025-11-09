@@ -5,11 +5,11 @@ export default class ResponseHelper {
     static success<T>(res: Response<ApiResponse<T>>, data: T, statusCode = 200) {
         return res.status(statusCode).json({
             success: true,
-            data: data,
+            data,
         });
     }
 
-    static error(res: Response<ApiResponse>, message: string, statusCode = 400) {
+    static error(res: Response, message: string, statusCode = 400) {
         return res.status(statusCode).json({
             success: false,
             message,

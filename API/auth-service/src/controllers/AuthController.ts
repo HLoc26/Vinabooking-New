@@ -43,7 +43,7 @@ class AuthController {
         private userService: UserService,
         private oauthService: OAuthService,
         private authRepository: AuthRepository
-    ) {}
+    ) { }
 
     public async signUp(req: SignUpRequest, res: Response, next: NextFunction) {
         const { email, password, name, phone, userType }: SignUpInfo = req.body;
