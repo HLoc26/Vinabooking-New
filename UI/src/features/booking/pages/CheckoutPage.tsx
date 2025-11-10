@@ -1,14 +1,12 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
-import type { BookingDto } from "../types/BookingDto";
 import { useState, useEffect } from "react";
 import { Snackbar, Alert } from "@mui/material";
+import { useBookingContext } from "../hooks/useBookingContext";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
-	const location = useLocation();
-	const booking = location.state?.booking as BookingDto;
-
+	const { booking } = useBookingContext();
 	const { confirmBooking, loading } = useConfirmBooking();
 	const [qrUrl, setQrUrl] = useState("");
 
@@ -21,9 +19,8 @@ export default function CheckoutPage() {
 
 	useEffect(() => {
 		// generate a random fake QR code
-		const randomId = Math.floor(Math.random() * 1_000_000_000);
 		setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=BOOKING_${booking.id}`);
-	}, []);
+	}, [booking.id]);
 
 	if (!booking) return <p style={{ textAlign: "center", marginTop: "2rem" }}>No booking found</p>;
 
@@ -82,7 +79,7 @@ export default function CheckoutPage() {
 
 				<h4>Rooms / Beds</h4>
 				<ul>
-					{booking.rooms.map((room) => (
+					{booking.room.map((room) => (
 						<li key={room.id}>
 							{room.name} ({room.type})
 						</li>

@@ -1,31 +1,11 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Card, CardContent, Typography, Button, TextField, Checkbox, FormControlLabel, Snackbar, Alert, Divider } from "@mui/material";
-import type { BookingDto } from "../types/BookingDto";
+import { useBookingContext } from "../hooks/useBookingContext";
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
-
-	const [booking, setBooking] = useState<BookingDto>({
-		id: "TEMP_" + Math.random().toString(36).substring(2, 9),
-		startDate: new Date("2024-12-15"),
-		endDate: new Date("2024-12-20"),
-		guestCount: 3,
-		user: {
-			name: "Linh Tran",
-			email: "linh.tran@example.com",
-			phone: "0909123456",
-		},
-		referenceNo: 31312313,
-		accommodation: {
-			name: "Vinabooking Riverside Hotel",
-			address: "123 Nguyen Hue, District 1, Ho Chi Minh City",
-		},
-		rooms: [
-			{ id: "R1", name: "Deluxe Room 101", type: "ROOM" },
-			{ id: "B1", name: "Bed A - Shared Dorm", type: "BED" },
-		],
-	});
+	const { booking, setBooking } = useBookingContext();
 
 	const [isEditing, setIsEditing] = useState(false);
 	const [agreed, setAgreed] = useState(false);
@@ -160,11 +140,12 @@ export default function BookingPreviewPage() {
 				<CardContent>
 					<Typography variant="h6">Rooms / Beds</Typography>
 					<ul style={{ marginTop: 8 }}>
-						{booking.rooms.map((r) => (
-							<li key={r.id}>
-								{r.name} ({r.type})
-							</li>
-						))}
+						{booking.room &&
+							booking.room.map((r) => (
+								<li key={r.id}>
+									{r.name} ({r.type})
+								</li>
+							))}
 					</ul>
 				</CardContent>
 			</Card>

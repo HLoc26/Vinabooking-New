@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import type { BookingDto } from "../types/BookingDto";
+import type { BookingDto } from "../services/types/BookingDto";
 import { bookingApi } from "../services/bookingApi";
 
 export const useFetchBookingInfo = (bookingId: string) => {
