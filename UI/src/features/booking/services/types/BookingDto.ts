@@ -3,6 +3,7 @@ export interface RoomDetail {
   name: string;
   type: "ROOM" | "BED";
   note?: string;
+  //roomImage: file?
 }
 
 export interface BookingDto {
@@ -15,10 +16,16 @@ export interface BookingDto {
     name: string;
     email: string;
     phone: string;
+    id: string;
   };
   accommodation: {
     name: string;
     address: string;
+    //image: file?
   };
-  rooms: RoomDetail[];
+  room: RoomDetail[];
+}
+export interface BookingImageDto {
+  entity: string;
+  id: File;
 }

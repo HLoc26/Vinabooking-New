@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import type { BookingDto } from "../types/BookingDto";
+import type { BookingDto } from "../services/types/BookingDto";
 
 interface Props {
 	booking: BookingDto;
