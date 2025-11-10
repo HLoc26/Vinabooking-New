@@ -4,7 +4,7 @@ import type { ApiResponse } from "../types/Response";
 import BookingService from "../services/BookingService";
 
 export default class BookingController {
-    constructor(private readonly bookingService: BookingService) {}
+    constructor(private readonly bookingService: BookingService) { }
 
     // public async getBookingById(req: Request, res: Response<ApiResponse>) {
     //     try {
@@ -60,9 +60,8 @@ export default class BookingController {
     }
     public async createBooking(req: Request, res: Response<ApiResponse>) {
         try {
-            const bookingData = {...req.body, status: "PENDING", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000)) };
+            const bookingData = { ...req.body, status: "PENDING", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000)) };
             const newBooking = await this.bookingService.createBooking(bookingData);
-            console.log("New Booking Created:", bookingData);
             return ResponseHelper.success(res, { booking: newBooking }, 201);
         } catch (err: any) {
             return ResponseHelper.error(res, err.message);
@@ -70,7 +69,7 @@ export default class BookingController {
     }
     public async createDraftBooking(req: Request, res: Response<ApiResponse>) {
         try {
-            const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000))};
+            const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000)) };
             const newBooking = await this.bookingService.createBooking(bookingData);
             return ResponseHelper.success(res, { booking: newBooking }, 201);
         } catch (err: any) {
