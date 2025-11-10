@@ -8,7 +8,7 @@ import { BookingResponse } from "../types/Response";
 import AccommodationServiceClient from "../clients/AccommodationServiceClient";
 
 export default class BookingController {
-    constructor(private readonly bookingService: BookingService) { }
+    constructor(private readonly bookingService: BookingService, private readonly bookingRepository: BookingRepository) { }
 
     // public async getBookingById(req: Request, res: Response<ApiResponse>) {
     //     try {
@@ -70,22 +70,10 @@ export default class BookingController {
         res: Response<ApiResponse<BookingResponse>>
     ) {
         try {
-            const bookingData = { ...req.body, status: "PENDING", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000)) };
-            const newBooking = await this.bookingService.createBooking(bookingData);
-            return ResponseHelper.success(res, { booking: newBooking }, 201);
-        } catch (err: any) {
-            return ResponseHelper.error(res, err.message);
-            const userId = req.user?.id; // comes from middleware
+            const bookingData = { ...req.body, status: "PENDING", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000)) }; const userId = req.user?.id; // comes from middleware
             if (!userId) {
                 return ResponseHelper.error(res, "User not authenticated");
             }
-
-            const bookingData = {
-                ...req.body,
-                userId, // attach authenticated user
-                status: "PENDING",
-                referenceNo: Number(`${Date.now()}${Math.floor(Math.random() * 100)}`)
-            };
 
             const newBooking = await this.bookingRepository.createBooking(bookingData);
             return ResponseHelper.success(res, newBooking, 201);
@@ -93,13 +81,15 @@ export default class BookingController {
             const e = err as Error;
             return ResponseHelper.error(res, e.message);
         }
+    }
     public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
         try {
             const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number(Math.floor(100000000 + Math.random() * 900000000)) };
-            const newBooking = await this.bookingService.createBooking(bookingData);
-            return ResponseHelper.success(res, { booking: newBooking }, 201);
-        } catch (err: any) {
-            return ResponseHelper.error(res, err.message);
+            const newBooking = await this.bookingRepository.createBooking(bookingData);
+            return ResponseHelper.success(res, newBooking, 201);
+        } catch (err: unknown) {
+            const e = err as Error;
+            return ResponseHelper.error(res, e.message);
         }
     }
 }
