@@ -71,6 +71,8 @@ class BookingRouter {
                 res
             );
         });
+        this.router.post("/summary", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
+
     }
 }
 

@@ -86,6 +86,7 @@ export default class BookingController {
             const e = err as Error;
             return ResponseHelper.error(res, e.message);
         }
+    }
     public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
         try {
             const bookingData = { ...req.body, status: "DRAFT" };
@@ -96,4 +97,28 @@ export default class BookingController {
             return ResponseHelper.error(res, e.message);
         }
     }
+    public async getBookingSummary(req: Request, res: Response) {
+        try {
+            const { roomIds, startDate, endDate } = req.body;
+            if (!roomIds || !Array.isArray(roomIds) || !startDate || !endDate) {
+                return ResponseHelper.error(res, "Invalid request body");
+            }
+
+            const start = new Date(startDate);
+            const end = new Date(endDate);
+
+            const counts = await this.bookingRepository.countBookedRooms(roomIds, start, end);
+
+            const data = roomIds.map(roomId => ({
+                roomId,
+                bookedCount: counts[roomId] ?? 0,
+            }));
+
+            return ResponseHelper.success(res, data);
+        } catch (err: unknown) {
+            const e = err as Error;
+            return ResponseHelper.error(res, e.message);
+        }
+    }
+
 }
