@@ -62,6 +62,7 @@ class BookingRouter {
 		this.router.post("/draft", (req, res: Response) => {
 			return this.bookingController.createDraftBooking(req as AuthenticatedRequest, res);
 		});
+		this.router.post("/summary", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
 	}
 }
 

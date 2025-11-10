@@ -26,10 +26,10 @@ export default class BookingRepository {
 	}
 
 	// public async findByAccommodationId(accommodationId: string) {
-	//     return await this.prisma.booking.findMany({
-	//         where: { details: { some: { itemId: accommodationId, itemType: "ACCOMMODATION" } } },
-	//         include: { details: true },
-	//     });
+	//	 return await this.prisma.booking.findMany({
+	//		 where: { details: { some: { itemId: accommodationId, itemType: "ACCOMMODATION" } } },
+	//		 include: { details: true },
+	//	 });
 	// }
 
 	public async createBooking(data: BookingPayload) {
@@ -43,5 +43,28 @@ export default class BookingRepository {
 				details: true,
 			},
 		});
+	}
+	public async countBookedRooms(roomIds: string[], startDate: Date, endDate: Date) {
+		const counts: Record<string, number> = {};
+
+		for (const roomId of roomIds) {
+			const bookings = await this.prisma.booking.findMany({
+				where: {
+					status: "BOOKED",
+					details: {
+						some: { itemId: roomId, itemType: "ROOM" },
+					},
+					OR: [
+						{
+							startDate: { lte: endDate },
+							endDate: { gte: startDate },
+						},
+					],
+				},
+			});
+			counts[roomId] = bookings.length;
+		}
+
+		return counts;
 	}
 }
