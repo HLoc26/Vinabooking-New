@@ -44,4 +44,28 @@ export default class BookingRepository {
             }
         });
     }
+    public async countBookedRooms(roomIds: string[], startDate: Date, endDate: Date) {
+        const counts: Record<string, number> = {};
+
+        for (const roomId of roomIds) {
+            const bookings = await this.prisma.booking.findMany({
+                where: {
+                    status: "BOOKED",
+                    details: {
+                        some: { itemId: roomId, itemType: "ROOM" },
+                    },
+                    OR: [
+                        {
+                            startDate: { lte: endDate },
+                            endDate: { gte: startDate },
+                        }
+                    ]
+                },
+            });
+            counts[roomId] = bookings.length;
+        }
+
+        return counts;
+    }
+
 }
