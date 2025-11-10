@@ -41,8 +41,15 @@ export const HomePage = () => {
 					</Typography>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 6, sm: 3 }}>
-							<Button fullWidth variant="contained" color="primary">
-								Primary
+							<Button
+								fullWidth
+								variant="contained"
+								color="secondary"
+								onClick={() => {
+									navigate("/booking");
+								}}
+							>
+								Create a booking
 							</Button>
 						</Grid>
 						<Grid size={{ xs: 6, sm: 3 }}>

@@ -61,10 +61,20 @@ export default function CheckoutPage() {
 					<strong>Address:</strong> {booking.accommodation.address}
 				</p>
 				<p>
-					<strong>Check-in:</strong> {booking.startDate.toISOString()}
+					<b>Check in:</b>{" "}
+					{new Date(booking.startDate).toLocaleDateString("en-GB", {
+						day: "2-digit",
+						month: "short",
+						year: "numeric",
+					})}{" "}
 				</p>
 				<p>
-					<strong>Check-out:</strong> {booking.endDate.toISOString()}
+					<b>Check out:</b>{" "}
+					{new Date(booking.endDate).toLocaleDateString("en-GB", {
+						day: "2-digit",
+						month: "short",
+						year: "numeric",
+					})}{" "}
 				</p>
 				<p>
 					<strong>Guests:</strong> {booking.guestCount}
@@ -95,7 +105,6 @@ export default function CheckoutPage() {
 				{loading ? "Processing..." : "Confirm Booking"}
 			</button>
 
-			{/* ✅ Snackbar notification */}
 			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
 				<Alert onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
 					{snackbar.message}
