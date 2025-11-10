@@ -7,8 +7,8 @@ export interface RoomDetail {
 
 export interface BookingDto {
   id: string;
-  startDate: Date ;
-  endDate: Date ;
+  startDate: Date;
+  endDate: Date;
   guestCount: number;
   referenceNo: number;
   user: {

@@ -3,7 +3,6 @@ import axios from "axios";
 import type { BookingDto } from "../types/BookingDto";
 import Cookies from "js-cookie";
 
-
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const token = Cookies.get(ACCESS_TOKEN_KEY);
 const API_URL = "http://localhost:3000";
@@ -41,7 +40,17 @@ export const bookingApi = {
 
     return res.data;
   },
-
+  //   async getAccomImage(){
+  //     const res = await axios.get(ACCOMMODATION_ENDPOINT, {
+  //       headers: {
+  //         Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
+  //       },
+  //       params: {
+  //         byEntity: "room",
+  //         entityId: "r2-uuid",
+  //       },
+  //   }),
+  // };
   async getBooking(id: string) {
     const res = await axios.get(`${BOOKING_ENDPOINT}/${id}`);
     return res.data;

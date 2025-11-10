@@ -46,7 +46,7 @@ export default function BookingPreviewPage() {
 		});
 	};
 
-	// ✅ Enhanced validation logic
+	//  Enhanced validation logic
 	const handleToggleEdit = () => {
 		if (isEditing) {
 			const phone = booking.user.phone.trim();
@@ -58,7 +58,7 @@ export default function BookingPreviewPage() {
 					message: "Please enter a valid phone number (numbers only).",
 					severity: "warning",
 				});
-				return; // ❌ don't exit edit mode
+				return; //  don't exit edit mode
 			}
 
 			// If empty → hide field
@@ -90,7 +90,7 @@ export default function BookingPreviewPage() {
 			});
 		}
 
-		navigate("/checkout", { state: { booking } });
+		navigate("/booking/checkout", { state: { booking } });
 	};
 
 	return (
