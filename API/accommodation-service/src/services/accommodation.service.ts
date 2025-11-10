@@ -34,27 +34,6 @@ export class AccommodationService {
             images: images,
         };
     }
-    
-    /**
-     * Gets Accommodation details by a Room ID.
-     */
-    async getAccommodationByRoomId(roomId: string) {
-        console.log(
-            `[AccommodationService] Finding accommodation for room ID: ${roomId}`
-        );
-        // 1. Call Room Service Client to get the Accommodation ID
-        const accommodationId =
-            await roomClient.getAccommodationIdByRoomId(roomId);
-        console.log(
-            `[AccommodationService] Found accommodation ID: ${accommodationId} for room ID: ${roomId}`
-        );
-
-        // 2. Use the existing getAccommodationById to fetch details (which includes fetching rooms again)
-        const accommodationDetails =
-            await this.getAccommodationById(accommodationId);
-
-        return accommodationDetails;
-    }
 
     /**
      * Gets Accommodation details by a Room ID.
