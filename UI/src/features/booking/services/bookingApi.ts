@@ -4,7 +4,6 @@ import type { BookingDto, BookingImageDto } from "./types/BookingDto";
 import Cookies from "js-cookie";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
-const token = Cookies.get(ACCESS_TOKEN_KEY);
 const API_URL = "http://localhost:3000";
 const BOOKING_ENDPOINT = `${API_URL}/bookings`; // old backend uses /booking route
 const IMAGE_ENDPOINT = `${API_URL}/images`;
@@ -31,7 +30,7 @@ export const bookingApi = {
         })),
       },
     };
-
+    const token = Cookies.get(ACCESS_TOKEN_KEY);
     const res = await axios.post(BOOKING_ENDPOINT, payload, {
       headers: {
         Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
