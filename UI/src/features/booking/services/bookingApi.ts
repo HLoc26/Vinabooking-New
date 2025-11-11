@@ -7,7 +7,7 @@ const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const token = Cookies.get(ACCESS_TOKEN_KEY);
 const API_URL = "http://localhost:3000";
 const BOOKING_ENDPOINT = `${API_URL}/bookings`; // old backend uses /booking route
-const ACCOMMODATION_ENDPOINT = `${API_URL}/accommodations`;
+const IMAGE_ENDPOINT = `${API_URL}/images`;
 
 export const bookingApi = {
   /**
@@ -42,15 +42,16 @@ export const bookingApi = {
     return res.data;
   },
   async getAccomImage(data: BookingImageDto) {
-    const res = await axios.get(ACCOMMODATION_ENDPOINT, {
-      params: {
-        byEntity: data.entity,
-        entityId: data.id,
-      },
-    });
-    return res.data;
-  },
+    try {
+      const res = await axios.get(`${IMAGE_ENDPOINT}/accommodation/${data.id}`);
 
+      // Return only the array of image objects, or empty array if none
+      return res.data?.data?.images ?? [];
+    } catch (error) {
+      console.error("Error fetching accommodation images:", error);
+      return []; // return empty array on error
+    }
+  },
   async getBooking(id: string) {
     const res = await axios.get(`${BOOKING_ENDPOINT}/${id}`);
     return res.data;
