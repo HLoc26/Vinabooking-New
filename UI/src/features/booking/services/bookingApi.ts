@@ -43,9 +43,6 @@ export const bookingApi = {
   },
   async getAccomImage(data: BookingImageDto) {
     const res = await axios.get(ACCOMMODATION_ENDPOINT, {
-      headers: {
-        Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
-      },
       params: {
         byEntity: data.entity,
         entityId: data.id,
