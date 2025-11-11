@@ -1,12 +1,16 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Typography, Button, TextField, Checkbox, FormControlLabel, Snackbar, Alert, Divider } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button, Checkbox, FormControlLabel, Snackbar, Alert, Divider } from "@mui/material";
 import { useBookingContext } from "../hooks/useBookingContext";
+import { MuiTelInput } from "mui-tel-input";
+import { useFetchImages } from "../hooks/useFetchImages";
+import type { MuiTelInputInfo } from "mui-tel-input";
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
 	const { booking, setBooking } = useBookingContext();
-
+	const { getAccomImage } = useFetchImages();
+	const [images, setImages] = useState<string[]>([]);
 	const [isEditing, setIsEditing] = useState(false);
 	const [agreed, setAgreed] = useState(false);
 	const [showPhoneField, setShowPhoneField] = useState(true);
@@ -19,10 +23,10 @@ export default function BookingPreviewPage() {
 
 	const handleCloseSnackbar = () => setSnackbar({ ...snackbar, open: false });
 
-	const handlePhoneChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+	const handlePhoneChange = (value: string, info: MuiTelInputInfo) => {
 		setBooking({
 			...booking,
-			user: { ...booking.user, phone: e.target.value },
+			user: { ...booking.user, phone: value },
 		});
 	};
 
@@ -72,6 +76,32 @@ export default function BookingPreviewPage() {
 
 		navigate("/booking/checkout", { state: { booking } });
 	};
+	useEffect(() => {
+		if (booking?.room?.length) {
+			const fetchImages = async () => {
+				try {
+					const allRoomImages = await Promise.all(
+						booking.room.map(async (room) => {
+							const response = await getAccomImage({
+								entity: "Accommodation",
+								id: room.id,
+							});
+
+							// Filter only WEBP images and get URLs
+							return response.filter((img: { variant: string }) => img.variant === "WEBP").map((img: { url: string }) => img.url);
+						})
+					);
+
+					// Flatten array of arrays
+					setImages(allRoomImages.flat());
+				} catch (err) {
+					console.error("Error fetching room images:", err);
+				}
+			};
+
+			fetchImages();
+		}
+	}, [booking]);
 
 	return (
 		<Box sx={{ maxWidth: 600, mx: "auto", mt: 5, px: 2 }}>
@@ -98,7 +128,7 @@ export default function BookingPreviewPage() {
 
 					<Box mt={1}>
 						{isEditing ? (
-							<TextField fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
+							<MuiTelInput fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
 						) : (
 							showPhoneField && (
 								<Typography>
@@ -132,6 +162,13 @@ export default function BookingPreviewPage() {
 					<Typography>
 						<strong>Reference No:</strong> {booking.referenceNo}
 					</Typography>
+					{images.length > 0 && (
+						<Box mt={2} display="flex" flexWrap="wrap" gap={1}>
+							{images.map((url, idx) => (
+								<img key={idx} src={url} alt={`Accommodation ${idx + 1}`} style={{ width: "100%", maxWidth: 250, borderRadius: 8 }} />
+							))}
+						</Box>
+					)}
 				</CardContent>
 			</Card>
 

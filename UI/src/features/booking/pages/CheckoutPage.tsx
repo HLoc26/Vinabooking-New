@@ -1,7 +1,6 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { useState, useEffect } from "react";
-import { Snackbar, Alert } from "@mui/material";
 import type { BookingDto } from "../services/types/BookingDto";
 
 export default function CheckoutPage() {
@@ -102,12 +101,6 @@ export default function CheckoutPage() {
 			>
 				{loading ? "Processing..." : "Confirm Booking"}
 			</button>
-
-			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} anchorOrigin={{ vertical: "top", horizontal: "right" }}>
-				<Alert onClose={() => setSnackbar((prev) => ({ ...prev, open: false }))} severity={snackbar.severity} variant="filled" sx={{ width: "100%" }}>
-					{snackbar.message}
-				</Alert>
-			</Snackbar>
 		</div>
 	);
 }
