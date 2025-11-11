@@ -19,8 +19,7 @@ export class FakeContextInfo implements ContextInfoAdapter {
                 address: "123 Nguyen Hue, District 1, Ho Chi Minh City",
             },
             room:
-                [{ id: "R1", name: "Deluxe Room 101", type: "ROOM" }],
-
+                [{ id: "acc-001", name: "Deluxe Room 101", type: "ROOM" }],
         }
     };
 }

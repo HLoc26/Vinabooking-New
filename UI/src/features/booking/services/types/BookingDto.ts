@@ -27,5 +27,5 @@ export interface BookingDto {
 }
 export interface BookingImageDto {
   entity: string;
-  id: File;
+  id: string;
 }
