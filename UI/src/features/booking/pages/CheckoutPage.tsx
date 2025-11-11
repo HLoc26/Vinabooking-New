@@ -1,15 +1,16 @@
-import { useNavigate } from "react-router-dom";
+import { useLocation, useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { useState, useEffect } from "react";
 import { Snackbar, Alert } from "@mui/material";
-import { useBookingContext } from "../hooks/useBookingContext";
+import type { BookingDto } from "../services/types/BookingDto";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
-	const { booking } = useBookingContext();
+	const location = useLocation();
+	const booking: BookingDto = location.state?.booking;
 	const { confirmBooking, loading } = useConfirmBooking();
 	const [qrUrl, setQrUrl] = useState("");
-
+	console.log("Booking ", booking);
 	// snackbar state
 	const [snackbar, setSnackbar] = useState<{
 		open: boolean;
