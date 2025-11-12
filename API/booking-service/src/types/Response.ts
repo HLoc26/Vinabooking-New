@@ -1,9 +1,9 @@
 import BookingRepository from "../repositories/BookingRepository";
 
 export interface ApiResponse<T> {
-    success: boolean;
-    message?: string;
-    data?: T;
+	success: boolean;
+	message?: string;
+	data?: T;
 }
 
 // export interface BookingResponse {
