@@ -6,22 +6,22 @@ import ErrorHandler from "./middlewares/ErrorHandler";
 import AuthRouterFactory from "./routes/AuthRouterFactory";
 
 export const startRest = () => {
-    const app = express();
-    app.use(express.json());
+	const app = express();
+	app.use(express.json());
 
-    app.use(
-        session({
-            secret: process.env["SESSION_SECRET"] as string,
-            resave: false,
-            saveUninitialized: true,
-            cookie: { secure: false },
-        })
-    );
+	app.use(
+		session({
+			secret: process.env["SESSION_SECRET"] as string,
+			resave: false,
+			saveUninitialized: true,
+			cookie: { secure: false },
+		})
+	);
 
-    app.use("/", AuthRouterFactory.createAuthRouter());
+	app.use("/", AuthRouterFactory.createAuthRouter());
 
-    app.use(ErrorHandler.handle);
+	app.use(ErrorHandler.handle);
 
-    const PORT = process.env["PORT"] || 3002;
-    app.listen(PORT, () => console.log(`Auth Service running on port ${PORT}`));
+	const PORT = process.env["PORT"] || 3002;
+	app.listen(PORT, () => console.log(`Auth Service running on port ${PORT}`));
 };

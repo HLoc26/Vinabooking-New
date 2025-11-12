@@ -3,13 +3,13 @@ import ResponseHelper from "../utils/ResponseHelper";
 import type AppError from "../errors/AppError";
 
 class ErrorHandler {
-    public static handle(err: AppError, _req: Request, res: Response, _next: NextFunction) {
-        console.error(err);
-        const statusCode = err.statusCode || 500;
-        const message = err.message;
+	public static handle(err: AppError, _req: Request, res: Response, _next: NextFunction) {
+		console.error(err);
+		const statusCode = err.statusCode || 500;
+		const message = err.message;
 
-        return ResponseHelper.error(res, message, statusCode);
-    }
+		return ResponseHelper.error(res, message, statusCode);
+	}
 }
 
 export default ErrorHandler;
