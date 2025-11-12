@@ -5,28 +5,28 @@ import { getRedisClient } from "../clients/RedisSingleton";
 
 // Base route: /users
 class EmailRouter {
-    constructor(
-        private emailController: EmailController,
-        public router: Router
-    ) {
-        this.registerRoutes();
-    }
+	constructor(
+		private emailController: EmailController,
+		public router: Router
+	) {
+		this.registerRoutes();
+	}
 
-    private registerRoutes(): void {
-        // health check
-        this.router.get("/health", async (_: Request, res: Response) => {
-            const redis = await getRedisClient();
-            const ping = await redis.ping("Healthy");
-            ResponseHelper.success(res, {
-                email_service: "Healthy",
-                redis: ping,
-            });
-        });
+	private registerRoutes(): void {
+		// health check
+		this.router.get("/health", async (_: Request, res: Response) => {
+			const redis = await getRedisClient();
+			const ping = await redis.ping("Healthy");
+			ResponseHelper.success(res, {
+				email_service: "Healthy",
+				redis: ping,
+			});
+		});
 
-        this.router.post("/", async (req: Request, res: Response) => {
-            return this.emailController.sendMail(req, res);
-        });
-    }
+		this.router.post("/", async (req: Request, res: Response) => {
+			return this.emailController.sendMail(req, res);
+		});
+	}
 }
 
 export default EmailRouter;
