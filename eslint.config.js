@@ -21,7 +21,7 @@ export default tseslint.config([
             semi: ["error", "always"], // semi: true
             quotes: ["error", "double"], // double quotes
             "comma-dangle": ["error", "only-multiline"], // trailingComma: es5
-            indent: ["error", 4, { SwitchCase: 1 }], // use 4 spaces for tabs
+            indent: ["error", "tab", { SwitchCase: 1 }], // use 4 spaces for tabs
             "max-len": ["error", { code: 200 }], // printWidth: 200
             "linebreak-style": ["error", "windows"], // endOfLine: crlf
             "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
