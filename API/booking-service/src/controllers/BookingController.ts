@@ -5,13 +5,12 @@ import BookingService from "../services/BookingService";
 import { AuthenticatedRequest, BookingRequest } from "../types/Request";
 import BookingRepository from "../repositories/BookingRepository";
 import { BookingResponse } from "../types/Response";
-import AccommodationServiceClient from "../clients/AccommodationServiceClient";
 
 export default class BookingController {
 	constructor(
 		private readonly bookingService: BookingService,
 		private readonly bookingRepository: BookingRepository
-	) { }
+	) {}
 	// public async getBookingById(req: Request, res: Response<ApiResponse>) {
 	//     try {
 	//         const { id } = req.params;
