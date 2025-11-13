@@ -1,7 +1,7 @@
 import express from "express";
 import cors from "cors";
 import accommodationRoutes from "./routes/accommodation.routes";
-//import { errorMiddleware } from "./middlewares/error.middleware";
+import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
 
@@ -11,13 +11,13 @@ app.use(express.json());
 
 // Health check
 app.get("/health", (_, res) => {
-    res.json({ service: "Accommodation Service", success: true });
+	res.json({ service: "Accommodation Service", success: true });
 });
 
 // Routes
 app.use("/", accommodationRoutes);
 
 // Global error handling
-//app.use(errorMiddleware);
+app.use(errorMiddleware);
 
 export default app;

@@ -12,24 +12,24 @@ export type UserWithFavourites = { favourites: FavouriteListWithItems[] } & User
 
 // Mimics enum
 export const EUserRole = {
-    TRAVELLER: "Traveller",
-    ACCOMMODATION_OWNER: "AccommodationOwner",
+	TRAVELLER: "Traveller",
+	ACCOMMODATION_OWNER: "AccommodationOwner",
 } as const;
 
 export type EUserRole = (typeof EUserRole)[keyof typeof EUserRole];
 
 export interface IUser {
-    id: string;
-    name: string;
-    phone: string;
-    role: string;
+	id: string;
+	name: string;
+	phone: string | null;
+	role: string;
 
-    favouriteLists: Array<IFavouriteList>;
+	favouriteLists: Array<IFavouriteList>;
 
-    createdAt?: Date;
-    updatedAt?: Date;
+	createdAt?: Date;
+	updatedAt?: Date;
 }
 
 export type SaveUserInfo = {
-    email: string;
+	email: string;
 } & CacheInfo["info"]; // Lấy type từ CacheInfo["info"]

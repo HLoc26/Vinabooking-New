@@ -8,52 +8,76 @@ import ResponseHelper from "../utils/ResponseHelper";
 import { type Response } from "express";
 import type User from "../classes/User";
 import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserByIdRequest, SaveUserRequest } from "../types/Request";
+import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
 
 class UserController {
-    private userService = new UserService();
+	private userService = new UserService();
 
-    public async getUserById(req: FindUserByIdRequest, res: Response<ApiResponse<UserResponse>>) {
-        const id = req.params.id;
-        const withFavourites = req.query.withFavourites === "true";
+	public async getUser(req: FindUserRequest, res: Response<ApiResponse<UserResponse>>) {
+		const { id, email } = req.query;
+		const withFavourites = req.query.withFavourites === "true";
+		if (!id && !email) {
+			throw new BadRequestError("Specify at least an email an an id");
+		}
+		const user: User | null = await this.userService.getUser({ id, email }, withFavourites);
+		if (!user) {
+			throw new NotFoundError("User not found");
+		}
 
-        if (!id) {
-            throw new BadRequestError("Invalid ID");
-        }
+		return ResponseHelper.success<UserResponse>(res, user.toJson());
+	}
 
-        const user: User | null = await this.userService.getUserById(id, withFavourites);
+	public async getUserById(req: FindUserByIdRequest, res: Response<ApiResponse<UserResponse>>) {
+		const id = req.params.id;
+		const withFavourites = req.query.withFavourites === "true";
 
-        if (!user) {
-            throw new NotFoundError("User not found");
-        }
+		if (!id) {
+			throw new BadRequestError("Invalid ID");
+		}
 
-        return ResponseHelper.success<UserResponse>(res, user.toJson());
-    }
+		const user: User | null = await this.userService.getUserById(id, withFavourites);
 
-    public async cacheUser(req: CacheUserRequest, res: Response<ApiResponse<CacheUserResponse>>) {
-        const cacheInfo: CacheInfo = req.body;
+		if (!user) {
+			throw new NotFoundError("User not found");
+		}
 
-        const OK = await this.userService.cacheUser(cacheInfo);
+		return ResponseHelper.success<UserResponse>(res, user.toJson());
+	}
 
-        if (!OK) {
-            throw new RedisClientError("Failed to save user to cache");
-        }
-        return ResponseHelper.success<CacheUserResponse>(res, { success: true });
-    }
+	public async saveUserDirect(req: SaveUserDirectRequest, res: Response<ApiResponse<boolean>>) {
+		const { cognitoSub, email, name } = req.body;
+		const OK = await this.userService.saveUser(cognitoSub, email, name);
 
-    public async saveUser(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
-        const email = req.body.email;
+		if (!OK) {
+			throw new DatabaseError("Failed to save user to database");
+		}
+		return ResponseHelper.success<SaveUserResponse>(res, { success: true });
+	}
 
-        const OK = await this.userService.saveUser(email);
+	public async cacheUser(req: CacheUserRequest, res: Response<ApiResponse<CacheUserResponse>>) {
+		const cacheInfo: CacheInfo = req.body;
 
-        if (!OK) {
-            throw new DatabaseError("Failed to save user to database");
-        }
-        return ResponseHelper.success<SaveUserResponse>(res, { success: true });
-    }
+		const OK = await this.userService.cacheUser(cacheInfo);
+
+		if (!OK) {
+			throw new RedisClientError("Failed to save user to cache");
+		}
+		return ResponseHelper.success<CacheUserResponse>(res, { success: true });
+	}
+
+	public async saveUserFromCache(req: SaveUserRequest, res: Response<ApiResponse<SaveUserResponse>>) {
+		const email = req.body.email;
+
+		const OK = await this.userService.saveUserFromCache(email);
+
+		if (!OK) {
+			throw new DatabaseError("Failed to save user to database");
+		}
+		return ResponseHelper.success<SaveUserResponse>(res, { success: true });
+	}
 }
 
 export default UserController;

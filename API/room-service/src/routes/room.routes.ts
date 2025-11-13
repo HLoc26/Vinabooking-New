@@ -4,10 +4,7 @@ import { roomController } from "../controllers/room.controller";
 const router = Router();
 
 // GET /accommodation/:accommodationId
-router.get(
-    "/accommodation/:accommodationId",
-    roomController.getRoomsByAccommodationId
-);
+router.get("/accommodation/:accommodationId", roomController.getRoomsByAccommodationId);
 
 // POST /
 router.post("/", roomController.createRoom);
@@ -34,9 +31,6 @@ router.delete("/beds/:bedId", roomController.removeBed);
 router.post("/:roomId/amenities", roomController.addAmenityToRoom);
 
 // DELETE /:roomId/amenities/:amenityId
-router.delete(
-    "/:roomId/amenities/:amenityId",
-    roomController.removeAmenityFromRoom
-);
+router.delete("/:roomId/amenities/:amenityId", roomController.removeAmenityFromRoom);
 
 export default router;
