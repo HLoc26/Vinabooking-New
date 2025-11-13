@@ -11,7 +11,7 @@ app.use(express.json());
 
 // Health check
 app.get("/health", (_, res) => {
-    res.json({ service: "Accommodation Service", success: true });
+	res.json({ service: "Accommodation Service", success: true });
 });
 
 // Routes

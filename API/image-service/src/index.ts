@@ -26,16 +26,16 @@ const server = new Server();
 const grpcImageController = GrpcImageControllerFactory.createGrpcController();
 
 server.addService(ImageServiceService, {
-    getHealth: grpcImageController.getHealth,
-    uploadImages: grpcImageController.uploadImages.bind(grpcImageController),
-    getImages: grpcImageController.getImages.bind(grpcImageController),
+	getHealth: grpcImageController.getHealth,
+	uploadImages: grpcImageController.uploadImages.bind(grpcImageController),
+	getImages: grpcImageController.getImages.bind(grpcImageController),
 });
 
 server.bindAsync("0.0.0.0:50057", ServerCredentials.createInsecure(), (error, port) => {
-    if (error) {
-        console.error(`Server binding failed: ${error.message}`);
-        return;
-    }
-    console.log(`Server running at http://0.0.0.0:${port}`);
-    // server.start()
+	if (error) {
+		console.error(`Server binding failed: ${error.message}`);
+		return;
+	}
+	console.log(`Server running at http://0.0.0.0:${port}`);
+	// server.start()
 });
