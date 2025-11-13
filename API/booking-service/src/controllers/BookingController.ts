@@ -5,7 +5,6 @@ import BookingService from "../services/BookingService";
 import { AuthenticatedRequest, BookingRequest } from "../types/Request";
 import BookingRepository from "../repositories/BookingRepository";
 import { BookingResponse } from "../types/Response";
-import AccommodationServiceClient from "../clients/AccommodationServiceClient";
 
 export default class BookingController {
 	constructor(
