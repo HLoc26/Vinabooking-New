@@ -33,7 +33,7 @@ class BookingRouter {
 				success: true,
 			});
 		});
-
+		this.router.post("/booked-counts", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
 		this.router.use((req: Request, res: Response, next: NextFunction) => {
 			return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
 		});
@@ -62,7 +62,6 @@ class BookingRouter {
 		this.router.post("/draft", (req, res: Response) => {
 			return this.bookingController.createDraftBooking(req as AuthenticatedRequest, res);
 		});
-		this.router.post("/summary", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
 	}
 }
 
