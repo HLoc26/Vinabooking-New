@@ -1,15 +1,17 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Typography, Button, Checkbox, FormControlLabel, Snackbar, Alert, Divider, Dialog, IconButton } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button, Checkbox, FormControlLabel, Divider, Dialog, IconButton, Grid } from "@mui/material";
 import { ChevronLeft, ChevronRight, Close } from "@mui/icons-material";
 import { MuiTelInput } from "mui-tel-input";
 import { useBookingContext } from "../hooks/useBookingContext";
 import { useFetchImages } from "../hooks/useFetchImages";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
 	const { booking, setBooking } = useBookingContext();
 	const { getAccomImage } = useFetchImages();
+	const { pushNotification } = usePushNotificationContext();
 
 	const [images, setImages] = useState<string[]>([]);
 	const [imagesLoading, setImagesLoading] = useState(true);
@@ -20,13 +22,6 @@ export default function BookingPreviewPage() {
 
 	const [openGallery, setOpenGallery] = useState(false);
 	const [currentIndex, setCurrentIndex] = useState(0);
-
-	const [snackbar, setSnackbar] = useState({
-		open: false,
-		message: "",
-		severity: "error" as "error" | "warning" | "success",
-	});
-	const handleCloseSnackbar = () => setSnackbar((s) => ({ ...s, open: false }));
 
 	const validImages = images.filter((url) => typeof url === "string" && url.trim() !== "");
 
@@ -56,11 +51,7 @@ export default function BookingPreviewPage() {
 		if (isEditing) {
 			const phone = booking.user.phone.trim();
 			if (phone && !/^[0-9]+$/.test(phone)) {
-				setSnackbar({
-					open: true,
-					message: "Please enter a valid phone number (numbers only).",
-					severity: "warning",
-				});
+				pushNotification("Please enter a valid phone number (numbers only).", "warning");
 				return;
 			}
 			setShowPhoneField(!!phone);
@@ -70,19 +61,11 @@ export default function BookingPreviewPage() {
 
 	const handleProceed = () => {
 		if (!booking.user.name.trim()) {
-			return setSnackbar({
-				open: true,
-				message: "Name cannot be empty.",
-				severity: "error",
-			});
+			return pushNotification("Name cannot be empty.", "error");
 		}
 
 		if (!agreed) {
-			return setSnackbar({
-				open: true,
-				message: "Please confirm that all the information is correct.",
-				severity: "warning",
-			});
+			return pushNotification("Please confirm that all the information is correct.", "warning");
 		}
 
 		navigate("/booking/checkout", { state: { booking } });
@@ -106,15 +89,22 @@ export default function BookingPreviewPage() {
 					})
 				);
 				setImages(roomImgs.flat());
+
+				if (roomImgs.flat().length > 0) {
+					pushNotification("Room images loaded successfully", "success");
+				} else {
+					pushNotification("No images available for this room", "info");
+				}
 			} catch (err) {
 				console.error("Error fetching room images:", err);
+				pushNotification("Failed to load room images", "error");
 			} finally {
 				setImagesLoading(false);
 			}
 		};
 
 		loadImages();
-	}, [booking.room, getAccomImage]);
+	}, [booking.room, getAccomImage, pushNotification]);
 
 	// Keyboard navigation for gallery
 	useEffect(() => {
@@ -130,190 +120,182 @@ export default function BookingPreviewPage() {
 		return () => window.removeEventListener("keydown", handleKeyDown);
 	}, [openGallery, validImages.length]);
 
+	// Calculate total price
+	const totalPrice = booking.room.reduce((sum, room) => sum + (room.price || 0), 0);
+
 	return (
-		<Box sx={{ maxWidth: 600, mx: "auto", mt: 5, px: 2 }}>
-			<Typography variant="h4" gutterBottom>
+		<Box sx={{ maxWidth: 1400, mx: "auto", mt: 5, px: 3 }}>
+			<Typography variant="h4" gutterBottom mb={3}>
 				Booking Preview
 			</Typography>
 
-			{/* USER INFO */}
-			<Card sx={{ mb: 3 }}>
-				<CardContent>
-					<Box display="flex" justifyContent="space-between" alignItems="center">
-						<Typography variant="h6">User Information</Typography>
-						<Button size="small" onClick={handleToggleEdit}>
-							{isEditing ? "Done" : "Edit"}
-						</Button>
-					</Box>
-					<Typography sx={{ mt: 1 }}>
-						<strong>Name:</strong> {booking.user.name}
-					</Typography>
-					<Typography>
-						<strong>Email:</strong> {booking.user.email}
-					</Typography>
-					<Box mt={1}>
-						{isEditing ? (
-							<MuiTelInput fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
-						) : (
-							showPhoneField && (
-								<Typography>
-									<strong>Phone:</strong> {booking.user.phone}
-								</Typography>
-							)
-						)}
-					</Box>
-				</CardContent>
-			</Card>
-
-			{/* ACCOMMODATION INFO */}
-			<Card sx={{ mb: 3 }}>
-				<CardContent>
-					<Typography variant="h6">Accommodation Information</Typography>
-					<Typography sx={{ mt: 1 }}>
-						<strong>{booking.accommodation.name}</strong>
-						<br />
-						{booking.accommodation.address}
-					</Typography>
-					<Divider sx={{ my: 1 }} />
-					<Typography>
-						<strong>Check-in:</strong> {booking.startDate.toDateString()}
-					</Typography>
-					<Typography>
-						<strong>Check-out:</strong> {booking.endDate.toDateString()}
-					</Typography>
-					<Typography>
-						<strong>Guests:</strong> {booking.guestCount}
-					</Typography>
-					<Typography>
-						<strong>Reference No:</strong> {booking.referenceNo}
-					</Typography>
-
-					{/* IMAGE PREVIEW GRID */}
-					<Box mt={2}>
-						{imagesLoading ? (
-							<Box
-								sx={{
-									height: 350,
-									display: "flex",
-									justifyContent: "center",
-									alignItems: "center",
-									bgcolor: "#f0f0f0",
-									borderRadius: 2,
-								}}
-							>
-								<Typography>Loading images...</Typography>
+			<Grid container spacing={3}>
+				{/* LEFT COLUMN - User Information */}
+				<Grid item xs={12} md={3}>
+					<Card>
+						<CardContent>
+							<Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
+								<Typography variant="h6">User Information</Typography>
+								<Button size="small" onClick={handleToggleEdit} sx={{ color: "warning.main" }}>
+									{isEditing ? "Done" : "Edit"}
+								</Button>
 							</Box>
-						) : validImages.length === 0 ? (
-							<Box
-								sx={{
-									height: 350,
-									display: "flex",
-									justifyContent: "center",
-									alignItems: "center",
-									bgcolor: "#f0f0f0",
-									borderRadius: 2,
-								}}
-							>
-								<Typography>No images available</Typography>
+							<Typography sx={{ mb: 1 }}>
+								<strong>Name:</strong> {booking.user.name}
+							</Typography>
+							<Typography sx={{ mb: 1 }}>
+								<strong>Email:</strong> {booking.user.email}
+							</Typography>
+							<Box minHeight={56}>
+								{isEditing ? (
+									<MuiTelInput fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
+								) : (
+									showPhoneField && (
+										<Typography>
+											<strong>Phone:</strong> {booking.user.phone}
+										</Typography>
+									)
+								)}
 							</Box>
-						) : (
-							<Box
-								sx={{
-									display: "grid",
-									gridTemplateColumns: "2fr 1fr",
-									gap: 1.5,
-									width: "100%",
-								}}
-							>
-								{/* Main image */}
-								<Box
-									component="img"
-									src={validImages[0]}
-									alt="Main"
-									onClick={() => openImageGallery(0)}
-									sx={{
-										width: "100%",
-										height: 350,
-										objectFit: "cover",
-										borderRadius: 2,
-										cursor: "pointer",
-									}}
-								/>
+						</CardContent>
+					</Card>
+				</Grid>
 
-								{/* Right stacked images */}
-								<Box sx={{ display: "flex", flexDirection: "column", gap: 1.5 }}>
-									{validImages.slice(1, 4).map((url, idx) => {
-										const abs = idx + 1;
-										const showOverlay = validImages.length > 4 && idx === 2;
+				{/* MIDDLE COLUMN - Room Review */}
+				<Grid item xs={12} md={6}>
+					<Card>
+						<CardContent>
+							<Typography variant="h6" mb={2}>
+								Room Review (Booking Detail Preview)
+							</Typography>
 
-										return (
+							{booking.room.map((room, idx) => (
+								<Box key={room.id} mb={idx < booking.room.length - 1 ? 3 : 0}>
+									<Box
+										sx={{
+											border: "1px solid #e0e0e0",
+											borderRadius: 2,
+											p: 2,
+										}}
+									>
+										<Box display="flex" gap={2}>
+											{/* Room Image */}
 											<Box
-												key={abs}
-												onClick={() => openImageGallery(abs)}
 												sx={{
-													width: "100%",
-													height: 110,
+													width: 120,
+													height: 120,
+													bgcolor: "#90EE90",
 													borderRadius: 2,
+													flexShrink: 0,
+													display: "flex",
+													alignItems: "center",
+													justifyContent: "center",
 													overflow: "hidden",
-													position: "relative",
-													cursor: "pointer",
 												}}
 											>
-												<Box component="img" src={url} alt={`Preview ${abs}`} sx={{ width: "100%", height: "100%", objectFit: "cover" }} />
-												{showOverlay && (
+												{!imagesLoading && validImages[idx] ? (
 													<Box
+														component="img"
+														src={validImages[idx]}
+														alt={room.name}
+														onClick={() => openImageGallery(idx)}
 														sx={{
-															position: "absolute",
-															inset: 0,
-															bgcolor: "rgba(0,0,0,0.45)",
-															display: "flex",
-															alignItems: "center",
-															justifyContent: "center",
-															color: "white",
-															fontSize: 24,
-															fontWeight: 600,
+															width: "100%",
+															height: "100%",
+															objectFit: "cover",
+															cursor: "pointer",
 														}}
-													>
-														+{validImages.length - 4}
-													</Box>
+													/>
+												) : (
+													<Typography variant="caption" color="text.secondary">
+														Image
+													</Typography>
 												)}
 											</Box>
-										);
-									})}
+
+											{/* Room Details */}
+											<Box flex={1}>
+												<Typography variant="subtitle1" fontWeight={600} mb={0.5}>
+													{room.name}
+												</Typography>
+												<Typography variant="body2" color="text.secondary" mb={1}>
+													Amenities: {room.type}
+												</Typography>
+												<Typography variant="h6" color="primary" textAlign="right">
+													${room.price || 0}
+												</Typography>
+											</Box>
+										</Box>
+									</Box>
 								</Box>
+							))}
+						</CardContent>
+					</Card>
+				</Grid>
+
+				{/* RIGHT COLUMN - Accommodation Information */}
+				<Grid item xs={12} md={3}>
+					<Card>
+						<CardContent>
+							<Typography variant="h6" mb={2}>
+								Accommodation Information
+							</Typography>
+							<Typography fontWeight={600} mb={0.5}>
+								{booking.accommodation.name}
+							</Typography>
+							<Typography variant="body2" color="text.secondary" mb={2}>
+								{booking.accommodation.address}
+							</Typography>
+
+							<Divider sx={{ my: 2 }} />
+
+							<Typography variant="h6" mb={2}>
+								Check-in / Checkout Date
+							</Typography>
+							<Typography variant="body2" mb={1}>
+								<strong>Check-in:</strong> {booking.startDate.toDateString()}
+							</Typography>
+							<Typography variant="body2" mb={1}>
+								<strong>Check-out:</strong> {booking.endDate.toDateString()}
+							</Typography>
+							<Typography variant="body2" mb={3}>
+								<strong>Guests:</strong> {booking.guestCount}
+							</Typography>
+
+							<Divider sx={{ my: 2 }} />
+
+							<Box mb={3}>
+								<Typography variant="h6" mb={1}>
+									Total Price
+								</Typography>
+								<Typography variant="h4" sx={{ color: "warning.main" }} fontWeight={600}>
+									${totalPrice}
+								</Typography>
 							</Box>
-						)}
-					</Box>
-				</CardContent>
-			</Card>
 
-			{/* ROOMS */}
-			<Card sx={{ mb: 3 }}>
-				<CardContent>
-					<Typography variant="h6">Rooms / Beds</Typography>
-					<ul style={{ marginTop: 8 }}>
-						{booking.room.map((r) => (
-							<li key={r.id}>
-								{r.name} ({r.type})
-							</li>
-						))}
-					</ul>
-				</CardContent>
-			</Card>
+							<Box display="flex" alignItems="flex-start" gap={1} mb={2}>
+								<Checkbox checked={agreed} onChange={(e) => setAgreed(e.target.checked)} sx={{ p: 0, mt: 0.25 }} />
+								<Typography variant="body2" sx={{ lineHeight: 1.6 }}>
+									I confirm that all the information I provided is correct.
+								</Typography>
+							</Box>
 
-			{/* CONFIRMATION */}
-			<FormControlLabel control={<Checkbox checked={agreed} onChange={(e) => setAgreed(e.target.checked)} />} label="I confirm that all the information I provided is correct." />
-
-			<Button variant="contained" color="primary" fullWidth sx={{ mt: 2, py: 1.2 }} onClick={handleProceed}>
-				Proceed to Payment
-			</Button>
-
-			{/* SNACKBAR */}
-			<Snackbar open={snackbar.open} autoHideDuration={3000} onClose={handleCloseSnackbar} anchorOrigin={{ vertical: "bottom", horizontal: "center" }}>
-				<Alert onClose={handleCloseSnackbar} severity={snackbar.severity} variant="filled">
-					{snackbar.message}
-				</Alert>
-			</Snackbar>
+							<Button
+								variant="contained"
+								fullWidth
+								sx={{
+									py: 1.5,
+									bgcolor: "warning.main",
+									"&:hover": { bgcolor: "warning.dark" },
+								}}
+								onClick={handleProceed}
+							>
+								Proceed to Payment
+							</Button>
+						</CardContent>
+					</Card>
+				</Grid>
+			</Grid>
 
 			{/* FULLSCREEN GALLERY WITH ARROWS */}
 			<Dialog

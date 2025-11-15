@@ -2,20 +2,17 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { useState, useEffect } from "react";
 import type { BookingDto } from "../services/types/BookingDto";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const booking: BookingDto = location.state?.booking;
 	const { confirmBooking, loading } = useConfirmBooking();
+	const { pushNotification } = usePushNotificationContext();
 	const [qrUrl, setQrUrl] = useState("");
+
 	console.log("Booking ", booking);
-	// snackbar state
-	const [snackbar, setSnackbar] = useState<{
-		open: boolean;
-		message: string;
-		severity: "success" | "error";
-	}>({ open: false, message: "", severity: "success" });
 
 	useEffect(() => {
 		// generate a random fake QR code
@@ -27,19 +24,11 @@ export default function CheckoutPage() {
 	const handleConfirm = async () => {
 		try {
 			await confirmBooking(booking);
-			setSnackbar({
-				open: true,
-				message: "Booking confirmed successfully!, please check your booking history ",
-				severity: "success",
-			});
+			pushNotification("Booking confirmed successfully! Please check your booking history.", "success");
 			// navigate after a short delay
 			setTimeout(() => navigate("/", { state: { booking } }), 1500);
 		} catch {
-			setSnackbar({
-				open: true,
-				message: "Failed to confirm booking. Please try again.",
-				severity: "error",
-			});
+			pushNotification("Failed to confirm booking. Please try again.", "error");
 		}
 	};
 
