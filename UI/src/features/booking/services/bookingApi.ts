@@ -21,7 +21,7 @@ export const bookingApi = {
 			guestCount: data.guestCount,
 			phone: data.user.phone,
 			status: null || "PENDING",
-			userId: data.user.id || "mock-user-123", // for now
+			userId: data.user.id,
 			details: {
 				create: data.room.map((room) => ({
 					itemId: room.id,
@@ -43,12 +43,28 @@ export const bookingApi = {
 	},
 	async getAccomImage(data: BookingImageDto) {
 		try {
-			const res = await axios.get(`${IMAGE_ENDPOINT}/accommodation/${data.id}`);
+			//Get accommodation by roomId
+			const accomRes = await axios.get(`${ACCOMMODATION_ENDPOINT}?byEntity=room&entityId=${data.id}`);
 
+			const accommodationId = accomRes.data?.data?.id;
+			if (!accommodationId) return [];
+
+			// Get images using accommodationId
+			const imgRes = await axios.get(`${IMAGE_ENDPOINT}/accommodation/${accommodationId}`);
+
+			return imgRes.data?.data?.images ?? [];
+		} catch (error) {
+			console.error("Error fetching accommodation images:", error);
+			return [];
+		}
+	},
+	async getRoomImage(data: BookingImageDto) {
+		try {
+			const res = await axios.get(`${IMAGE_ENDPOINT}/room/${data.id}`);
 			// Return only the array of image objects, or empty array if none
 			return res.data?.data?.images ?? [];
 		} catch (error) {
-			console.error("Error fetching accommodation images:", error);
+			console.error("Error fetching room images:", error);
 			return []; // return empty array on error
 		}
 	},
