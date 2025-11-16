@@ -13,10 +13,9 @@ export default function BookingPreviewPage() {
 	const { getImages } = useFetchImages();
 	const { pushNotification } = usePushNotificationContext();
 
-	console.log("BookingPreviewPage rendered"); // Debug log
-
 	// Images
 	const [roomImages, setRoomImages] = useState<Record<string, string>>({});
+	const [roomImagesByRoomId, setRoomImagesByRoomId] = useState<Record<string, string[]>>({});
 	const [imagesLoading, setImagesLoading] = useState(true);
 	const [accomImages, setAccomImages] = useState<string[]>([]);
 	const [accomImageLoading, setAccomImageLoading] = useState(true);
@@ -32,7 +31,7 @@ export default function BookingPreviewPage() {
 	const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
 	const openImageGallery = (index: number) => {
-		const safeIndex = Math.min(Math.max(0, index), galleryImages.length - 1);
+		const safeIndex = Math.min(Math.max(0, index), galleryImages.length);
 		setCurrentIndex(safeIndex);
 		setOpenGallery(true);
 	};
@@ -87,7 +86,7 @@ export default function BookingPreviewPage() {
 		const loadRoomImages = async () => {
 			try {
 				const imageMap: Record<string, string> = {};
-				const allImages: string[] = [];
+				const imagesByRoom: Record<string, string[]> = {};
 
 				await Promise.all(
 					booking.room.map(async (room) => {
@@ -100,8 +99,8 @@ export default function BookingPreviewPage() {
 							const webpImages = res.filter((img: any) => img.variant === "WEBP").map((img: any) => img.url);
 
 							if (webpImages.length > 0) {
-								imageMap[room.id] = webpImages[0];
-								allImages.push(...webpImages);
+								imageMap[room.id] = webpImages[0]; // First image for thumbnail
+								imagesByRoom[room.id] = webpImages; // All images for this specific room
 							}
 						} catch (err) {
 							console.error(`Error fetching images for room ${room.id}:`, err);
@@ -110,7 +109,7 @@ export default function BookingPreviewPage() {
 				);
 
 				setRoomImages(imageMap);
-				setGalleryImages(allImages);
+				setRoomImagesByRoomId(imagesByRoom);
 
 				if (Object.keys(imageMap).length > 0) {
 					pushNotification("Room images loaded successfully", "success");
@@ -126,35 +125,20 @@ export default function BookingPreviewPage() {
 		};
 
 		loadRoomImages();
-	}, []); // EMPTY DEPS - only run on mount
+	}, []);
 
-	// Fetch ACCOMMODATION images - STRICT GUARD
+	// Fetch ACCOMMODATION images
 	const fetchedAccomRef = useRef(false);
-	const accomIdRef = useRef<string>("");
 	useEffect(() => {
-		const firstRoomId = booking?.room?.[0]?.id || "";
-
-		console.log("Accom images effect triggered");
-		console.log("fetchedAccomRef:", fetchedAccomRef.current);
-		console.log("Current firstRoomId:", firstRoomId);
-		console.log("Cached accomId:", accomIdRef.current);
-
-		// Guard: already fetched OR no rooms OR same room
-		if (fetchedAccomRef.current || !firstRoomId || accomIdRef.current === firstRoomId) {
-			console.log("Skipping accom fetch");
-			return;
-		}
+		if (!booking?.room?.length || fetchedAccomRef.current) return;
 
 		fetchedAccomRef.current = true;
-		accomIdRef.current = firstRoomId;
-		console.log("Fetching accommodation images...");
 
 		const loadAccomImages = async () => {
 			try {
-				// Use first room's ID to get accommodation images
 				const res = await getImages({
 					entity: "accommodation",
-					id: booking.room[0].id, // Pass room ID, API will find accommodation
+					id: booking.room[0].id,
 				});
 
 				const webpImages = res.filter((img: any) => img.variant === "WEBP").map((img: any) => img.url);
@@ -168,7 +152,7 @@ export default function BookingPreviewPage() {
 		};
 
 		loadAccomImages();
-	}, [booking.room]); // Removed getImages from deps
+	}, []);
 
 	// Gallery keyboard support
 	useEffect(() => {
@@ -263,8 +247,11 @@ export default function BookingPreviewPage() {
 														src={roomImages[room.id]}
 														alt={room.name}
 														onClick={() => {
-															const imgIndex = galleryImages.indexOf(roomImages[room.id]);
-															if (imgIndex !== -1) openImageGallery(imgIndex);
+															// Set only THIS room's images to gallery
+															const thisRoomImages = roomImagesByRoomId[room.id] || [];
+															setGalleryImages(thisRoomImages);
+															// Open at first image
+															setTimeout(() => openImageGallery(0), 0);
 														}}
 														sx={{
 															width: "100%",
@@ -320,7 +307,7 @@ export default function BookingPreviewPage() {
 										alt={booking.accommodation.name}
 										onClick={() => {
 											setGalleryImages(accomImages);
-											openImageGallery(0);
+											setTimeout(() => openImageGallery(0), 0);
 										}}
 										sx={{
 											width: "100%",
@@ -339,6 +326,7 @@ export default function BookingPreviewPage() {
 												display: "grid",
 												gridTemplateColumns: "repeat(4, 1fr)",
 												gap: 0.5,
+												position: "relative",
 											}}
 										>
 											{accomImages.slice(1, 5).map((img, idx) => (
@@ -349,7 +337,7 @@ export default function BookingPreviewPage() {
 													alt={`Accommodation ${idx + 2}`}
 													onClick={() => {
 														setGalleryImages(accomImages);
-														openImageGallery(idx + 1);
+														setTimeout(() => openImageGallery(idx + 1), 0);
 													}}
 													sx={{
 														width: "100%",
@@ -357,7 +345,6 @@ export default function BookingPreviewPage() {
 														objectFit: "cover",
 														borderRadius: 1,
 														cursor: "pointer",
-														position: "relative",
 													}}
 												/>
 											))}
@@ -381,7 +368,7 @@ export default function BookingPreviewPage() {
 													}}
 													onClick={() => {
 														setGalleryImages(accomImages);
-														openImageGallery(4);
+														setTimeout(() => openImageGallery(4), 0);
 													}}
 												>
 													+{accomImages.length - 4}
