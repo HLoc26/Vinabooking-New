@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Card, CardContent, Typography, Button, Checkbox, FormControlLabel, Divider, Dialog, IconButton, Grid } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button, Checkbox, Divider, Dialog, IconButton, Grid } from "@mui/material";
 import { ChevronLeft, ChevronRight, Close } from "@mui/icons-material";
 import { MuiTelInput } from "mui-tel-input";
 import { useBookingContext } from "../hooks/useBookingContext";
@@ -10,23 +10,29 @@ import { usePushNotificationContext } from "../../../context/PushNotification/ho
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
 	const { booking, setBooking } = useBookingContext();
-	const { getAccomImage } = useFetchImages();
+	const { getImages } = useFetchImages();
 	const { pushNotification } = usePushNotificationContext();
 
-	const [images, setImages] = useState<string[]>([]);
-	const [imagesLoading, setImagesLoading] = useState(true);
+	console.log("BookingPreviewPage rendered"); // Debug log
 
+	// Images
+	const [roomImages, setRoomImages] = useState<Record<string, string>>({});
+	const [imagesLoading, setImagesLoading] = useState(true);
+	const [accomImages, setAccomImages] = useState<string[]>([]);
+	const [accomImageLoading, setAccomImageLoading] = useState(true);
+
+	// MUITelInput + checkbox
 	const [isEditing, setIsEditing] = useState(false);
 	const [showPhoneField, setShowPhoneField] = useState(true);
 	const [agreed, setAgreed] = useState(false);
 
+	// Image gallery
 	const [openGallery, setOpenGallery] = useState(false);
 	const [currentIndex, setCurrentIndex] = useState(0);
-
-	const validImages = images.filter((url) => typeof url === "string" && url.trim() !== "");
+	const [galleryImages, setGalleryImages] = useState<string[]>([]);
 
 	const openImageGallery = (index: number) => {
-		const safeIndex = Math.min(Math.max(0, index), validImages.length - 1);
+		const safeIndex = Math.min(Math.max(0, index), galleryImages.length - 1);
 		setCurrentIndex(safeIndex);
 		setOpenGallery(true);
 	};
@@ -34,11 +40,11 @@ export default function BookingPreviewPage() {
 	const closeGallery = () => setOpenGallery(false);
 
 	const handlePrevImage = () => {
-		setCurrentIndex((prev) => (prev === 0 ? validImages.length - 1 : prev - 1));
+		setCurrentIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
 	};
 
 	const handleNextImage = () => {
-		setCurrentIndex((prev) => (prev === validImages.length - 1 ? 0 : prev + 1));
+		setCurrentIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
 	};
 
 	const handlePhoneChange = (value: string) =>
@@ -71,29 +77,45 @@ export default function BookingPreviewPage() {
 		navigate("/booking/checkout", { state: { booking } });
 	};
 
-	// Fetch images before showing gallery
+	// Fetch ROOM images
 	const fetchedRef = useRef(false);
 	useEffect(() => {
 		if (!booking?.room?.length || fetchedRef.current) return;
 
 		fetchedRef.current = true;
-		const loadImages = async () => {
+
+		const loadRoomImages = async () => {
 			try {
-				const roomImgs = await Promise.all(
+				const imageMap: Record<string, string> = {};
+				const allImages: string[] = [];
+
+				await Promise.all(
 					booking.room.map(async (room) => {
-						const res = await getAccomImage({
-							entity: "Accommodation",
-							id: room.id,
-						});
-						return res.filter((img: any) => img.variant === "WEBP").map((img: any) => img.url);
+						try {
+							const res = await getImages({
+								entity: "room",
+								id: room.id,
+							});
+
+							const webpImages = res.filter((img: any) => img.variant === "WEBP").map((img: any) => img.url);
+
+							if (webpImages.length > 0) {
+								imageMap[room.id] = webpImages[0];
+								allImages.push(...webpImages);
+							}
+						} catch (err) {
+							console.error(`Error fetching images for room ${room.id}:`, err);
+						}
 					})
 				);
-				setImages(roomImgs.flat());
 
-				if (roomImgs.flat().length > 0) {
+				setRoomImages(imageMap);
+				setGalleryImages(allImages);
+
+				if (Object.keys(imageMap).length > 0) {
 					pushNotification("Room images loaded successfully", "success");
 				} else {
-					pushNotification("No images available for this room", "info");
+					pushNotification("No images available for rooms", "info");
 				}
 			} catch (err) {
 				console.error("Error fetching room images:", err);
@@ -103,10 +125,52 @@ export default function BookingPreviewPage() {
 			}
 		};
 
-		loadImages();
-	}, [booking.room, getAccomImage, pushNotification]);
+		loadRoomImages();
+	}, []); // EMPTY DEPS - only run on mount
 
-	// Keyboard navigation for gallery
+	// Fetch ACCOMMODATION images - STRICT GUARD
+	const fetchedAccomRef = useRef(false);
+	const accomIdRef = useRef<string>("");
+	useEffect(() => {
+		const firstRoomId = booking?.room?.[0]?.id || "";
+
+		console.log("Accom images effect triggered");
+		console.log("fetchedAccomRef:", fetchedAccomRef.current);
+		console.log("Current firstRoomId:", firstRoomId);
+		console.log("Cached accomId:", accomIdRef.current);
+
+		// Guard: already fetched OR no rooms OR same room
+		if (fetchedAccomRef.current || !firstRoomId || accomIdRef.current === firstRoomId) {
+			console.log("Skipping accom fetch");
+			return;
+		}
+
+		fetchedAccomRef.current = true;
+		accomIdRef.current = firstRoomId;
+		console.log("Fetching accommodation images...");
+
+		const loadAccomImages = async () => {
+			try {
+				// Use first room's ID to get accommodation images
+				const res = await getImages({
+					entity: "accommodation",
+					id: booking.room[0].id, // Pass room ID, API will find accommodation
+				});
+
+				const webpImages = res.filter((img: any) => img.variant === "WEBP").map((img: any) => img.url);
+
+				setAccomImages(webpImages);
+			} catch (err) {
+				console.error("Error fetching accommodation images:", err);
+			} finally {
+				setAccomImageLoading(false);
+			}
+		};
+
+		loadAccomImages();
+	}, [booking.room]); // Removed getImages from deps
+
+	// Gallery keyboard support
 	useEffect(() => {
 		if (!openGallery) return;
 
@@ -118,9 +182,9 @@ export default function BookingPreviewPage() {
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [openGallery, validImages.length]);
+	}, [openGallery, galleryImages.length]);
 
-	// Calculate total price
+	// Total price
 	const totalPrice = booking.room.reduce((sum, room) => sum + (room.price || 0), 0);
 
 	return (
@@ -128,9 +192,10 @@ export default function BookingPreviewPage() {
 			<Typography variant="h4" gutterBottom mb={3}>
 				Booking Preview
 			</Typography>
+
 			<Grid container spacing={3}>
-				{/* LEFT COLUMN - User Information */}
-				<Grid item xs={12} md={3} sx={{ width: 320, flexShrink: 0 }}>
+				{/* LEFT COLUMN - User */}
+				<Grid item xs={12} md={3}>
 					<Card>
 						<CardContent>
 							<Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -139,12 +204,14 @@ export default function BookingPreviewPage() {
 									{isEditing ? "Done" : "Edit"}
 								</Button>
 							</Box>
+
 							<Typography sx={{ mb: 1 }}>
 								<strong>Name:</strong> {booking.user.name}
 							</Typography>
 							<Typography sx={{ mb: 1 }}>
 								<strong>Email:</strong> {booking.user.email}
 							</Typography>
+
 							<Box minHeight={56} display="flex" alignItems="center">
 								{isEditing ? (
 									<MuiTelInput fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
@@ -165,18 +232,12 @@ export default function BookingPreviewPage() {
 					<Card>
 						<CardContent>
 							<Typography variant="h6" mb={2}>
-								Room Review (Booking Detail Preview)
+								Room Review
 							</Typography>
 
 							{booking.room.map((room, idx) => (
 								<Box key={room.id} mb={idx < booking.room.length - 1 ? 3 : 0}>
-									<Box
-										sx={{
-											border: "1px solid #e0e0e0",
-											borderRadius: 2,
-											p: 2,
-										}}
-									>
+									<Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
 										<Box display="flex" gap={2}>
 											{/* Room Image */}
 											<Box
@@ -192,12 +253,19 @@ export default function BookingPreviewPage() {
 													overflow: "hidden",
 												}}
 											>
-												{!imagesLoading && validImages[idx] ? (
+												{imagesLoading ? (
+													<Typography variant="caption" color="text.secondary">
+														Loading...
+													</Typography>
+												) : roomImages[room.id] ? (
 													<Box
 														component="img"
-														src={validImages[idx]}
+														src={roomImages[room.id]}
 														alt={room.name}
-														onClick={() => openImageGallery(idx)}
+														onClick={() => {
+															const imgIndex = galleryImages.indexOf(roomImages[room.id]);
+															if (imgIndex !== -1) openImageGallery(imgIndex);
+														}}
 														sx={{
 															width: "100%",
 															height: "100%",
@@ -207,20 +275,22 @@ export default function BookingPreviewPage() {
 													/>
 												) : (
 													<Typography variant="caption" color="text.secondary">
-														Image
+														No Image
 													</Typography>
 												)}
 											</Box>
 
 											{/* Room Details */}
-											<Box flex={1}>
-												<Typography variant="subtitle1" fontWeight={600} mb={0.5}>
-													{room.name}
-												</Typography>
-												<Typography variant="body2" color="text.secondary" mb={1}>
-													Type of place: {room.type.toLocaleLowerCase()}
-												</Typography>
-												<Typography variant="h6" color="primary" textAlign="right">
+											<Box flex={1} display="flex" flexDirection="column" justifyContent="space-between">
+												<Box>
+													<Typography variant="subtitle1" fontWeight={600} mb={0.5}>
+														{room.name}
+													</Typography>
+													<Typography variant="body2" color="text.secondary">
+														Type of place: {room.type.toLowerCase()}
+													</Typography>
+												</Box>
+												<Typography variant="h6" sx={{ color: "warning.main" }} textAlign="right">
 													${room.price || 0}
 												</Typography>
 											</Box>
@@ -232,13 +302,122 @@ export default function BookingPreviewPage() {
 					</Card>
 				</Grid>
 
-				{/* RIGHT COLUMN - Accommodation Information */}
+				{/* RIGHT COLUMN - Accommodation Info */}
 				<Grid item xs={12} md={3}>
 					<Card>
 						<CardContent>
 							<Typography variant="h6" mb={2}>
 								Accommodation Information
 							</Typography>
+
+							{/* Accommodation Image Gallery Preview */}
+							{accomImages.length > 0 && (
+								<Box sx={{ mb: 2 }}>
+									{/* Main Image */}
+									<Box
+										component="img"
+										src={accomImages[0]}
+										alt={booking.accommodation.name}
+										onClick={() => {
+											setGalleryImages(accomImages);
+											openImageGallery(0);
+										}}
+										sx={{
+											width: "100%",
+											height: 150,
+											objectFit: "cover",
+											borderRadius: 2,
+											cursor: "pointer",
+											mb: 1,
+										}}
+									/>
+
+									{/* Thumbnail Grid (if more than 1 image) */}
+									{accomImages.length > 1 && (
+										<Box
+											sx={{
+												display: "grid",
+												gridTemplateColumns: "repeat(4, 1fr)",
+												gap: 0.5,
+											}}
+										>
+											{accomImages.slice(1, 5).map((img, idx) => (
+												<Box
+													key={idx}
+													component="img"
+													src={img}
+													alt={`Accommodation ${idx + 2}`}
+													onClick={() => {
+														setGalleryImages(accomImages);
+														openImageGallery(idx + 1);
+													}}
+													sx={{
+														width: "100%",
+														height: 60,
+														objectFit: "cover",
+														borderRadius: 1,
+														cursor: "pointer",
+														position: "relative",
+													}}
+												/>
+											))}
+											{/* Show +N overlay on last thumbnail if more images exist */}
+											{accomImages.length > 5 && (
+												<Box
+													sx={{
+														position: "absolute",
+														bottom: 0,
+														right: 0,
+														width: "calc(25% - 2px)",
+														height: 60,
+														display: "flex",
+														alignItems: "center",
+														justifyContent: "center",
+														bgcolor: "rgba(0,0,0,0.6)",
+														color: "white",
+														borderRadius: 1,
+														cursor: "pointer",
+														fontWeight: 600,
+													}}
+													onClick={() => {
+														setGalleryImages(accomImages);
+														openImageGallery(4);
+													}}
+												>
+													+{accomImages.length - 4}
+												</Box>
+											)}
+										</Box>
+									)}
+								</Box>
+							)}
+
+							{/* Loading/No Image State */}
+							{accomImages.length === 0 && (
+								<Box
+									sx={{
+										width: "100%",
+										height: 150,
+										bgcolor: "#f0f0f0",
+										borderRadius: 2,
+										mb: 2,
+										display: "flex",
+										alignItems: "center",
+										justifyContent: "center",
+									}}
+								>
+									{accomImageLoading ? (
+										<Typography variant="caption" color="text.secondary">
+											Loading...
+										</Typography>
+									) : (
+										<Typography variant="caption" color="text.secondary">
+											No Image
+										</Typography>
+									)}
+								</Box>
+							)}
+
 							<Typography fontWeight={600} mb={0.5}>
 								{booking.accommodation.name}
 							</Typography>
@@ -296,7 +475,7 @@ export default function BookingPreviewPage() {
 				</Grid>
 			</Grid>
 
-			{/* FULLSCREEN GALLERY WITH ARROWS */}
+			{/* FULLSCREEN GALLERY */}
 			<Dialog
 				fullScreen
 				open={openGallery}
@@ -352,23 +531,10 @@ export default function BookingPreviewPage() {
 							borderRadius: 1,
 						}}
 					>
-						{currentIndex + 1} / {validImages.length}
+						{currentIndex + 1} / {galleryImages.length}
 					</Box>
 
-					{imagesLoading ? (
-						<Box
-							sx={{
-								height: "100vh",
-								display: "flex",
-								justifyContent: "center",
-								alignItems: "center",
-								color: "white",
-								fontSize: 18,
-							}}
-						>
-							Loading images...
-						</Box>
-					) : validImages.length === 0 ? (
+					{galleryImages.length === 0 ? (
 						<Box
 							sx={{
 								height: "100vh",
@@ -383,7 +549,7 @@ export default function BookingPreviewPage() {
 						</Box>
 					) : (
 						<>
-							{/* Main Image Display */}
+							{/* Main Image */}
 							<Box
 								sx={{
 									height: "100vh",
@@ -395,7 +561,7 @@ export default function BookingPreviewPage() {
 							>
 								<Box
 									component="img"
-									src={validImages[currentIndex]}
+									src={galleryImages[currentIndex]}
 									alt={`Image ${currentIndex + 1}`}
 									onClick={(e) => e.stopPropagation()}
 									sx={{
@@ -449,7 +615,7 @@ export default function BookingPreviewPage() {
 								<ChevronRight sx={{ fontSize: 40 }} />
 							</IconButton>
 
-							{/* Thumbnail Strip */}
+							{/* Thumbnails */}
 							<Box
 								onClick={(e) => e.stopPropagation()}
 								sx={{
@@ -471,7 +637,7 @@ export default function BookingPreviewPage() {
 									},
 								}}
 							>
-								{validImages.map((url, idx) => (
+								{galleryImages.map((url, idx) => (
 									<Box
 										key={idx}
 										component="img"
