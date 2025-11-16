@@ -18,7 +18,10 @@ export class FakeContextInfo implements ContextInfoAdapter {
 				name: "Vinabooking Riverside Hotel",
 				address: "123 Nguyen Hue, District 1, Ho Chi Minh City",
 			},
-			room: [{ id: "room-001", name: "Deluxe Room 101", type: "ROOM" }],
+			room: [
+				{ id: "room-001", name: "Deluxe Room 101", type: "ROOM", price: 320 },
+				{ id: "bed-002", name: "Master bedroom", type: "BED", price: 190 },
+			],
 		};
 	}
 }
