@@ -45,7 +45,7 @@ export const bookingApi = {
 		try {
 			//Get accommodation by roomId
 			const accomRes = await axios.get(`${ACCOMMODATION_ENDPOINT}?byEntity=room&entityId=${data.id}`);
-
+			//Xài tạm này do service của Huy đang lỗi nhánh này
 			const accommodationId = accomRes.data?.data?.id;
 			if (!accommodationId) return [];
 
