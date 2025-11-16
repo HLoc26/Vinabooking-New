@@ -128,10 +128,9 @@ export default function BookingPreviewPage() {
 			<Typography variant="h4" gutterBottom mb={3}>
 				Booking Preview
 			</Typography>
-
 			<Grid container spacing={3}>
 				{/* LEFT COLUMN - User Information */}
-				<Grid item xs={12} md={3}>
+				<Grid item xs={12} md={3} sx={{ width: 320, flexShrink: 0 }}>
 					<Card>
 						<CardContent>
 							<Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
@@ -146,7 +145,7 @@ export default function BookingPreviewPage() {
 							<Typography sx={{ mb: 1 }}>
 								<strong>Email:</strong> {booking.user.email}
 							</Typography>
-							<Box minHeight={56}>
+							<Box minHeight={56} display="flex" alignItems="center">
 								{isEditing ? (
 									<MuiTelInput fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
 								) : (
@@ -219,7 +218,7 @@ export default function BookingPreviewPage() {
 													{room.name}
 												</Typography>
 												<Typography variant="body2" color="text.secondary" mb={1}>
-													Amenities: {room.type}
+													Type of place: {room.type.toLocaleLowerCase()}
 												</Typography>
 												<Typography variant="h6" color="primary" textAlign="right">
 													${room.price || 0}
