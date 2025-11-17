@@ -5,14 +5,22 @@ import { roomClient } from "../clients/room.client";
 import { imageClient } from "../clients/image.client";
 
 export class AccommodationService {
-    async getAccommodationById(id: string) {
+    async getAccommodationById(
+        id: string,
+        startDate?: string,
+        endDate?: string
+    ) {
         console.log(
             `[AccommodationService] Fetching details for accomm ID: ${id}`
         );
 
         // 1. Create 3 Promises to run in parallel
         const accommodationPromise = accommodationRepository.findById(id);
-        const roomsPromise = roomClient.getRoomsByAccommodationId(id);
+        const roomsPromise = roomClient.getRoomsByAccommodationId(
+            id,
+            startDate,
+            endDate
+        );
         const imagesPromise = imageClient.getImagesForEntity(id);
 
         // 2. Await all Promises
@@ -33,27 +41,6 @@ export class AccommodationService {
             rooms: rooms,
             images: images,
         };
-    }
-    
-    /**
-     * Gets Accommodation details by a Room ID.
-     */
-    async getAccommodationByRoomId(roomId: string) {
-        console.log(
-            `[AccommodationService] Finding accommodation for room ID: ${roomId}`
-        );
-        // 1. Call Room Service Client to get the Accommodation ID
-        const accommodationId =
-            await roomClient.getAccommodationIdByRoomId(roomId);
-        console.log(
-            `[AccommodationService] Found accommodation ID: ${accommodationId} for room ID: ${roomId}`
-        );
-
-        // 2. Use the existing getAccommodationById to fetch details (which includes fetching rooms again)
-        const accommodationDetails =
-            await this.getAccommodationById(accommodationId);
-
-        return accommodationDetails;
     }
 
     /**
