@@ -37,7 +37,7 @@ export const useFetchRoomsImages = (roomIds: string[]) => {
 		return () => {
 			ignore = true;
 		};
-	}, [roomIds.join(",")]); // join để dependency check thay đổi list
+	}, [roomIds]);
 
 	return { roomImagesMap, loading };
 };

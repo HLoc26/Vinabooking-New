@@ -1,11 +1,13 @@
 import React, { type Dispatch, type SetStateAction } from "react";
 import { Box, Typography, Checkbox, Divider, CardContent, Card, Button } from "@mui/material";
-import type { BookingDto } from "../services/types/BookingDto";
 import type { ImageType } from "../services/types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
+import type { RoomInfo } from "../services/types/RoomInfo";
+import { useBookingContext } from "../hooks/useBookingContext";
+import useAccommodationInfo from "../hooks/useAccommodationInfo";
 
 interface Props {
-	booking: BookingDto;
+	rooms: RoomInfo[];
 	agreed: boolean;
 	setAgreed: Dispatch<SetStateAction<boolean>>;
 	setGalleryImages: Dispatch<SetStateAction<ImageType[]>>;
@@ -13,10 +15,20 @@ interface Props {
 	handleProceed: () => void;
 }
 
-const AccommodationInfoBox: React.FC<Props> = ({ booking, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
-	const { accomImages, accomImagesLoading } = useFetchAccommodationImages(booking.room[0].id);
+const AccommodationInfoBox: React.FC<Props> = ({ rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
+	const { context } = useBookingContext();
+	const { accommInfo, loading } = useAccommodationInfo(context.accommodationId);
+	const { accomImages, accomImagesLoading } = useFetchAccommodationImages(accommInfo?.id ?? "");
 
-	const totalPrice = booking.room.reduce((sum, room) => sum + (room.price || 0), 0);
+	if (loading) {
+		return <Typography>Loading...</Typography>;
+	}
+
+	if (!accommInfo) {
+		return <Typography>Accommodation not found</Typography>;
+	}
+
+	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) || 0), 0);
 	const webp = accomImages.filter((i) => i.variant === "WEBP");
 	const thumbnails = accomImages.filter((i) => i.variant === "THUMBNAIL");
 
@@ -40,7 +52,7 @@ const AccommodationInfoBox: React.FC<Props> = ({ booking, agreed, setAgreed, set
 						<Box
 							component="img"
 							src={mainThumbnail.url}
-							alt={booking.accommodation.name}
+							alt={accommInfo.name}
 							onClick={() => {
 								setGalleryImages(webp);
 								setTimeout(() => openImageGallery(0), 0);
@@ -142,10 +154,10 @@ const AccommodationInfoBox: React.FC<Props> = ({ booking, agreed, setAgreed, set
 				)}
 
 				<Typography fontWeight={600} mb={0.5}>
-					{booking.accommodation.name}
+					{accommInfo.name}
 				</Typography>
 				<Typography variant="body2" color="text.secondary" mb={2}>
-					{booking.accommodation.address}
+					{accommInfo.address.fullAddress}
 				</Typography>
 
 				<Divider sx={{ my: 2 }} />
@@ -154,13 +166,13 @@ const AccommodationInfoBox: React.FC<Props> = ({ booking, agreed, setAgreed, set
 					Check-in / Checkout Date
 				</Typography>
 				<Typography variant="body2" mb={1}>
-					<strong>Check-in:</strong> {booking.startDate.toDateString()}
+					<strong>Check-in:</strong> {context.startDate.toDateString()}
 				</Typography>
 				<Typography variant="body2" mb={1}>
-					<strong>Check-out:</strong> {booking.endDate.toDateString()}
+					<strong>Check-out:</strong> {context.endDate.toDateString()}
 				</Typography>
 				<Typography variant="body2" mb={3}>
-					<strong>Guests:</strong> {booking.guestCount}
+					<strong>Guests:</strong> {context.guestCount}
 				</Typography>
 
 				<Divider sx={{ my: 2 }} />
@@ -169,8 +181,8 @@ const AccommodationInfoBox: React.FC<Props> = ({ booking, agreed, setAgreed, set
 					<Typography variant="h6" mb={1}>
 						Total Price
 					</Typography>
-					<Typography variant="h4" sx={{ color: "warning.main" }} fontWeight={600}>
-						${totalPrice}
+					<Typography variant="h4" sx={{ color: "text.primary" }} fontWeight={600}>
+						${totalPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 					</Typography>
 				</Box>
 

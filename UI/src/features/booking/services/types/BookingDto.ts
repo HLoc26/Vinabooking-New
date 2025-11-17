@@ -1,9 +1,10 @@
-export interface RoomDetail {
+export interface ItemDetail {
 	id: string;
 	name: string;
 	type: "ROOM" | "BED";
 	price: number;
 	note?: string;
+	count: number;
 	//roomImage: file?
 }
 
@@ -24,5 +25,5 @@ export interface BookingDto {
 		address: string;
 		//image: file?
 	};
-	room: RoomDetail[];
+	room: ItemDetail[];
 }
