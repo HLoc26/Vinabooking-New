@@ -74,6 +74,7 @@ export default class BookingController {
 				...req.body,
 				userId, // attach authenticated user
 				status: "PENDING",
+				referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
 			};
 
 			const newBooking = await this.bookingRepository.createBooking(bookingData);
@@ -86,7 +87,7 @@ export default class BookingController {
 
 	public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
 		try {
-			const bookingData = { ...req.body, status: "DRAFT" };
+			const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)) };
 			const newBooking = await this.bookingRepository.createBooking(bookingData);
 			return ResponseHelper.success(res, newBooking, 201);
 		} catch (err: unknown) {
