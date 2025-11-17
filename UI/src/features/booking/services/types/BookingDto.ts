@@ -26,7 +26,3 @@ export interface BookingDto {
 	};
 	room: RoomDetail[];
 }
-export interface BookingImageDto {
-	entity: string;
-	id: string;
-}
