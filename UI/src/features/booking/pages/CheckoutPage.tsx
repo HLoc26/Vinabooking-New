@@ -1,95 +1,104 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
-import { useState, useEffect } from "react";
-import type { BookingDto } from "../services/types/BookingDto";
+import { useState } from "react";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
+import { useBookingContext } from "../hooks/useBookingContext";
+import useAuth from "../../user/hooks/useAuth";
+import type { RoomInfo } from "../services/types/RoomInfo";
+import type { AccommodationInfo } from "../services/types/Accommodation";
+import { Box, Typography, Button, Paper, List, ListItem, Divider } from "@mui/material";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
 	const location = useLocation();
-	const booking: BookingDto = location.state?.booking;
+	const roomInfo: RoomInfo[] = location.state?.rooms;
+	const accommodation: AccommodationInfo = location.state?.accommodation;
+	const { context } = useBookingContext();
+	const [userInfo] = useState(useAuth().getCurrentUser());
+
 	const { confirmBooking, loading } = useConfirmBooking();
 	const { pushNotification } = usePushNotificationContext();
-	const [qrUrl, setQrUrl] = useState("");
 
-	console.log("Booking ", booking);
-
-	useEffect(() => {
-		// generate a random fake QR code
-		setQrUrl(`https://api.qrserver.com/v1/create-qr-code/?size=500x500&data=BOOKING_${booking.id}`);
-	}, [booking.id]);
-
-	if (!booking) return <p style={{ textAlign: "center", marginTop: "2rem" }}>No booking found</p>;
+	if (!context)
+		return (
+			<Typography variant="h6" align="center" mt={5}>
+				No booking found
+			</Typography>
+		);
 
 	const handleConfirm = async () => {
 		try {
-			await confirmBooking(booking);
+			await confirmBooking(context, userInfo, roomInfo);
 			pushNotification("Booking confirmed successfully! Please check your booking history.", "success");
-			// navigate after a short delay
-			setTimeout(() => navigate("/", { state: { booking } }), 1500);
+			setTimeout(() => navigate("/", { state: { context } }), 1500);
 		} catch {
 			pushNotification("Failed to confirm booking. Please try again.", "error");
 		}
 	};
 
 	return (
-		<div style={{ maxWidth: 600, margin: "2rem auto", textAlign: "center" }}>
-			<h2>Checkout</h2>
+		<Box
+			sx={{
+				maxWidth: 700,
+				mx: "auto",
+				my: 5,
+				p: 4,
+				borderRadius: 3,
+				boxShadow: 3,
+				backgroundColor: "background.paper",
+			}}
+		>
+			<Typography variant="h4" align="center" gutterBottom color="primary">
+				Checkout
+			</Typography>
 
-			{qrUrl ? <img src={qrUrl} alt="QR Code" style={{ margin: "1rem 0" }} /> : null}
-
-			<div style={{ marginBottom: "1rem", textAlign: "left" }}>
-				<h3>Booking Summary</h3>
-				<p>
-					<strong>Accommodation:</strong> {booking.accommodation.name}
-				</p>
-				<p>
-					<strong>Address:</strong> {booking.accommodation.address}
-				</p>
-				<p>
-					<b>Check in:</b>{" "}
-					{new Date(booking.startDate).toLocaleDateString("en-GB", {
+			<Paper variant="outlined" sx={{ p: 3, mb: 3 }}>
+				<Typography variant="h6" gutterBottom>
+					Booking Summary
+				</Typography>
+				<Typography>
+					<strong>Accommodation:</strong> {accommodation.name}
+				</Typography>
+				<Typography>
+					<strong>Address:</strong> {accommodation.address.fullAddress}
+				</Typography>
+				<Typography>
+					<strong>Check-in:</strong>{" "}
+					{new Date(context.startDate).toLocaleDateString("en-GB", {
 						day: "2-digit",
 						month: "short",
 						year: "numeric",
-					})}{" "}
-				</p>
-				<p>
-					<b>Check out:</b>{" "}
-					{new Date(booking.endDate).toLocaleDateString("en-GB", {
+					})}
+				</Typography>
+				<Typography>
+					<strong>Check-out:</strong>{" "}
+					{new Date(context.endDate).toLocaleDateString("en-GB", {
 						day: "2-digit",
 						month: "short",
 						year: "numeric",
-					})}{" "}
-				</p>
-				<p>
-					<strong>Guests:</strong> {booking.guestCount}
-				</p>
+					})}
+				</Typography>
+				<Typography>
+					<strong>Guests:</strong> {context.guestCount}
+				</Typography>
 
-				<h4>Rooms / Beds</h4>
-				<ul>
-					{booking.room.map((room) => (
-						<li key={room.id}>
-							{room.name} ({room.type})
-						</li>
+				<Divider sx={{ my: 2 }} />
+
+				<Typography variant="subtitle1" gutterBottom>
+					Rooms / Beds
+				</Typography>
+				<List>
+					{roomInfo.map((room) => (
+						<ListItem key={room.id} sx={{ pl: 0 }}>
+							- {room.name}
+						</ListItem>
 					))}
-				</ul>
-			</div>
+				</List>
+			</Paper>
 
-			<button
-				onClick={handleConfirm}
-				disabled={loading}
-				style={{
-					padding: "0.6rem 1.2rem",
-					border: "none",
-					borderRadius: 6,
-					backgroundColor: "#1976d2",
-					color: "white",
-					cursor: "pointer",
-				}}
-			>
+			<Button variant="contained" color="primary" fullWidth size="large" onClick={handleConfirm} disabled={loading}>
 				{loading ? "Processing..." : "Confirm Booking"}
-			</button>
-		</div>
+			</Button>
+		</Box>
 	);
 }

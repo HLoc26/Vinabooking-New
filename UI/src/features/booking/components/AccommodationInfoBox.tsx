@@ -4,9 +4,10 @@ import type { ImageType } from "../services/types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
 import type { RoomInfo } from "../services/types/RoomInfo";
 import { useBookingContext } from "../hooks/useBookingContext";
-import useAccommodationInfo from "../hooks/useAccommodationInfo";
+import type { AccommodationInfo } from "../services/types/Accommodation";
 
 interface Props {
+	accommInfo: AccommodationInfo;
 	rooms: RoomInfo[];
 	agreed: boolean;
 	setAgreed: Dispatch<SetStateAction<boolean>>;
@@ -15,14 +16,9 @@ interface Props {
 	handleProceed: () => void;
 }
 
-const AccommodationInfoBox: React.FC<Props> = ({ rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
+const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
 	const { context } = useBookingContext();
-	const { accommInfo, loading } = useAccommodationInfo(context.accommodationId);
 	const { accomImages, accomImagesLoading } = useFetchAccommodationImages(accommInfo?.id ?? "");
-
-	if (loading) {
-		return <Typography>Loading...</Typography>;
-	}
 
 	if (!accommInfo) {
 		return <Typography>Accommodation not found</Typography>;

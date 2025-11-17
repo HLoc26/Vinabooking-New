@@ -10,6 +10,7 @@ import AccommodationInfoBox from "../components/AccommodationInfoBox";
 import type { ImageType } from "../services/types/Image";
 import useAuth from "../../user/hooks/useAuth";
 import useRoomsInfo from "../hooks/useRoomInfo";
+import useAccommodationInfo from "../hooks/useAccommodationInfo";
 const ImageGallery = lazy(() => import("../components/ImageGallery"));
 
 export default function BookingPreviewPage() {
@@ -17,10 +18,9 @@ export default function BookingPreviewPage() {
 	const { context } = useBookingContext();
 	const roomIds = useMemo(() => context.items.map((i) => i.id), [context.items]);
 	const { roomsInfo: selectedRooms, loading: roomInfoLoading } = useRoomsInfo(roomIds);
+	const { accommInfo } = useAccommodationInfo(context.accommodationId);
 
 	const [userInfo, setUserInfo] = useState(useAuth().getCurrentUser());
-
-	console.log(selectedRooms, context.items);
 
 	const { pushNotification } = usePushNotificationContext();
 
@@ -73,7 +73,7 @@ export default function BookingPreviewPage() {
 			return pushNotification("Please confirm that all the information is correct.", "warning");
 		}
 
-		navigate("/booking/checkout");
+		navigate("/booking/checkout", { state: { accommodation: accommInfo, rooms: selectedRooms } });
 	};
 
 	// Gallery keyboard support
@@ -135,6 +135,7 @@ export default function BookingPreviewPage() {
 				{/* RIGHT COLUMN */}
 				<Grid size={{ xs: 12, md: 4 }}>
 					<AccommodationInfoBox
+						accommInfo={accommInfo!}
 						rooms={selectedRooms}
 						agreed={agreed}
 						setAgreed={setAgreed}
