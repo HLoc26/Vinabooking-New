@@ -22,7 +22,7 @@ export class RoomController {
 
     /**
      * GET /accommodations/:accommodationId/rooms
-     * Lấy tất cả phòng thuộc một accommodation
+     * Lấy tất cả phòng thuộc một accommodation (có thể lọc và tính toán theo ngày)
      */
     async getRoomsByAccommodationId(
         req: Request,
@@ -32,8 +32,13 @@ export class RoomController {
         try {
             // Tên param (accommodationId) phải khớp với file routes
             const accommodationId = req.params.accommodationId;
-            const rooms =
-                await roomService.getRoomsByAccommodationId(accommodationId);
+            const { startDate, endDate } = req.query;
+            const rooms = await roomService.getRoomsByAccommodationId(
+                accommodationId,
+                startDate as string,
+                endDate as string
+            );
+            
             sendSuccess(res, rooms);
         } catch (error) {
             next(error);
