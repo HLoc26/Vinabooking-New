@@ -1,26 +1,16 @@
-import type { ContextInfo, ContextInfoAdapter } from "./ContextInfoAdapter";
+import type { BookingContextInfo } from "../types/BookingContextInfo";
+import type { ContextInfoAdapter } from "./ContextInfoAdapter";
 
 export class FakeContextInfo implements ContextInfoAdapter {
-	getInfo(): ContextInfo {
+	getInfo(): BookingContextInfo {
 		return {
-			id: "TEMP_" + Math.random().toString(36).substring(2, 9),
 			startDate: new Date("2024-12-15"),
 			endDate: new Date("2024-12-20"),
 			guestCount: 3,
-			user: {
-				name: "Linksoft Linh Tran",
-				email: "Linkalinh@example.com",
-				phone: "0000019990",
-				id: "adada-123123-xyzxyz",
-			},
-			referenceNo: 31312313,
-			accommodation: {
-				name: "Vinabooking Riverside Hotel",
-				address: "123 Nguyen Hue, District 1, Ho Chi Minh City",
-			},
-			room: [
-				{ id: "room-001", name: "Deluxe Room 101", type: "ROOM", price: 320 },
-				{ id: "bed-002", name: "Master bedroom", type: "BED", price: 190 },
+			accommodationId: "24fe3148-ca50-4d74-8bb3-78e0280bede0",
+			items: [
+				{ id: "e321d131-6df0-4047-8bc6-a326cb3f039f", itemType: "ROOM", count: 1 },
+				{ id: "e94cfce0-af0d-42e5-9547-f33931e04cc8", itemType: "ROOM", count: 1 },
 			],
 		};
 	}

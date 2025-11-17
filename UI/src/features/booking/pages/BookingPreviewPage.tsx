@@ -1,4 +1,4 @@
-import { useState, useEffect, lazy, Suspense } from "react";
+import { useState, useEffect, lazy, Suspense, useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Grid, Paper, Divider } from "@mui/material";
 import { PreviewOutlined } from "@mui/icons-material";
@@ -8,12 +8,20 @@ import UserInfoPreviewCard from "../components/UserInfoPreviewCard";
 import RoomReviewBox from "../components/RoomReviewBox";
 import AccommodationInfoBox from "../components/AccommodationInfoBox";
 import type { ImageType } from "../services/types/Image";
-
+import useAuth from "../../user/hooks/useAuth";
+import useRoomsInfo from "../hooks/useRoomInfo";
 const ImageGallery = lazy(() => import("../components/ImageGallery"));
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
-	const { booking, setBooking } = useBookingContext();
+	const { context } = useBookingContext();
+	const roomIds = useMemo(() => context.items.map((i) => i.id), [context.items]);
+	const { roomsInfo: selectedRooms, loading: roomInfoLoading } = useRoomsInfo(roomIds);
+
+	const [userInfo, setUserInfo] = useState(useAuth().getCurrentUser());
+
+	console.log(selectedRooms, context.items);
+
 	const { pushNotification } = usePushNotificationContext();
 
 	// MUITelInput + checkbox
@@ -43,21 +51,21 @@ export default function BookingPreviewPage() {
 	};
 
 	const handlePhoneChange = (value: string) =>
-		setBooking({
-			...booking,
-			user: { ...booking.user, phone: value },
+		setUserInfo({
+			...userInfo,
+			phone: value,
 		});
 
 	const handleToggleEdit = () => {
 		if (isEditing) {
-			const phone = booking.user.phone.trim();
+			const phone = userInfo.phone.trim();
 			setShowPhoneField(!!phone);
 		}
 		setIsEditing((prev) => !prev);
 	};
 
 	const handleProceed = () => {
-		if (!booking.user.name.trim()) {
+		if (!userInfo.name.trim()) {
 			return pushNotification("Name cannot be empty.", "error");
 		}
 
@@ -65,7 +73,7 @@ export default function BookingPreviewPage() {
 			return pushNotification("Please confirm that all the information is correct.", "warning");
 		}
 
-		navigate("/booking/checkout", { state: { booking } });
+		navigate("/booking/checkout");
 	};
 
 	// Gallery keyboard support
@@ -102,18 +110,32 @@ export default function BookingPreviewPage() {
 			<Grid container spacing={3} sx={{ justifyContent: "center" }}>
 				{/* LEFT COLUMN */}
 				<Grid size={{ xs: 12, md: 4 }}>
-					<UserInfoPreviewCard booking={booking} isEditing={isEditing} showPhoneField={showPhoneField} handleToggleEdit={handleToggleEdit} handlePhoneChange={handlePhoneChange} />
+					<UserInfoPreviewCard //
+						userInfo={userInfo}
+						isEditing={isEditing}
+						showPhoneField={showPhoneField}
+						handleToggleEdit={handleToggleEdit}
+						handlePhoneChange={handlePhoneChange}
+					/>
 				</Grid>
 
 				{/* MIDDLE COLUMN */}
 				<Grid size={{ xs: 12, md: 4 }}>
-					<RoomReviewBox booking={booking} setGalleryImages={setGalleryImages} openImageGallery={openImageGallery} />
+					{roomInfoLoading ? (
+						<Typography>Loading...</Typography>
+					) : (
+						<RoomReviewBox //
+							roomsInfo={selectedRooms}
+							setGalleryImages={setGalleryImages}
+							openImageGallery={openImageGallery}
+						/>
+					)}
 				</Grid>
 
 				{/* RIGHT COLUMN */}
 				<Grid size={{ xs: 12, md: 4 }}>
 					<AccommodationInfoBox
-						booking={booking}
+						rooms={selectedRooms}
 						agreed={agreed}
 						setAgreed={setAgreed}
 						setGalleryImages={setGalleryImages}

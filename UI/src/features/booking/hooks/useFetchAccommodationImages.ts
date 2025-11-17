@@ -2,20 +2,18 @@ import { useEffect, useState } from "react";
 import { bookingApi } from "../services/bookingApi";
 import type { ImageType } from "../services/types/Image";
 
-export const useFetchAccommodationImages = (roomId: string) => {
+export const useFetchAccommodationImages = (accommId: string) => {
 	const [accomImages, setAccommImages] = useState<ImageType[]>([]);
 	const [accomImagesLoading, setLoading] = useState(false);
 
 	useEffect(() => {
-		if (!roomId) return;
+		if (!accommId) return;
 
 		let ignore = false;
 
 		const fetchImages = async () => {
 			setLoading(true);
 			try {
-				const accommId = await bookingApi.getAccommIdByRoomId(roomId);
-
 				if (!accommId || ignore) return;
 
 				const images = await bookingApi.getAccomImage(accommId); // <-- array of ImageType
@@ -33,7 +31,7 @@ export const useFetchAccommodationImages = (roomId: string) => {
 		return () => {
 			ignore = true;
 		};
-	}, [roomId]);
+	}, [accommId]);
 
 	return { accomImages, accomImagesLoading };
 };

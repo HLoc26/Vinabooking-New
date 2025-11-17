@@ -1,16 +1,16 @@
 import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import { MuiTelInput } from "mui-tel-input";
-import type { BookingDto } from "../services/types/BookingDto";
+import type { UserInfo } from "../services/types/UserInfo";
 
 type UserInfoPreviewCardProps = {
-	booking: BookingDto;
+	userInfo: UserInfo;
 	isEditing: boolean;
 	showPhoneField: boolean;
 	handleToggleEdit: () => void;
 	handlePhoneChange: (value: string) => void;
 };
 
-const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ booking, isEditing, showPhoneField, handleToggleEdit, handlePhoneChange }) => {
+const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ userInfo, isEditing, showPhoneField, handleToggleEdit, handlePhoneChange }) => {
 	return (
 		<Card>
 			<CardContent>
@@ -22,19 +22,19 @@ const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ booking, isEd
 				</Box>
 
 				<Typography sx={{ mb: 1 }}>
-					<strong>Name:</strong> {booking.user.name}
+					<strong>Name:</strong> {userInfo.name}
 				</Typography>
 				<Typography sx={{ mb: 1 }}>
-					<strong>Email:</strong> {booking.user.email}
+					<strong>Email:</strong> {userInfo.email}
 				</Typography>
 
 				<Box minHeight={56} display="flex" alignItems="center">
 					{isEditing ? (
-						<MuiTelInput fullWidth label="Phone" value={booking.user.phone} onChange={handlePhoneChange} size="small" />
+						<MuiTelInput fullWidth label="Phone" value={userInfo.phone} onChange={handlePhoneChange} size="small" />
 					) : (
 						showPhoneField && (
 							<Typography>
-								<strong>Phone:</strong> {booking.user.phone}
+								<strong>Phone:</strong> {userInfo.phone}
 							</Typography>
 						)
 					)}

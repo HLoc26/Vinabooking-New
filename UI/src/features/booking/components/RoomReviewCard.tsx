@@ -4,8 +4,7 @@ import type { ImageType } from "../services/types/Image";
 
 type Props = {
 	roomName: string;
-	roomType: string;
-	roomPrice: number;
+	roomPrice: string;
 	thumbnail?: string;
 	images: ImageType[];
 	loading: boolean;
@@ -13,7 +12,7 @@ type Props = {
 	openImageGallery: (index: number) => void;
 };
 
-const RoomReviewCard: React.FC<Props> = ({ roomName, roomType, roomPrice, thumbnail, images, loading, setGalleryImages, openImageGallery }) => {
+const RoomReviewCard: React.FC<Props> = ({ roomName, roomPrice, thumbnail, images, loading, setGalleryImages, openImageGallery }) => {
 	return (
 		<Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
 			<Box display="flex" gap={2}>
@@ -63,13 +62,10 @@ const RoomReviewCard: React.FC<Props> = ({ roomName, roomType, roomPrice, thumbn
 						<Typography variant="subtitle1" fontWeight={600} mb={0.5}>
 							{roomName}
 						</Typography>
-						<Typography variant="body2" color="text.secondary">
-							Type of place: {roomType.toLowerCase()}
-						</Typography>
 					</Box>
 
-					<Typography variant="h6" sx={{ color: "warning.main" }} textAlign="right">
-						${roomPrice}
+					<Typography variant="h6" sx={{ color: "text.primary" }} textAlign="right">
+						${Number.parseInt(roomPrice).toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 					</Typography>
 				</Box>
 			</Box>
