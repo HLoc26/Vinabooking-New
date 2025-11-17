@@ -48,21 +48,24 @@ export default class BookingRepository {
 		const counts: Record<string, number> = {};
 
 		for (const roomId of roomIds) {
-			const bookings = await this.prisma.booking.findMany({
+			const details = await this.prisma.bookingDetail.findMany({
 				where: {
-					status: "BOOKED",
-					details: {
-						some: { itemId: roomId, itemType: "ROOM" },
+					itemId: roomId,
+					itemType: "ROOM",
+
+					Booking: {
+						status: "BOOKED",
+						startDate: { lte: endDate },
+						endDate: { gte: startDate },
 					},
-					OR: [
-						{
-							startDate: { lte: endDate },
-							endDate: { gte: startDate },
-						},
-					],
+				},
+				select: {
+					count: true,
 				},
 			});
-			counts[roomId] = bookings.length;
+
+			// Sum all count fields
+			counts[roomId] = details.reduce((sum, d) => sum + d.count, 0);
 		}
 
 		return counts;
