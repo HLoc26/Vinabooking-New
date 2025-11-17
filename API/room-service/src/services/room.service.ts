@@ -1,6 +1,7 @@
 import { roomRepository } from "../repositories/room.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { Prisma } from "@prisma/client";
+import { bookingClient } from "../clients/booking.client";
 
 export class RoomService {
     /**
@@ -18,10 +19,56 @@ export class RoomService {
     /**
      * (R) Lấy tất cả phòng thuộc một accommodation
      */
-    async getRoomsByAccommodationId(accommodationId: string) {
+    async getRoomsByAccommodationId(
+        accommodationId: string,
+        startDate?: string,
+        endDate?: string
+    ) {
         const rooms =
             await roomRepository.findAllByAccommodationId(accommodationId);
-        return rooms;
+
+        if (!startDate || !endDate || rooms.length === 0) {
+            return rooms.map((room) => ({
+                ...room,
+                remainingQuantity: room.quantity,
+            }));
+        }
+        const roomIds = rooms.map((r) => r.id);
+        try {
+            const bookedCounts = await bookingClient.getBookedCounts(
+                roomIds,
+                startDate,
+                endDate
+            );
+            const bookedMap = new Map<string, number>();
+            bookedCounts.forEach((item) => {
+                bookedMap.set(item.roomId, item.bookedCount);
+            });
+            return rooms.map((room) => {
+                const totalQuantity = room.quantity;
+                const bookedCount = bookedMap.get(room.id) || 0;
+
+                const remainingQuantity = Math.max(
+                    0,
+                    totalQuantity - bookedCount
+                );
+
+                return {
+                    ...room,
+                    remainingQuantity,
+                };
+            });
+        } catch (error) {
+            console.error(
+                "[RoomService] Error fetching booked counts from Booking Service:",
+                error
+            );
+
+            return rooms.map((room) => ({
+                ...rooms,
+                remainingQuantity: room.quantity,
+            }));
+        }
     }
 
     /**
