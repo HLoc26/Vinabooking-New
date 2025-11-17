@@ -1,18 +1,20 @@
 // src/features/booking/hooks/useConfirmBooking.ts
 import { useState } from "react";
 import { bookingApi } from "../services/bookingApi";
-import type { BookingDto } from "../services/types/BookingDto";
+import type { UserInfo } from "../services/types/UserInfo";
+import type { RoomInfo } from "../services/types/RoomInfo";
+import type { BookingContextInfo } from "../services/types/BookingContextInfo";
 
 export function useConfirmBooking() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
-	const confirmBooking = async (booking: BookingDto) => {
+	const confirmBooking = async (booking: BookingContextInfo, user: UserInfo, rooms: RoomInfo[]) => {
 		setLoading(true);
 		setError(null);
 
 		try {
-			const response = await bookingApi.createBooking(booking);
+			const response = await bookingApi.createBooking(booking, user, rooms);
 			console.log("Booking created:", response);
 			return response;
 		} catch (err) {
