@@ -11,7 +11,13 @@ export class AccommodationController {
     async getById(req: Request, res: Response, next: NextFunction) {
         try {
             const { id } = req.params;
-            const data = await accommodationService.getAccommodationById(id);
+            const { startDate, endDate } = req.query;
+
+            const data = await accommodationService.getAccommodationById(
+                id,
+                startDate as string | undefined,
+                endDate as string | undefined
+            );
             sendSuccess(res, data);
         } catch (error) {
             next(error);
