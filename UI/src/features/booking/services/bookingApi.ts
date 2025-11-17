@@ -1,13 +1,13 @@
 // src/features/booking/services/bookingApi.ts
 import axios from "axios";
-import type { BookingDto, BookingImageDto } from "./types/BookingDto";
+import type { BookingDto } from "./types/BookingDto";
 import Cookies from "js-cookie";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const API_URL = "http://localhost:3000";
 const BOOKING_ENDPOINT = `${API_URL}/bookings`; // old backend uses /booking route
 const IMAGE_ENDPOINT = `${API_URL}/images`;
-const ACCOMMODATION_ENDPOINT = `${API_URL}/accommodations`;
+const ROOM_ENDPOINT = `${API_URL}/rooms`;
 
 export const bookingApi = {
 	/**
@@ -20,7 +20,6 @@ export const bookingApi = {
 			endDate: data.endDate,
 			guestCount: data.guestCount,
 			phone: data.user.phone,
-			status: null || "PENDING",
 			userId: data.user.id,
 			details: {
 				create: data.room.map((room) => ({
@@ -41,16 +40,16 @@ export const bookingApi = {
 
 		return res.data;
 	},
-	async getAccomImage(data: BookingImageDto) {
-		try {
-			//Get accommodation by roomId
-			const accomRes = await axios.get(`${ACCOMMODATION_ENDPOINT}?byEntity=room&entityId=${data.id}`);
-			//Xài tạm này do service của Huy đang lỗi nhánh này
-			const accommodationId = accomRes.data?.data?.id;
-			if (!accommodationId) return [];
 
+	async getAccommIdByRoomId(roomId: string) {
+		const room = await axios.get(`${ROOM_ENDPOINT}/${roomId}`);
+		return room.data.data.accommodationId;
+	},
+
+	async getAccomImage(accommId: string) {
+		try {
 			// Get images using accommodationId
-			const imgRes = await axios.get(`${IMAGE_ENDPOINT}/accommodation/${accommodationId}`);
+			const imgRes = await axios.get(`${IMAGE_ENDPOINT}/accommodation/${accommId}`);
 
 			return imgRes.data?.data?.images ?? [];
 		} catch (error) {
@@ -58,9 +57,9 @@ export const bookingApi = {
 			return [];
 		}
 	},
-	async getRoomImage(data: BookingImageDto) {
+	async getRoomImage(roomId: string) {
 		try {
-			const res = await axios.get(`${IMAGE_ENDPOINT}/room/${data.id}`);
+			const res = await axios.get(`${IMAGE_ENDPOINT}/room/${roomId}`);
 			// Return only the array of image objects, or empty array if none
 			return res.data?.data?.images ?? [];
 		} catch (error) {
