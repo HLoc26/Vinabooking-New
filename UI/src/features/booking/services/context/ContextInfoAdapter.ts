@@ -1,24 +1,24 @@
-import type { RoomDetail } from "../types/BookingDto";
+import type { ItemDetail } from "../types/BookingDto";
 
 export interface ContextInfoAdapter {
-    getInfo(): ContextInfo;
+	getInfo(): ContextInfo;
 }
 export type ContextInfo = {
-    id: string;
-    startDate: Date;
-    endDate: Date;
-    guestCount: number;
-    referenceNo: number;
-    user: {
-        name: string;
-        email: string;
-        phone: string;
-        id: string;
-    };
-    accommodation: {
-        name: string;
-        address: string;
-        //image: file?
-    };
-    room: RoomDetail[];
-}
+	id: string;
+	startDate: Date;
+	endDate: Date;
+	guestCount: number;
+	referenceNo: number;
+	user: {
+		name: string;
+		email: string;
+		phone: string;
+		id: string;
+	};
+	accommodation: {
+		name: string;
+		address: string;
+		//image: file?
+	};
+	room: ItemDetail[];
+};
