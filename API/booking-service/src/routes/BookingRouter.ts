@@ -8,72 +8,77 @@ import { AuthenticatedRequest } from "../types/Request";
 import accommodationClient from "../clients/AccommodationServiceClient";
 
 class BookingRouterFactory {
-    static createBookingRouter() {
-        const bookingRepository = new BookingRepository();
-        const bookingService = new BookingService(bookingRepository);
-        const bookingController = new BookingController(
-            bookingService,
-            bookingRepository
-        );
+  static createBookingRouter() {
+    const bookingRepository = new BookingRepository();
+    const bookingService = new BookingService(bookingRepository);
+    const bookingController = new BookingController(
+      bookingService,
+      bookingRepository
+    );
 
-        const bookingRouter = new BookingRouter(bookingController, Router());
-        return bookingRouter.router;
-    }
+    const bookingRouter = new BookingRouter(bookingController, Router());
+    return bookingRouter.router;
+  }
 }
 
 class BookingRouter {
-    constructor(
-        private readonly bookingController: BookingController,
-        public readonly router: Router
-    ) {
-        this.registerRoutes();
-    }
+  constructor(
+    private readonly bookingController: BookingController,
+    public readonly router: Router
+  ) {
+    this.registerRoutes();
+  }
 
-    private registerRoutes() {
-        this.router.get("/health", (_req: Request, res: Response) => {
-            return ResponseHelper.success(res, {
-                service: "Booking Service",
-                success: true,
-            });
-        });
+  private registerRoutes() {
+    this.router.get("/health", (_req: Request, res: Response) => {
+      return ResponseHelper.success(res, {
+        service: "Booking Service",
+        success: true,
+      });
+    });
+    this.router.post("/booked-counts", (req, res: Response) =>
+      this.bookingController.getBookingSummary(req, res)
+    );
+    this.router.use((req: Request, res: Response, next: NextFunction) => {
+      return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
+    });
 
-        this.router.use((req: Request, res: Response, next: NextFunction) => {
-            return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
-        });
-
-        this.router.get(
-            "/",
-            async (req, res, next) => {
-                if (req.query.entity === "accommodation") {
-                    try {
-                        const data = await accommodationClient.getAccommodationsByRoomId(String(req.query.id));
-                        console.log("Accommodation info:", data);
-                    } catch (err) {
-                        console.error(err);
-                        return ResponseHelper.error(res, "Failed to fetch accommodation info");
-                    }
-                }
-                next();
-            },
-            (req, res) => this.bookingController.getBookings(req, res)
-        );
-
-        this.router.post("/", (req, res: Response) => {
-            return this.bookingController.createBooking(
-                req as AuthenticatedRequest,
-                res
+    this.router.get(
+      "/",
+      async (req, res, next) => {
+        if (req.query.entity === "accommodation") {
+          try {
+            const data = await accommodationClient.getAccommodationsByRoomId(
+              String(req.query.id)
             );
-        });
-
-        this.router.post("/draft", (req, res: Response) => {
-            return this.bookingController.createDraftBooking(
-                req as AuthenticatedRequest,
-                res
+            console.log("Accommodation info:", data);
+          } catch (err) {
+            console.error(err);
+            return ResponseHelper.error(
+              res,
+              "Failed to fetch accommodation info"
             );
-        });
-        this.router.post("/summary", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
+          }
+        }
+        next();
+      },
+      (req, res) => this.bookingController.getBookings(req, res)
+    );
 
-    }
+    this.router.post("/", (req, res: Response) => {
+      return this.bookingController.createBooking(
+        req as AuthenticatedRequest,
+        res
+      );
+    });
+
+    this.router.post("/draft", (req, res: Response) => {
+      return this.bookingController.createDraftBooking(
+        req as AuthenticatedRequest,
+        res
+      );
+    });
+  }
 }
 
 export default BookingRouterFactory;
