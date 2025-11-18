@@ -1,16 +1,14 @@
-// src/features/booking/services/bookingApi.ts
-import axios from "axios";
+import axioInstance from "../../../services/apiClient";
 import Cookies from "js-cookie";
 import type { RoomInfo } from "./types/RoomInfo";
 import type { BookingContextInfo } from "./types/BookingContextInfo";
 import type { UserInfo } from "./types/UserInfo";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
-const API_URL = "http://localhost:3000";
-const BOOKING_ENDPOINT = `${API_URL}/bookings`; // old backend uses /booking route
-const IMAGE_ENDPOINT = `${API_URL}/images`;
-const ROOM_ENDPOINT = `${API_URL}/rooms`;
-const ACCOM_ENDPOINT = `${API_URL}/accommodations`;
+const BOOKING_ENDPOINT = "/bookings";
+const IMAGE_ENDPOINT = "/images";
+const ROOM_ENDPOINT = "/rooms";
+const ACCOM_ENDPOINT = "/accommodations";
 
 export const bookingApi = {
 	/**
@@ -34,7 +32,7 @@ export const bookingApi = {
 			},
 		};
 		const token = Cookies.get(ACCESS_TOKEN_KEY);
-		const res = await axios.post(BOOKING_ENDPOINT, payload, {
+		const res = await axioInstance.post(BOOKING_ENDPOINT, payload, {
 			headers: {
 				Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
 				"Content-Type": "application/json",
@@ -45,14 +43,14 @@ export const bookingApi = {
 	},
 
 	async getAccommIdByRoomId(roomId: string) {
-		const room = await axios.get(`${ROOM_ENDPOINT}/${roomId}`);
+		const room = await axioInstance.get(`${ROOM_ENDPOINT}/${roomId}`);
 		return room.data.data.accommodationId;
 	},
 
 	async getAccomImage(accommId: string) {
 		try {
 			// Get images using accommodationId
-			const imgRes = await axios.get(`${IMAGE_ENDPOINT}/accommodation/${accommId}`);
+			const imgRes = await axioInstance.get(`${IMAGE_ENDPOINT}/accommodation/${accommId}`);
 
 			return imgRes.data?.data?.images ?? [];
 		} catch (error) {
@@ -62,7 +60,7 @@ export const bookingApi = {
 	},
 	async getRoomImage(roomId: string) {
 		try {
-			const res = await axios.get(`${IMAGE_ENDPOINT}/room/${roomId}`);
+			const res = await axioInstance.get(`${IMAGE_ENDPOINT}/room/${roomId}`);
 			// Return only the array of image objects, or empty array if none
 			return res.data?.data?.images ?? [];
 		} catch (error) {
@@ -71,17 +69,22 @@ export const bookingApi = {
 		}
 	},
 	async getBooking(id: string) {
-		const res = await axios.get(`${BOOKING_ENDPOINT}/${id}`);
+		const res = await axioInstance.get(`${BOOKING_ENDPOINT}/${id}`);
 		return res.data;
 	},
 
 	async getRoom(id: string) {
-		const res = await axios.get(`${ROOM_ENDPOINT}/${id}`);
-		return res.data.data;
+		try {
+			const res = await axioInstance.get(`${ROOM_ENDPOINT}/${id}`);
+			console.log(res);
+			return res.data.data;
+		} catch (error) {
+			console.log(error);
+		}
 	},
 
 	async getAccomm(id: string) {
-		const res = await axios.get(`${ACCOM_ENDPOINT}/${id}`);
+		const res = await axioInstance.get(`${ACCOM_ENDPOINT}/${id}`);
 		return res.data.data;
 	},
 };
