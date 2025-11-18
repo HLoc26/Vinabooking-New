@@ -1,16 +1,16 @@
 import { Box, Button, Card, CardContent, Typography } from "@mui/material";
-import { MuiTelInput } from "mui-tel-input";
 import type { UserInfo } from "../services/types/UserInfo";
+import UserInfoItem from "./UserInfoItem";
+import { EmailOutlined, PersonOutline, PhoneOutlined } from "@mui/icons-material";
 
 type UserInfoPreviewCardProps = {
 	userInfo: UserInfo;
 	isEditing: boolean;
-	showPhoneField: boolean;
 	handleToggleEdit: () => void;
-	handlePhoneChange: (value: string) => void;
+	handleUserInfoUpdate: (field: keyof UserInfo, value: string) => void;
 };
 
-const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ userInfo, isEditing, showPhoneField, handleToggleEdit, handlePhoneChange }) => {
+const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ userInfo, isEditing, handleToggleEdit, handleUserInfoUpdate: handleUserInfoChange }) => {
 	return (
 		<Card>
 			<CardContent>
@@ -21,24 +21,28 @@ const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ userInfo, isE
 					</Button>
 				</Box>
 
-				<Typography sx={{ mb: 1 }}>
-					<strong>Name:</strong> {userInfo.name}
-				</Typography>
-				<Typography sx={{ mb: 1 }}>
-					<strong>Email:</strong> {userInfo.email}
-				</Typography>
-
-				<Box minHeight={56} display="flex" alignItems="center">
-					{isEditing ? (
-						<MuiTelInput fullWidth label="Phone" value={userInfo.phone} onChange={handlePhoneChange} size="small" />
-					) : (
-						showPhoneField && (
-							<Typography>
-								<strong>Phone:</strong> {userInfo.phone}
-							</Typography>
-						)
-					)}
-				</Box>
+				<UserInfoItem //
+					icon={<PersonOutline />}
+					onChange={(value) => handleUserInfoChange("name", value)}
+					label="Full Name"
+					value={userInfo.name}
+					isEditing={isEditing}
+				/>
+				<UserInfoItem //
+					icon={<EmailOutlined />}
+					onChange={(value) => handleUserInfoChange("email", value)}
+					label="Email Address"
+					value={userInfo.email}
+					isEditing={isEditing}
+				/>
+				<UserInfoItem //
+					icon={<PhoneOutlined />}
+					onChange={(value) => handleUserInfoChange("phone", value)}
+					label="Phone Number"
+					value={userInfo.phone ?? ""}
+					isEditing={isEditing}
+					isPhone
+				/>
 			</CardContent>
 		</Card>
 	);
