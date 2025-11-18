@@ -8,15 +8,9 @@ const router = Router();
  * Get accommodation details by Room ID.
  * Handles other potential filters later if needed.
  */
-router.get(
-    "/",
-    accommodationController.getAccommodations.bind(accommodationController)
-);
+router.get("/", accommodationController.getAccommodations.bind(accommodationController));
 
 // GET /accommodations/:id
-router.get(
-    "/:id",
-    accommodationController.getById.bind(accommodationController)
-);
+router.get("/:id", accommodationController.getById.bind(accommodationController));
 
 export default router;
