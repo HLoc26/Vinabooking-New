@@ -27,6 +27,7 @@ export interface LogInResponse {
 		id: string;
 		name: string;
 		email: string;
+		phone: string;
 	};
 }
 
