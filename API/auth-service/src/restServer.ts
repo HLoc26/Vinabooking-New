@@ -1,5 +1,6 @@
 import express from "express";
 import session from "express-session";
+import cookieParser from "cookie-parser";
 
 import "dotenv";
 import ErrorHandler from "./middlewares/ErrorHandler";
@@ -8,6 +9,7 @@ import AuthRouterFactory from "./routes/AuthRouterFactory";
 export const startRest = () => {
 	const app = express();
 	app.use(express.json());
+	app.use(cookieParser());
 
 	app.use(
 		session({
