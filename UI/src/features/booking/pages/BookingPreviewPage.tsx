@@ -11,6 +11,7 @@ import type { ImageType } from "../services/types/Image";
 import useAuth from "../../user/hooks/useAuth";
 import useRoomsInfo from "../hooks/useRoomInfo";
 import useAccommodationInfo from "../hooks/useAccommodationInfo";
+import type { UserInfo } from "../services/types/UserInfo";
 const ImageGallery = lazy(() => import("../components/ImageGallery"));
 
 export default function BookingPreviewPage() {
@@ -26,7 +27,6 @@ export default function BookingPreviewPage() {
 
 	// MUITelInput + checkbox
 	const [isEditing, setIsEditing] = useState(false);
-	const [showPhoneField, setShowPhoneField] = useState(true);
 	const [agreed, setAgreed] = useState(false);
 
 	// Image gallery
@@ -50,17 +50,14 @@ export default function BookingPreviewPage() {
 		setCurrentIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
 	};
 
-	const handlePhoneChange = (value: string) =>
+	const handleUserInfoUpdate = (field: keyof UserInfo, value: string) => {
 		setUserInfo({
 			...userInfo,
-			phone: value,
+			[field]: value,
 		});
+	};
 
 	const handleToggleEdit = () => {
-		if (isEditing) {
-			const phone = userInfo.phone.trim();
-			setShowPhoneField(!!phone);
-		}
 		setIsEditing((prev) => !prev);
 	};
 
@@ -105,46 +102,44 @@ export default function BookingPreviewPage() {
 					<Typography variant="h4">Booking Preview</Typography>
 				</Box>
 				<Divider />
-			</Paper>
+				<Grid container spacing={3} sx={{ justifyContent: "center", mt: 3 }}>
+					{/* LEFT COLUMN */}
+					<Grid size={{ xs: 12, md: 4 }}>
+						<UserInfoPreviewCard //
+							userInfo={userInfo}
+							isEditing={isEditing}
+							handleToggleEdit={handleToggleEdit}
+							handleUserInfoUpdate={handleUserInfoUpdate}
+						/>
+					</Grid>
 
-			<Grid container spacing={3} sx={{ justifyContent: "center" }}>
-				{/* LEFT COLUMN */}
-				<Grid size={{ xs: 12, md: 4 }}>
-					<UserInfoPreviewCard //
-						userInfo={userInfo}
-						isEditing={isEditing}
-						showPhoneField={showPhoneField}
-						handleToggleEdit={handleToggleEdit}
-						handlePhoneChange={handlePhoneChange}
-					/>
-				</Grid>
+					{/* MIDDLE COLUMN */}
+					<Grid size={{ xs: 12, md: 4 }}>
+						{roomInfoLoading ? (
+							<Typography>Loading...</Typography>
+						) : (
+							<RoomReviewBox //
+								roomsInfo={selectedRooms}
+								setGalleryImages={setGalleryImages}
+								openImageGallery={openImageGallery}
+							/>
+						)}
+					</Grid>
 
-				{/* MIDDLE COLUMN */}
-				<Grid size={{ xs: 12, md: 4 }}>
-					{roomInfoLoading ? (
-						<Typography>Loading...</Typography>
-					) : (
-						<RoomReviewBox //
-							roomsInfo={selectedRooms}
+					{/* RIGHT COLUMN */}
+					<Grid size={{ xs: 12, md: 4 }}>
+						<AccommodationInfoBox
+							accommInfo={accommInfo!}
+							rooms={selectedRooms}
+							agreed={agreed}
+							setAgreed={setAgreed}
 							setGalleryImages={setGalleryImages}
 							openImageGallery={openImageGallery}
+							handleProceed={handleProceed}
 						/>
-					)}
+					</Grid>
 				</Grid>
-
-				{/* RIGHT COLUMN */}
-				<Grid size={{ xs: 12, md: 4 }}>
-					<AccommodationInfoBox
-						accommInfo={accommInfo!}
-						rooms={selectedRooms}
-						agreed={agreed}
-						setAgreed={setAgreed}
-						setGalleryImages={setGalleryImages}
-						openImageGallery={openImageGallery}
-						handleProceed={handleProceed}
-					/>
-				</Grid>
-			</Grid>
+			</Paper>
 
 			{/* FULLSCREEN GALLERY */}
 			{openGallery && (
