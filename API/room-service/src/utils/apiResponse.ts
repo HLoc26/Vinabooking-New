@@ -6,16 +6,12 @@ import { Response } from "express";
  * @param data Dữ liệu cần gửi
  * @param statusCode Mã HTTP (mặc định 200)
  */
-export const sendSuccess = <T>(
-    res: Response,
-    data: T,
-    statusCode: number = 200
-) => {
-    res.status(statusCode).json({
-        success: true,
-        data: data,
-        error: null,
-    });
+export const sendSuccess = <T>(res: Response, data: T, statusCode: number = 200) => {
+	res.status(statusCode).json({
+		success: true,
+		data: data,
+		error: null,
+	});
 };
 
 /**
@@ -23,15 +19,12 @@ export const sendSuccess = <T>(
  * @param res Đối tượng Response của Express
  * @param data Dữ liệu đã được tạo
  */
-export const sendCreated = <T>(
-    res: Response,
-    data: T
-) => {
-    res.status(201).json({
-        success: true,
-        data: data,
-        error: null,
-    });
+export const sendCreated = <T>(res: Response, data: T) => {
+	res.status(201).json({
+		success: true,
+		data: data,
+		error: null,
+	});
 };
 
 /**
@@ -40,6 +33,6 @@ export const sendCreated = <T>(
  * @param res Đối tượng Response của Express
  */
 export const sendNoContent = (res: Response) => {
-    // 204 No Content không bao giờ được gửi kèm body
-    res.status(204).send();
+	// 204 No Content không bao giờ được gửi kèm body
+	res.status(204).send();
 };

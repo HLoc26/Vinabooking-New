@@ -24,30 +24,25 @@ export class AccommodationController {
         }
     }
 
-    /**
-     * GET /?byEntity=room&entityId=:roomId
-     * Handles getting accommodations, potentially filtered by related entities.
-     */
-    async getAccommodations(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { byEntity, entityId } = req.query;
+	/**
+	 * GET /?byEntity=room&entityId=:roomId
+	 * Handles getting accommodations, potentially filtered by related entities.
+	 */
+	async getAccommodations(req: Request, res: Response, next: NextFunction) {
+		try {
+			const { byEntity, entityId } = req.query;
 
-            // Check if filtering by room ID
-            if (byEntity === "room" && entityId) {
-                const accommodation =
-                    await accommodationService.getAccommodationByRoomId(
-                        entityId as string
-                    );
-                sendSuccess(res, accommodation);
-            } else {
-                throw new BadRequestError(
-                    "Unsupported or missing query parameters for filtering."
-                );
-            }
-        } catch (error) {
-            next(error);
-        }
-    }
+			// Check if filtering by room ID
+			if (byEntity === "room" && entityId) {
+				const accommodation = await accommodationService.getAccommodationByRoomId(entityId as string);
+				sendSuccess(res, accommodation);
+			} else {
+				throw new BadRequestError("Unsupported or missing query parameters for filtering.");
+			}
+		} catch (error) {
+			next(error);
+		}
+	}
 }
 
 // Export a singleton instance of the controller

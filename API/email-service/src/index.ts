@@ -1,5 +1,5 @@
 import GrpcServerFactory from "./GrpcServer";
-import RestServer from "./restServer";
+import RestServer from "./RestServer";
 
 const restServer = new RestServer();
 restServer.start();
