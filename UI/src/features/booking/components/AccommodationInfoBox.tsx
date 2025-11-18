@@ -1,5 +1,5 @@
 import React, { type Dispatch, type SetStateAction } from "react";
-import { Box, Typography, Checkbox, Divider, CardContent, Card, Button } from "@mui/material";
+import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel } from "@mui/material";
 import type { ImageType } from "../services/types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
 import type { RoomInfo } from "../services/types/RoomInfo";
@@ -183,10 +183,17 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 				</Box>
 
 				<Box display="flex" alignItems="flex-start" gap={1} mb={2}>
-					<Checkbox checked={agreed} onChange={(e) => setAgreed(e.target.checked)} sx={{ p: 0, mt: 0.25 }} />
-					<Typography variant="body2" sx={{ lineHeight: 1.6 }}>
-						I confirm that all the information I provided is correct.
-					</Typography>
+					<FormControlLabel
+						required
+						sx={{ p: 0, mt: 0.25 }}
+						control={
+							<Checkbox //
+								checked={agreed}
+								onChange={(e) => setAgreed(e.target.checked)}
+							/>
+						}
+						label="I confirm that all the information I provided is correct."
+					/>
 				</Box>
 
 				<Button
