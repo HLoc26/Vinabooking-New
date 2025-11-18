@@ -203,7 +203,7 @@ class AuthController {
 	}
 
 	public async refreshToken(req: RefreshRequest, res: Response<ApiResponse<RefreshResponse>>) {
-		const { refreshToken } = req.body;
+		const refreshToken = req.cookies.refresh_token;
 		const awsResponse = await this.authService.refreshToken(refreshToken);
 		const auth = awsResponse.AuthenticationResult;
 		if (
