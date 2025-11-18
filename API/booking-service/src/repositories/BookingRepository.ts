@@ -44,4 +44,14 @@ export default class BookingRepository {
 			},
 		});
 	}
+	public async confirmBooking(id: string) {
+		return await this.prisma.booking.update({
+			where: { id },
+			data: { status: "BOOKED" },
+			include: {
+				details: true, // booking details like room/bed, count, note
+				// user: true, // user info: name, email, phone
+			},
+		});
+	}
 }
