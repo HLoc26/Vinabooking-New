@@ -29,6 +29,7 @@ const RoomReviewBox: React.FC<RoomReviewCardProps> = ({ roomsInfo, setGalleryIma
 		// Lọc chỉ WEBP cho gallery
 		roomImagesByRoomId[roomId] = images.filter((img) => img.variant === "WEBP");
 	}
+
 	return (
 		<Card>
 			<CardContent>
@@ -40,12 +41,13 @@ const RoomReviewBox: React.FC<RoomReviewCardProps> = ({ roomsInfo, setGalleryIma
 					<Box key={room.id} mb={idx < roomsInfo.length - 1 ? 3 : 0}>
 						<RoomReviewCard
 							roomName={room.name}
-							roomPrice={room.price || 0}
+							roomPrice={room.price || "0"}
 							thumbnail={roomThumbnail[room.id]}
 							images={roomImagesByRoomId[room.id] || []}
 							loading={loading}
 							setGalleryImages={setGalleryImages}
 							openImageGallery={openImageGallery}
+							amenities={room.amenities}
 						/>
 					</Box>
 				))}
