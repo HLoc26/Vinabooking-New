@@ -1,14 +1,14 @@
-type Amenity = {
+export type Amenity = {
 	id: string;
 	name: string;
 	type: string;
 	description: string;
 };
 
-type AmenityConfig = {
+export type AmenityConfig = {
 	id: string;
 	note: string;
-	amenity: Amenity[];
+	amenity: Amenity;
 };
 
 export type RoomInfo = {
