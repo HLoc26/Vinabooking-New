@@ -73,7 +73,11 @@ export const HomePage = () => {
 								variant="contained"
 								color="success"
 								onClick={() => {
-									navigate("/auth/login");
+									if (!user) {
+										navigate("/auth/login");
+									} else {
+										pushNotification("You have already logged in");
+									}
 								}}
 							>
 								Log In
@@ -85,7 +89,11 @@ export const HomePage = () => {
 								variant="contained"
 								color="info"
 								onClick={() => {
-									navigate("/auth/register");
+									if (!user) {
+										navigate("/auth/register");
+									} else {
+										pushNotification("You have already logged in");
+									}
 								}}
 							>
 								Register
