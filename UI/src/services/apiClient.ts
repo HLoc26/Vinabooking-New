@@ -1,4 +1,4 @@
-import axios, { AxiosError, type AxiosRequestConfig, type AxiosResponse } from "axios";
+import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 
 interface QueueItem {
 	resolve: (token: string | null) => void;
@@ -10,7 +10,7 @@ const apiClient = axios.create({
 	headers: {
 		"Content-Type": "application/json",
 	},
-	withCredentials: true, // gửi cookie refresh token tự động
+	withCredentials: true,
 });
 
 let isRefreshing = false;
@@ -33,7 +33,7 @@ apiClient.interceptors.request.use(async (config) => {
 });
 
 apiClient.interceptors.response.use(
-	(res: AxiosResponse) => res,
+	(res) => res,
 	async (error: AxiosError) => {
 		const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
 
@@ -57,8 +57,8 @@ apiClient.interceptors.response.use(
 		isRefreshing = true;
 
 		try {
-			const res = await apiClient.post("/auth/refresh");
-			const newAccessToken = res.data.data.accessToken as string | undefined;
+			const res = await apiClient.get("/auth/refresh");
+			const newAccessToken = res.data.data.accessToken as string;
 
 			if (!newAccessToken) throw new Error("Refresh token failed");
 
@@ -69,6 +69,7 @@ apiClient.interceptors.response.use(
 			if (originalRequest.headers) {
 				originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 			}
+
 			return apiClient(originalRequest);
 		} catch (refreshErr) {
 			processQueue(refreshErr, null);
@@ -78,5 +79,4 @@ apiClient.interceptors.response.use(
 		}
 	}
 );
-
 export default apiClient;
