@@ -76,10 +76,6 @@ export class EmailServiceClient {
 		const message = `Your booking at ${accomData?.name || "the property"} from ${checkIn} to ${checkOut} has been confirmed.`;
 
 		// build gallery HTML (skip primary if same as gallery first)
-		const galleryHtml =
-			gallery.length > 0
-				? gallery.map((g) => `<td style="padding:4px;"><img src="${g.url}" alt="photo" style="width:150px; height:100px; object-fit:cover; display:block; border-radius:6px;" /></td>`).join("")
-				: "";
 
 		const html = `
       <!DOCTYPE html>

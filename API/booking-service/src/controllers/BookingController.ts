@@ -108,18 +108,26 @@ export default class BookingController {
 			console.log(`[BookingController] Booking confirmed: ${JSON.stringify(booking)}`);
 			if (!booking) return ResponseHelper.error(res, "Booking not found");
 
+			// --- Start: Validation for New Fields ---
+			// Ensure the necessary fields for email are present on the booking object
+			if (!booking.leaderEmail || !booking.leaderName) {
+				// Depending on your system, you might:
+				// a) Fallback to the user service if these fields are missing.
+				// b) Throw a specific error indicating required data is missing on the booking.
+				// For this example, we'll throw an error if the required fields aren't there.
+				return ResponseHelper.error(res, "Booking object is missing leaderEmail or leaderName required for confirmation email.");
+			}
+			// --- End: Validation for New Fields ---
+
 			const firstDetail = booking.details[0];
+			console.log(`[BookingController] Fetching accommodation data: ${firstDetail}`);
 
 			// 2. Get accommodation
 			const accommodationRes = await axios.get<AccommodationPayload>(`${process.env.ACCOMMODATION_ENDPOINT}?byEntity=room&entityId=${firstDetail.itemId}`);
 			const accommodation = accommodationRes.data;
 
-			// 3. Get user
-			console.log(`[BookingController] Fetching user data for userId: ${booking.userId} and url: ${process.env.USER_ENDPOINT}/${booking.userId}`);
-			const userRes = await axios.get(`${process.env.USER_ENDPOINT}/${booking.userId}`);
-			console.log("[BookingController] Fetched user data:");
-			console.log(userRes.data.data);
-			const user = userRes.data.data;
+			// 3. Skip: Get user (Using booking.leaderEmail and booking.leaderName instead)
+			// Note: The original step 3 and associated console logs are removed.
 
 			// 4. Build check-in / check-out display format
 			const checkIn = booking.startDate.toLocaleDateString("en-US", {
@@ -135,20 +143,23 @@ export default class BookingController {
 				month: "long",
 				day: "numeric",
 			});
-
+			const totalChargeDisplay = booking.totalPrice
+				? booking.totalPrice.toString() // Convert Decimal to string if it exists
+				: undefined; // Use undefined if totalPrice is null
 			// 5. Prepare email payload
 			const emailData: ConfirmationEmailData = {
-				to: user.email,
+				// Use leaderEmail and leaderName directly from the booking object
+				to: booking.leaderEmail,
 				accommodation,
 				checkIn,
 				checkOut,
-				guestName: user.name,
+				guestName: booking.leaderName, // Use leaderName for the guest name
 				referenceNo: booking.referenceNo,
 				roomType: firstDetail.itemType,
 				guestCount: booking.guestCount,
 				nights: firstDetail.count,
 				specialRequest: firstDetail.note || undefined,
-				totalCharge: undefined, // or calculate if needed
+				totalCharge: totalChargeDisplay, // or calculate if needed
 			};
 
 			// 6. Send email
@@ -161,7 +172,6 @@ export default class BookingController {
 			return ResponseHelper.success(res, booking);
 		} catch (err) {
 			const e = err as Error;
-			console.log(e);
 			return ResponseHelper.error(res, e.message);
 		}
 	}
