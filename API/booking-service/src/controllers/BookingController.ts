@@ -128,7 +128,11 @@ export default class BookingController {
 
 			// 3. Skip: Get user (Using booking.leaderEmail and booking.leaderName instead)
 			// Note: The original step 3 and associated console logs are removed.
-
+			console.log(`[BookingController] Fetching user data for userId: ${booking.userId} and url: ${process.env.USER_ENDPOINT}/${booking.userId}`);
+			const userRes = await axios.get(`${process.env.USER_ENDPOINT}/${booking.userId}`);
+			console.log("[BookingController] Fetched user data:");
+			console.log(userRes.data.data);
+			const user = userRes.data.data;
 			// 4. Build check-in / check-out display format
 			const checkIn = booking.startDate.toLocaleDateString("en-US", {
 				weekday: "long",
@@ -147,26 +151,38 @@ export default class BookingController {
 				? booking.totalPrice.toString() // Convert Decimal to string if it exists
 				: undefined; // Use undefined if totalPrice is null
 			// 5. Prepare email payload
-			const emailData: ConfirmationEmailData = {
-				// Use leaderEmail and leaderName directly from the booking object
-				to: booking.leaderEmail,
+			const userEmailData: ConfirmationEmailData = {
+				to: user.email,
 				accommodation,
 				checkIn,
 				checkOut,
-				guestName: booking.leaderName, // Use leaderName for the guest name
+				guestName: user.name, // guestName as user.name
 				referenceNo: booking.referenceNo,
 				roomType: firstDetail.itemType,
 				guestCount: booking.guestCount,
 				nights: firstDetail.count,
 				specialRequest: firstDetail.note || undefined,
-				totalCharge: totalChargeDisplay, // or calculate if needed
+				totalCharge: totalChargeDisplay,
+			};
+
+			const leaderEmailData: ConfirmationEmailData = {
+				to: booking.leaderEmail,
+				accommodation,
+				checkIn,
+				checkOut,
+				guestName: booking.leaderName, // guestName as booking.leaderName
+				referenceNo: booking.referenceNo,
+				roomType: firstDetail.itemType,
+				guestCount: booking.guestCount,
+				nights: firstDetail.count,
+				specialRequest: firstDetail.note || undefined,
+				totalCharge: totalChargeDisplay,
 			};
 
 			// 6. Send email
 			const emailClient = new EmailServiceClient();
-			console.log("[BookingController] Sending confirmation email with data:");
-			console.log(emailData);
-			await emailClient.sendConfirmationEmail(emailData);
+			await emailClient.sendConfirmationEmail(userEmailData);
+			await emailClient.sendConfirmationEmail(leaderEmailData);
 
 			// 7. Return to FE
 			return ResponseHelper.success(res, booking);
