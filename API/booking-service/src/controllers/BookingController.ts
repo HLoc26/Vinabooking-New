@@ -116,7 +116,7 @@ export default class BookingController {
 
 			// 3. Get user
 			console.log(`[BookingController] Fetching user data for userId: ${booking.userId} and url: ${process.env.USER_ENDPOINT}/${booking.userId}`);
-			const userRes = await axios.get(`${process.env.USER_ENDPOINT}${booking.userId}`);
+			const userRes = await axios.get(`${process.env.USER_ENDPOINT}/${booking.userId}`);
 			console.log("[BookingController] Fetched user data:");
 			console.log(userRes.data.data);
 			const user = userRes.data.data;
@@ -161,6 +161,7 @@ export default class BookingController {
 			return ResponseHelper.success(res, booking);
 		} catch (err) {
 			const e = err as Error;
+			console.log(e);
 			return ResponseHelper.error(res, e.message);
 		}
 	}
