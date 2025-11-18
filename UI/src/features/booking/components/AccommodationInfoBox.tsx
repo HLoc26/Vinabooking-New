@@ -5,6 +5,7 @@ import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImage
 import type { RoomInfo } from "../services/types/RoomInfo";
 import { useBookingContext } from "../hooks/useBookingContext";
 import type { AccommodationInfo } from "../services/types/Accommodation";
+import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
 
 interface Props {
 	accommInfo: AccommodationInfo;
@@ -149,27 +150,44 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 					</Box>
 				)}
 
-				<Typography fontWeight={600} mb={0.5}>
-					{accommInfo.name}
-				</Typography>
-				<Typography variant="body2" color="text.secondary" mb={2}>
-					{accommInfo.address.fullAddress}
-				</Typography>
+				<Box display="flex" alignItems="center" gap={1} mb={1}>
+					<Apartment fontSize="small" />
+					<Typography fontWeight={600}>{accommInfo.name}</Typography>
+				</Box>
+
+				<Box display="flex" alignItems="center" gap={1} mb={2}>
+					<LocationOn fontSize="small" />
+					<Typography variant="body2" color="text.secondary">
+						{accommInfo.address.fullAddress}
+					</Typography>
+				</Box>
 
 				<Divider sx={{ my: 2 }} />
 
 				<Typography variant="h6" mb={2}>
 					Check-in / Checkout Date
 				</Typography>
-				<Typography variant="body2" mb={1}>
-					<strong>Check-in:</strong> {context.startDate.toDateString()}
-				</Typography>
-				<Typography variant="body2" mb={1}>
-					<strong>Check-out:</strong> {context.endDate.toDateString()}
-				</Typography>
-				<Typography variant="body2" mb={3}>
-					<strong>Guests:</strong> {context.guestCount}
-				</Typography>
+
+				<Box display="flex" alignItems="center" mb={2}>
+					<CalendarToday fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
+					<Typography variant="body2">
+						<strong>Check-in:</strong> {context.startDate.toDateString()}
+					</Typography>
+				</Box>
+
+				<Box display="flex" alignItems="center" mb={2}>
+					<CalendarToday fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
+					<Typography variant="body2">
+						<strong>Check-out:</strong> {context.endDate.toDateString()}
+					</Typography>
+				</Box>
+
+				<Box display="flex" alignItems="center" mb={2}>
+					<People fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
+					<Typography variant="body2">
+						<strong>Guests:</strong> {context.guestCount}
+					</Typography>
+				</Box>
 
 				<Divider sx={{ my: 2 }} />
 
