@@ -22,6 +22,7 @@ export interface IUser {
 	id: string;
 	name: string;
 	phone: string | null;
+	email: string;
 	role: string;
 
 	favouriteLists: Array<IFavouriteList>;

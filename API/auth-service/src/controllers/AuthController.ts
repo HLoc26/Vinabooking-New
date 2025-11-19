@@ -157,6 +157,7 @@ class AuthController {
 			user: {
 				id: userId,
 				name: userInDb.name,
+				phone: userInDb.phone,
 				email: username, // user will use their email to login -> email = username
 			},
 		};

@@ -17,3 +17,6 @@ export interface BookingPayload {
 		create: BookingDetailPayload[];
 	};
 }
+export interface ConfirmPayload {
+	id: string;
+}

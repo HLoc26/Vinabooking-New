@@ -43,17 +43,29 @@ export enum EFacilityType {
 	SUSTAINABILITY = "SUSTAINABILITY",
 	OTHER = "OTHER",
 }
-export interface AccommodationPayload {
+// types/Accommodation.ts
+export type ImageVariant = "ORIGINAL" | "THUMBNAIL" | "WEBP" | "OPTIMIZED";
+
+export interface AccommodationImage {
+	id: string;
+	url: string;
+	variant: ImageVariant;
+	imageId: string;
+}
+
+export interface AccommodationData {
 	id: string;
 	name: string;
 	description?: string;
-	type: EAccommodationType; // EAccommodationType
-	rentalType?: ERentalType; // ERentalType
-	isActive: boolean;
-	ownerId: string;
-	addressId?: string;
-	createdAt?: string;
-	updatedAt?: string;
+	// ... other existing fields ...
+	images?: AccommodationImage[];
+	// If your API wraps with { success, data, error } you'll keep that wrapper type below
+}
+
+export interface AccommodationPayload {
+	success: boolean;
+	data: AccommodationData;
+	error?: any;
 }
 
 export interface AddressPayload {
