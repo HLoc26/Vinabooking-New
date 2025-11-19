@@ -1,7 +1,7 @@
 import React from "react";
 import { Dialog, DialogContent, DialogTitle, IconButton, Box } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import LoginForm from "../../features/user/components/LoginForm";
+import LoginForm from "../../features/auth/components/LoginForm";
 
 type Props = {
 	open: boolean;

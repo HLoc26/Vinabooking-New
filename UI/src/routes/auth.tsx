@@ -1,9 +1,9 @@
 import { Routes, Route } from "react-router-dom";
-import LoginPage from "../features/user/pages/LoginPage";
-import RegisterPage from "../features/user/pages/RegisterPage";
-import ConfirmOTPPage from "../features/user/pages/ConfirmPage";
-import ForgotPasswordRequestPage from "../features/user/pages/ForgotPasswordRequestPage";
-import ForgotPasswordVerifyPage from "../features/user/pages/ForgotPasswordVerifyPage";
+import LoginPage from "../features/auth/pages/LoginPage";
+import RegisterPage from "../features/auth/pages/RegisterPage";
+import ConfirmOTPPage from "../features/auth/pages/ConfirmPage";
+import ForgotPasswordRequestPage from "../features/auth/pages/ForgotPasswordRequestPage";
+import ForgotPasswordVerifyPage from "../features/auth/pages/ForgotPasswordVerifyPage";
 
 export const AuthRouter = () => (
 	<Routes>
