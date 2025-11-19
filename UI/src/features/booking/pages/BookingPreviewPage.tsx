@@ -23,7 +23,14 @@ export default function BookingPreviewPage() {
 
 	const authContext = useAuthContextProvider();
 
-	const [userInfo, setUserInfo] = useState(authContext.getCurrentUser());
+	const userInfoDto = authContext.getCurrentUser();
+
+	const [userInfo, setUserInfo] = useState<UserInfo>({
+		id: userInfoDto?.id || "",
+		email: userInfoDto?.email || "",
+		name: userInfoDto?.name || "",
+		phone: userInfoDto?.phone,
+	});
 
 	const { pushNotification } = usePushNotificationContext();
 
