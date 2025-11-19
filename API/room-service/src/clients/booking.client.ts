@@ -32,7 +32,7 @@ class BookingClient {
             );
 
             const response = await this.client.post<BookingSummaryResponse>(
-                "/bookings/booked-counts",
+                "/booked-counts",
                 {
                     roomIds,
                     startDate,
