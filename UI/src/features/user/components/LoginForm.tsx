@@ -1,11 +1,11 @@
 import React, { useState } from "react";
 import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import UserSwitcher from "./UserSwitcher";
-import useAuth from "../hooks/useAuth";
 import type { EUserType } from "../types/UserDto";
 import { useNavigate } from "react-router-dom";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { GoogleAuthButton } from "./GoogleAuthButton";
+import useAuthContextProvider from "../../../context/AuthContext/hook";
 
 const LoginForm: React.FC = () => {
 	const navigate = useNavigate();
@@ -14,7 +14,7 @@ const LoginForm: React.FC = () => {
 		password: "",
 		userType: "TRAVELLER" as EUserType,
 	});
-	const { login, loading } = useAuth();
+	const { login, loading } = useAuthContextProvider();
 
 	const { pushNotification } = usePushNotificationContext();
 

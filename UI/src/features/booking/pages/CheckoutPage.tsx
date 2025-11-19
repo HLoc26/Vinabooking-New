@@ -3,10 +3,10 @@ import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { useState } from "react";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useBookingContext } from "../hooks/useBookingContext";
-import useAuth from "../../user/hooks/useAuth";
 import type { RoomInfo } from "../services/types/RoomInfo";
 import type { AccommodationInfo } from "../services/types/Accommodation";
 import { Box, Typography, Button, Paper, List, ListItem, Divider } from "@mui/material";
+import useAuthContextProvider from "../../../context/AuthContext/hook";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
@@ -14,7 +14,8 @@ export default function CheckoutPage() {
 	const roomInfo: RoomInfo[] = location.state?.rooms;
 	const accommodation: AccommodationInfo = location.state?.accommodation;
 	const { context } = useBookingContext();
-	const [userInfo] = useState(useAuth().getCurrentUser());
+	const authContext = useAuthContextProvider();
+	const [userInfo] = useState(authContext.getCurrentUser());
 
 	const { confirmBooking, loading } = useConfirmBooking();
 	const { pushNotification } = usePushNotificationContext();
