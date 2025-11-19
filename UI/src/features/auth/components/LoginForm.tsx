@@ -7,7 +7,11 @@ import { usePushNotificationContext } from "../../../context/PushNotification/ho
 import { GoogleAuthButton } from "./GoogleAuthButton";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
 
-const LoginForm: React.FC = () => {
+type LoginFormProps = {
+	onSuccess?: () => void;
+};
+
+const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 	const navigate = useNavigate();
 	const [values, setValues] = useState({
 		email: "",
@@ -33,6 +37,9 @@ const LoginForm: React.FC = () => {
 			const success = await login(values.email, values.password);
 			if (success) {
 				pushNotification("Login success", "success");
+			}
+			if (onSuccess) {
+				onSuccess();
 			}
 			navigate("/");
 		} catch (err) {
