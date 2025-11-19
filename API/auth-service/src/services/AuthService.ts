@@ -15,7 +15,6 @@ import {
 	ConfirmForgotPasswordCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 
-import "dotenv/config";
 import CognitoClient from "../clients/CognitoIdentityProviderClient";
 import type { SignUpResponse } from "../types/Response";
 
