@@ -1,6 +1,6 @@
-import React from "react";
-import { Box, Typography, Button } from "@mui/material";
-import { ArrowRight } from "lucide-react";
+import React, { useRef } from "react";
+import { Box, Typography, Button, IconButton } from "@mui/material";
+import { ArrowRight, ArrowLeft } from "lucide-react";
 
 interface HorizontalListProps<T> {
 	title: string;
@@ -10,8 +10,38 @@ interface HorizontalListProps<T> {
 }
 
 const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalListProps<T>) => {
+	const scrollRef = useRef<HTMLDivElement>(null);
+
+	// Mouse dragging logic
+	let isDown = false;
+	let startX = 0;
+	let scrollLeft = 0;
+
+	const handleMouseDown = (e: React.MouseEvent) => {
+		isDown = true;
+		startX = e.pageX - (scrollRef.current?.offsetLeft || 0);
+		scrollLeft = scrollRef.current?.scrollLeft || 0;
+	};
+
+	const handleMouseMove = (e: React.MouseEvent) => {
+		if (!isDown || !scrollRef.current) return;
+		e.preventDefault();
+		const x = e.pageX - scrollRef.current.offsetLeft;
+		const walk = (x - startX) * 1; // Drag speed
+		scrollRef.current.scrollLeft = scrollLeft - walk;
+	};
+
+	const handleMouseUp = () => (isDown = false);
+
+	// Scroll arrows
+	const scrollByAmount = (amount: number) => {
+		if (scrollRef.current) {
+			scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
+		}
+	};
+
 	return (
-		<Box sx={{ py: { xs: 4, md: 8 } }}>
+		<Box sx={{ position: "relative", py: { xs: 4, md: 8 } }}>
 			{/* Header */}
 			<Box
 				sx={{
@@ -25,6 +55,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				<Typography variant="h5" fontWeight="bold" color="text.primary">
 					{title}
 				</Typography>
+
 				{onSeeAll && (
 					<Button
 						onClick={onSeeAll}
@@ -41,22 +72,69 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				)}
 			</Box>
 
-			{/* Horizontal Scroll */}
-			<Box
-				sx={{
-					display: "flex",
-					overflowX: "auto",
-					gap: 2,
-					px: 2,
-					pb: 2,
-					"&::-webkit-scrollbar": { display: "none" },
-				}}
-			>
-				{items.map((item, index) => (
-					<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "70%", sm: "40%", md: "30%", lg: "22%" } }}>
-						{renderItem(item)}
-					</Box>
-				))}
+			{/* Scroll Container */}
+			<Box sx={{ position: "relative" }}>
+				{/* Left Arrow */}
+				<IconButton
+					onClick={() => scrollByAmount(-300)}
+					sx={{
+						position: "absolute",
+						left: 0,
+						top: "50%",
+						transform: "translateY(-50%)",
+						zIndex: 5,
+						display: { xs: "none", sm: "flex" },
+						bgcolor: "white",
+						boxShadow: 2,
+						":hover": { bgcolor: "grey.100" },
+					}}
+				>
+					<ArrowLeft />
+				</IconButton>
+
+				{/* Scrollable content */}
+				<Box
+					ref={scrollRef}
+					onMouseDown={handleMouseDown}
+					onMouseMove={handleMouseMove}
+					onMouseLeave={handleMouseUp}
+					onMouseUp={handleMouseUp}
+					sx={{
+						display: "flex",
+						overflowX: "auto",
+						gap: 2,
+						px: 2,
+						pb: 2,
+						scrollBehavior: "smooth",
+						cursor: "grab",
+						"&:active": { cursor: "grabbing" },
+						"&::-webkit-scrollbar": { display: "none" },
+					}}
+				>
+					{items.map((item, index) => (
+						<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "70%", sm: "40%", md: "30%", lg: "22%" } }}>
+							{renderItem(item)}
+						</Box>
+					))}
+				</Box>
+
+				{/* Right Arrow */}
+				<IconButton
+					onClick={() => scrollByAmount(300)}
+					sx={{
+						position: "absolute",
+						right: 0,
+						top: "50%",
+						transform: "translateY(-50%)",
+						zIndex: 5,
+						display: { xs: "none", sm: "flex" },
+						bgcolor: "white",
+						boxShadow: 2,
+						":hover": { bgcolor: "grey.100" },
+					}}
+				>
+					<ArrowRight />
+				</IconButton>
 			</Box>
 		</Box>
 	);
