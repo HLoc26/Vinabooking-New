@@ -5,6 +5,7 @@ import { usePushNotificationContext } from "../../../context/PushNotification/ho
 import { useNavigate } from "react-router-dom";
 import { GoogleAuthButton } from "../../auth/components/GoogleAuthButton";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
+import { ProtectedLink } from "../../../components/ui/ProtectedLink";
 
 export const HomePage = () => {
 	const navigate = useNavigate();
@@ -41,16 +42,11 @@ export const HomePage = () => {
 					</Typography>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 6, sm: 3 }}>
-							<Button
-								fullWidth
-								variant="contained"
-								color="secondary"
-								onClick={() => {
-									navigate("/booking");
-								}}
-							>
-								Create a booking
-							</Button>
+							<ProtectedLink to="/booking">
+								<Button fullWidth variant="contained" color="secondary">
+									Create a booking
+								</Button>
+							</ProtectedLink>
 						</Grid>
 						<Grid size={{ xs: 6, sm: 3 }}>
 							<Button fullWidth variant="contained" color="secondary">
