@@ -3,6 +3,7 @@ import { HomePage } from "../features/common/pages/HomePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
+import { BookingRouter } from "./booking";
 
 export const AppRouter = () => (
 	<BrowserRouter>
@@ -10,6 +11,7 @@ export const AppRouter = () => (
 			<Route path="/" element={<HomePage />} />
 			<Route path="/auth/*" element={<AuthRouter />} />
 			<Route path="/oauth/*" element={<OAuthRouter />} />
+			<Route path="/booking/*" element={<BookingRouter />} />
 		</Routes>
 	</BrowserRouter>
 );
