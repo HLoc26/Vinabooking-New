@@ -123,7 +123,6 @@ export const Hero: React.FC = () => {
 	const [originalTop, setOriginalTop] = useState(0);
 
 	useEffect(() => {
-		// Calculate and store the original position
 		if (searchRef.current && originalTop === 0) {
 			const rect = searchRef.current.getBoundingClientRect();
 			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
@@ -135,41 +134,28 @@ export const Hero: React.FC = () => {
 		const handleScroll = () => {
 			if (!searchRef.current || originalTop === 0) return;
 			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-			// Check if we've scrolled past the original position
 			setSticky(scrollTop > originalTop - 80);
 		};
 		window.addEventListener("scroll", handleScroll);
-
-		return () => {
-			window.removeEventListener("scroll", handleScroll);
-		};
+		return () => window.removeEventListener("scroll", handleScroll);
 	}, [originalTop]);
 
 	const handleDateClick = (date: Date) => {
 		if (!tempDateRange.checkIn || (tempDateRange.checkIn && tempDateRange.checkOut)) {
-			// First click or reset
 			setTempDateRange({ checkIn: date, checkOut: null });
 		} else {
-			// Second click
-			if (date < tempDateRange.checkIn) {
-				setTempDateRange({ checkIn: date, checkOut: tempDateRange.checkIn });
-			} else {
-				setTempDateRange({ ...tempDateRange, checkOut: date });
-			}
+			if (date < tempDateRange.checkIn) setTempDateRange({ checkIn: date, checkOut: tempDateRange.checkIn });
+			else setTempDateRange({ ...tempDateRange, checkOut: date });
 		}
 	};
 
 	const handleDateMenuOpen = () => {
-		// Initialize temp date range with current confirmed dates
 		setTempDateRange(dateRange);
 		setIsDateMenuOpen(true);
 	};
 
 	const handleDateMenuClose = () => {
-		// Only confirm if both dates are selected
-		if (tempDateRange.checkIn && tempDateRange.checkOut) {
-			setDateRange(tempDateRange);
-		}
+		if (tempDateRange.checkIn && tempDateRange.checkOut) setDateRange(tempDateRange);
 		setIsDateMenuOpen(false);
 	};
 
@@ -188,17 +174,27 @@ export const Hero: React.FC = () => {
 
 	return (
 		<Box position="relative" height={{ xs: 600, lg: 700 }}>
-			{/* Hero Background */}
+			{/* Background */}
 			<Box
 				position="absolute"
-				inset={0}
 				sx={{
-					backgroundImage: "url(https://picsum.photos/600/700)",
+					inset: 0,
+					backgroundImage: "url(https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=800&fit=crop)",
 					backgroundSize: "cover",
 					backgroundPosition: "center",
+					zIndex: 0,
 				}}
 			/>
-			<Box position="absolute" inset={0} bgcolor="rgba(0,0,0,0.4)" sx={{ backdropFilter: "blur(2px)" }} />
+			{/* Overlay */}
+			<Box
+				position="absolute"
+				sx={{
+					inset: 0,
+					bgcolor: "rgba(0,0,0,0.4)",
+					backdropFilter: "blur(2px)",
+					zIndex: 1,
+				}}
+			/>
 
 			{/* Hero Text */}
 			<Box position="relative" zIndex={5} textAlign="center" px={2} pt={8}>
@@ -232,14 +228,7 @@ export const Hero: React.FC = () => {
 				<Paper elevation={6} sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, borderRadius: 2, overflow: "hidden" }}>
 					{/* Destination */}
 					<Box flex={1} p={1}>
-						<TextField
-							fullWidth
-							placeholder="Where are you going?"
-							variant="outlined"
-							InputProps={{
-								startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} />,
-							}}
-						/>
+						<TextField fullWidth placeholder="Where are you going?" variant="outlined" InputProps={{ startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} /> }} />
 					</Box>
 
 					{/* Date Picker */}
@@ -259,9 +248,7 @@ export const Hero: React.FC = () => {
 							anchorEl={dateRef.current}
 							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
 							disableAutoFocusItem
-							MenuListProps={{
-								onClick: (e) => e.stopPropagation(),
-							}}
+							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
 						>
 							<Box display="flex" p={2} onClick={(e) => e.stopPropagation()}>
 								<CalendarMonth
@@ -302,9 +289,7 @@ export const Hero: React.FC = () => {
 							anchorEl={guestRef.current}
 							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
 							disableAutoFocusItem
-							MenuListProps={{
-								onClick: (e) => e.stopPropagation(),
-							}}
+							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
 						>
 							<Box p={2} onClick={(e) => e.stopPropagation()}>
 								<Counter label="Adults" value={guests.adults} onChange={(v) => setGuests({ ...guests, adults: v })} min={1} />
