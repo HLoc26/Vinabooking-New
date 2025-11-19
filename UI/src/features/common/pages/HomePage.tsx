@@ -1,10 +1,10 @@
 import { Box, Button, Typography, AppBar, Container, Paper, Grid } from "@mui/material";
 import { Palette } from "@mui/icons-material";
 
-import { useAuth } from "../../user/hooks/useAuth";
+import { useAuth } from "../../auth/hooks/useAuth";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useNavigate } from "react-router-dom";
-import { GoogleAuthButton } from "../../user/components/GoogleAuthButton";
+import { GoogleAuthButton } from "../../auth/components/GoogleAuthButton";
 
 export const HomePage = () => {
 	const navigate = useNavigate();
