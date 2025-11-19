@@ -11,7 +11,7 @@ app.use(express.json()); // Parse JSON bodies
 
 // === Health check ===
 app.get("/health", (_, res) => {
-    res.json({ service: "Room Service", success: true });
+	res.json({ service: "Room Service", success: true });
 });
 
 // === API Routes ===
