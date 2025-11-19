@@ -6,9 +6,10 @@ import LoginForm from "../../features/auth/components/LoginForm";
 type Props = {
 	open: boolean;
 	onClose: () => void;
+	onLoginSuccess: () => void;
 };
 
-const LoginModal: React.FC<Props> = ({ open, onClose }) => {
+const LoginModal: React.FC<Props> = ({ open, onClose, onLoginSuccess }) => {
 	return (
 		<Dialog open={open} onClose={onClose} maxWidth="xs" fullWidth PaperProps={{ sx: { borderRadius: 3, p: 1 } }}>
 			<Box display="flex" justifyContent="space-between" alignItems="center">
@@ -20,7 +21,7 @@ const LoginModal: React.FC<Props> = ({ open, onClose }) => {
 			</Box>
 
 			<DialogContent sx={{ pt: 0 }}>
-				<LoginForm />
+				<LoginForm onSuccess={onLoginSuccess} />
 			</DialogContent>
 		</Dialog>
 	);
