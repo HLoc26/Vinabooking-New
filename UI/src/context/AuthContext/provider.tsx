@@ -1,4 +1,4 @@
-import useAuth from "../../features/auth/hooks/useAuth";
+import useAuth from "../../hooks/useAuth";
 import AuthContext from "./context";
 
 const AuthContextProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
