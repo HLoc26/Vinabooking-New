@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import UserSwitcher from "./UserSwitcher";
-import type { EUserType } from "../types/UserDto";
+import type { EUserType } from "../../../types/UserDto";
 import { useNavigate } from "react-router-dom";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { GoogleAuthButton } from "./GoogleAuthButton";
