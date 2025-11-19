@@ -41,8 +41,15 @@ export const HomePage = () => {
 					</Typography>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 6, sm: 3 }}>
-							<Button fullWidth variant="contained" color="primary">
-								Primary
+							<Button
+								fullWidth
+								variant="contained"
+								color="secondary"
+								onClick={() => {
+									navigate("/booking");
+								}}
+							>
+								Create a booking
 							</Button>
 						</Grid>
 						<Grid size={{ xs: 6, sm: 3 }}>
@@ -66,7 +73,11 @@ export const HomePage = () => {
 								variant="contained"
 								color="success"
 								onClick={() => {
-									navigate("/auth/login");
+									if (!user) {
+										navigate("/auth/login");
+									} else {
+										pushNotification("You have already logged in");
+									}
 								}}
 							>
 								Log In
@@ -78,7 +89,11 @@ export const HomePage = () => {
 								variant="contained"
 								color="info"
 								onClick={() => {
-									navigate("/auth/register");
+									if (!user) {
+										navigate("/auth/register");
+									} else {
+										pushNotification("You have already logged in");
+									}
 								}}
 							>
 								Register

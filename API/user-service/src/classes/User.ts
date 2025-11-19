@@ -5,6 +5,7 @@ import { EUserRole, type IUser, type UserWithFavourites } from "../types/User";
 class User {
 	#id: string;
 	#name: string;
+	#email: string;
 	#phone: string | null;
 	#role: EUserRole;
 
@@ -17,6 +18,7 @@ class User {
 		this.#id = props.id;
 		this.#name = props.name;
 		this.#phone = props.phone ?? null;
+		this.#email = props.email;
 
 		const roleMap: Record<string, EUserRole> = {
 			Traveller: EUserRole.TRAVELLER,
@@ -41,6 +43,7 @@ class User {
 			id: schema.id,
 			name: schema.name,
 			phone: schema.phone ?? "",
+			email: schema.email,
 			role: schema.role,
 			favouriteLists: favourites ?? [],
 			createdAt: schema.createdAt,
@@ -53,6 +56,7 @@ class User {
 			id: this.id,
 			name: this.name,
 			phone: this.phone,
+			email: this.email,
 			role: this.role,
 			favourites: this.favouriteLists?.map((list) => list.toJson()),
 			createdAt: this.createdAt,
@@ -69,6 +73,9 @@ class User {
 	}
 	get phone() {
 		return this.#phone ?? "";
+	}
+	get email() {
+		return this.#email;
 	}
 	get role() {
 		return this.#role;
