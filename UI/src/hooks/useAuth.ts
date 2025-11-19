@@ -2,15 +2,15 @@ import { useCallback, useState } from "react";
 import { authApi } from "../services/authApi";
 import type { ApiResponse, LogInResponse } from "../types/Response";
 import { AxiosError } from "axios";
-import { usePushNotificationContext } from "../context/PushNotification/hook";
+import type { UserDto } from "../types/UserDto";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const USER_KEY = import.meta.env.VITE_USER_KEY;
 
 export const useAuth = () => {
+	const [user, setUser] = useState<UserDto | null>(null);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
-	const { pushNotification } = usePushNotificationContext();
 
 	const login = useCallback(async (email: string, password: string) => {
 		setLoading(true);
@@ -28,6 +28,7 @@ export const useAuth = () => {
 
 			cookieStore.set(ACCESS_TOKEN_KEY, data.accessToken);
 			localStorage.setItem(USER_KEY, JSON.stringify(data.user));
+			setUser(data.user);
 
 			return true;
 		} catch (e: unknown) {
@@ -57,6 +58,7 @@ export const useAuth = () => {
 			}
 			cookieStore.delete(ACCESS_TOKEN_KEY);
 			localStorage.removeItem(USER_KEY);
+			setUser(null);
 			return true;
 		} catch (e: unknown) {
 			if (e instanceof AxiosError) {
@@ -71,16 +73,8 @@ export const useAuth = () => {
 	}, []);
 
 	const getCurrentUser = useCallback(() => {
-		const raw = localStorage.getItem(USER_KEY);
-		if (!raw) return null;
-		try {
-			return JSON.parse(raw);
-		} catch (e) {
-			const error = e as Error;
-			pushNotification(error.message, "error");
-			return null;
-		}
-	}, [pushNotification]);
+		return user;
+	}, [user]);
 
 	return { login, logout, getCurrentUser, loading, error } as const;
 };
