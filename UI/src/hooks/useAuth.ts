@@ -2,7 +2,7 @@ import { useCallback, useState } from "react";
 import { authApi } from "../services/authApi";
 import type { ApiResponse, LogInResponse } from "../types/Response";
 import { AxiosError } from "axios";
-import { usePushNotificationContext } from "../../../context/PushNotification/hook";
+import { usePushNotificationContext } from "../context/PushNotification/hook";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const USER_KEY = import.meta.env.VITE_USER_KEY;
