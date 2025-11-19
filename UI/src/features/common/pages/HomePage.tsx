@@ -3,7 +3,7 @@ import { Palette } from "@mui/icons-material";
 
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useNavigate } from "react-router-dom";
-import { GoogleAuthButton } from "../../user/components/GoogleAuthButton";
+import { GoogleAuthButton } from "../../auth/components/GoogleAuthButton";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
 
 export const HomePage = () => {
