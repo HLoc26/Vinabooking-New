@@ -9,19 +9,17 @@ interface ApiResponse<T> {
 }
 
 class RoomClient {
-    private client: AxiosInstance;
+	private client: AxiosInstance;
 
-    constructor() {
-        if (!config.roomEndpoint) {
-            throw new Error(
-                "ROOM_SERVICE_URL environment variable is not set."
-            );
-        }
-        this.client = axios.create({
-            baseURL: config.roomEndpoint,
-            timeout: 5000,
-        });
-    }
+	constructor() {
+		if (!config.roomEndpoint) {
+			throw new Error("ROOM_SERVICE_URL environment variable is not set.");
+		}
+		this.client = axios.create({
+			baseURL: config.roomEndpoint,
+			timeout: 5000,
+		});
+	}
 
     /**
      * Lấy accommodationId từ roomId

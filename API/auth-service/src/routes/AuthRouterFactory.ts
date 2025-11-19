@@ -11,44 +11,44 @@ import { UserAxiosClient } from "../clients/UserServiceClient";
 import PrismaSingleton from "../clients/PrismaSingleton";
 
 class AuthRouterFactory {
-    public static createAuthRouter() {
-        // Cognito config
-        const cognitoClient = CognitoClient.getInstance();
-        const cognitoAppClientId = CognitoClient.clientId;
+	public static createAuthRouter() {
+		// Cognito config
+		const cognitoClient = CognitoClient.getInstance();
+		const cognitoAppClientId = CognitoClient.clientId;
 
-        // Google config
-        const googleClientId = process.env["GOOGLE_CLIENT_ID"];
-        if (!googleClientId) {
-            throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_ID");
-        }
-        const googleClientSecret = process.env["GOOGLE_CLIENT_SECRET"];
-        if (!googleClientSecret) {
-            throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_SECRET");
-        }
-        const redirectUri = "http://localhost:3000/auth/google/callback";
+		// Google config
+		const googleClientId = process.env["GOOGLE_CLIENT_ID"];
+		if (!googleClientId) {
+			throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_ID");
+		}
+		const googleClientSecret = process.env["GOOGLE_CLIENT_SECRET"];
+		if (!googleClientSecret) {
+			throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_SECRET");
+		}
+		const redirectUri = "http://localhost:3000/auth/google/callback";
 
-        const authServiceConfig: AuthServiceConfig = {
-            cognitoAppClientId: cognitoAppClientId,
-            cognitoClient: cognitoClient,
-            googleClientSecret: googleClientSecret,
-        };
-        const oAuthServiceConfig: GoogleOAuthConfig = {
-            clientId: googleClientId,
-            clientSecret: googleClientSecret,
-            redirectUri: redirectUri,
-        };
+		const authServiceConfig: AuthServiceConfig = {
+			cognitoAppClientId: cognitoAppClientId,
+			cognitoClient: cognitoClient,
+			googleClientSecret: googleClientSecret,
+		};
+		const oAuthServiceConfig: GoogleOAuthConfig = {
+			clientId: googleClientId,
+			clientSecret: googleClientSecret,
+			redirectUri: redirectUri,
+		};
 
-        const userAxiosInstance = UserAxiosClient.getInstance();
-        const prismaClient = PrismaSingleton.getInstance();
+		const userAxiosInstance = UserAxiosClient.getInstance();
+		const prismaClient = PrismaSingleton.getInstance();
 
-        const authService = new AuthService(authServiceConfig);
-        const oAuthService = new OAuthService(oAuthServiceConfig);
-        const userService = new UserService(userAxiosInstance);
-        const authRepository = new AuthRepository(prismaClient);
-        const authController = new AuthController(authService, userService, oAuthService, authRepository);
-        const authRouter = new AuthRouter(Router(), authController);
-        return authRouter.router;
-    }
+		const authService = new AuthService(authServiceConfig);
+		const oAuthService = new OAuthService(oAuthServiceConfig);
+		const userService = new UserService(userAxiosInstance);
+		const authRepository = new AuthRepository(prismaClient);
+		const authController = new AuthController(authService, userService, oAuthService, authRepository);
+		const authRouter = new AuthRouter(Router(), authController);
+		return authRouter.router;
+	}
 }
 
 export default AuthRouterFactory;
