@@ -3,19 +3,38 @@ import { useParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
-import { HeroGallery, PropertyHeader, DetailTabs, BookingCard, ImageGalleryDialog } from "../components/detail";
+import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
+import ImageGallery from "../../../components/ui/ImageGallery";
 
 export default function DetailPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
-	const { accommodation, loading, error, displayImages } = useAccommodationDetail(accommodationId);
+	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId);
 
-	const [openGallery, setOpenGallery] = useState(false);
 	const [isFavorite, setIsFavorite] = useState(false);
 	const [tabValue, setTabValue] = useState(0);
 
 	const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
 	const [startDate, setStartDate] = useState<Date>(new Date("2025-11-07"));
 	const [endDate, setEndDate] = useState<Date>(new Date("2025-11-10"));
+
+	const [openGallery, setOpenGallery] = useState(false);
+	const [currentIndex, setCurrentIndex] = useState(0);
+
+	const openImageGallery = (index: number) => {
+		const safeIndex = Math.min(Math.max(0, index), displayImages.length);
+		setCurrentIndex(safeIndex);
+		setOpenGallery(true);
+	};
+
+	const closeGallery = () => setOpenGallery(false);
+
+	const handlePrevImage = () => {
+		setCurrentIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
+	};
+
+	const handleNextImage = () => {
+		setCurrentIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
+	};
 
 	// Tính số đêm
 	const nights = Math.max(0, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
@@ -63,7 +82,7 @@ export default function DetailPage() {
 	return (
 		<Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb: 8 }}>
 			<Container maxWidth="lg" sx={{ pt: 2 }}>
-				<HeroGallery images={displayImages} onOpenGallery={() => setOpenGallery(true)} />
+				<HeroGallery images={thumbnails} onOpenGallery={(i) => openImageGallery(i)} />
 
 				<Grid container spacing={4} sx={{ mt: 3 }}>
 					{/* Cột trái – thông tin chính */}
@@ -81,7 +100,15 @@ export default function DetailPage() {
 			</Container>
 
 			{/* Gallery modal */}
-			<ImageGalleryDialog open={openGallery} onClose={() => setOpenGallery(false)} images={displayImages} propertyName={accommodation.name} />
+			<ImageGallery //
+				galleryImages={displayImages}
+				openGallery={openGallery}
+				currentIndex={currentIndex}
+				closeGallery={closeGallery}
+				setCurrentIndex={setCurrentIndex}
+				handleNextImage={handleNextImage}
+				handlePrevImage={handlePrevImage}
+			/>
 		</Box>
 	);
 }
