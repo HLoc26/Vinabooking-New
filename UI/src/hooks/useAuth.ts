@@ -8,7 +8,17 @@ const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const USER_KEY = import.meta.env.VITE_USER_KEY;
 
 export const useAuth = () => {
-	const [user, setUser] = useState<UserDto | null>(null);
+	const [user, setUser] = useState<UserDto | null>(() => {
+		const raw = localStorage.getItem(USER_KEY);
+		if (!raw) return null;
+		try {
+			return JSON.parse(raw);
+		} catch (e) {
+			const error = e as Error;
+			console.error(error.message);
+			return null;
+		}
+	});
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
