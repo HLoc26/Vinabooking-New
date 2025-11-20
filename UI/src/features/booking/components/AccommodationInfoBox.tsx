@@ -2,9 +2,9 @@ import React, { type Dispatch, type SetStateAction } from "react";
 import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel } from "@mui/material";
 import type { ImageType } from "../../../types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
-import type { RoomInfo } from "../services/types/RoomInfo";
+import type { RoomInfo } from "../types/RoomInfo";
 import { useBookingContext } from "../hooks/useBookingContext";
-import type { AccommodationInfo } from "../services/types/Accommodation";
+import type { AccommodationInfo } from "../types/Accommodation";
 import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
 
 interface Props {

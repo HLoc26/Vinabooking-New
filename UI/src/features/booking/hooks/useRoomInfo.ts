@@ -1,5 +1,5 @@
 import { useEffect, useRef, useState } from "react";
-import type { RoomInfo } from "../services/types/RoomInfo";
+import type { RoomInfo } from "../types/RoomInfo";
 import { bookingApi } from "../services/bookingApi";
 import { useBookingContext } from "./useBookingContext";
 

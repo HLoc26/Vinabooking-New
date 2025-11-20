@@ -1,7 +1,7 @@
 import { Box, Typography, Modal, Chip } from "@mui/material";
 import { useState } from "react";
 import type { ImageType } from "../../../types/Image";
-import type { AmenityConfig } from "../services/types/RoomInfo";
+import type { AmenityConfig } from "../types/RoomInfo";
 
 type RoomReviewCardProps = {
 	roomName: string;

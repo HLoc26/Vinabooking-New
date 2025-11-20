@@ -3,8 +3,8 @@ import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { useState } from "react";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useBookingContext } from "../hooks/useBookingContext";
-import type { RoomInfo } from "../services/types/RoomInfo";
-import type { AccommodationInfo } from "../services/types/Accommodation";
+import type { RoomInfo } from "../types/RoomInfo";
+import type { AccommodationInfo } from "../types/Accommodation";
 import { Box, Typography, Button, Paper, List, ListItem, Divider } from "@mui/material";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
 

@@ -10,7 +10,7 @@ import AccommodationInfoBox from "../components/AccommodationInfoBox";
 import type { ImageType } from "../../../types/Image";
 import useRoomsInfo from "../hooks/useRoomInfo";
 import useAccommodationInfo from "../hooks/useAccommodationInfo";
-import type { UserInfo } from "../services/types/UserInfo";
+import type { UserInfo } from "../types/UserInfo";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
 const ImageGallery = lazy(() => import("../components/ImageGallery"));
 

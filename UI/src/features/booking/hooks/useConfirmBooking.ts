@@ -1,9 +1,9 @@
 // src/features/booking/hooks/useConfirmBooking.ts
 import { useState } from "react";
 import { bookingApi } from "../services/bookingApi";
-import type { UserInfo } from "../services/types/UserInfo";
-import type { RoomInfo } from "../services/types/RoomInfo";
-import type { BookingContextInfo } from "../services/types/BookingContextInfo";
+import type { UserInfo } from "../types/UserInfo";
+import type { RoomInfo } from "../types/RoomInfo";
+import type { BookingContextInfo } from "../types/BookingContextInfo";
 
 export function useConfirmBooking() {
 	const [loading, setLoading] = useState(false);

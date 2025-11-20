@@ -1,4 +1,4 @@
-import type { BookingContextInfo } from "../types/BookingContextInfo";
+import type { BookingContextInfo } from "../../types/BookingContextInfo";
 import type { ContextInfoAdapter } from "./ContextInfoAdapter";
 
 export class FakeContextInfo implements ContextInfoAdapter {
