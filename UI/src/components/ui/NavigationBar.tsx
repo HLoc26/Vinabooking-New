@@ -168,7 +168,7 @@ const NavigationBar: React.FC = () => {
 			</AppBar>
 
 			{/* Login Modal */}
-			<LoginModal open={openLoginModal} onClose={() => setOpenLoginModal(false)} />
+			<LoginModal open={openLoginModal} onClose={() => setOpenLoginModal(false)} onLoginSuccess={() => setOpenLoginModal(false)} />
 		</>
 	);
 };
