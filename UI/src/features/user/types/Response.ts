@@ -1,3 +1,5 @@
+import type { UserDto } from "./UserDto";
+
 export interface AuthResponse {
 	token: string;
 	user: {
@@ -28,11 +30,7 @@ export interface LogInResponse {
 	idToken: string;
 	expiresIn: number;
 	tokenType: string | "Bearer";
-	user: {
-		id: string;
-		name: string;
-		email: string;
-	};
+	user: UserDto;
 }
 
 export interface ApiResponse<T> {
