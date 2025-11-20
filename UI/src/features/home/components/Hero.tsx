@@ -216,13 +216,13 @@ export const Hero: React.FC = () => {
 					width: "100%",
 					px: 2,
 					zIndex: 10,
-					position: sticky ? "fixed" : "absolute",
-					top: sticky ? 80 : 280,
+					position: sticky ? "fixed" : "relative",
+					top: sticky ? 10 : "auto",
 					left: 0,
 					right: 0,
 					mx: "auto",
 					maxWidth: 1200,
-					transition: "all 0.3s ease",
+					transition: "top 0.2s ease",
 				}}
 			>
 				<Paper elevation={6} sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, borderRadius: 2, overflow: "hidden" }}>
@@ -312,6 +312,7 @@ export const Hero: React.FC = () => {
 					</Box>
 				</Paper>
 			</Box>
+			{sticky && <Box sx={{ height: 100 }} />}
 		</Box>
 	);
 };
