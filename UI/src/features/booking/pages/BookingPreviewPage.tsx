@@ -98,7 +98,7 @@ export default function BookingPreviewPage() {
 				<Divider />
 				<Grid container spacing={3} sx={{ justifyContent: "center", mt: 3 }}>
 					{/* LEFT COLUMN */}
-					<Grid size={{ xs: 12, md: 4 }}>
+					<Grid size={{ xs: 12, md: 3 }}>
 						<UserInfoPreviewCard //
 							userInfo={bookingInfo.leader}
 							isEditing={isEditing}
@@ -108,7 +108,7 @@ export default function BookingPreviewPage() {
 					</Grid>
 
 					{/* MIDDLE COLUMN */}
-					<Grid size={{ xs: 12, md: 4 }}>
+					<Grid size={{ xs: 12, md: 5 }}>
 						{roomInfoLoading ? (
 							<Typography>Loading...</Typography>
 						) : (
