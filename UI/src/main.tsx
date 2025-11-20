@@ -5,14 +5,17 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
+import AuthContextProvider from "./context/AuthContext/provider.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
 		<ThemeProvider theme={theme}>
 			<PushNotificationProvider>
-				<CssBaseline />
-				<App />
+				<AuthContextProvider>
+					<CssBaseline />
+					<App />
+				</AuthContextProvider>
 			</PushNotificationProvider>
 		</ThemeProvider>
-	</React.StrictMode>,
+	</React.StrictMode>
 );
