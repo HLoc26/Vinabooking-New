@@ -12,10 +12,10 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
-import useAuth from "../../features/user/hooks/useAuth.ts";
 
 import LoginModal from "./LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
+import useAuthContextProvider from "../../context/AuthContext/hook.tsx";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -27,10 +27,10 @@ const NavigationBar: React.FC = () => {
 	const [anchorElAccommodation, setAnchorElAccommodation] = useState<null | HTMLElement>(null);
 	const [anchorElProfile, setAnchorElProfile] = useState<null | HTMLElement>(null);
 	const [openLoginModal, setOpenLoginModal] = useState(false);
-	const { pushNotification } = usePushNotificationContext ();
+	const { pushNotification } = usePushNotificationContext();
 
 	const navigate = useNavigate();
-	const { logout, getCurrentUser } = useAuth();
+	const { logout, getCurrentUser } = useAuthContextProvider();
 	const user = getCurrentUser();
 
 	const handleLogout = async () => {
@@ -168,7 +168,7 @@ const NavigationBar: React.FC = () => {
 			</AppBar>
 
 			{/* Login Modal */}
-			<LoginModal open={openLoginModal} onClose={() => setOpenLoginModal(false)} />
+			<LoginModal open={openLoginModal} onClose={() => setOpenLoginModal(false)} onLoginSuccess={() => setOpenLoginModal(false)} />
 		</>
 	);
 };

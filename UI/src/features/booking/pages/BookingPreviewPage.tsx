@@ -8,10 +8,10 @@ import UserInfoPreviewCard from "../components/UserInfoPreviewCard";
 import RoomReviewBox from "../components/RoomReviewBox";
 import AccommodationInfoBox from "../components/AccommodationInfoBox";
 import type { ImageType } from "../services/types/Image";
-import useAuth from "../../user/hooks/useAuth";
 import useRoomsInfo from "../hooks/useRoomInfo";
 import useAccommodationInfo from "../hooks/useAccommodationInfo";
 import type { UserInfo } from "../services/types/UserInfo";
+import useAuthContextProvider from "../../../context/AuthContext/hook";
 const ImageGallery = lazy(() => import("../components/ImageGallery"));
 
 export default function BookingPreviewPage() {
@@ -21,7 +21,16 @@ export default function BookingPreviewPage() {
 	const { roomsInfo: selectedRooms, loading: roomInfoLoading } = useRoomsInfo(roomIds);
 	const { accommInfo } = useAccommodationInfo(context.accommodationId);
 
-	const [userInfo, setUserInfo] = useState(useAuth().getCurrentUser());
+	const authContext = useAuthContextProvider();
+
+	const userInfoDto = authContext.getCurrentUser();
+
+	const [userInfo, setUserInfo] = useState<UserInfo>({
+		id: userInfoDto?.id || "",
+		email: userInfoDto?.email || "",
+		name: userInfoDto?.name || "",
+		phone: userInfoDto?.phone,
+	});
 
 	const { pushNotification } = usePushNotificationContext();
 

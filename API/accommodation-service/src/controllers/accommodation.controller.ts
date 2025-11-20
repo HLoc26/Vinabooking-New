@@ -11,7 +11,9 @@ export class AccommodationController {
 	async getById(req: Request, res: Response, next: NextFunction) {
 		try {
 			const { id } = req.params;
-			const data = await accommodationService.getAccommodationById(id);
+			const { startDate, endDate } = req.query;
+
+			const data = await accommodationService.getAccommodationById(id, startDate as string | undefined, endDate as string | undefined);
 			sendSuccess(res, data);
 		} catch (error) {
 			next(error);
@@ -33,6 +35,35 @@ export class AccommodationController {
 			} else {
 				throw new BadRequestError("Unsupported or missing query parameters for filtering.");
 			}
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	/**
+	 * GET /stats
+	 * API cho Homepage: Lấy danh sách loại hình và thành phố phổ biến
+	 */
+	async getHomepageStats(req: Request, res: Response, next: NextFunction) {
+		try {
+			const stats = await accommodationService.getHomepageStats();
+			sendSuccess(res, stats);
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	/**
+	 * GET /count
+	 * Query Params: ?city=...&type=...
+	 */
+	async getCount(req: Request, res: Response, next: NextFunction) {
+		try {
+			const { city, type } = req.query;
+
+			const result = await accommodationService.getCount(city as string | undefined, type as string | undefined);
+
+			sendSuccess(res, result);
 		} catch (error) {
 			next(error);
 		}
