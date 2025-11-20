@@ -1,8 +1,7 @@
-import { useState, useEffect, lazy, Suspense, useMemo } from "react";
+import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Grid, Paper, Divider } from "@mui/material";
 import { PreviewOutlined } from "@mui/icons-material";
-import { useBookingContext } from "../hooks/useBookingContext";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import UserInfoPreviewCard from "../components/UserInfoPreviewCard";
 import RoomReviewBox from "../components/RoomReviewBox";
@@ -11,26 +10,15 @@ import type { ImageType } from "../../../types/Image";
 import useRoomsInfo from "../hooks/useRoomInfo";
 import useAccommodationInfo from "../hooks/useAccommodationInfo";
 import type { UserInfo } from "../types/UserInfo";
-import useAuthContextProvider from "../../../context/AuthContext/hook";
+import useBookingContextProvider from "../../../context/BookingContext/hook";
 const ImageGallery = lazy(() => import("../components/ImageGallery"));
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
-	const { context } = useBookingContext();
-	const roomIds = useMemo(() => context.items.map((i) => i.id), [context.items]);
+	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
+	const roomIds = useMemo(() => bookingInfo.items.map((i) => i.id), [bookingInfo.items]);
 	const { roomsInfo: selectedRooms, loading: roomInfoLoading } = useRoomsInfo(roomIds);
-	const { accommInfo } = useAccommodationInfo(context.accommodationId);
-
-	const authContext = useAuthContextProvider();
-
-	const userInfoDto = authContext.getCurrentUser();
-
-	const [userInfo, setUserInfo] = useState<UserInfo>({
-		id: userInfoDto?.id || "",
-		email: userInfoDto?.email || "",
-		name: userInfoDto?.name || "",
-		phone: userInfoDto?.phone,
-	});
+	const { accommInfo } = useAccommodationInfo(bookingInfo.accommodationId);
 
 	const { pushNotification } = usePushNotificationContext();
 
@@ -51,19 +39,16 @@ export default function BookingPreviewPage() {
 
 	const closeGallery = () => setOpenGallery(false);
 
-	const handlePrevImage = () => {
+	const handlePrevImage = useCallback(() => {
 		setCurrentIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
-	};
+	}, [galleryImages.length]);
 
-	const handleNextImage = () => {
+	const handleNextImage = useCallback(() => {
 		setCurrentIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
-	};
+	}, [galleryImages.length]);
 
 	const handleUserInfoUpdate = (field: keyof UserInfo, value: string) => {
-		setUserInfo({
-			...userInfo,
-			[field]: value,
-		});
+		updateBookingInfo("leader", { ...bookingInfo.leader, [field]: value });
 	};
 
 	const handleToggleEdit = () => {
@@ -71,7 +56,7 @@ export default function BookingPreviewPage() {
 	};
 
 	const handleProceed = () => {
-		if (!userInfo.name.trim()) {
+		if (!bookingInfo.leader.name.trim()) {
 			return pushNotification("Name cannot be empty.", "error");
 		}
 
@@ -94,7 +79,7 @@ export default function BookingPreviewPage() {
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [openGallery, galleryImages.length]);
+	}, [openGallery, galleryImages.length, handleNextImage, handlePrevImage]);
 
 	return (
 		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1400 }}>
@@ -115,7 +100,7 @@ export default function BookingPreviewPage() {
 					{/* LEFT COLUMN */}
 					<Grid size={{ xs: 12, md: 4 }}>
 						<UserInfoPreviewCard //
-							userInfo={userInfo}
+							userInfo={bookingInfo.leader}
 							isEditing={isEditing}
 							handleToggleEdit={handleToggleEdit}
 							handleUserInfoUpdate={handleUserInfoUpdate}

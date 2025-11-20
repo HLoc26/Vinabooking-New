@@ -1,13 +1,13 @@
 import { useEffect, useRef, useState } from "react";
 import type { RoomInfo } from "../types/RoomInfo";
 import { bookingApi } from "../services/bookingApi";
-import { useBookingContext } from "./useBookingContext";
+import useBookingContextProvider from "../../../context/BookingContext/hook";
 
 const useRoomsInfo = (roomIds: string[]) => {
 	const [roomsInfo, setRoomsInfo] = useState<RoomInfo[]>([]);
 	const [loading, setLoading] = useState(true);
 	const prevIdsRef = useRef<string>("");
-	const { context: bookingContext } = useBookingContext();
+	const { bookingInfo: bookingContext } = useBookingContextProvider();
 
 	useEffect(() => {
 		if (roomIds.length === 0) return;
