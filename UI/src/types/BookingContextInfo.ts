@@ -1,4 +1,4 @@
-type ItemInfo = {
+export type ItemInfo = {
 	id: string;
 	itemType: "ROOM" | "BED";
 	count: number;
