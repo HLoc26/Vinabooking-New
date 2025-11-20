@@ -1,5 +1,6 @@
 import prisma from "../prisma/client";
 //import { AccommodationEntity } from "../types/accommodation";
+import { Prisma, EAccommodationType } from "@prisma/client";
 
 export class AccommodationRepository {
 	async findById(id: string) {
@@ -46,6 +47,29 @@ export class AccommodationRepository {
 				},
 			},
 			take: 20, // <--- GIỚI HẠN: Chỉ lấy 20 thành phố cao nhất
+		});
+	}
+
+	// Count accommodations with city and type filters
+	async count(filters: { city?: string; type?: EAccommodationType }) {
+		const where: Prisma.AccommodationWhereInput = {
+			isActive: true,
+		};
+
+		if (filters.type) {
+			where.type = filters.type;
+		}
+
+		if (filters.city) {
+			where.address = {
+				city: {
+					contains: filters.city,
+				},
+			};
+		}
+
+		return prisma.accommodation.count({
+			where,
 		});
 	}
 }

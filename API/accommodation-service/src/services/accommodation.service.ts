@@ -3,6 +3,7 @@ import { NotFoundError } from "../errors";
 //import { UserClient, RoomClient, ImageClient, ReviewClient } from "../clients";
 import { roomClient } from "../clients/room.client";
 import { imageClient } from "../clients/image.client";
+import { EAccommodationType } from "@prisma/client";
 
 export class AccommodationService {
 	async getAccommodationById(id: string, startDate?: string, endDate?: string) {
@@ -45,7 +46,7 @@ export class AccommodationService {
 	}
 
 	/**
-	 * Lấy thống kê cho trang chủ (Homepage)
+	 * Gets homepage statistics: popular accommodation types and cities.
 	 */
 	async getHomepageStats() {
 		console.log("[AccommodationService] Fetching homepage stats...");
@@ -65,6 +66,22 @@ export class AccommodationService {
 		return {
 			types: formattedTypes,
 			cities: formattedCities,
+		};
+	}
+
+	/**
+	 * Counts accommodations based on optional city and type filters.
+	 */
+	async getCount(city?: string, type?: string) {
+		const count = await accommodationRepository.count({
+			city: city,
+			type: type as EAccommodationType,
+		});
+
+		return {
+			city: city || null,
+			type: type || null,
+			count: count,
 		};
 	}
 }
