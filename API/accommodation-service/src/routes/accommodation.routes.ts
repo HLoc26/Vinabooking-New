@@ -3,6 +3,9 @@ import { accommodationController } from "../controllers/accommodation.controller
 
 const router = Router();
 
+// GET /stats
+router.get("/stats", accommodationController.getHomepageStats.bind(accommodationController));
+
 /**
  * GET /?byEntity=room&entityId=:roomId
  * Get accommodation details by Room ID.
