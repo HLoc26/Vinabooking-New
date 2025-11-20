@@ -1,5 +1,5 @@
 import PrismaSingleton from "../clients/PrismaSingleton";
-import { BookingPayload } from "../types/Booking";
+import { BookingPayload, CreateBookingInput } from "../types/Booking";
 
 export default class BookingRepository {
 	private prisma = PrismaSingleton.getInstance();
@@ -32,7 +32,7 @@ export default class BookingRepository {
 	//     });
 	// }
 
-	public async createBooking(data: BookingPayload) {
+	public async createBooking(data: CreateBookingInput) {
 		const bookingData = {
 			...data,
 		};

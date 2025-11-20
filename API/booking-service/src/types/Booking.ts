@@ -7,8 +7,8 @@ export interface BookingDetailPayload {
 }
 
 export interface BookingPayload {
-	startDate: string; // ISO 8601 string
-	endDate: string;
+	startDate: Date; // ISO 8601 string
+	endDate: Date;
 	guestCount: number;
 	details: {
 		create: BookingDetailPayload[];
@@ -17,6 +17,8 @@ export interface BookingPayload {
 	leaderName: string;
 	leaderEmail: string;
 }
+
+export type CreateBookingInput = BookingPayload & { userId: string; referenceNo: number; status: "DRAFT" | "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED" };
 export interface ConfirmPayload {
 	id: string;
 }
