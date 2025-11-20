@@ -1,6 +1,6 @@
 import React from "react";
-import { authApi } from "../services/authApi";
-import type { ApiResponse, SignUpResponse } from "../types/Response";
+import { authApi } from "../../../services/authApi";
+import type { ApiResponse, SignUpResponse } from "../../../types/Response";
 import { AxiosError } from "axios";
 
 export const useRegister = () => {

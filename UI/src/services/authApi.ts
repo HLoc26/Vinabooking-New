@@ -1,4 +1,4 @@
-import AxiosInstance from "../../../services/apiClient";
+import AxiosInstance from "./apiClient";
 import { type GetOTPResponse, type ApiResponse, type SignUpResponse, type ConfirmUserResponse, type LogInResponse, type ForgotPasswordSendOtpResponse } from "../types/Response";
 
 export const authApi = {
