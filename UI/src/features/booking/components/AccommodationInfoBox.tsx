@@ -25,7 +25,14 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 		return <Typography>Accommodation not found</Typography>;
 	}
 
-	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) * (room.count || 0) || 0), 0);
+	// Calculate number of nights
+	const checkInDate = new Date(context.startDate);
+	const checkOutDate = new Date(context.endDate);
+	const nights = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+	// Calculate total price
+	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) * (room.count || 0) * nights || 0), 0);
+
 	const webp = accomImages.filter((i) => i.variant === "WEBP");
 	const thumbnails = accomImages.filter((i) => i.variant === "THUMBNAIL");
 
