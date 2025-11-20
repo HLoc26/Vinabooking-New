@@ -10,4 +10,9 @@ export type BookingContextInfo = {
 	guestCount: number;
 	accommodationId: string;
 	items: ItemInfo[];
+	leader: {
+		name: string;
+		email: string;
+		phone: string;
+	};
 };
