@@ -52,6 +52,22 @@ export class AccommodationController {
 			next(error);
 		}
 	}
+
+	/**
+	 * GET /count
+	 * Query Params: ?city=...&type=...
+	 */
+	async getCount(req: Request, res: Response, next: NextFunction) {
+		try {
+			const { city, type } = req.query;
+
+			const result = await accommodationService.getCount(city as string | undefined, type as string | undefined);
+
+			sendSuccess(res, result);
+		} catch (error) {
+			next(error);
+		}
+	}
 }
 
 // Export a singleton instance of the controller
