@@ -1,6 +1,6 @@
 import React, { type Dispatch, type SetStateAction } from "react";
 import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel } from "@mui/material";
-import type { ImageType } from "../services/types/Image";
+import type { ImageType } from "../../../types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
 import type { RoomInfo } from "../services/types/RoomInfo";
 import { useBookingContext } from "../hooks/useBookingContext";
