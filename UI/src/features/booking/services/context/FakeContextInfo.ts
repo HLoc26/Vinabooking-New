@@ -1,4 +1,4 @@
-import type { BookingContextInfo } from "../../types/BookingContextInfo";
+import type { BookingContextInfo } from "../../../../types/BookingContextInfo";
 import type { ContextInfoAdapter } from "./ContextInfoAdapter";
 
 export class FakeContextInfo implements ContextInfoAdapter {
@@ -12,6 +12,11 @@ export class FakeContextInfo implements ContextInfoAdapter {
 				{ id: "e321d131-6df0-4047-8bc6-a326cb3f039f", itemType: "ROOM", count: 1 },
 				{ id: "e94cfce0-af0d-42e5-9547-f33931e04cc8", itemType: "ROOM", count: 1 },
 			],
+			leader: {
+				email: "example@gmail.com",
+				name: "John Doe",
+				phone: "+100 221 002 111",
+			},
 		};
 	}
 }
