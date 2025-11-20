@@ -4,19 +4,25 @@ import { sendSuccess } from "../utils/apiResponse";
 import { BadRequestError } from "../errors";
 
 export class AccommodationController {
-	/**
-	 * GET /accommodations/:id
-	 * Returns accommodation detail by ID.
-	 */
-	async getById(req: Request, res: Response, next: NextFunction) {
-		try {
-			const { id } = req.params;
-			const data = await accommodationService.getAccommodationById(id);
-			sendSuccess(res, data);
-		} catch (error) {
-			next(error);
-		}
-	}
+    /**
+     * GET /accommodations/:id
+     * Returns accommodation detail by ID.
+     */
+    async getById(req: Request, res: Response, next: NextFunction) {
+        try {
+            const { id } = req.params;
+            const { startDate, endDate } = req.query;
+
+            const data = await accommodationService.getAccommodationById(
+                id,
+                startDate as string | undefined,
+                endDate as string | undefined
+            );
+            sendSuccess(res, data);
+        } catch (error) {
+            next(error);
+        }
+    }
 
 	/**
 	 * GET /?byEntity=room&entityId=:roomId
