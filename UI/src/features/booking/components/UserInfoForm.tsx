@@ -1,7 +1,7 @@
 import React, { useState } from "react";
 import { Box, TextField, IconButton, Typography } from "@mui/material";
 import EditIcon from "@mui/icons-material/Edit";
-import type { BookingDto } from "../services/types/BookingDto";
+import type { BookingDto } from "../types/BookingDto";
 
 interface Props {
 	user: BookingDto["user"];

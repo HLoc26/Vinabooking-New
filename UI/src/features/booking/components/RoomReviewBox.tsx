@@ -3,7 +3,7 @@ import { useMemo, type Dispatch, type SetStateAction } from "react";
 import type { ImageType } from "../../../types/Image";
 import { useFetchRoomsImages } from "../hooks/useFetchRoomImages";
 import RoomReviewCard from "./RoomReviewCard";
-import type { RoomInfo } from "../services/types/RoomInfo";
+import type { RoomInfo } from "../types/RoomInfo";
 
 type RoomReviewCardProps = {
 	roomsInfo: RoomInfo[];

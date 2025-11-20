@@ -1,8 +1,8 @@
 import axioInstance from "../../../services/apiClient";
 import Cookies from "js-cookie";
-import type { RoomInfo } from "./types/RoomInfo";
-import type { BookingContextInfo } from "./types/BookingContextInfo";
-import type { UserInfo } from "./types/UserInfo";
+import type { RoomInfo } from "../types/RoomInfo";
+import type { BookingContextInfo } from "../types/BookingContextInfo";
+import type { UserInfo } from "../types/UserInfo";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const BOOKING_ENDPOINT = "/bookings";
