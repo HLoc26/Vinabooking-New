@@ -1,26 +1,22 @@
 import { useLocation, useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
-import { useState } from "react";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-import { useBookingContext } from "../hooks/useBookingContext";
 import type { RoomInfo } from "../types/RoomInfo";
 import type { AccommodationInfo } from "../types/Accommodation";
 import { Box, Typography, Button, Paper, List, ListItem, Divider } from "@mui/material";
-import useAuthContextProvider from "../../../context/AuthContext/hook";
+import useBookingContextProvider from "../../../context/BookingContext/hook";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
 	const location = useLocation();
 	const roomInfo: RoomInfo[] = location.state?.rooms;
 	const accommodation: AccommodationInfo = location.state?.accommodation;
-	const { context } = useBookingContext();
-	const authContext = useAuthContextProvider();
-	const [userInfo] = useState(authContext.getCurrentUser());
+	const { bookingInfo } = useBookingContextProvider();
 
 	const { confirmBooking, loading } = useConfirmBooking();
 	const { pushNotification } = usePushNotificationContext();
 
-	if (!context)
+	if (!bookingInfo)
 		return (
 			<Typography variant="h6" align="center" mt={5}>
 				No booking found
@@ -29,9 +25,9 @@ export default function CheckoutPage() {
 
 	const handleConfirm = async () => {
 		try {
-			await confirmBooking(context, userInfo, roomInfo);
+			await confirmBooking(bookingInfo, roomInfo);
 			pushNotification("Booking confirmed successfully! Please check your booking history.", "success");
-			setTimeout(() => navigate("/", { state: { context } }), 1500);
+			setTimeout(() => navigate("/"), 3000);
 		} catch {
 			pushNotification("Failed to confirm booking. Please try again.", "error");
 		}
@@ -65,7 +61,7 @@ export default function CheckoutPage() {
 				</Typography>
 				<Typography>
 					<strong>Check-in:</strong>{" "}
-					{new Date(context.startDate).toLocaleDateString("en-GB", {
+					{new Date(bookingInfo.startDate).toLocaleDateString("en-GB", {
 						day: "2-digit",
 						month: "short",
 						year: "numeric",
@@ -73,14 +69,14 @@ export default function CheckoutPage() {
 				</Typography>
 				<Typography>
 					<strong>Check-out:</strong>{" "}
-					{new Date(context.endDate).toLocaleDateString("en-GB", {
+					{new Date(bookingInfo.endDate).toLocaleDateString("en-GB", {
 						day: "2-digit",
 						month: "short",
 						year: "numeric",
 					})}
 				</Typography>
 				<Typography>
-					<strong>Guests:</strong> {context.guestCount}
+					<strong>Guests:</strong> {bookingInfo.guestCount}
 				</Typography>
 
 				<Divider sx={{ my: 2 }} />

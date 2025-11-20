@@ -10,12 +10,12 @@ export interface BookingPayload {
 	startDate: string; // ISO 8601 string
 	endDate: string;
 	guestCount: number;
-	userId: string;
-	referenceNo: number;
-	phone: string;
 	details: {
 		create: BookingDetailPayload[];
 	};
+	phone: string;
+	leaderName: string;
+	leaderEmail: string;
 }
 export interface ConfirmPayload {
 	id: string;
