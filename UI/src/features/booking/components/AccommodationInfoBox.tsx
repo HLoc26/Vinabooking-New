@@ -3,9 +3,9 @@ import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormCont
 import type { ImageType } from "../../../types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
 import type { RoomInfo } from "../types/RoomInfo";
-import { useBookingContext } from "../hooks/useBookingContext";
 import type { AccommodationInfo } from "../types/Accommodation";
 import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
+import useBookingContextProvider from "../../../context/BookingContext/hook";
 
 interface Props {
 	accommInfo: AccommodationInfo;
@@ -18,14 +18,14 @@ interface Props {
 }
 
 const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
-	const { context } = useBookingContext();
+	const { bookingInfo: context } = useBookingContextProvider();
 	const { accomImages, accomImagesLoading } = useFetchAccommodationImages(accommInfo?.id ?? "");
 
 	if (!accommInfo) {
 		return <Typography>Accommodation not found</Typography>;
 	}
 
-	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) || 0), 0);
+	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) * (room.count || 0) || 0), 0);
 	const webp = accomImages.filter((i) => i.variant === "WEBP");
 	const thumbnails = accomImages.filter((i) => i.variant === "THUMBNAIL");
 
