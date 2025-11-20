@@ -1,6 +1,6 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useMemo, type Dispatch, type SetStateAction } from "react";
-import type { ImageType } from "../services/types/Image";
+import type { ImageType } from "../../../types/Image";
 import { useFetchRoomsImages } from "../hooks/useFetchRoomImages";
 import RoomReviewCard from "./RoomReviewCard";
 import type { RoomInfo } from "../services/types/RoomInfo";
