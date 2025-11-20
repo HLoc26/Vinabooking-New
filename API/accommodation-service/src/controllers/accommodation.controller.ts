@@ -4,25 +4,21 @@ import { sendSuccess } from "../utils/apiResponse";
 import { BadRequestError } from "../errors";
 
 export class AccommodationController {
-    /**
-     * GET /accommodations/:id
-     * Returns accommodation detail by ID.
-     */
-    async getById(req: Request, res: Response, next: NextFunction) {
-        try {
-            const { id } = req.params;
-            const { startDate, endDate } = req.query;
+	/**
+	 * GET /accommodations/:id
+	 * Returns accommodation detail by ID.
+	 */
+	async getById(req: Request, res: Response, next: NextFunction) {
+		try {
+			const { id } = req.params;
+			const { startDate, endDate } = req.query;
 
-            const data = await accommodationService.getAccommodationById(
-                id,
-                startDate as string | undefined,
-                endDate as string | undefined
-            );
-            sendSuccess(res, data);
-        } catch (error) {
-            next(error);
-        }
-    }
+			const data = await accommodationService.getAccommodationById(id, startDate as string | undefined, endDate as string | undefined);
+			sendSuccess(res, data);
+		} catch (error) {
+			next(error);
+		}
+	}
 
 	/**
 	 * GET /?byEntity=room&entityId=:roomId
@@ -39,6 +35,19 @@ export class AccommodationController {
 			} else {
 				throw new BadRequestError("Unsupported or missing query parameters for filtering.");
 			}
+		} catch (error) {
+			next(error);
+		}
+	}
+
+	/**
+	 * GET /stats
+	 * API cho Homepage: Lấy danh sách loại hình và thành phố phổ biến
+	 */
+	async getHomepageStats(req: Request, res: Response, next: NextFunction) {
+		try {
+			const stats = await accommodationService.getHomepageStats();
+			sendSuccess(res, stats);
 		} catch (error) {
 			next(error);
 		}
