@@ -1,5 +1,5 @@
-import { useEffect, useState } from "react";
-import type { BookingContextInfo } from "../types/BookingContextInfo";
+import { useCallback, useEffect, useState } from "react";
+import type { BookingContextInfo, ItemInfo } from "../types/BookingContextInfo";
 import useAuth from "./useAuth";
 import type { UserDto } from "../types/UserDto";
 
@@ -39,14 +39,28 @@ const useBookingInfo = () => {
 		}));
 	}, [user]);
 
-	const updateBookingInfo = <K extends keyof BookingContextInfo>(key: K, value: BookingContextInfo[K]) => {
+	const updateBookingInfo = useCallback(<K extends keyof BookingContextInfo>(key: K, value: BookingContextInfo[K]) => {
 		setBookingInfo((prev) => ({
 			...prev,
 			[key]: value,
 		}));
+	}, []);
+
+	const updateRoomQuantity = (roomId: string, count: number) => {
+		setBookingInfo((prev) => {
+			const exists = prev.items.find((item) => item.id === roomId);
+			let newItems: ItemInfo[];
+			if (exists) {
+				newItems = prev.items.map((item) => (item.id === roomId ? { ...item, count } : item));
+			} else {
+				newItems = [...prev.items, { id: roomId, itemType: "ROOM", count }];
+			}
+			newItems = newItems.filter((item) => item.count > 0);
+			return { ...prev, items: newItems };
+		});
 	};
 
-	return { bookingInfo, updateBookingInfo };
+	return { bookingInfo, updateBookingInfo, updateRoomQuantity };
 };
 
 export default useBookingInfo;
