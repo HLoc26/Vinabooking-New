@@ -50,7 +50,7 @@ class AuthRouter {
 			return this.authController.logIn(req, res);
 		});
 
-		this.router.post("/refresh", (req: Request, res: Response) => {
+		this.router.get("/refresh", (req: Request, res: Response) => {
 			return this.authController.refreshToken(req, res);
 		});
 

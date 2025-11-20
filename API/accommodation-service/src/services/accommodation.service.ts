@@ -3,22 +3,19 @@ import { NotFoundError } from "../errors";
 //import { UserClient, RoomClient, ImageClient, ReviewClient } from "../clients";
 import { roomClient } from "../clients/room.client";
 import { imageClient } from "../clients/image.client";
+import { EAccommodationType } from "@prisma/client";
 
 export class AccommodationService {
-	async getAccommodationById(id: string) {
+	async getAccommodationById(id: string, startDate?: string, endDate?: string) {
 		console.log(`[AccommodationService] Fetching details for accomm ID: ${id}`);
 
 		// 1. Create 3 Promises to run in parallel
 		const accommodationPromise = accommodationRepository.findById(id);
-		const roomsPromise = roomClient.getRoomsByAccommodationId(id);
+		const roomsPromise = roomClient.getRoomsByAccommodationId(id, startDate, endDate);
 		const imagesPromise = imageClient.getImagesForEntity(id);
 
 		// 2. Await all Promises
-		const [accommodation, rooms, images] = await Promise.all([
-			accommodationPromise, //
-			roomsPromise,
-			imagesPromise,
-		]);
+		const [accommodation, rooms, images] = await Promise.all([accommodationPromise, roomsPromise, imagesPromise]);
 
 		// 3. Check if accommodation exists
 		if (!accommodation) {
@@ -46,6 +43,46 @@ export class AccommodationService {
 		const accommodationDetails = await this.getAccommodationById(accommodationId);
 
 		return accommodationDetails;
+	}
+
+	/**
+	 * Gets homepage statistics: popular accommodation types and cities.
+	 */
+	async getHomepageStats() {
+		console.log("[AccommodationService] Fetching homepage stats...");
+
+		const [byType, byCity] = await Promise.all([accommodationRepository.countByType(), accommodationRepository.countByCity()]);
+
+		const formattedTypes = byType.map((item) => ({
+			type: item.type,
+			count: item._count.id,
+		}));
+
+		const formattedCities = byCity.map((item) => ({
+			city: item.city,
+			count: item._count.id,
+		}));
+
+		return {
+			types: formattedTypes,
+			cities: formattedCities,
+		};
+	}
+
+	/**
+	 * Counts accommodations based on optional city and type filters.
+	 */
+	async getCount(city?: string, type?: string) {
+		const count = await accommodationRepository.count({
+			city: city,
+			type: type as EAccommodationType,
+		});
+
+		return {
+			city: city || null,
+			type: type || null,
+			count: count,
+		};
 	}
 }
 

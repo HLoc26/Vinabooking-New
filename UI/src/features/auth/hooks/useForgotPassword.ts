@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-import { authApi } from "../services/authApi";
+import { authApi } from "../../../services/authApi";
 import { useNavigate } from "react-router-dom";
 import { validatePassword } from "../utils/validatePassword";
 
