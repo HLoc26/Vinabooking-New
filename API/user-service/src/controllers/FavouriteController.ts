@@ -2,8 +2,8 @@ import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
 import { type AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavouriteResponse } from "../types/Response";
-import type { AuthenticatedAddAccommodationRequest, AuthenticatedCreateFavouriteListRequest, AuthenticatedRemoveAccommodationRequest } from "../types/Request";
-import type { ApiResponse, CreateFavouriteListResponse } from "../types/Response";
+import type { AuthenticatedAddAccommodationRequest, AuthenticatedCreateFavouriteListRequest, AuthenticatedDeleteFavouriteListRequest, AuthenticatedRemoveAccommodationRequest } from "../types/Request";
+import type { ApiResponse, CreateFavouriteListResponse, DeleteFavouriteListResponse } from "../types/Response";
 import FavouriteRepository from "../repositories/FavouriteRepository";
 
 class FavouriteController {
@@ -39,6 +39,13 @@ class FavouriteController {
 
 		const list = await this.favouriteRepository.create(userId, name);
 		ResponseHelper.success<CreateFavouriteListResponse>(res, { ...list, items: [] });
+	}
+
+	public async deleteFavouriteList(req: AuthenticatedDeleteFavouriteListRequest, res: Response<ApiResponse<DeleteFavouriteListResponse>>) {
+		const userId = req.user.id;
+		const { listId } = req.query;
+		await this.favouriteRepository.deleteFavouriteList(userId, listId);
+		ResponseHelper.success(res, { success: true });
 	}
 }
 
