@@ -41,4 +41,5 @@ export interface ResponseImage {
 	url: string;
 	variant: EVariantType;
 	imageId: string; // original id
+	isPrimary: boolean;
 }
