@@ -5,7 +5,7 @@ export function useAccommodationTypeNavigation() {
 	const navigate = useNavigate();
 
 	const goToType = (type: string) => {
-		navigate(`/search/${type}`);
+		navigate(`/${type}`);
 	};
 	// Force scroll to top after navigation
 	window.scrollTo(0, 0);

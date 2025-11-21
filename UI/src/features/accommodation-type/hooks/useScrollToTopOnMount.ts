@@ -9,6 +9,7 @@ export const useScrollToTopOnMount = () => {
 	useEffect(() => {
 		// Scroll to top instantly
 		window.scrollTo(0, 0);
-		// Or smoothly: window.scrollTo({ top: 0, behavior: 'smooth' });
+		// Or smoothly:
+		// window.scrollTo({ top: 0, behavior: "smooth" });
 	}, []); // Empty dependency array: runs only once on mount
 };
