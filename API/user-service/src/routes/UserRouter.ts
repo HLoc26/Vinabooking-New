@@ -53,6 +53,7 @@ class UserRouter {
 			return this.userController.addAccommodationToFavouriteList(req as AuthenticatedAddAccommodationRequest, res);
 		});
 
+		// DELETE /users/favourites/accommodation?accommodationId=:aId&listId=lId
 		this.router.delete("/favourites/accommodation", authMiddleware, (req, res) => {
 			return this.userController.removeAccommodationFromFavouriteList(req as AuthenticatedRemoveAccommodationRequest, res);
 		});
