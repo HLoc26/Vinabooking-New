@@ -1,7 +1,7 @@
 import express, { type Router, type Request, type Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import UserController from "../controllers/UserController";
-import type { AuthenticatedAddAccommodationRequest, FindUserByIdRequest, FindUserRequest, SaveUserDirectRequest } from "../types/Request";
+import type { AuthenticatedAddAccommodationRequest, AuthenticatedRemoveAccommodationRequest, FindUserByIdRequest, FindUserRequest, SaveUserDirectRequest } from "../types/Request";
 import { getRedisClient } from "../clients/RedisSingleton"; // thay đổi từ default export sang function
 import { authMiddleware } from "../middlewares/AuthMiddleware";
 
@@ -51,6 +51,10 @@ class UserRouter {
 		// POST /users/favourites/accommodation
 		this.router.post("/favourites/accommodation", authMiddleware, (req, res) => {
 			return this.userController.addAccommodationToFavouriteList(req as AuthenticatedAddAccommodationRequest, res);
+		});
+
+		this.router.delete("/favourites/accommodation", authMiddleware, (req, res) => {
+			return this.userController.removeAccommodationFromFavouriteList(req as AuthenticatedRemoveAccommodationRequest, res);
 		});
 	}
 }

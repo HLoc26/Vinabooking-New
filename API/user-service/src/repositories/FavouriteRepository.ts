@@ -34,6 +34,35 @@ class FavouriteRepository {
 
 		return newItem;
 	}
+
+	public async removeAccommodationFromFavouriteList(userId: string, listId: string, accommodationId: string) {
+		// Check if user owns the list
+		const list = await this.prismaClient.favouriteList.findFirst({ where: { id: listId } });
+
+		if (!list) {
+			throw new Error("Favourite List not found");
+		}
+		if (list.ownerId != userId) {
+			throw new Error("User does not own this list");
+		}
+
+		const found = await this.prismaClient.favouriteItem.findFirst({
+			where: {
+				listId,
+				accommodationId,
+			},
+		});
+
+		if (!found) {
+			throw new Error("Accommodation is not in list");
+		}
+		try {
+			await this.prismaClient.favouriteItem.delete({ where: { id: found.id } });
+		} catch (e: unknown) {
+			const error = e as Error;
+			throw new Error(error.message);
+		}
+	}
 }
 
 export default FavouriteRepository;

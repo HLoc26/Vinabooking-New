@@ -1,5 +1,5 @@
 import type { Request } from "express";
-import type { ApiResponse, UserResponse, CacheUserResponse, SaveUserResponse, AddAccommodationToFavouriteResponse } from "./Response";
+import type { ApiResponse, UserResponse, CacheUserResponse, SaveUserResponse, AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavouriteResponse } from "./Response";
 
 export type FindUserRequest = Request<unknown, ApiResponse<UserResponse>, unknown, { withFavourites?: string; email?: string; id?: string }>;
 
@@ -29,5 +29,10 @@ export interface AddAccommodationToFavouriteRequestPayload {
 
 export type AddAccommodationToFavouriteRequest = Request<unknown, ApiResponse<AddAccommodationToFavouriteResponse>, AddAccommodationToFavouriteRequestPayload, unknown>;
 export interface AuthenticatedAddAccommodationRequest extends AddAccommodationToFavouriteRequest {
+	user: { id: string; username: string };
+}
+
+export type RemoveAccommodationFromFavouriteRequest = Request<{ accommodationId: string; listId: string }, ApiResponse<RemoveAccommodationFromFavouriteResponse>, unknown, unknown>;
+export interface AuthenticatedRemoveAccommodationRequest extends RemoveAccommodationFromFavouriteRequest {
 	user: { id: string; username: string };
 }

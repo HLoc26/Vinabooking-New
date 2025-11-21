@@ -7,8 +7,17 @@ import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
 import type User from "../classes/User";
-import type { SaveUserResponse, CacheUserResponse, UserResponse, AddAccommodationToFavouriteResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest, AuthenticatedAddAccommodationRequest } from "../types/Request";
+import { type SaveUserResponse, type CacheUserResponse, type UserResponse, type AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavouriteResponse } from "../types/Response";
+import type {
+	CacheInfo,
+	CacheUserRequest,
+	FindUserRequest,
+	FindUserByIdRequest,
+	SaveUserDirectRequest,
+	SaveUserRequest,
+	AuthenticatedAddAccommodationRequest,
+	AuthenticatedRemoveAccommodationRequest,
+} from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
@@ -85,13 +94,20 @@ class UserController {
 		const userId = req.user.id; // lấy userId từ req.user
 		const { listId, accommodationId } = req.body;
 
-		try {
-			const updatedItem = await this.favouriteRepository.addAccommodationToFavouriteList(userId, listId, accommodationId);
-			ResponseHelper.success<AddAccommodationToFavouriteResponse>(res, updatedItem);
-		} catch (e: unknown) {
-			const err = e as Error;
-			ResponseHelper.error(res, err.message || "Failed to add accommodation to favourite list");
-		}
+		const updatedItem = await this.favouriteRepository.addAccommodationToFavouriteList(userId, listId, accommodationId);
+		ResponseHelper.success<AddAccommodationToFavouriteResponse>(res, updatedItem);
+	}
+
+	public async removeAccommodationFromFavouriteList(
+		//
+		req: AuthenticatedRemoveAccommodationRequest,
+		res: Response<ApiResponse<RemoveAccommodationFromFavouriteResponse>>
+	) {
+		const userId = req.user.id;
+		const { accommodationId, listId } = req.params;
+
+		await this.favouriteRepository.removeAccommodationFromFavouriteList(userId, listId, accommodationId);
+		ResponseHelper.success<RemoveAccommodationFromFavouriteResponse>(res, { success: true });
 	}
 }
 

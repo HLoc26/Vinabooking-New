@@ -21,3 +21,7 @@ export interface AddAccommodationToFavouriteResponse {
 	listId: string;
 	accommodationId: string;
 }
+
+export interface RemoveAccommodationFromFavouriteResponse {
+	success: boolean;
+}
