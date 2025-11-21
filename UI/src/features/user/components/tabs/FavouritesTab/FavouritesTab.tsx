@@ -49,7 +49,7 @@ const FavouritesTab: React.FC = () => {
 	}
 
 	return (
-		<Box sx={{ p: 4, bgcolor: "white", minHeight: "100vh" }}>
+		<Box sx={{ p: 4, bgcolor: "white", minHeight: "75vh" }}>
 			<Box sx={{ maxWidth: 1200, mx: "auto" }}>
 				<Box mb={4} pb={2} borderBottom="1px solid #e5e7eb" sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
 					<Box>
