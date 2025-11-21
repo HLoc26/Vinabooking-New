@@ -116,7 +116,7 @@ const CalendarMonth: React.FC<{
 	);
 };
 
-export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
+export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
 	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
 	const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
@@ -212,7 +212,7 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 
 			{/* Accommodation Type Selector (Pills) */}
 			<Box position="relative" zIndex={5} pt={4} display="flex" justifyContent="center">
-				<Paper
+				{/* <Paper
 					elevation={0}
 					sx={{
 						bgcolor: "rgba(255,255,255,0.15)",
@@ -232,7 +232,7 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 					}}
 				>
 					{Object.values(EAccommodationType)
-						.slice(0, 5)
+						.slice(0, 20)
 						.map((type) => {
 							const isSelected = currentType === type;
 							return (
@@ -253,7 +253,7 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 								/>
 							);
 						})}
-				</Paper>
+				</Paper> */}
 			</Box>
 
 			{/* Hero Text */}
@@ -350,10 +350,17 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 						>
 							<BedDouble size={20} className="text-gray-500 mr-3" />
 							<Box width="100%">
-								<Typography variant="caption" color="text.secondary" fontWeight={700} display="block">
-									Destination
-								</Typography>
-								<TextField fullWidth placeholder="Where are you going?" variant="standard" InputProps={{ disableUnderline: true }} sx={{ "& input": { p: 0, fontWeight: 500 } }} />
+								<Typography variant="caption" color="text.secondary" fontWeight={700} display="block"></Typography>
+								<TextField
+									fullWidth
+									placeholder="Where are you going?"
+									variant="standard"
+									InputProps={{ disableUnderline: true }}
+									sx={{
+										ml: 2,
+										"& input": { p: 0, fontWeight: 500 },
+									}}
+								/>{" "}
 							</Box>
 						</Box>
 					</Box>

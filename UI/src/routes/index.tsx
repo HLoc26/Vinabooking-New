@@ -1,12 +1,12 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import { HomePage } from "../features/home/pages/Index";
-import { AcommodationTypePage } from "../features/accommodation-type/pages/AccommodationTypePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
 import { TravelerLayout } from "../components/layout/TravelerLayout";
+import { TypeRouter } from "./type";
 
 export const AppRouter = () => (
 	<BrowserRouter>
@@ -26,10 +26,10 @@ export const AppRouter = () => (
 			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
 			<Route
-				path="/:accommodationType"
+				path="/search*	"
 				element={
 					<TravelerLayout>
-						<AcommodationTypePage />{" "}
+						<TypeRouter />{" "}
 					</TravelerLayout>
 				}
 			/>
