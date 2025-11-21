@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import { HomePage } from "../features/home/pages/Index";
+import { AcommodationTypePage } from "../features/accommodation-type/pages/AccommodationTypePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
@@ -19,12 +20,12 @@ export const AppRouter = () => (
 					</TravelerLayout>
 				}
 			/>
-
 			{/* Auth, OAuth, Booking remain separate */}
 			<Route path="/auth/*" element={<AuthRouter />} />
 			<Route path="/oauth/*" element={<OAuthRouter />} />
 			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
+			<Route path="/:accommodationType" element={<AcommodationTypePage />} />
 		</Routes>
 	</BrowserRouter>
 );
