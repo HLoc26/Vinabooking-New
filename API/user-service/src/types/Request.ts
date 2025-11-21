@@ -7,6 +7,7 @@ import type {
 	AddAccommodationToFavouriteResponse,
 	RemoveAccommodationFromFavouriteResponse,
 	CreateFavouriteListResponse,
+	DeleteFavouriteListResponse,
 } from "./Response";
 
 export type FindUserRequest = Request<unknown, ApiResponse<UserResponse>, unknown, { withFavourites?: string; email?: string; id?: string }>;
@@ -50,5 +51,15 @@ export interface CreateFavouriteListPayload {
 }
 export type CreateFavouriteListRequest = Request<unknown, ApiResponse<CreateFavouriteListResponse>, CreateFavouriteListPayload, unknown>;
 export interface AuthenticatedCreateFavouriteListRequest extends CreateFavouriteListRequest {
+	user: { id: string; username: string };
+}
+
+export type DeleteFavouriteListRequest = Request<
+	unknown, // params
+	ApiResponse<DeleteFavouriteListResponse>, // response body
+	unknown, // request body
+	{ listId: string } // query
+>;
+export interface AuthenticatedDeleteFavouriteListRequest extends DeleteFavouriteListRequest {
 	user: { id: string; username: string };
 }
