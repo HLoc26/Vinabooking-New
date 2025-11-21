@@ -26,7 +26,7 @@ export const AppRouter = () => (
 			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
 			<Route
-				path="/search*	"
+				path="/search*"
 				element={
 					<TravelerLayout>
 						<TypeRouter />{" "}

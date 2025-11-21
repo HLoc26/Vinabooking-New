@@ -45,9 +45,17 @@ export function AcommodationTypePage() {
 
 	// Sync state with URL parameter
 	useEffect(() => {
-		const parsedType = parseAccommodationType(accommodationTypeParam);
-		setAccommodationType(parsedType);
-	}, [accommodationTypeParam]);
+		if (accommodationTypeParam) {
+			const expectedSlug = accommodationType.toLowerCase().replace(/_/g, "-");
+
+			const currentSlug = accommodationTypeParam.toLowerCase();
+
+			// If URL has spaces or wrong format → redirect to clean version
+			if (currentSlug !== expectedSlug) {
+				navigate(`/${expectedSlug}`, { replace: true });
+			}
+		}
+	}, [accommodationTypeParam, accommodationType, navigate]);
 
 	// Handle accommodation type change and update URL
 	const handleTypeChange = (newType: EAccommodationType) => {
