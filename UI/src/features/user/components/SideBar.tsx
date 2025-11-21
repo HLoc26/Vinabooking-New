@@ -19,7 +19,7 @@ const SideBar: React.FC<SideBarProps> = ({ selected, handleSelected }) => {
 				border: "1px solid #e0e0e0",
 				bgcolor: "background.paper",
 				position: "sticky",
-				top: 90,
+				top: 110,
 			}}
 		>
 			<List disablePadding>
