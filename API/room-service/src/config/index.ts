@@ -1,7 +1,7 @@
 import { bookingClient } from "@src/clients/booking.client";
 import dotenv from "dotenv";
 
-dotenv.config();
+dotenv.config({ path: ["../common.env", ".env"] });
 
 export default {
     port: process.env.PORT || 3005,

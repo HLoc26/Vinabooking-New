@@ -2,7 +2,6 @@ import express from "express";
 import session from "express-session";
 import cookieParser from "cookie-parser";
 
-import "dotenv";
 import ErrorHandler from "./middlewares/ErrorHandler";
 import AuthRouterFactory from "./routes/AuthRouterFactory";
 
