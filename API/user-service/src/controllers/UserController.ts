@@ -7,14 +7,16 @@ import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
 import type User from "../classes/User";
-import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
+import type { SaveUserResponse, CacheUserResponse, UserResponse, AddAccommodationToFavouriteResponse } from "../types/Response";
+import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest, AuthenticatedAddAccommodationRequest } from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
+import FavouriteRepository from "../repositories/FavouriteRepository";
 
 class UserController {
 	private userService = new UserService();
+	private favouriteRepository = new FavouriteRepository();
 
 	public async getUser(req: FindUserRequest, res: Response<ApiResponse<UserResponse>>) {
 		const { id, email } = req.query;
@@ -77,6 +79,19 @@ class UserController {
 			throw new DatabaseError("Failed to save user to database");
 		}
 		return ResponseHelper.success<SaveUserResponse>(res, { success: true });
+	}
+
+	public async addAccommodationToFavouriteList(req: AuthenticatedAddAccommodationRequest, res: Response<ApiResponse<AddAccommodationToFavouriteResponse>>) {
+		const userId = req.user.id; // lấy userId từ req.user
+		const { listId, accommodationId } = req.body;
+
+		try {
+			const updatedItem = await this.favouriteRepository.addAccommodationToFavouriteList(userId, listId, accommodationId);
+			ResponseHelper.success<AddAccommodationToFavouriteResponse>(res, updatedItem);
+		} catch (e: unknown) {
+			const err = e as Error;
+			ResponseHelper.error(res, err.message || "Failed to add accommodation to favourite list");
+		}
 	}
 }
 
