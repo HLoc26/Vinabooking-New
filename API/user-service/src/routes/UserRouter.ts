@@ -4,15 +4,18 @@ import UserController from "../controllers/UserController";
 import type { AuthenticatedAddAccommodationRequest, AuthenticatedRemoveAccommodationRequest, FindUserByIdRequest, FindUserRequest, SaveUserDirectRequest } from "../types/Request";
 import { getRedisClient } from "../clients/RedisSingleton"; // thay đổi từ default export sang function
 import { authMiddleware } from "../middlewares/AuthMiddleware";
+import FavouriteController from "../controllers/FavouriteController";
 
 // Base route: /users
 class UserRouter {
 	public router: Router;
 	private userController: UserController;
+	private favouriteController: FavouriteController;
 
 	constructor() {
 		this.router = express.Router();
 		this.userController = new UserController();
+		this.favouriteController = new FavouriteController();
 		this.registerRoutes();
 	}
 
@@ -50,12 +53,12 @@ class UserRouter {
 
 		// POST /users/favourites/accommodation
 		this.router.post("/favourites/accommodation", authMiddleware, (req, res) => {
-			return this.userController.addAccommodationToFavouriteList(req as AuthenticatedAddAccommodationRequest, res);
+			return this.favouriteController.addAccommodationToFavouriteList(req as AuthenticatedAddAccommodationRequest, res);
 		});
 
 		// DELETE /users/favourites/accommodation?accommodationId=:aId&listId=lId
 		this.router.delete("/favourites/accommodation", authMiddleware, (req, res) => {
-			return this.userController.removeAccommodationFromFavouriteList(req as AuthenticatedRemoveAccommodationRequest, res);
+			return this.favouriteController.removeAccommodationFromFavouriteList(req as AuthenticatedRemoveAccommodationRequest, res);
 		});
 	}
 }
