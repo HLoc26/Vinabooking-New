@@ -95,10 +95,15 @@ export class AccommodationService {
 	/**
 	 * SEARCH API (Full Flow)
 	 */
+	/**
+	 * SEARCH API (Full Flow - Level 2)
+	 */
 	async searchAccommodations(query: SearchQuery) {
-		const { keyword, type, checkIn, checkOut, adults, children, minPrice, maxPrice, facilities, page = "1", limit = "20", sortBy } = query;
+		const { keyword, type, checkIn, checkOut, adults, children, rooms, minPrice, maxPrice, facilities, page = "1", limit = "20", sortBy } = query;
 
 		const limitNum = Number(limit);
+		const pageNum = Number(page);
+		const requiredRooms = rooms ? Number(rooms) : 1;
 
 		// --- BƯỚC 1: Lọc ID theo Giá & Người ---
 		let filteredIds: string[] | undefined = undefined;
@@ -109,16 +114,20 @@ export class AccommodationService {
 				adults ? Number(adults) : undefined,
 				children ? Number(children) : undefined
 			);
-			// Nếu lọc mà rỗng -> Trả về luôn
+
+			// Nếu lọc mà không tìm thấy ID nào -> Trả về rỗng ngay
 			if (!result || result.length === 0) {
-				return { data: [], meta: { page: Number(page), limit: limitNum, total: 0 } };
+				return {
+					data: [],
+					meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 },
+				};
 			}
 			filteredIds = result;
 		}
 
 		// --- BƯỚC 2: Loop Search & Check Availability ---
 		const finalResults: AccommodationEntity[] = [];
-		let currentOffset = (Number(page) - 1) * limitNum;
+		let currentOffset = (pageNum - 1) * limitNum;
 		let hasMoreToCheck = true;
 		let loopCount = 0;
 		const needsAvailabilityCheck = checkIn && checkOut;
@@ -140,20 +149,33 @@ export class AccommodationService {
 				sortBy
 			);
 
-			const candidates = searchResult.data as unknown as AccommodationEntity[];
-			totalMatchesInDB = searchResult.total;
+			let candidates: AccommodationEntity[] = [];
+			if (Array.isArray(searchResult)) {
+				candidates = [];
+				totalMatchesInDB = 0;
+			} else {
+				candidates = searchResult.data as unknown as AccommodationEntity[];
+				totalMatchesInDB = searchResult.total;
+			}
 
-			if (!candidates || candidates.length === 0) {
+			if (candidates.length === 0) {
 				hasMoreToCheck = false;
 				break;
 			}
 
 			if (needsAvailabilityCheck) {
-				const checkPromises = candidates.map(async (acc) => {
+				const checkPromises = candidates.map(async (acc: AccommodationEntity) => {
 					try {
-						const rooms = await roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut);
-						const isAvailable = rooms.some((r: any) => r.remainingQuantity > 0);
-						return isAvailable ? acc : null;
+						const roomList = await roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut);
+
+						// Check xem có loại phòng nào còn đủ số lượng (requiredRooms) không
+						const isAvailable = roomList.some((r: any) => {
+							const remaining = r.remainingQuantity || 0;
+							return remaining >= requiredRooms;
+						});
+
+						if (isAvailable) return acc;
+						return null;
 					} catch (e) {
 						return null;
 					}
@@ -161,6 +183,7 @@ export class AccommodationService {
 
 				const results = await Promise.all(checkPromises);
 				const validResults = results.filter((r): r is AccommodationEntity => r !== null);
+
 				finalResults.push(...validResults);
 			} else {
 				finalResults.push(...candidates);
@@ -175,7 +198,7 @@ export class AccommodationService {
 		const slicedResults = finalResults.slice(0, limitNum);
 
 		const dataWithImages = await Promise.all(
-			slicedResults.map(async (acc) => {
+			slicedResults.map(async (acc: AccommodationEntity) => {
 				const images = await imageClient.getImagesForEntity(acc.id);
 				const firstImage = images.length > 0 ? (images[0] as any) : null;
 				const thumbnail = firstImage ? firstImage.url || firstImage.s3Key : null;
@@ -187,10 +210,10 @@ export class AccommodationService {
 		return {
 			data: dataWithImages,
 			meta: {
-				page: Number(page),
+				page: pageNum,
 				limit: limitNum,
-				total: totalMatchesInDB, // Total này là ước lượng (trước khi check available)
-				totalPages: Math.ceil(totalMatchesInDB / limitNum),
+				total: totalMatchesInDB,
+				totalPages: Math.ceil(totalMatchesInDB / limitNum) || 1,
 			},
 		};
 	}
