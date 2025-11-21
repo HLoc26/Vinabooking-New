@@ -36,6 +36,12 @@ const favouriteApi = {
 				name,
 			})
 			.then((r) => r.data.data),
+	deleteFavouriteList: (id: string) =>
+		apiClient
+			.delete<ApiResponse<{ success: boolean }>>("/users/favourites", {
+				params: { listId: id },
+			})
+			.then((r) => r.data.data),
 };
 
 export default favouriteApi;
