@@ -1,9 +1,9 @@
 import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Box, Button, Typography } from "@mui/material";
-import useUserProfileInfo from "../hooks/useUserProfileInfo";
+import useUserContextProvider from "../../../context/UserContext/hook";
 
 const ProfileAvatar: React.FC = () => {
-	const { userInfo, userAvatars } = useUserProfileInfo();
+	const { userInfo, userAvatars } = useUserContextProvider();
 
 	const name = userInfo?.name;
 

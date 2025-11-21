@@ -1,11 +1,11 @@
 import { Cancel, Edit, Save } from "@mui/icons-material";
 import { Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
-import useUserProfileInfo from "../hooks/useUserProfileInfo";
+import useUserContextProvider from "../../../context/UserContext/hook";
 
 const ProfileUpdateForm: React.FC = () => {
 	const [editing, setEditing] = useState<boolean>(false);
-	const { userInfo } = useUserProfileInfo();
+	const { userInfo } = useUserContextProvider();
 
 	return (
 		<>
