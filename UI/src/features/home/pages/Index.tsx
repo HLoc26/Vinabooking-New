@@ -1,4 +1,3 @@
-import React from "react";
 import Hero from "../components/Hero";
 import HorizontalList from "../components/HorizontalList";
 import CityCard from "../components/CityCard";
@@ -25,7 +24,7 @@ export function HomePage() {
 				{/* Types */}
 				<Paper elevation={0} sx={{ bgcolor: "#f3f4f6", py: 4 }}>
 					<Container>
-						<HorizontalList title="Find accommodation by type" items={ACCOMMODATION_TYPES} renderItem={(type) => <TypeCard data={type} />} />
+						<HorizontalList title="Find accommodation by type" items={ACCOMMODATION_TYPES} renderItem={(type, onClick) => <TypeCard data={type} onClick={onClick} />} />
 					</Container>
 				</Paper>
 

@@ -1,12 +1,14 @@
 import React, { useRef } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
 import { ArrowRight, ArrowLeft } from "lucide-react";
+import { useAccommodationTypeNavigation } from "../hooks/useAccommodationTypeNavigation";
 
 interface HorizontalListProps<T> {
 	title: string;
 	items: T[];
-	renderItem: (item: T) => React.ReactNode;
+	renderItem: (item: T, onClick: () => void) => React.ReactNode;
 	onSeeAll?: () => void;
+	onItemClick?: (item: T) => void;
 }
 
 const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalListProps<T>) => {
@@ -16,6 +18,11 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 	let isDown = false;
 	let startX = 0;
 	let scrollLeft = 0;
+	const { goToType } = useAccommodationTypeNavigation();
+	const handleItemClick = (item: any) => {
+		// item.value = your enum key
+		goToType(item.name);
+	};
 
 	const handleMouseDown = (e: React.MouseEvent) => {
 		isDown = true;
@@ -30,7 +37,6 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 		const walk = (x - startX) * 1; // Drag speed
 		scrollRef.current.scrollLeft = scrollLeft - walk;
 	};
-
 	const handleMouseUp = () => (isDown = false);
 
 	// Scroll arrows
@@ -113,7 +119,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				>
 					{items.map((item, index) => (
 						<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "70%", sm: "40%", md: "30%", lg: "22%" } }}>
-							{renderItem(item)}
+							{renderItem(item, () => handleItemClick(item))}
 						</Box>
 					))}
 				</Box>

@@ -4,11 +4,13 @@ import type { AccommodationTypeData } from "../services/types/AccommodationTypeD
 
 interface TypeCardProps {
 	data: AccommodationTypeData;
+	onClick?: () => void;
 }
 
-const TypeCard: React.FC<TypeCardProps> = ({ data }) => {
+const TypeCard: React.FC<TypeCardProps> = ({ data, onClick }) => {
 	return (
 		<Card
+			onClick={onClick}
 			sx={{
 				borderRadius: 3,
 				overflow: "hidden",

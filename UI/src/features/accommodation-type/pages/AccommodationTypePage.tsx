@@ -8,21 +8,27 @@ import { PropertyCard } from "../components/PropertyCard";
 import { EAccommodationType } from "../../../types/acommodation";
 import type { City } from "../services/types/City";
 import type { Property } from "../services/types/Property";
+import { useScrollToTopOnMount } from "../hooks/useScrollToTopOnMount";
 
 import { ACCOMMODATION_LABELS, CITY_NAMES } from "../constants/Const";
 
 // Helper function to convert URL param to EAccommodationType
+// Helper function to convert URL param to EAccommodationType
 const parseAccommodationType = (param: string | undefined): EAccommodationType => {
 	if (!param) return EAccommodationType.HOTEL;
 
-	const paramUpper = param.toUpperCase();
+	// Normalize: replace hyphens and spaces with underscores, then uppercase
+	const normalized = param
+		.toUpperCase()
+		.replace(/-/g, "_") // "vacation-home" → "VACATION_HOME"
+		.replace(/\s+/g, "_"); // "vacation home"  → "VACATION_HOME"
 
-	// Check if the param matches any enum value
-	if (Object.values(EAccommodationType).includes(paramUpper as EAccommodationType)) {
-		return paramUpper as EAccommodationType;
+	// Check if it matches any enum value
+	if (Object.values(EAccommodationType).includes(normalized as EAccommodationType)) {
+		return normalized as EAccommodationType;
 	}
 
-	// Default to HOTEL if invalid
+	// Fallback to HOTEL
 	return EAccommodationType.HOTEL;
 };
 
@@ -72,6 +78,8 @@ export function AcommodationTypePage() {
 
 		return { currentCities: cities, currentProperties: properties };
 	}, [accommodationType]);
+
+	useScrollToTopOnMount();
 
 	return (
 		<Box sx={{ minHeight: "100vh", pb: 8 }}>
