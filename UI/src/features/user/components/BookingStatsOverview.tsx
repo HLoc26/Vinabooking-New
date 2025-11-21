@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography, Box } from "@mui/material";
+import { Paper, Stack, Typography, Box, Skeleton } from "@mui/material";
 import type { Booking } from "../types/Booking";
 import { WalletOutlined, LuggageOutlined, NightsStayOutlined, StarRateRounded } from "@mui/icons-material";
 import { standardize } from "../../../utils/moneyConverter";
@@ -79,7 +79,7 @@ const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings })
 					</Typography>
 
 					<Typography variant="h6" fontWeight={700}>
-						{stat.value}
+						{stat.value ? stat.value : <Skeleton variant="text" />}
 					</Typography>
 				</Paper>
 			))}
