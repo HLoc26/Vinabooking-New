@@ -43,3 +43,9 @@ export interface ForgotPasswordSendOtpResponse {
 	CodeDeliveryDestination?: string;
 	CodeDeliveryMedium?: string;
 }
+
+export interface AddAccommodationToFavouriteResponse {
+	id: string;
+	listId: string;
+	accommodationId: string;
+}

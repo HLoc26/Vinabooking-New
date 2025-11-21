@@ -102,6 +102,7 @@ export interface Amenity {
 export interface AccommodationImage {
 	id: string;
 	variant: "THUMBNAIL" | "ORIGINAL" | "WEBP" | "OPTIMIZED";
+	isPrimary: boolean;
 	url: string;
 	imageId: string;
 }
