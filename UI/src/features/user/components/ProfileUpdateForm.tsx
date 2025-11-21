@@ -2,6 +2,7 @@ import { Cancel, Edit, Save } from "@mui/icons-material";
 import { Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useState } from "react";
 import useUserContextProvider from "../../../context/UserContext/hook";
+import { MuiTelInput } from "mui-tel-input";
 
 const ProfileUpdateForm: React.FC = () => {
 	const [editing, setEditing] = useState<boolean>(false);
@@ -41,7 +42,7 @@ const ProfileUpdateForm: React.FC = () => {
 							disabled={!editing}
 							value={userInfo?.name || ""}
 						/>
-						<TextField //
+						<MuiTelInput //
 							fullWidth
 							margin="normal"
 							label="Phone Number"
