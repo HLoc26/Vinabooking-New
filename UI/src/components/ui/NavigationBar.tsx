@@ -49,7 +49,7 @@ const NavigationBar: React.FC = () => {
 
 	return (
 		<>
-			<AppBar position="static" color="inherit" elevation={1}>
+			<AppBar position="sticky" color="inherit" elevation={1}>
 				<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
 					{/* Left */}
 					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -146,7 +146,7 @@ const NavigationBar: React.FC = () => {
 								</Button>
 
 								<Menu anchorEl={anchorElProfile} open={Boolean(anchorElProfile)} onClose={() => setAnchorElProfile(null)}>
-									<MenuItem component={RouterLink} to="/profile" onClick={() => setAnchorElProfile(null)}>
+									<MenuItem component={RouterLink} to="/user/me" onClick={() => setAnchorElProfile(null)}>
 										My Profile
 									</MenuItem>
 									<MenuItem component={RouterLink} to="/favorites" onClick={() => setAnchorElProfile(null)}>
