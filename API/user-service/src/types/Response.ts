@@ -15,3 +15,9 @@ export interface CacheUserResponse {
 export interface SaveUserResponse {
 	success: boolean;
 }
+
+export interface AddAccommodationToFavouriteResponse {
+	id: string;
+	listId: string;
+	accommodationId: string;
+}
