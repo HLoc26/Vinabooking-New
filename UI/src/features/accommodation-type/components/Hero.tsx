@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack } from "@mui/material";
-import { Calendar, User, Minus, Plus, BedDouble, ChevronDown } from "lucide-react";
+import { Calendar, User, Minus, Plus, BedDouble, ChevronDown, ChevronRight, ChevronLeft, Search } from "lucide-react";
 import { EAccommodationType } from "../../../types/acommodation";
 import type { DateRange } from "../services/types/DateRange";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
@@ -48,6 +48,8 @@ const CalendarMonth: React.FC<{
 	month: number;
 	label: string;
 	tempDateRange: DateRange;
+	minDate?: Date;
+	maxDate?: Date;
 	onDateClick: (date: Date) => void;
 }> = ({ year, month, label, tempDateRange, onDateClick }) => {
 	const daysInMonth = getDaysInMonth(year, month);
@@ -176,10 +178,23 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 		return `${checkInStr} — ${checkOutStr}`;
 	};
 
+	/* -------- Calendar Navigation (2 months only) -------- */
 	const today = new Date();
-	const currentYear = today.getFullYear();
-	const currentMonth = today.getMonth();
-	const nextMonthDate = new Date(currentYear, currentMonth + 1);
+	const maxDate = new Date(today.getFullYear(), today.getMonth() + 12, today.getDate());
+
+	// This month index relative to current date
+	const [monthOffset, setMonthOffset] = useState(0);
+
+	// Always show 2 months
+	const visibleMonths = [new Date(today.getFullYear(), today.getMonth() + monthOffset), new Date(today.getFullYear(), today.getMonth() + monthOffset + 1)];
+
+	const handlePrev = () => {
+		setMonthOffset((prev) => Math.max(0, prev - 1)); // prevent going before today
+	};
+
+	const handleNext = () => {
+		setMonthOffset((prev) => prev + 1);
+	};
 
 	return (
 		<Box position="relative" sx={{ minHeight: { xs: 650, lg: 750 }, display: "flex", flexDirection: "column" }}>
@@ -308,191 +323,145 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 			</Box>
 
 			{/* Search Bar */}
+			{/* Search Bar */}
 			<Box
 				ref={searchRef}
 				sx={{
 					width: "100%",
 					px: 2,
-					zIndex: 50,
-					position: sticky ? "fixed" : "absolute",
-					top: sticky ? 20 : 420, // Adjust top based on content
+					zIndex: 10,
+					position: sticky ? "fixed" : "relative",
+					top: sticky ? 10 : "auto",
 					left: 0,
 					right: 0,
 					mx: "auto",
-					maxWidth: 1100,
-					transition: "all 0.3s ease",
+					maxWidth: 1200,
+					transition: "top 0.2s ease",
 				}}
 			>
 				<Paper
-					elevation={sticky ? 8 : 24}
+					elevation={6}
 					sx={{
 						display: "flex",
-						flexDirection: { xs: "column", md: "row" },
-						borderRadius: 3,
+						flexDirection: { xs: "column", lg: "row" },
+						borderRadius: 2,
 						overflow: "hidden",
-						p: 1,
-						bgcolor: "rgba(255,255,255,0.98)",
-						border: "1px solid rgba(255,255,255,1)",
 					}}
 				>
 					{/* Destination */}
-					<Box flex={1.5} p={1} position="relative">
-						<Box
-							sx={{
-								display: "flex",
-								alignItems: "center",
-								height: "100%",
-								borderRadius: 2,
-								px: 2,
-								"&:hover": { bgcolor: "grey.50" },
-								cursor: "text",
+					<Box flex={1} p={1}>
+						<TextField
+							fullWidth
+							placeholder="Where are you going?"
+							variant="outlined"
+							InputProps={{
+								startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} />,
 							}}
-						>
-							<BedDouble size={20} className="text-gray-500 mr-3" />
-							<Box width="100%">
-								<Typography variant="caption" color="text.secondary" fontWeight={700} display="block"></Typography>
-								<TextField
-									fullWidth
-									placeholder="Where are you going?"
-									variant="standard"
-									InputProps={{ disableUnderline: true }}
-									sx={{
-										ml: 2,
-										"& input": { p: 0, fontWeight: 500 },
-									}}
-								/>{" "}
-							</Box>
-						</Box>
+						/>
 					</Box>
 
-					<Divider orientation="vertical" flexItem sx={{ display: { xs: "none", md: "block" }, my: 1 }} />
-					<Divider orientation="horizontal" flexItem sx={{ display: { xs: "block", md: "none" }, mx: 2 }} />
-
 					{/* Date Picker */}
-					<Box flex={1.2} p={1} ref={dateRef}>
-						<Button
-							fullWidth
-							onClick={handleDateMenuOpen}
-							sx={{
-								justifyContent: "flex-start",
-								textTransform: "none",
-								height: "100%",
-								px: 2,
-								borderRadius: 2,
-								"&:hover": { bgcolor: "grey.50" },
-							}}
-						>
-							<Calendar size={20} className="text-gray-500 mr-3" />
+					<Box flex={1} p={1} ref={dateRef}>
+						<Button fullWidth onClick={handleDateMenuOpen} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
+							<Calendar size={24} style={{ marginRight: 8 }} />
 							<Box textAlign="left">
-								<Typography variant="caption" color="text.secondary" fontWeight={700} display="block">
+								<Typography variant="caption" fontWeight={700}>
 									Check-in — Check-out
 								</Typography>
-								<Typography variant="body2" color="text.primary" fontWeight={500}>
-									{formatDateRange()}
-								</Typography>
+								<Typography variant="body2">{formatDateRange()}</Typography>
 							</Box>
 						</Button>
+
 						<Menu
 							open={isDateMenuOpen}
 							onClose={handleDateMenuClose}
 							anchorEl={dateRef.current}
 							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-							transformOrigin={{ vertical: "top", horizontal: "left" }}
 							disableAutoFocusItem
-							MenuListProps={{ onClick: (e) => e.stopPropagation(), sx: { p: 0 } }}
-							PaperProps={{ sx: { borderRadius: 3, mt: 2, boxShadow: 6 } }}
+							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
 						>
-							<Box display="flex" flexDirection={{ xs: "column", sm: "row" }} p={2} onClick={(e) => e.stopPropagation()}>
-								<CalendarMonth
-									year={currentYear}
-									month={currentMonth}
-									label={today.toLocaleString("default", { month: "long", year: "numeric" })}
-									tempDateRange={tempDateRange}
-									onDateClick={handleDateClick}
-								/>
-								<Box sx={{ borderLeft: "1px solid #eee", mx: 2, display: { xs: "none", sm: "block" } }} />
-								<CalendarMonth
-									year={nextMonthDate.getFullYear()}
-									month={nextMonthDate.getMonth()}
-									label={nextMonthDate.toLocaleString("default", { month: "long", year: "numeric" })}
-									tempDateRange={tempDateRange}
-									onDateClick={handleDateClick}
-								/>
+							{/* Month Navigation Header */}
+							<Box display="flex" justifyContent="space-between" alignItems="center" px={2} py={1}>
+								<IconButton onClick={handlePrev} disabled={monthOffset === 0}>
+									<ChevronLeft />
+								</IconButton>
+
+								<Typography fontWeight={700}>Select Dates</Typography>
+
+								<IconButton onClick={handleNext}>
+									<ChevronRight />
+								</IconButton>
+							</Box>
+
+							{/* Calendar Grid */}
+							<Box display="flex" p={2} gap={2} onClick={(e) => e.stopPropagation()}>
+								{visibleMonths.map((d, i) => (
+									<CalendarMonth
+										key={i}
+										year={d.getFullYear()}
+										month={d.getMonth()}
+										label={d.toLocaleString("default", {
+											month: "long",
+											year: "numeric",
+										})}
+										tempDateRange={tempDateRange}
+										onDateClick={handleDateClick}
+										minDate={today}
+										maxDate={maxDate}
+									/>
+								))}
 							</Box>
 						</Menu>
 					</Box>
 
-					<Divider orientation="vertical" flexItem sx={{ display: { xs: "none", md: "block" }, my: 1 }} />
-					<Divider orientation="horizontal" flexItem sx={{ display: { xs: "block", md: "none" }, mx: 2 }} />
-
 					{/* Guests Picker */}
 					<Box flex={1} p={1} ref={guestRef}>
-						<Button
-							fullWidth
-							onClick={() => setIsGuestMenuOpen(!isGuestMenuOpen)}
-							sx={{
-								justifyContent: "flex-start",
-								textTransform: "none",
-								height: "100%",
-								px: 2,
-								borderRadius: 2,
-								"&:hover": { bgcolor: "grey.50" },
-							}}
-						>
-							<User size={20} className="text-gray-500 mr-3" />
+						<Button fullWidth onClick={() => setIsGuestMenuOpen(!isGuestMenuOpen)} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
+							<User size={24} style={{ marginRight: 8 }} />
 							<Box textAlign="left" flexGrow={1}>
-								<Typography variant="caption" color="text.secondary" fontWeight={700} display="block">
+								<Typography variant="caption" fontWeight={700}>
 									Guests
 								</Typography>
-								<Typography variant="body2" color="text.primary" fontWeight={500} noWrap>
-									{guests.adults} adults · {guests.rooms} room
+								<Typography variant="body2">
+									{guests.adults} adults · {guests.children} children · {guests.rooms} room
 								</Typography>
 							</Box>
-							<ChevronDown size={16} className="text-gray-400" />
+							<ChevronDown size={16} />
 						</Button>
+
 						<Menu
 							open={isGuestMenuOpen}
 							onClose={() => setIsGuestMenuOpen(false)}
 							anchorEl={guestRef.current}
 							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-							transformOrigin={{ vertical: "top", horizontal: "left" }}
 							disableAutoFocusItem
-							MenuListProps={{ onClick: (e) => e.stopPropagation(), sx: { p: 1, width: 300 } }}
-							PaperProps={{ sx: { borderRadius: 3, mt: 2, boxShadow: 6 } }}
+							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
 						>
-							<Box onClick={(e) => e.stopPropagation()}>
+							<Box p={2} onClick={(e) => e.stopPropagation()}>
 								<Counter label="Adults" value={guests.adults} onChange={(v) => setGuests({ ...guests, adults: v })} min={1} />
 								<Counter label="Children" value={guests.children} onChange={(v) => setGuests({ ...guests, children: v })} />
 								<Counter label="Rooms" value={guests.rooms} onChange={(v) => setGuests({ ...guests, rooms: v })} min={1} />
+
 								<Divider sx={{ my: 1 }} />
-								<Stack direction="row" alignItems="center" justifyContent="space-between" px={2} py={1}>
-									<Typography variant="body2">Traveling with pets?</Typography>
-									<Switch size="small" checked={hasPets} onChange={() => setHasPets(!hasPets)} />
+
+								<Stack direction="row" alignItems="center" justifyContent="space-between">
+									<Typography>Traveling with pets?</Typography>
+									<Switch checked={hasPets} onChange={() => setHasPets(!hasPets)} />
 								</Stack>
 							</Box>
 						</Menu>
 					</Box>
 
 					{/* Search Button */}
-					<Box p={1} flex={0.6}>
-						<Button
-							fullWidth
-							variant="contained"
-							color="primary"
-							size="large"
-							sx={{
-								height: "100%",
-								boxShadow: "none",
-								fontSize: "1rem",
-								borderRadius: 2,
-								minHeight: 48,
-							}}
-						>
+					<Box p={1}>
+						<Button fullWidth variant="contained" color="warning" startIcon={<Search />} sx={{ height: "100%" }}>
 							Search
 						</Button>
 					</Box>
 				</Paper>
 			</Box>
+
+			{sticky && <Box sx={{ height: 100 }} />}
 		</Box>
 	);
 };
