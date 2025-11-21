@@ -1,5 +1,5 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack, Chip } from "@mui/material";
+import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack } from "@mui/material";
 import { Calendar, User, Minus, Plus, BedDouble, ChevronDown } from "lucide-react";
 import { EAccommodationType } from "../../../types/acommodation";
 import type { DateRange } from "../services/types/DateRange";
