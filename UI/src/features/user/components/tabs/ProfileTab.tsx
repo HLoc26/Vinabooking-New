@@ -5,7 +5,7 @@ import ProfileUpdateForm from "../ProfileUpdateForm";
 const ProfileTab: React.FC = () => {
 	return (
 		<Stack spacing={3}>
-			<ProfileAvatar name="Nguyễn Văn A" url="https://i.pravatar.cc/300" />
+			<ProfileAvatar />
 			<Divider />
 
 			<ProfileUpdateForm />
