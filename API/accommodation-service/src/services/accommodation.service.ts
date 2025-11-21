@@ -4,6 +4,13 @@ import { NotFoundError } from "../errors";
 import { roomClient } from "../clients/room.client";
 import { imageClient } from "../clients/image.client";
 import { EAccommodationType } from "@prisma/client";
+import type { SearchQuery } from "../types/Search";
+
+// Interface nội bộ
+interface AccommodationEntity {
+	id: string;
+	[key: string]: any;
+}
 
 export class AccommodationService {
 	async getAccommodationById(id: string, startDate?: string, endDate?: string) {
@@ -82,6 +89,109 @@ export class AccommodationService {
 			city: city || null,
 			type: type || null,
 			count: count,
+		};
+	}
+
+	/**
+	 * SEARCH API (Full Flow)
+	 */
+	async searchAccommodations(query: SearchQuery) {
+		const { keyword, type, checkIn, checkOut, adults, children, minPrice, maxPrice, facilities, page = "1", limit = "20", sortBy } = query;
+
+		const limitNum = Number(limit);
+
+		// --- BƯỚC 1: Lọc ID theo Giá & Người ---
+		let filteredIds: string[] | undefined = undefined;
+		if (minPrice || maxPrice || adults || children) {
+			const result = await roomClient.getFilteredAccommodationIds(
+				minPrice ? Number(minPrice) : undefined,
+				maxPrice ? Number(maxPrice) : undefined,
+				adults ? Number(adults) : undefined,
+				children ? Number(children) : undefined
+			);
+			// Nếu lọc mà rỗng -> Trả về luôn
+			if (!result || result.length === 0) {
+				return { data: [], meta: { page: Number(page), limit: limitNum, total: 0 } };
+			}
+			filteredIds = result;
+		}
+
+		// --- BƯỚC 2: Loop Search & Check Availability ---
+		const finalResults: AccommodationEntity[] = [];
+		let currentOffset = (Number(page) - 1) * limitNum;
+		let hasMoreToCheck = true;
+		let loopCount = 0;
+		const needsAvailabilityCheck = checkIn && checkOut;
+		let totalMatchesInDB = 0;
+
+		while (finalResults.length < limitNum && hasMoreToCheck && loopCount < 3) {
+			loopCount++;
+			const batchLimit = limitNum + 10; // Lấy dư để bù
+
+			const searchResult = await accommodationRepository.search(
+				{
+					keyword: keyword,
+					type: type as EAccommodationType,
+					ids: filteredIds,
+					facilities: facilities ? (Array.isArray(facilities) ? facilities : [facilities]) : undefined,
+				},
+				currentOffset,
+				batchLimit,
+				sortBy
+			);
+
+			const candidates = searchResult.data as unknown as AccommodationEntity[];
+			totalMatchesInDB = searchResult.total;
+
+			if (!candidates || candidates.length === 0) {
+				hasMoreToCheck = false;
+				break;
+			}
+
+			if (needsAvailabilityCheck) {
+				const checkPromises = candidates.map(async (acc) => {
+					try {
+						const rooms = await roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut);
+						const isAvailable = rooms.some((r: any) => r.remainingQuantity > 0);
+						return isAvailable ? acc : null;
+					} catch (e) {
+						return null;
+					}
+				});
+
+				const results = await Promise.all(checkPromises);
+				const validResults = results.filter((r): r is AccommodationEntity => r !== null);
+				finalResults.push(...validResults);
+			} else {
+				finalResults.push(...candidates);
+			}
+
+			currentOffset += candidates.length;
+			// Nếu lấy về ít hơn yêu cầu -> Đã hết DB
+			if (candidates.length < batchLimit) hasMoreToCheck = false;
+		}
+
+		// --- BƯỚC 3: Format & Lấy ảnh ---
+		const slicedResults = finalResults.slice(0, limitNum);
+
+		const dataWithImages = await Promise.all(
+			slicedResults.map(async (acc) => {
+				const images = await imageClient.getImagesForEntity(acc.id);
+				const firstImage = images.length > 0 ? (images[0] as any) : null;
+				const thumbnail = firstImage ? firstImage.url || firstImage.s3Key : null;
+
+				return { ...acc, thumbnail };
+			})
+		);
+
+		return {
+			data: dataWithImages,
+			meta: {
+				page: Number(page),
+				limit: limitNum,
+				total: totalMatchesInDB, // Total này là ước lượng (trước khi check available)
+				totalPages: Math.ceil(totalMatchesInDB / limitNum),
+			},
 		};
 	}
 }

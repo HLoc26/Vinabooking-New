@@ -68,6 +68,19 @@ export class AccommodationController {
 			next(error);
 		}
 	}
+
+	/**
+	 * GET /search
+	 * Query Params: ?city=...&type=...&minPrice=...&maxPrice=...&startDate=...&endDate=...&guests=...
+	 */
+	async search(req: Request, res: Response, next: NextFunction) {
+		try {
+			const result = await accommodationService.searchAccommodations(req.query);
+			sendSuccess(res, result);
+		} catch (error) {
+			next(error);
+		}
+	}
 }
 
 // Export a singleton instance of the controller
