@@ -1,4 +1,4 @@
-import { ArrowBack, CalendarMonth, Favorite } from "@mui/icons-material";
+import { ArrowBack, CalendarMonth, StarRounded } from "@mui/icons-material";
 import { Box, Grid, Pagination, Paper, Skeleton, Typography } from "@mui/material";
 import AccommodationCard from "./AccommodationCard";
 import { useMemo, useState } from "react";
@@ -71,7 +71,7 @@ const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, on
 
 					<Box sx={{ display: "flex", gap: 3, color: "text.secondary" }}>
 						<Box sx={{ display: "flex", alignItems: "center" }}>
-							<Favorite sx={{ mr: 1, color: "error.main" }} />
+							<StarRounded sx={{ mr: 1, color: "gold" }} />
 							{favourite.items.length} accommodations
 						</Box>
 						<Box sx={{ display: "flex", alignItems: "center" }}>
