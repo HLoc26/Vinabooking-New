@@ -24,7 +24,7 @@ const UserProfilePage: React.FC = () => {
 	})();
 
 	return (
-		<Container maxWidth="lg" sx={{ py: 4 }}>
+		<Container maxWidth="lg" sx={{ py: 1 }}>
 			<Grid container spacing={3} sx={{ mt: 5 }}>
 				<Grid size={{ md: 3 }}>
 					<SideBar selected={selectedTab} handleSelected={handleSelectTab} />
