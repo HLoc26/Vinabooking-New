@@ -63,6 +63,23 @@ class FavouriteRepository {
 			throw new Error(error.message);
 		}
 	}
+
+	public async create(ownerId: string, name: string) {
+		const found = await this.prismaClient.favouriteList.findFirst({ where: { name, ownerId } });
+
+		if (found) {
+			throw new Error("Duplicated name");
+		}
+
+		const result = await this.prismaClient.favouriteList.create({
+			data: {
+				name,
+				ownerId,
+			},
+		});
+
+		return result;
+	}
 }
 
 export default FavouriteRepository;
