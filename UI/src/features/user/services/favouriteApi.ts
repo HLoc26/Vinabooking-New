@@ -30,6 +30,12 @@ const favouriteApi = {
 				},
 			})
 			.then((r) => r.data.data),
+	createFavouriteList: (name: string) =>
+		apiClient
+			.post<ApiResponse<FavouriteList>>("/users/favourites", {
+				name,
+			})
+			.then((r) => r.data.data),
 };
 
 export default favouriteApi;
