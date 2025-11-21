@@ -1,6 +1,6 @@
 import { useState } from "react";
-import { Place, Star } from "@mui/icons-material";
-import { Box, Card, CardContent, CardMedia, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button } from "@mui/material";
+import { Place, StarRounded } from "@mui/icons-material";
+import { Box, Card, CardContent, CardMedia, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack } from "@mui/material";
 import type { Accommodation } from "../../../types/Accommodation";
 import { standardize } from "../../../../../utils/moneyConverter";
 
@@ -50,7 +50,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 						}}
 						onClick={handleRemoveClick}
 					>
-						<Star sx={{ color: "gold" }} />
+						<StarRounded sx={{ color: "gold" }} />
 					</IconButton>
 				</Box>
 
@@ -68,18 +68,18 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 
 					<Box sx={{ display: "flex", justifyContent: "space-between", mt: 2 }}>
 						<Box sx={{ display: "flex", alignItems: "center" }}>
-							<Star sx={{ fontSize: 18, mr: 0.5, color: "#facc15" }} />
+							<StarRounded sx={{ fontSize: 18, mr: 0.5, color: "gold" }} />
 							<Typography fontWeight={600}>{5}</Typography>
 						</Box>
 
-						<Box sx={{ textAlign: "right" }}>
+						<Stack direction="row" sx={{ textAlign: "right" }} alignItems={"end"} spacing={0.5}>
 							<Typography color="primary" fontWeight={700}>
 								${standardize(minPrice)}
 							</Typography>
 							<Typography variant="caption" color="text.secondary">
 								/night
 							</Typography>
-						</Box>
+						</Stack>
 					</Box>
 				</CardContent>
 			</Card>
