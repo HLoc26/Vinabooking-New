@@ -1,11 +1,12 @@
 import { useState } from "react";
 import FavouriteDetailView from "./FavouriteDetailView";
-import { Box, Button, Dialog, DialogActions, DialogContent, DialogTitle, Grid, Skeleton, Stack, TextField, Typography } from "@mui/material";
+import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import FolderCard from "./FolderCard";
 import useUserFavouriteList from "../../../hooks/useUserFavouriteList";
 import useUserProfileInfo from "../../../../../hooks/useUserProfileInfo";
 import type { FavouriteList } from "../../../types/FavouriteList";
 import { CreateNewFolderOutlined } from "@mui/icons-material";
+import CreateFavouriteListModal from "../../../../../components/ui/CreateFavouriteListModal";
 
 const FavouritesTabSkeleton = (
 	<Box sx={{ p: 4, bgcolor: "white", minHeight: "100vh" }}>
@@ -38,7 +39,6 @@ const FavouritesTab: React.FC = () => {
 	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList } = useUserFavouriteList(userInfo?.id ?? "");
 
 	const [openCreateModal, setOpenCreateModal] = useState(false);
-	const [newListName, setNewListName] = useState("");
 
 	if (!favouriteLists) {
 		return FavouritesTabSkeleton;
@@ -77,26 +77,7 @@ const FavouritesTab: React.FC = () => {
 					))}
 				</Grid>
 			</Box>
-			<Dialog open={openCreateModal} onClose={() => setOpenCreateModal(false)}>
-				<DialogTitle>Create Favourite List</DialogTitle>
-				<DialogContent>
-					<TextField autoFocus margin="dense" label="List Name" type="text" fullWidth value={newListName} onChange={(e) => setNewListName(e.target.value)} />
-				</DialogContent>
-				<DialogActions>
-					<Button onClick={() => setOpenCreateModal(false)}>Cancel</Button>
-					<Button
-						variant="contained"
-						disabled={!newListName.trim() || favListLoading}
-						onClick={async () => {
-							await handleCreateFavouriteList(newListName.trim());
-							setNewListName("");
-							setOpenCreateModal(false);
-						}}
-					>
-						Create
-					</Button>
-				</DialogActions>
-			</Dialog>
+			<CreateFavouriteListModal open={openCreateModal} onClose={() => setOpenCreateModal(false)} onCreate={handleCreateFavouriteList} loading={favListLoading} />
 		</Box>
 	);
 };
