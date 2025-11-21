@@ -1,4 +1,6 @@
+import { FavouriteList } from "../../generated/prisma";
 import type User from "../classes/User";
+import { FavouriteListWithItems } from "./Favourite";
 
 export interface ApiResponse<T> {
 	success: boolean;
@@ -25,3 +27,5 @@ export interface AddAccommodationToFavouriteResponse {
 export interface RemoveAccommodationFromFavouriteResponse {
 	success: boolean;
 }
+
+export type CreateFavouriteListResponse = FavouriteListWithItems;
