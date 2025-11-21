@@ -1,9 +1,9 @@
 import React from "react";
 import { Card, CardContent, CardMedia, Typography, Stack, Box, Button, Chip, Divider, Skeleton } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
-import type { Booking } from "../types/Booking";
-import useAccommodationByRoom from "../hooks/useAccommodationByRoom";
-import useRoomInfo from "../hooks/useRoomInfo";
+import type { Booking } from "../../../types/Booking";
+import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
+import useRoomInfo from "../../../hooks/useRoomInfo";
 
 type BookingDetailItemProps = {
 	booking: Booking;

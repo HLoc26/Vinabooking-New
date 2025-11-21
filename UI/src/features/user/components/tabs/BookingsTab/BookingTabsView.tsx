@@ -1,6 +1,6 @@
 import React, { useState, useMemo } from "react";
 import { Tabs, Tab, Box, Typography } from "@mui/material";
-import type { Booking } from "../types/Booking";
+import type { Booking } from "../../../types/Booking";
 import BookingDetailItem from "./BookingDetailItem";
 
 type BookingTabsViewProps = {

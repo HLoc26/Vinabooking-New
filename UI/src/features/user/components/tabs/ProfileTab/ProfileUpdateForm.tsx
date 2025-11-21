@@ -1,9 +1,9 @@
 import { Cancel, Edit, Save } from "@mui/icons-material";
 import { Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
 import { useEffect, useState } from "react";
-import useUserContextProvider from "../../../context/UserContext/hook";
+import useUserContextProvider from "../../../../../context/UserContext/hook";
 import { MuiTelInput } from "mui-tel-input";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../../../../../types/UserDto";
 
 const ProfileUpdateForm: React.FC = () => {
 	const [editing, setEditing] = useState(false);
