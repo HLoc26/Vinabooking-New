@@ -36,7 +36,7 @@ const FavouritesTab: React.FC = () => {
 
 	const { userInfo } = useUserProfileInfo();
 
-	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList } = useUserFavouriteList(userInfo?.id ?? "");
+	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList } = useUserFavouriteList(userInfo?.id ?? "");
 
 	const [openCreateModal, setOpenCreateModal] = useState(false);
 
@@ -72,7 +72,7 @@ const FavouritesTab: React.FC = () => {
 				<Grid container spacing={2}>
 					{favouriteLists.map((f) => (
 						<Grid size={{ xs: 6, sm: 4, md: 3, lg: 3 }} key={f.id}>
-							<FolderCard favourite={f} onClick={() => setSelected(f)} />
+							<FolderCard favourite={f} onClick={() => setSelected(f)} onDelete={handleDeleteFavouriteList} />
 						</Grid>
 					))}
 				</Grid>

@@ -116,7 +116,32 @@ const useUserFavouriteList = (userId: string) => {
 		}
 	};
 
-	return { favouriteLists, loading, handleAddToFavourite, handleRemoveFromFavourite, handleCreateFavouriteList };
+	// ---------------- Delete Favourite List ----------------
+	const handleDeleteFavouriteList = async (listId: string) => {
+		if (!favouriteLists) return;
+
+		setLoading(true);
+		try {
+			await favouriteApi.deleteFavouriteList(listId);
+
+			// Cập nhật state sau khi API thành công
+			setFavouriteList((prev) => prev?.filter((f) => f.id !== listId) || null);
+
+			pushNotification("Favourite list deleted successfully", "success");
+		} catch (err) {
+			console.error("Failed to delete favourite list:", err);
+
+			if (err instanceof AxiosError) {
+				pushNotification((err.response as AxiosResponse<ApiResponse<FavouriteList>>)?.data.error ?? "Error while deleting favourite list", "error");
+			} else {
+				pushNotification("Error while deleting favourite list", "error");
+			}
+		} finally {
+			setLoading(false);
+		}
+	};
+
+	return { favouriteLists, loading, handleAddToFavourite, handleRemoveFromFavourite, handleCreateFavouriteList, handleDeleteFavouriteList };
 };
 
 export default useUserFavouriteList;
