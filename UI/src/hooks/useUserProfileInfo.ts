@@ -1,6 +1,6 @@
 import { useCallback, useEffect, useState } from "react";
-import type { UserDto } from "../../../types/UserDto";
-import useAuthContextProvider from "../../../context/AuthContext/hook";
+import type { UserDto } from "../types/UserDto";
+import useAuthContextProvider from "../context/AuthContext/hook";
 import userApi from "../services/userApi";
 import type { Image } from "../types/Image";
 

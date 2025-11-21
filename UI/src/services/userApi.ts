@@ -1,5 +1,5 @@
-import apiClient from "../../../services/apiClient";
-import type { ApiResponse } from "../../../types/Response";
+import apiClient from "../services/apiClient";
+import type { ApiResponse } from "../types/Response";
 import type { Image } from "../types/Image";
 
 const userApi = {
