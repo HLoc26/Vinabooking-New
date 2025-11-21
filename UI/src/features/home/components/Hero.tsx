@@ -1,6 +1,6 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack } from "@mui/material";
-import { Search, Calendar, User, Minus, Plus, BedDouble, ChevronDown } from "lucide-react";
+import { Search, Calendar, User, Minus, Plus, BedDouble, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
 
 interface CounterProps {
 	label: string;
@@ -29,7 +29,9 @@ const Counter: React.FC<CounterProps> = ({ label, value, onChange, min = 0 }) =>
 	</Stack>
 );
 
-// Calendar helpers
+/* -------------------------------------------
+   Calendar utils
+-------------------------------------------- */
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => {
 	const day = new Date(year, month, 1).getDay();
@@ -42,7 +44,9 @@ const CalendarMonth: React.FC<{
 	label: string;
 	tempDateRange: DateRange;
 	onDateClick: (date: Date) => void;
-}> = ({ year, month, label, tempDateRange, onDateClick }) => {
+	minDate?: Date;
+	maxDate?: Date;
+}> = ({ year, month, label, tempDateRange, onDateClick, minDate, maxDate }) => {
 	const daysInMonth = getDaysInMonth(year, month);
 	const firstDay = getFirstDayOfMonth(year, month);
 	const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -50,18 +54,23 @@ const CalendarMonth: React.FC<{
 
 	const isSelected = (day: number) => {
 		const date = new Date(year, month, day);
-		const checkIn = tempDateRange.checkIn;
-		const checkOut = tempDateRange.checkOut;
+		const { checkIn, checkOut } = tempDateRange;
 		if (!checkIn) return false;
 		return date.toDateString() === checkIn.toDateString() || (checkOut && date.toDateString() === checkOut.toDateString());
 	};
 
 	const isInRange = (day: number) => {
 		const date = new Date(year, month, day);
-		const checkIn = tempDateRange.checkIn;
-		const checkOut = tempDateRange.checkOut;
+		const { checkIn, checkOut } = tempDateRange;
 		if (!checkIn || !checkOut) return false;
 		return date > checkIn && date < checkOut;
+	};
+
+	const isDisabled = (day: number) => {
+		const date = new Date(year, month, day);
+		if (minDate && date < minDate) return true;
+		if (maxDate && date > maxDate) return true;
+		return false;
 	};
 
 	return (
@@ -69,6 +78,8 @@ const CalendarMonth: React.FC<{
 			<Typography align="center" fontWeight={700} mb={1}>
 				{label}
 			</Typography>
+
+			{/* Weekdays */}
 			<Box display="grid" gridTemplateColumns="repeat(7, 1fr)" textAlign="center" mb={1}>
 				{["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
 					<Typography key={d} variant="caption" color="text.secondary">
@@ -76,18 +87,22 @@ const CalendarMonth: React.FC<{
 					</Typography>
 				))}
 			</Box>
+
+			{/* Days */}
 			<Box display="grid" gridTemplateColumns="repeat(7, 1fr)" textAlign="center" gap={0.5}>
 				{blanks.map((b) => (
 					<Box key={`blank-${b}`} />
 				))}
+
 				{days.map((d) => (
 					<Button
 						key={d}
 						variant="text"
 						onClick={(e) => {
 							e.stopPropagation();
-							onDateClick(new Date(year, month, d));
+							if (!isDisabled(d)) onDateClick(new Date(year, month, d));
 						}}
+						disabled={isDisabled(d)}
 						sx={{
 							borderRadius: "50%",
 							minWidth: 32,
@@ -95,7 +110,7 @@ const CalendarMonth: React.FC<{
 							bgcolor: isSelected(d) ? "warning.main" : isInRange(d) ? "warning.light" : "transparent",
 							color: isSelected(d) ? "white" : "inherit",
 							"&:hover": {
-								bgcolor: isSelected(d) ? "warning.dark" : "action.hover",
+								bgcolor: isSelected(d) ? "warning.dark" : !isDisabled(d) ? "action.hover" : "transparent",
 							},
 						}}
 					>
@@ -107,11 +122,16 @@ const CalendarMonth: React.FC<{
 	);
 };
 
+/* -------------------------------------------
+   MAIN HERO COMPONENT
+-------------------------------------------- */
 export const Hero: React.FC = () => {
 	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
 	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
+
 	const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
 	const [hasPets, setHasPets] = useState(false);
+
 	const [dateRange, setDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
 	const [tempDateRange, setTempDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
 
@@ -119,6 +139,7 @@ export const Hero: React.FC = () => {
 	const dateRef = useRef<HTMLDivElement>(null);
 	const searchRef = useRef<HTMLDivElement>(null);
 
+	/* Sticky search bar logic */
 	const [sticky, setSticky] = useState(false);
 	const [originalTop, setOriginalTop] = useState(0);
 
@@ -140,6 +161,7 @@ export const Hero: React.FC = () => {
 		return () => window.removeEventListener("scroll", handleScroll);
 	}, [originalTop]);
 
+	/* Date selection */
 	const handleDateClick = (date: Date) => {
 		if (!tempDateRange.checkIn || (tempDateRange.checkIn && tempDateRange.checkOut)) {
 			setTempDateRange({ checkIn: date, checkOut: null });
@@ -167,10 +189,23 @@ export const Hero: React.FC = () => {
 		return `${checkInStr} — ${checkOutStr}`;
 	};
 
+	/* -------- Calendar Navigation (2 months only) -------- */
 	const today = new Date();
-	const currentYear = today.getFullYear();
-	const currentMonth = today.getMonth();
-	const nextMonthDate = new Date(currentYear, currentMonth + 1);
+	const maxDate = new Date(today.getFullYear(), today.getMonth() + 12, today.getDate());
+
+	// This month index relative to current date
+	const [monthOffset, setMonthOffset] = useState(0);
+
+	// Always show 2 months
+	const visibleMonths = [new Date(today.getFullYear(), today.getMonth() + monthOffset), new Date(today.getFullYear(), today.getMonth() + monthOffset + 1)];
+
+	const handlePrev = () => {
+		setMonthOffset((prev) => Math.max(0, prev - 1)); // prevent going before today
+	};
+
+	const handleNext = () => {
+		setMonthOffset((prev) => prev + 1);
+	};
 
 	return (
 		<Box position="relative" height={{ xs: 600, lg: 700 }}>
@@ -185,6 +220,7 @@ export const Hero: React.FC = () => {
 					zIndex: 0,
 				}}
 			/>
+
 			{/* Overlay */}
 			<Box
 				position="absolute"
@@ -225,10 +261,25 @@ export const Hero: React.FC = () => {
 					transition: "top 0.2s ease",
 				}}
 			>
-				<Paper elevation={6} sx={{ display: "flex", flexDirection: { xs: "column", lg: "row" }, borderRadius: 2, overflow: "hidden" }}>
+				<Paper
+					elevation={6}
+					sx={{
+						display: "flex",
+						flexDirection: { xs: "column", lg: "row" },
+						borderRadius: 2,
+						overflow: "hidden",
+					}}
+				>
 					{/* Destination */}
 					<Box flex={1} p={1}>
-						<TextField fullWidth placeholder="Where are you going?" variant="outlined" InputProps={{ startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} /> }} />
+						<TextField
+							fullWidth
+							placeholder="Where are you going?"
+							variant="outlined"
+							InputProps={{
+								startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} />,
+							}}
+						/>
 					</Box>
 
 					{/* Date Picker */}
@@ -242,6 +293,7 @@ export const Hero: React.FC = () => {
 								<Typography variant="body2">{formatDateRange()}</Typography>
 							</Box>
 						</Button>
+
 						<Menu
 							open={isDateMenuOpen}
 							onClose={handleDateMenuClose}
@@ -250,21 +302,36 @@ export const Hero: React.FC = () => {
 							disableAutoFocusItem
 							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
 						>
-							<Box display="flex" p={2} onClick={(e) => e.stopPropagation()}>
-								<CalendarMonth
-									year={currentYear}
-									month={currentMonth}
-									label={today.toLocaleString("default", { month: "long", year: "numeric" })}
-									tempDateRange={tempDateRange}
-									onDateClick={handleDateClick}
-								/>
-								<CalendarMonth
-									year={nextMonthDate.getFullYear()}
-									month={nextMonthDate.getMonth()}
-									label={nextMonthDate.toLocaleString("default", { month: "long", year: "numeric" })}
-									tempDateRange={tempDateRange}
-									onDateClick={handleDateClick}
-								/>
+							{/* Month Navigation Header */}
+							<Box display="flex" justifyContent="space-between" alignItems="center" px={2} py={1}>
+								<IconButton onClick={handlePrev} disabled={monthOffset === 0}>
+									<ChevronLeft />
+								</IconButton>
+
+								<Typography fontWeight={700}>Select Dates</Typography>
+
+								<IconButton onClick={handleNext}>
+									<ChevronRight />
+								</IconButton>
+							</Box>
+
+							{/* Calendar Grid */}
+							<Box display="flex" p={2} gap={2} onClick={(e) => e.stopPropagation()}>
+								{visibleMonths.map((d, i) => (
+									<CalendarMonth
+										key={i}
+										year={d.getFullYear()}
+										month={d.getMonth()}
+										label={d.toLocaleString("default", {
+											month: "long",
+											year: "numeric",
+										})}
+										tempDateRange={tempDateRange}
+										onDateClick={handleDateClick}
+										minDate={today}
+										maxDate={maxDate}
+									/>
+								))}
 							</Box>
 						</Menu>
 					</Box>
@@ -283,6 +350,7 @@ export const Hero: React.FC = () => {
 							</Box>
 							<ChevronDown size={16} />
 						</Button>
+
 						<Menu
 							open={isGuestMenuOpen}
 							onClose={() => setIsGuestMenuOpen(false)}
@@ -295,7 +363,9 @@ export const Hero: React.FC = () => {
 								<Counter label="Adults" value={guests.adults} onChange={(v) => setGuests({ ...guests, adults: v })} min={1} />
 								<Counter label="Children" value={guests.children} onChange={(v) => setGuests({ ...guests, children: v })} />
 								<Counter label="Rooms" value={guests.rooms} onChange={(v) => setGuests({ ...guests, rooms: v })} min={1} />
+
 								<Divider sx={{ my: 1 }} />
+
 								<Stack direction="row" alignItems="center" justifyContent="space-between">
 									<Typography>Traveling with pets?</Typography>
 									<Switch checked={hasPets} onChange={() => setHasPets(!hasPets)} />
@@ -312,6 +382,7 @@ export const Hero: React.FC = () => {
 					</Box>
 				</Paper>
 			</Box>
+
 			{sticky && <Box sx={{ height: 100 }} />}
 		</Box>
 	);
