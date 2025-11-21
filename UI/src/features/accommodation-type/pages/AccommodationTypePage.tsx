@@ -92,8 +92,6 @@ export function AcommodationTypePage() {
 					onSeeAll={() => console.log("See all properties")}
 					renderItem={(property) => <PropertyCard property={property} />}
 				/>
-
-				<HorizontalList title="Recently viewed" items={[...currentProperties].reverse().slice(0, 4)} renderItem={(property) => <PropertyCard property={property} />} />
 			</Container>
 		</Box>
 	);

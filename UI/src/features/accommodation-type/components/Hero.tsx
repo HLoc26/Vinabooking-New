@@ -221,8 +221,13 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 						p: 1,
 						display: "flex",
 						gap: 1,
-						flexWrap: "wrap",
-						justifyContent: "center",
+						flexWrap: "nowrap", // ❗ prevent wrapping
+						overflowX: "auto", // ❗ allow scroll instead of wrapping
+						scrollbarWidth: "none", // hide scrollbar (Firefox)
+						"&::-webkit-scrollbar": {
+							// hide scrollbar (Chrome)
+							display: "none",
+						},
 						maxWidth: "95%",
 					}}
 				>
@@ -252,7 +257,16 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 			</Box>
 
 			{/* Hero Text */}
-			<Box position="relative" zIndex={5} textAlign="center" px={2} mt={8} maxWidth={900} mx="auto">
+			<Box
+				position="relative"
+				zIndex={5}
+				textAlign="center"
+				px={2}
+				mt={8}
+				maxWidth={900}
+				mx="auto"
+				pb={8} // ⭐ Add this (try 8 → 12)
+			>
 				<Typography
 					variant="h2"
 					fontWeight={800}
@@ -261,6 +275,7 @@ export const Hero: React.FC<HeroProps> = ({ currentType, onTypeChange }) => {
 					sx={{
 						fontSize: { xs: "2.5rem", md: "3.5rem", lg: "4rem" },
 						textShadow: "0px 4px 12px rgba(0,0,0,0.3)",
+						lineHeight: 1.1, // ⭐ keeps text tight + prevents drop
 					}}
 				>
 					Find the perfect{" "}

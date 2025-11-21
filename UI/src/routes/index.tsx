@@ -25,7 +25,14 @@ export const AppRouter = () => (
 			<Route path="/oauth/*" element={<OAuthRouter />} />
 			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
-			<Route path="/:accommodationType" element={<AcommodationTypePage />} />
+			<Route
+				path="/:accommodationType"
+				element={
+					<TravelerLayout>
+						<AcommodationTypePage />{" "}
+					</TravelerLayout>
+				}
+			/>
 		</Routes>
 	</BrowserRouter>
 );
