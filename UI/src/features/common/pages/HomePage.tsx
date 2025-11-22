@@ -1,14 +1,15 @@
 import { Box, Button, Typography, AppBar, Container, Paper, Grid } from "@mui/material";
 import { Palette } from "@mui/icons-material";
 
-import { useAuth } from "../../user/hooks/useAuth";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useNavigate } from "react-router-dom";
-import { GoogleAuthButton } from "../../user/components/GoogleAuthButton";
+import { GoogleAuthButton } from "../../auth/components/GoogleAuthButton";
+import useAuthContextProvider from "../../../context/AuthContext/hook";
+import { ProtectedLink } from "../../../components/ui/ProtectedLink";
 
 export const HomePage = () => {
 	const navigate = useNavigate();
-	const { logout, getCurrentUser } = useAuth();
+	const { logout, getCurrentUser } = useAuthContextProvider();
 	const { pushNotification } = usePushNotificationContext();
 
 	const user = getCurrentUser();
@@ -41,9 +42,11 @@ export const HomePage = () => {
 					</Typography>
 					<Grid container spacing={2}>
 						<Grid size={{ xs: 6, sm: 3 }}>
-							<Button fullWidth variant="contained" color="primary">
-								Primary
-							</Button>
+							<ProtectedLink to="/booking">
+								<Button fullWidth variant="contained" color="secondary">
+									Create a booking
+								</Button>
+							</ProtectedLink>
 						</Grid>
 						<Grid size={{ xs: 6, sm: 3 }}>
 							<Button fullWidth variant="contained" color="secondary">
@@ -66,7 +69,11 @@ export const HomePage = () => {
 								variant="contained"
 								color="success"
 								onClick={() => {
-									navigate("/auth/login");
+									if (!user) {
+										navigate("/auth/login");
+									} else {
+										pushNotification("You have already logged in");
+									}
 								}}
 							>
 								Log In
@@ -78,7 +85,11 @@ export const HomePage = () => {
 								variant="contained"
 								color="info"
 								onClick={() => {
-									navigate("/auth/register");
+									if (!user) {
+										navigate("/auth/register");
+									} else {
+										pushNotification("You have already logged in");
+									}
 								}}
 							>
 								Register

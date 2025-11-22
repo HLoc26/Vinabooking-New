@@ -17,13 +17,16 @@ model Booking {
   startDate   DateTime
   endDate     DateTime
   guestCount  Int            @default(1)
+  leaderName  String?
+  leaderEmail String?
+  totalPrice  Decimal?       @db.Decimal(10, 2)
+  phone       String?
   referenceNo Int            @unique
   status      EBookingStatus @default(BOOKED)
 
   // Relations
   details   BookingDetail[]
   userId    String // who made the booking (traveler)   
-  phone     String? // optional for the booking
   createdAt DateTime        @default(now())
   updatedAt DateTime        @updatedAt
 }
