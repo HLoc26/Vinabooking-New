@@ -141,6 +141,39 @@ export class RoomRepository {
 			},
 		});
 	}
+
+	/**
+	 * (R) Tìm danh sách Accommodation IDs theo bộ lọc: Giá & Số người.
+	 */
+	async findAccommodationIdsByFilter(filters: { minPrice?: number; maxPrice?: number; adults?: number; children?: number }): Promise<string[]> {
+		const where: Prisma.RoomWhereInput = {
+			isActive: true,
+		};
+
+		// 1. Lọc theo Giá
+		if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+			where.price = {};
+			if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
+			if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+		}
+
+		// 2. Lọc theo Sức chứa
+		// Logic (đơn giản): Chỉ cần phòng chứa đủ số người lớn yêu cầu.
+		if (filters.adults) {
+			where.maxAdults = {
+				gte: filters.adults,
+			};
+		}
+
+		// Query lấy danh sách distinct accommodationId
+		const result = await prisma.room.findMany({
+			where,
+			select: { accommodationId: true },
+			distinct: ["accommodationId"],
+		});
+
+		return result.map((item) => item.accommodationId);
+	}
 }
 
 // Xuất ra một instance (singleton) của repository
