@@ -75,25 +75,6 @@ const useUserFavouriteList = () => {
 		}
 	};
 
-	// ---------------- Toggle Checkbox cho Modal ----------------
-	// Update UI, wont call API. When user clicks Confirm, call handleAddToFavourite / handleRemoveFromFavourite
-	const toggleAccommodationInList = (listId: string, accommodationId: string) => {
-		if (!favouriteLists) return;
-
-		setFavouriteList(
-			(prev) =>
-				prev?.map((f) => {
-					if (f.id !== listId) return f;
-					const exists = f.items.some((i) => i.accommodationId === accommodationId);
-					if (exists) {
-						return { ...f, items: f.items.filter((i) => i.accommodationId !== accommodationId) };
-					} else {
-						return { ...f, items: [...f.items, { id: "", accommodationId }] };
-					}
-				}) || null
-		);
-	};
-
 	// ---------------- Create / Delete Favourite List ----------------
 	const handleCreateFavouriteList = async (name: string) => {
 		setLoading(true);
@@ -147,7 +128,6 @@ const useUserFavouriteList = () => {
 		handleRemoveFromFavourite,
 		handleCreateFavouriteList,
 		handleDeleteFavouriteList,
-		toggleAccommodationInList, // chỉ update UI cho modal checkbox
 	};
 };
 
