@@ -3,7 +3,7 @@ import { Box, Grid, Pagination, Paper, Skeleton, Typography } from "@mui/materia
 import AccommodationCard from "./AccommodationCard";
 import { useMemo, useState } from "react";
 import { formatDate } from "../../../../../utils/dateFormatter";
-import type { FavouriteList } from "../../../types/FavouriteList";
+import type { FavouriteList } from "../../../../../types/FavouriteList";
 import useBatchAccommodationInfo from "../../../hooks/useBatchAccommodationInfo";
 
 type FavouriteDetailViewProps = {

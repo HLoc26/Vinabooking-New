@@ -1,9 +1,9 @@
 import { useState, useEffect } from "react";
 import type { FavouriteList } from "../types/FavouriteList";
 import favouriteApi from "../services/favouriteApi";
-import { usePushNotificationContext } from "../../../context/PushNotification/hook";
+import { usePushNotificationContext } from "../context/PushNotification/hook";
 import { AxiosError, type AxiosResponse } from "axios";
-import type { ApiResponse } from "../../../types/Response";
+import type { ApiResponse } from "../types/Response";
 
 const useUserFavouriteList = (userId: string) => {
 	const [favouriteLists, setFavouriteList] = useState<FavouriteList[] | null>(null);
@@ -23,47 +23,34 @@ const useUserFavouriteList = (userId: string) => {
 		})();
 	}, [userId]);
 
-	// ---------------- Optimistic Add ----------------
+	// ---------------- Add / Remove Single Accommodation ----------------
 	const handleAddToFavourite = async (favouriteId: string, accommodationId: string) => {
 		if (!favouriteLists) return;
 
-		// Update UI immediately
 		setFavouriteList((prev) => prev?.map((f) => (f.id === favouriteId ? { ...f, items: [...f.items, { id: "", accommodationId }] } : f)) || null);
 
 		try {
 			const added = await favouriteApi.addAccommodation(favouriteId, accommodationId);
-			if (!added) throw new Error("Error while adding accommodation to favourite");
+			if (!added) throw new Error("Error while adding accommodation");
 
-			setFavouriteList((prev) => {
-				const updatedLists = prev?.map((f) => {
-					if (f.id !== favouriteId) return f;
-
-					const updatedItems = f.items.map((item) => {
-						const shouldUpdate = item.accommodationId === accommodationId && item.id === "";
-						return shouldUpdate ? { ...item, id: added.id } : item;
-					});
-
-					return { ...f, items: updatedItems };
-				});
-
-				return updatedLists || null;
-			});
+			setFavouriteList(
+				(prev) =>
+					prev?.map((f) =>
+						f.id === favouriteId
+							? {
+									...f,
+									items: f.items.map((item) => (item.accommodationId === accommodationId && item.id === "" ? { ...item, id: added.id } : item)),
+								}
+							: f
+					) || null
+			);
 		} catch (err) {
 			console.error("Failed to add accommodation:", err);
-
-			setFavouriteList((prev) => {
-				const updatedLists = prev?.map((f) => {
-					if (f.id !== favouriteId) return f;
-					const filteredItems = f.items.filter((i) => i.accommodationId !== accommodationId || i.id !== "");
-					return { ...f, items: filteredItems };
-				});
-
-				return updatedLists || null;
-			});
+			// rollback
+			setFavouriteList((prev) => prev?.map((f) => (f.id === favouriteId ? { ...f, items: f.items.filter((i) => i.accommodationId !== accommodationId || i.id !== "") } : f)) || null);
 		}
 	};
 
-	// ---------------- Optimistic Remove ----------------
 	const handleRemoveFromFavourite = async (favouriteId: string, accommodationId: string) => {
 		if (!favouriteLists) return;
 
@@ -72,65 +59,72 @@ const useUserFavouriteList = (userId: string) => {
 
 		const prevItems = list.items;
 
-		// Update UI immediately
-		const newLists = favouriteLists.map((f) => (f.id === favouriteId ? { ...f, items: f.items.filter((i) => i.accommodationId !== accommodationId) } : f));
-		setFavouriteList(newLists);
+		setFavouriteList((prev) => prev?.map((f) => (f.id === favouriteId ? { ...f, items: f.items.filter((i) => i.accommodationId !== accommodationId) } : f)) || null);
 
 		try {
 			await favouriteApi.removeAccommodation(favouriteId, accommodationId);
 		} catch (err) {
 			console.error("Failed to remove accommodation:", err);
-			// Rollback if error
-			setFavouriteList(favouriteLists.map((f) => (f.id === favouriteId ? { ...f, items: prevItems } : f)));
+			// rollback
+			setFavouriteList((prev) => prev?.map((f) => (f.id === favouriteId ? { ...f, items: prevItems } : f)) || null);
 		}
 	};
-	// ---------------- Add New Favourite List ----------------
-	const handleCreateFavouriteList = async (name: string) => {
-		setLoading(true);
 
+	// ---------------- Toggle Checkbox cho Modal ----------------
+	// Update UI, wont call API. When user clicks Confirm, call handleAddToFavourite / handleRemoveFromFavourite
+	const toggleAccommodationInList = (listId: string, accommodationId: string) => {
 		if (!favouriteLists) return;
 
-		// Optimistic: add temp ID
+		setFavouriteList(
+			(prev) =>
+				prev?.map((f) => {
+					if (f.id !== listId) return f;
+					const exists = f.items.some((i) => i.accommodationId === accommodationId);
+					if (exists) {
+						return { ...f, items: f.items.filter((i) => i.accommodationId !== accommodationId) };
+					} else {
+						return { ...f, items: [...f.items, { id: "", accommodationId }] };
+					}
+				}) || null
+		);
+	};
+
+	// ---------------- Create / Delete Favourite List ----------------
+	const handleCreateFavouriteList = async (name: string) => {
+		setLoading(true);
+		if (!favouriteLists) return;
+
 		const tempId = `temp-${Date.now()}`;
 		const tempList: FavouriteList = { id: tempId, name, items: [], createdAt: new Date(), updatedAt: new Date() };
-
 		setFavouriteList((prev) => (prev ? [...prev, tempList] : [tempList]));
 
 		try {
 			const created = await favouriteApi.createFavouriteList(name);
 			if (!created?.id) throw new Error("Create failed");
 
-			// Update: replace id with realId
 			setFavouriteList((prev) => prev?.map((f) => (f.id === tempId ? { ...f, id: created.id } : f)) || null);
 			pushNotification("Success", "success");
 		} catch (err) {
 			console.error("Failed to create list:", err);
-
-			// Rollback if error
 			setFavouriteList((prev) => prev?.filter((f) => f.id !== tempId) || null);
 			if (err instanceof AxiosError) {
-				pushNotification((err.response as AxiosResponse<ApiResponse<FavouriteList>>).data.error ?? "Error while creating favourite list", "error");
+				pushNotification((err.response as AxiosResponse<ApiResponse<FavouriteList>>)?.data.error ?? "Error while creating favourite list", "error");
 			}
 		} finally {
 			setLoading(false);
 		}
 	};
 
-	// ---------------- Delete Favourite List ----------------
 	const handleDeleteFavouriteList = async (listId: string) => {
 		if (!favouriteLists) return;
 
 		setLoading(true);
 		try {
 			await favouriteApi.deleteFavouriteList(listId);
-
-			// Cập nhật state sau khi API thành công
 			setFavouriteList((prev) => prev?.filter((f) => f.id !== listId) || null);
-
 			pushNotification("Favourite list deleted successfully", "success");
 		} catch (err) {
 			console.error("Failed to delete favourite list:", err);
-
 			if (err instanceof AxiosError) {
 				pushNotification((err.response as AxiosResponse<ApiResponse<FavouriteList>>)?.data.error ?? "Error while deleting favourite list", "error");
 			} else {
@@ -141,7 +135,15 @@ const useUserFavouriteList = (userId: string) => {
 		}
 	};
 
-	return { favouriteLists, loading, handleAddToFavourite, handleRemoveFromFavourite, handleCreateFavouriteList, handleDeleteFavouriteList };
+	return {
+		favouriteLists,
+		loading,
+		handleAddToFavourite,
+		handleRemoveFromFavourite,
+		handleCreateFavouriteList,
+		handleDeleteFavouriteList,
+		toggleAccommodationInList, // chỉ update UI cho modal checkbox
+	};
 };
 
 export default useUserFavouriteList;
