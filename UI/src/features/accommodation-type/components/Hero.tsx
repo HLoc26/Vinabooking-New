@@ -1,15 +1,16 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack } from "@mui/material";
-import { Calendar, User, Minus, Plus, BedDouble, ChevronDown, ChevronRight, ChevronLeft, Search } from "lucide-react";
+import { Calendar, User, Minus, Plus, ChevronDown, ChevronRight, ChevronLeft, Search } from "lucide-react";
 import { EAccommodationType } from "../../../types/acommodation";
 import type { DateRange } from "../services/types/DateRange";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
+import { LocationTypeahead } from "./LocationTypeahead";
+import { useLocationSearch } from "../contexts/LocationSearchContext";
 
 interface HeroProps {
 	currentType: EAccommodationType;
 	onTypeChange: (type: EAccommodationType) => void;
 }
-
 interface CounterProps {
 	label: string;
 	value: number;
@@ -195,6 +196,8 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 	const handleNext = () => {
 		setMonthOffset((prev) => prev + 1);
 	};
+	const { query, setQuery } = useLocationSearch();
+	const [open, setOpen] = useState(false);
 
 	return (
 		<Box position="relative" sx={{ minHeight: { xs: 650, lg: 750 }, display: "flex", flexDirection: "column" }}>
@@ -349,13 +352,13 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 					}}
 				>
 					{/* Destination */}
-					<Box flex={1} p={1}>
-						<TextField
-							fullWidth
-							placeholder="Where are you going?"
-							variant="outlined"
-							InputProps={{
-								startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} />,
+					<Box position="relative">
+						<TextField fullWidth placeholder="Where are you going?" variant="outlined" value={query} onChange={(e) => setQuery(e.target.value)} onFocus={() => setOpen(true)} />
+						<LocationTypeahead
+							open={open}
+							onSelect={(loc) => {
+								setQuery(loc.name);
+								setOpen(false);
 							}}
 						/>
 					</Box>

@@ -9,6 +9,7 @@ import { EAccommodationType } from "../../../types/acommodation";
 import type { City } from "../services/types/City";
 import type { Property } from "../services/types/Property";
 import { useScrollToTopOnMount } from "../hooks/useScrollToTopOnMount";
+import { SearchProvider } from "../contexts/SearchContext";
 
 import { ACCOMMODATION_LABELS, CITY_NAMES } from "../constants/Const";
 
@@ -83,8 +84,9 @@ export function AcommodationTypePage() {
 
 	return (
 		<Box sx={{ minHeight: "100vh", pb: 8 }}>
-			<Hero currentType={accommodationType} onTypeChange={handleTypeChange} />
-
+			<SearchProvider>
+				<Hero currentType={accommodationType} onTypeChange={handleTypeChange} />
+			</SearchProvider>
 			<Container maxWidth="lg">
 				<Box mt={-4} position="relative" zIndex={10}></Box>
 
