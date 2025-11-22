@@ -382,7 +382,6 @@ export const Hero: React.FC = () => {
 					</Box>
 				</Paper>
 			</Box>
-
 			{sticky && <Box sx={{ height: 100 }} />}
 		</Box>
 	);
