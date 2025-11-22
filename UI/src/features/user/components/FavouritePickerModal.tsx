@@ -1,8 +1,9 @@
-import { DialogTitle, DialogContent, List, ListItem, ListItemIcon, Checkbox, ListItemText, DialogActions, Button, CircularProgress } from "@mui/material";
+import { DialogTitle, DialogContent, List, ListItem, ListItemIcon, Checkbox, ListItemText, DialogActions, Button, CircularProgress, Stack } from "@mui/material";
 import type { FavouriteList } from "../../../types/FavouriteList";
 import useModalContext from "../../../context/ModalContext/hook";
 import { useState, useEffect } from "react";
 import useUserFavouriteList from "../../../hooks/useUserFavouriteList";
+import CreateFavouriteListModal from "./tabs/FavouritesTab/CreateFavouriteListModal";
 
 type FavouritePickerModalProps = {
 	accommodationId: string;
@@ -12,8 +13,8 @@ type FavouritePickerModalProps = {
 };
 
 const FavouritePickerModal: React.FC<FavouritePickerModalProps> = ({ accommodationId, onAdd, onRemove, loading = false }) => {
-	const { closeModal } = useModalContext();
-	const { favouriteLists } = useUserFavouriteList();
+	const { openModal, closeModal } = useModalContext();
+	const { favouriteLists, handleCreateFavouriteList } = useUserFavouriteList();
 	// Local state để toggle thoải mái
 	const [localLists, setLocalLists] = useState<FavouriteList[]>([]);
 
@@ -56,9 +57,24 @@ const FavouritePickerModal: React.FC<FavouritePickerModalProps> = ({ accommodati
 		closeModal();
 	};
 
+	const handleCreateNew = () => {
+		openModal(
+			<CreateFavouriteListModal
+				autoClose={false}
+				onCreate={async (name: string) => {
+					await handleCreateFavouriteList(name);
+					openModal(<FavouritePickerModal accommodationId={accommodationId} onAdd={onAdd} onRemove={onRemove} />);
+				}}
+			/>
+		);
+	};
+
 	return (
 		<>
-			<DialogTitle>Save to...</DialogTitle>
+			<Stack direction={"row"} justifyContent={"space-between"}>
+				<DialogTitle>Save to...</DialogTitle>
+				<Button onClick={handleCreateNew}>Create new</Button>
+			</Stack>
 			<DialogContent dividers>
 				<List>
 					{localLists.map((list) => {

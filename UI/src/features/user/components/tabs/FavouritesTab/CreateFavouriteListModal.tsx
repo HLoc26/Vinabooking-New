@@ -5,9 +5,10 @@ import useModalContext from "../../../../../context/ModalContext/hook";
 type CreateFavouriteListModalProps = {
 	onCreate: (name: string) => Promise<void>;
 	loading?: boolean;
+	autoClose?: boolean;
 };
 
-const CreateFavouriteListModal: React.FC<CreateFavouriteListModalProps> = ({ onCreate, loading }) => {
+const CreateFavouriteListModal: React.FC<CreateFavouriteListModalProps> = ({ onCreate, loading, autoClose = true }) => {
 	const { closeModal } = useModalContext();
 
 	const [name, setName] = useState("");
@@ -16,7 +17,7 @@ const CreateFavouriteListModal: React.FC<CreateFavouriteListModalProps> = ({ onC
 		if (!name.trim()) return;
 		await onCreate(name.trim());
 		setName("");
-		closeModal();
+		if (autoClose) closeModal();
 	};
 
 	return (
