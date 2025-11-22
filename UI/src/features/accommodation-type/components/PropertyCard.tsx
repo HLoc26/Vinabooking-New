@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Typography, Card, CardMedia, CardContent, IconButton } from "@mui/material";
 import { Heart } from "lucide-react";
-import type { Property } from "../services/types/Property";
+import type { Property } from "../types/Property";
 
 export const PropertyCard: React.FC<{ property: Property }> = ({ property }) => {
 	return (

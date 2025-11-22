@@ -2,7 +2,7 @@
 import React from "react";
 import { Box, Paper, Button, TextField, Typography } from "@mui/material";
 import { Calendar, User, Search, ChevronDown } from "lucide-react";
-import type { Ref } from "react";
+import type { RefObject } from "react";
 import type { DateRange } from "../types/DateRange";
 import type { Guests } from "../types/Guest";
 import { DatePickerMenu } from "./DatePickerMenu";
@@ -10,11 +10,10 @@ import { GuestMenu } from "./GuestMenu";
 import { LocationTypeahead } from "./LocationTypeahead";
 
 interface HeroSearchBarProps {
-	searchRef?: Ref<HTMLDivElement>;
-	locationRef?: Ref<HTMLDivElement>;
-	dateRef?: Ref<HTMLDivElement>;
-	guestRef?: Ref<HTMLDivElement>;
-
+	searchRef?: RefObject<HTMLDivElement>;
+	locationRef?: RefObject<HTMLDivElement | null>;
+	dateRef?: RefObject<HTMLDivElement | null>;
+	guestRef?: RefObject<HTMLDivElement | null>;
 	sticky: boolean;
 	query: string;
 	setQuery: (q: string) => void;
@@ -94,98 +93,123 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 		<Box
 			ref={searchRef}
 			sx={{
-				width: "100%",
-				px: 2,
-				zIndex: 50,
 				position: sticky ? "fixed" : "relative",
-				top: sticky ? 10 : "auto",
+				top: sticky ? 16 : "auto",
 				left: 0,
 				right: 0,
+				width: "100%",
+				maxWidth: "1200px",
 				mx: "auto",
-				maxWidth: 1200,
-				transition: "top 0.2s ease",
+				px: { xs: 2, md: 3 },
+				zIndex: sticky ? 1300 : 50,
+				transition: "all 0.25s ease",
+				bgcolor: "transparent",
+				boxShadow: "none",
+				borderRadius: sticky ? 4 : 0,
+				py: sticky ? 1.5 : 0,
 			}}
 		>
 			<Paper
-				elevation={6}
+				elevation={sticky ? 12 : 8}
 				sx={{
 					display: "grid",
 					gridTemplateColumns: {
-						xs: "1fr", // mobile: stack everything
-						sm: "1fr 1fr", // tablet: 2 columns
-						md: "2fr 1.2fr 1.2fr auto", // desktop: destination bigger + perfect alignment
+						xs: "1fr",
+						sm: "1fr 1fr",
+						md: "2.2fr 1.3fr 1.3fr auto",
 					},
 					gridTemplateAreas: {
-						xs: `
-        "destination"
-        "dates-guests"
-        "search"
-      `,
-						sm: `
-        "destination destination"
-        "dates      guests"
-        "search     search"
-      `,
+						xs: `"destination" "dates-guests" "search"`,
+						sm: `"destination destination" "dates guests" "search search"`,
 						md: `"destination dates guests search"`,
 					},
-					gap: { xs: 1.5, md: 0 },
-					alignItems: "stretch",
+					gap: 0,
 					borderRadius: 4,
-					overflow: "hidden",
-					minHeight: { md: 72 },
-					backgroundColor: "background.paper",
+					overflow: "visible",
+					minHeight: 72,
+					border: "none", // No border
+					outline: "none", // No outline
+					boxShadow: sticky
+						? "0px 7px 8px -4px rgba(0,0,0,0.2),0px 12px 17px 2px rgba(0,0,0,0.14),0px 5px 22px 4px rgba(0,0,0,0.12)"
+						: "0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12)", // Shadow on Paper only
+					maxWidth: "100%",
+					margin: 0,
+					padding: 0,
+					"& > *": {
+						minWidth: 0,
+					},
 				}}
 			>
-				{/* ==================== DESTINATION ==================== */}
+				{/* DESTINATION */}
 				<Box
 					ref={locationRef}
 					sx={{
 						gridArea: "destination",
 						position: "relative",
-						p: { xs: 1, md: 1.5 },
+						borderRight: { md: "1px solid" },
+						borderRightColor: { md: "grey.300" },
 					}}
 				>
-					<TextField
-						fullWidth
-						placeholder="Where are you going?"
-						variant="outlined"
-						value={query}
-						onChange={(e) => setQuery(e.target.value)}
-						onFocus={() => setOpenLocation(true)}
-						InputProps={{
-							sx: {
-								height: { xs: 56, md: "100%" },
-								fontSize: { xs: "1rem", md: "1.1rem" },
-								"& .MuiOutlinedInput-notchedOutline": {
-									border: { xs: "2px solid", md: "none" },
-									borderColor: "warning.main",
-									borderRadius: { xs: 3, md: 0 },
-								},
-								"&:hover .MuiOutlinedInput-notchedOutline": {
-									borderColor: "warning.dark",
-								},
-							},
+					<Box
+						onClick={() => setOpenLocation(true)}
+						sx={{
+							display: "flex",
+							alignItems: "center",
+							height: "100%",
+							minHeight: 72,
+							py: 2,
+							px: 3,
+							cursor: "pointer",
+							"&:hover": { bgcolor: "action.hover" },
 						}}
-					/>
+					>
+						<Search size={24} style={{ marginRight: 16, opacity: 0.7 }} />
+						<Box textAlign="left" sx={{ flexGrow: 1 }}>
+							<Typography variant="caption" fontWeight={700} color="text.secondary" display="block">
+								Where
+							</Typography>
+							<TextField
+								placeholder="Search destinations"
+								variant="standard"
+								value={query}
+								onChange={(e) => setQuery(e.target.value)}
+								onFocus={(e) => {
+									e.stopPropagation();
+									setOpenLocation(true);
+								}}
+								onClick={(e) => e.stopPropagation()}
+								InputProps={{
+									disableUnderline: true,
+									sx: { fontSize: "1rem", fontWeight: 600, color: "text.primary" },
+								}}
+								sx={{
+									width: "100%",
+									mt: 0.5,
+									"& input": {
+										cursor: "text",
+										pointerEvents: "auto",
+									},
+								}}
+							/>
+						</Box>
+					</Box>
+
 					<LocationTypeahead
 						open={openLocation}
-						anchorEl={locationRef}
 						onSelect={(loc) => {
 							setQuery(loc.name ?? "");
 							setOpenLocation(false);
 						}}
 					/>
 				</Box>
-
-				{/* ==================== DATES ==================== */}
+				{/* DATES */}
 				<Box
 					ref={dateRef}
 					sx={{
 						gridArea: { xs: "dates-guests", sm: "dates", md: "dates" },
-						p: 1.5,
+						borderRight: { md: "1px solid" },
+						borderRightColor: { md: "grey.300" },
 						borderTop: { xs: "1px solid", xsColor: "grey.300" },
-						borderLeft: { md: "1px solid", mdColor: "grey.300" },
-						bgcolor: { md: "background.default" },
 					}}
 				>
 					<Button
@@ -198,24 +222,29 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 							justifyContent: "flex-start",
 							textTransform: "none",
 							height: "100%",
-							color: "text.primary",
+							minHeight: 72,
+							py: 2,
+							px: 3,
+							borderRadius: 0,
+							bgcolor: "transparent",
 							"&:hover": { bgcolor: "action.hover" },
 						}}
 					>
-						<Calendar size={24} style={{ marginRight: 12 }} />
+						<Calendar size={24} style={{ marginRight: 16, opacity: 0.7 }} />
 						<Box textAlign="left">
-							<Typography variant="caption" fontWeight={700} display="block">
-								Check-in — Check-out
+							<Typography variant="caption" fontWeight={700} color="text.secondary" display="block">
+								Check in — Check out
 							</Typography>
-							<Typography variant="body2" color={dateRange.checkIn ? "text.primary" : "text.secondary"}>
+							<Typography variant="body1" fontWeight={600}>
 								{formatDateRange(dateRange)}
 							</Typography>
 						</Box>
 					</Button>
 
 					<DatePickerMenu
+						key={`dates-${sticky}`}
 						open={isDateMenuOpen}
-						anchorEl={dateRef.current}
+						anchorEl={dateRef?.current ?? null}
 						tempDateRange={tempDateRange}
 						monthOffset={monthOffset}
 						onMonthPrev={() => setMonthOffset(Math.max(0, monthOffset - 1))}
@@ -224,16 +253,14 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						onClose={handleDateClose}
 					/>
 				</Box>
-
-				{/* ==================== GUESTS ==================== */}
+				{/* GUESTS */}
 				<Box
 					ref={guestRef}
 					sx={{
 						gridArea: { xs: "dates-guests", sm: "guests", md: "guests" },
-						p: 1.5,
+						borderRight: { md: "1px solid" },
+						borderRightColor: { md: "grey.300" },
 						borderTop: { xs: "1px solid", xsColor: "grey.300" },
-						borderLeft: { md: "1px solid", mdColor: "grey.300" },
-						bgcolor: { md: "background.default" },
 					}}
 				>
 					<Button
@@ -243,26 +270,31 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 							justifyContent: "flex-start",
 							textTransform: "none",
 							height: "100%",
-							color: "text.primary",
+							minHeight: 72,
+							py: 2,
+							px: 3,
+							borderRadius: 0,
+							bgcolor: "transparent",
 							"&:hover": { bgcolor: "action.hover" },
 						}}
 					>
-						<User size={24} style={{ marginRight: 12 }} />
+						<User size={24} style={{ marginRight: 16, opacity: 0.7 }} />
 						<Box textAlign="left" flexGrow={1}>
-							<Typography variant="caption" fontWeight={700} display="block">
-								Guests
+							<Typography variant="caption" fontWeight={700} color="text.secondary" display="block">
+								Who
 							</Typography>
-							<Typography variant="body2">
-								{guests.adults} adults · {guests.children} children · {guests.rooms} room
-								{guests.rooms > 1 && "s"}
+							<Typography variant="body1" fontWeight={600}>
+								{guests.adults + guests.children} guest{guests.adults + guests.children !== 1 && "s"}
+								{guests.rooms > 1 && ` · ${guests.rooms} rooms`}
 							</Typography>
 						</Box>
-						<ChevronDown size={16} />
+						<ChevronDown size={20} />
 					</Button>
 
 					<GuestMenu
+						key={`guests-${sticky}`}
 						open={isGuestMenuOpen}
-						anchorEl={guestRef.current}
+						anchorEl={guestRef?.current ?? null}
 						guests={guests}
 						hasPets={hasPets}
 						onGuestsChange={setGuests}
@@ -270,14 +302,8 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						onClose={() => setIsGuestMenuOpen(false)}
 					/>
 				</Box>
-
-				{/* ==================== SEARCH BUTTON ==================== */}
-				<Box
-					sx={{
-						gridArea: "search",
-						p: { xs: 1, md: 1.5 },
-					}}
-				>
+				{/* SEARCH BUTTON */}
+				<Box sx={{ gridArea: "search" }}>
 					<Button
 						fullWidth
 						variant="contained"
@@ -286,19 +312,17 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						startIcon={<Search />}
 						sx={{
 							height: "100%",
-							borderRadius: { xs: 3, md: 0 },
+							minHeight: 72,
+							borderRadius: { xs: 4, md: 0 },
 							fontWeight: 700,
 							fontSize: "1.1rem",
-							boxShadow: 4,
-							"&:hover": { boxShadow: 8 },
+							boxShadow: sticky ? 6 : 0,
 						}}
 					>
 						Search
 					</Button>
 				</Box>
 			</Paper>
-
-			{sticky && <Box sx={{ height: 100 }} />}
 		</Box>
 	);
 };

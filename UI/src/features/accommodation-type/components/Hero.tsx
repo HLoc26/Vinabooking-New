@@ -26,10 +26,10 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 	const { query, setQuery } = useLocationSearch();
 	const [openLocation, setOpenLocation] = useState(false);
 
-	const locationRef = useRef<HTMLDivElement>(null);
-	const dateRef = useRef<HTMLDivElement>(null);
-	const guestRef = useRef<HTMLDivElement>(null);
-	const searchRef = useRef<HTMLDivElement>(null);
+	const locationRef = useRef<HTMLDivElement>(null!);
+	const dateRef = useRef<HTMLDivElement>(null!);
+	const guestRef = useRef<HTMLDivElement>(null!);
+	const searchRef = useRef<HTMLDivElement>(null!);
 
 	const [sticky, setSticky] = useState(false);
 	const [originalTop, setOriginalTop] = useState(0);
