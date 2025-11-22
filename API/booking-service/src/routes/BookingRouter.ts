@@ -4,7 +4,7 @@ import BookingController from "../controllers/BookingController";
 import BookingRepository from "../repositories/BookingRepository";
 import BookingService from "../services/BookingService";
 import { AuthMiddleware } from "../middleware/AuthMiddleware";
-import { AuthenticatedRequest } from "../types/Request";
+import { AuthenticatedRequest, ConfirmRequest } from "../types/Request";
 import accommodationClient from "../clients/AccommodationServiceClient";
 
 class BookingRouterFactory {
@@ -62,7 +62,9 @@ class BookingRouter {
 		this.router.post("/draft", (req, res: Response) => {
 			return this.bookingController.createDraftBooking(req as AuthenticatedRequest, res);
 		});
+		this.router.post("/confirm", (req, res: Response) => {
+			return this.bookingController.confirmBooking(req as ConfirmRequest, res);
+		});
 	}
 }
-
 export default BookingRouterFactory;

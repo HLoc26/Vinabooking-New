@@ -2,7 +2,7 @@ import BookingRepository from "../repositories/BookingRepository";
 import NotFoundError from "../errors/NotFoundError";
 
 export default class BookingService {
-	constructor(private readonly bookingRepository: BookingRepository) {}
+	constructor(private readonly bookingRepository: BookingRepository) { }
 
 	public async getBookingById(id: string) {
 		const booking = await this.bookingRepository.findById(id);

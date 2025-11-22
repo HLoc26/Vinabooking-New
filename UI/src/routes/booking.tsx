@@ -1,0 +1,10 @@
+import { Routes, Route } from "react-router-dom";
+import BookingPreviewPage from "../features/booking/pages/BookingPreviewPage";
+import CheckoutPage from "../features/booking/pages/CheckoutPage";
+
+export const BookingRouter = () => (
+	<Routes>
+		<Route path="/" element={<BookingPreviewPage />} />
+		<Route path="/checkout" element={<CheckoutPage />} />
+	</Routes>
+);
