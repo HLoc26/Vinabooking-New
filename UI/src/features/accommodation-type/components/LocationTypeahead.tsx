@@ -1,31 +1,47 @@
 // src/components/LocationTypeahead.tsx
-import React, { useEffect, useRef } from "react";
+import React, { useEffect } from "react";
+import ReactDOM from "react-dom";
 import { Box, Paper, List, ListItemText, ListItemButton, CircularProgress } from "@mui/material";
-import { useLocationSearch } from "../contexts/LocationSearchContext";
+import { useLocationSearch, type Location } from "../contexts/LocationSearchContext";
 
-interface Props {
-	onSelect: (location: any) => void;
+export interface Props {
+	onSelect: (location: Location) => void;
 	open: boolean;
+	anchorEl: React.RefObject<HTMLDivElement>;
 }
 
-export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
+export const LocationTypeahead: React.FC<Props> = ({ onSelect, open, anchorEl }) => {
 	const { query, results, searchLocations, loading } = useLocationSearch();
-	const containerRef = useRef<HTMLDivElement>(null);
 
+	// Fetch results when opened or when query changes
 	useEffect(() => {
-		if (open) searchLocations();
+		if (open && query.trim().length > 0) searchLocations();
 	}, [open, query]);
 
-	if (!open) return null;
+	// If menu is closed or no anchor element → render nothing
+	if (!open || !anchorEl?.current) return null;
 
-	return (
-		<Box ref={containerRef} sx={{ position: "absolute", top: "100%", left: 0, right: 0, zIndex: 999 }}>
+	const rect = anchorEl.current.getBoundingClientRect();
+
+	// Don't render anything if user didn't type
+	if (query.trim().length === 0) return null;
+
+	return ReactDOM.createPortal(
+		<Box
+			sx={{
+				position: "absolute",
+				top: rect.bottom + window.scrollY,
+				left: rect.left + window.scrollX,
+				width: rect.width,
+				zIndex: 2000,
+			}}
+		>
 			<Paper elevation={4}>
 				{loading ? (
 					<Box sx={{ p: 2, display: "flex", justifyContent: "center" }}>
 						<CircularProgress size={24} />
 					</Box>
-				) : results.length ? (
+				) : results?.length > 0 ? (
 					<List>
 						{results.map((loc) => (
 							<ListItemButton key={loc.id} onClick={() => onSelect(loc)}>
@@ -37,6 +53,7 @@ export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
 					<Box sx={{ p: 2, textAlign: "center" }}>No results</Box>
 				)}
 			</Paper>
-		</Box>
+		</Box>,
+		document.body
 	);
 };

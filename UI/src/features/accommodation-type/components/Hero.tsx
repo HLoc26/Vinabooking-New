@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack } from "@mui/material";
 import { Calendar, User, Minus, Plus, ChevronDown, ChevronRight, ChevronLeft, Search } from "lucide-react";
 import { EAccommodationType } from "../../../types/acommodation";
-import type { DateRange } from "../services/types/DateRange";
+import type { DateRange } from "../types/DateRange";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
 import { LocationTypeahead } from "./LocationTypeahead";
 import { useLocationSearch } from "../contexts/LocationSearchContext";
@@ -178,6 +178,7 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 		const checkOutStr = dateRange.checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric" });
 		return `${checkInStr} — ${checkOutStr}`;
 	};
+	const inputRef = useRef<HTMLDivElement>(null);
 
 	/* -------- Calendar Navigation (2 months only) -------- */
 	const today = new Date();
@@ -326,13 +327,12 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 			</Box>
 
 			{/* Search Bar */}
-			{/* Search Bar */}
 			<Box
 				ref={searchRef}
 				sx={{
 					width: "100%",
 					px: 2,
-					zIndex: 10,
+					zIndex: 50,
 					position: sticky ? "fixed" : "relative",
 					top: sticky ? 10 : "auto",
 					left: 0,
@@ -347,22 +347,31 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 					sx={{
 						display: "flex",
 						flexDirection: { xs: "column", lg: "row" },
+						alignItems: "stretch", // ⭐ keeps heights consistent
 						borderRadius: 2,
-						overflow: "hidden",
+						overflow: "visible",
+						minHeight: { lg: 72 }, // ⭐ stabilizes the fixed mode
 					}}
 				>
 					{/* Destination */}
-					<Box position="relative">
+					<Box
+						position="relative"
+						ref={inputRef}
+						sx={{
+							flex: 2, // ⭐ makes width behave normally
+							minWidth: { xs: "100%", lg: 260 }, // ⭐ fixes weird shrinking
+						}}
+					>
 						<TextField fullWidth placeholder="Where are you going?" variant="outlined" value={query} onChange={(e) => setQuery(e.target.value)} onFocus={() => setOpen(true)} />
 						<LocationTypeahead
 							open={open}
+							anchorEl={inputRef} // <-- Required
 							onSelect={(loc) => {
-								setQuery(loc.name);
+								setQuery(loc.name ?? "");
 								setOpen(false);
 							}}
 						/>
 					</Box>
-
 					{/* Date Picker */}
 					<Box flex={1} p={1} ref={dateRef}>
 						<Button fullWidth onClick={handleDateMenuOpen} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
