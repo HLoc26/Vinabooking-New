@@ -7,6 +7,8 @@ import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
 import AuthContextProvider from "./context/AuthContext/provider.tsx";
 import UserContextProvider from "./context/UserContext/provider.tsx";
+import ModalProvider from "./context/ModalContext/provider.tsx";
+import { BrowserRouter } from "react-router-dom";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
@@ -14,8 +16,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 			<PushNotificationProvider>
 				<AuthContextProvider>
 					<UserContextProvider>
-						<CssBaseline />
-						<App />
+						<BrowserRouter>
+							<ModalProvider>
+								<CssBaseline />
+								<App />
+							</ModalProvider>
+						</BrowserRouter>
 					</UserContextProvider>
 				</AuthContextProvider>
 			</PushNotificationProvider>
