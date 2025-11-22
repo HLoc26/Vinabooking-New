@@ -1,11 +1,12 @@
 // src/context/LocationSearchContext.tsx
 import React, { createContext, useContext, useState } from "react";
 import axios from "axios";
+import type { EAccommodationType } from "../../../types/acommodation";
 
-interface Location {
+export interface Location {
 	id: string;
 	name: string;
-	type: "city" | "hotel" | "airport";
+	type: EAccommodationType;
 }
 
 interface LocationSearchContextType {
@@ -28,8 +29,10 @@ export const LocationSearchProvider: React.FC<{ children: React.ReactNode }> = (
 		if (!searchTerm) return setResults([]);
 		setLoading(true);
 		try {
-			const { data } = await axios.get(`/api/locations/search?q=${encodeURIComponent(searchTerm)}`);
-			setResults(data); // data should be an array of Location
+			const { data } = await axios.get(`http://localhost:3000/accommodations/search`, { params: { keyword: encodeURIComponent(searchTerm) } });
+			console.log(searchTerm);
+			console.log("API response:", data);
+			setResults(data.data.data); // data should be an array of Location
 		} catch (err) {
 			console.error(err);
 			setResults([]);

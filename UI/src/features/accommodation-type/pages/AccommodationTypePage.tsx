@@ -6,10 +6,9 @@ import HorizontalList from "../components/HorizontalList";
 import { CityCard } from "../components/CityCard";
 import { PropertyCard } from "../components/PropertyCard";
 import { EAccommodationType } from "../../../types/acommodation";
-import type { City } from "../services/types/City";
-import type { Property } from "../services/types/Property";
+import type { City } from "../types/City";
+import type { Property } from "../types/Property";
 import { useScrollToTopOnMount } from "../hooks/useScrollToTopOnMount";
-import { SearchProvider } from "../contexts/SearchContext";
 import { LocationSearchProvider } from "../contexts/LocationSearchContext";
 
 import { ACCOMMODATION_LABELS, CITY_NAMES } from "../constants/Const";
