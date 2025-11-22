@@ -119,7 +119,8 @@ export default class BookingController {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);
 		}
-    
+	}
+
 	public async confirmBooking(req: ConfirmRequest, res: Response<ApiResponse<BookingResponse>>) {
 		try {
 			const { id } = req.body;
