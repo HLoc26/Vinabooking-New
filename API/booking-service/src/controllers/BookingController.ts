@@ -15,23 +15,23 @@ export default class BookingController {
 		private readonly bookingRepository: BookingRepository
 	) {}
 	// public async getBookingById(req: Request, res: Response<ApiResponse>) {
-	//     try {
-	//         const { id } = req.params;
-	//         const booking = await this.bookingService.getBookingById(id);
-	//         return ResponseHelper.success(res, { booking });
-	//     } catch (err: any) {
-	//         return ResponseHelper.error(res, err.message);
-	//     }
+	//	 try {
+	//		 const { id } = req.params;
+	//		 const booking = await this.bookingService.getBookingById(id);
+	//		 return ResponseHelper.success(res, { booking });
+	//	 } catch (err: any) {
+	//		 return ResponseHelper.error(res, err.message);
+	//	 }
 	// }
 
 	// public async getBookingsByUserId(req: Request, res: Response<ApiResponse>) {
-	//     try {
-	//         const { userId } = req.params;
-	//         const bookings = await this.bookingService.getBookingsByUserId(userId);
-	//         return ResponseHelper.success(res, { bookings });
-	//     } catch (err: any) {
-	//         return ResponseHelper.error(res, err.message);
-	//     }
+	//	 try {
+	//		 const { userId } = req.params;
+	//		 const bookings = await this.bookingService.getBookingsByUserId(userId);
+	//		 return ResponseHelper.success(res, { bookings });
+	//	 } catch (err: any) {
+	//		 return ResponseHelper.error(res, err.message);
+	//	 }
 	// }
 	public async getBookings(req: Request, res: Response<ApiResponse<BookingResponse | BookingResponse[]>>) {
 		const { entity, id } = req.query;
@@ -45,8 +45,8 @@ export default class BookingController {
 
 			switch (entity) {
 				// case "accommodation":
-				//     bookings = await AccommodationServiceClient.getAccommodationsByRoomId(String(id));
-				//     break;
+				//	 bookings = await AccommodationServiceClient.getAccommodationsByRoomId(String(id));
+				//	 break;
 				case "user":
 					bookings = await this.bookingService.getBookingsByUserId(String(id));
 					break;
@@ -87,7 +87,6 @@ export default class BookingController {
 			return ResponseHelper.error(res, e.message);
 		}
 	}
-
 	public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
 		try {
 			const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)) };
@@ -98,6 +97,29 @@ export default class BookingController {
 			return ResponseHelper.error(res, e.message);
 		}
 	}
+	public async getBookingSummary(req: Request, res: Response) {
+		try {
+			const { roomIds, startDate, endDate } = req.body;
+			if (!roomIds || !Array.isArray(roomIds) || !startDate || !endDate) {
+				return ResponseHelper.error(res, "Invalid request body");
+			}
+
+			const start = new Date(startDate);
+			const end = new Date(endDate);
+
+			const counts = await this.bookingRepository.countBookedRooms(roomIds, start, end);
+
+			const data = roomIds.map((roomId) => ({
+				roomId,
+				bookedCount: counts[roomId] ?? 0,
+			}));
+
+			return ResponseHelper.success(res, data);
+		} catch (err: unknown) {
+			const e = err as Error;
+			return ResponseHelper.error(res, e.message);
+		}
+    
 	public async confirmBooking(req: ConfirmRequest, res: Response<ApiResponse<BookingResponse>>) {
 		try {
 			const { id } = req.body;
@@ -186,7 +208,7 @@ export default class BookingController {
 
 			// 7. Return to FE
 			return ResponseHelper.success(res, booking);
-		} catch (err) {
+		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);
 		}
