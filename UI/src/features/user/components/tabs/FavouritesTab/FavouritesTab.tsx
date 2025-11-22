@@ -3,7 +3,6 @@ import FavouriteDetailView from "./FavouriteDetailView";
 import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import FolderCard from "./FolderCard";
 import useUserFavouriteList from "../../../../../hooks/useUserFavouriteList";
-import useUserProfileInfo from "../../../../../hooks/useUserProfileInfo";
 import type { FavouriteList } from "../../../../../types/FavouriteList";
 import { CreateNewFolderOutlined } from "@mui/icons-material";
 import CreateFavouriteListModal from "./CreateFavouriteListModal";
@@ -35,9 +34,7 @@ const FavouritesTabSkeleton = (
 const FavouritesTab: React.FC = () => {
 	const [selected, setSelected] = useState<FavouriteList | null>(null);
 
-	const { userInfo } = useUserProfileInfo();
-
-	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList } = useUserFavouriteList(userInfo?.id ?? "");
+	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList } = useUserFavouriteList();
 
 	const { openModal } = useModalContext();
 

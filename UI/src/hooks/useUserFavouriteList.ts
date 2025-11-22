@@ -4,9 +4,14 @@ import favouriteApi from "../services/favouriteApi";
 import { usePushNotificationContext } from "../context/PushNotification/hook";
 import { AxiosError, type AxiosResponse } from "axios";
 import type { ApiResponse } from "../types/Response";
+import useUserContextProvider from "../context/UserContext/hook";
 
-const useUserFavouriteList = (userId: string) => {
-	const [favouriteLists, setFavouriteList] = useState<FavouriteList[] | null>(null);
+const useUserFavouriteList = () => {
+	const { userInfo } = useUserContextProvider();
+
+	const userId = userInfo?.id;
+
+	const [favouriteLists, setFavouriteList] = useState<FavouriteList[]>([]);
 	const [loading, setLoading] = useState<boolean>(false);
 	const { pushNotification } = usePushNotificationContext();
 
