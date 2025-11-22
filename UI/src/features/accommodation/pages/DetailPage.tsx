@@ -1,9 +1,12 @@
-import { useState, useMemo } from "react";
+import { useState, useMemo, useEffect } from "react";
 import { useParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard, ImageGalleryDialog } from "../components/detail";
+import useUserFavourites from "../../../hooks/useUserFavouriteList";
+import useModalContext from "../../../context/ModalContext/hook";
+import FavouritePickerModal from "../../user/components/FavouritePickerModal";
 
 export default function DetailPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
@@ -11,6 +14,18 @@ export default function DetailPage() {
 
 	const [openGallery, setOpenGallery] = useState(false);
 	const [isFavorite, setIsFavorite] = useState(false);
+
+	const { favouriteLists, handleAddToFavourite, handleRemoveFromFavourite } = useUserFavourites();
+	useEffect(() => {
+		const isFav = favouriteLists && favouriteLists.map((l) => l.items.find((i) => i.accommodationId === accommodationId));
+
+		if (isFav) {
+			setIsFavorite(true);
+		} else setIsFavorite(false);
+	}, [accommodationId, favouriteLists]);
+
+	const { openModal } = useModalContext();
+
 	const [tabValue, setTabValue] = useState(0);
 
 	const [roomQuantities, setRoomQuantities] = useState<Record<string, number>>({});
@@ -37,6 +52,10 @@ export default function DetailPage() {
 		setRoomQuantities((prev) => ({ ...prev, [roomId]: qty }));
 	};
 
+	const handleToggleFavourite = () => {
+		openModal(<FavouritePickerModal accommodationId={accommodationId ?? ""} onAdd={handleAddToFavourite} onRemove={handleRemoveFromFavourite} />);
+	};
+
 	if (loading) {
 		return (
 			<Box
@@ -55,7 +74,7 @@ export default function DetailPage() {
 	if (error || !accommodation) {
 		return (
 			<Typography variant="h5" color="error" textAlign="center" sx={{ mt: 8 }}>
-				{error || "Không tìm thấy chỗ ở này"}
+				{error || "Accommodation not found"}
 			</Typography>
 		);
 	}
@@ -68,7 +87,7 @@ export default function DetailPage() {
 				<Grid container spacing={4} sx={{ mt: 3 }}>
 					{/* Cột trái – thông tin chính */}
 					<Grid size={{ xs: 12, md: 8 }}>
-						<PropertyHeader accommodation={accommodation} isFavorite={isFavorite} onToggleFavorite={() => setIsFavorite(!isFavorite)} />
+						<PropertyHeader accommodation={accommodation} isFavorite={isFavorite} onToggleFavorite={handleToggleFavourite} />
 
 						<DetailTabs tabValue={tabValue} onChange={setTabValue} accommodation={accommodation} roomQuantities={roomQuantities} onRoomQuantityChange={handleRoomQuantityChange} />
 					</Grid>
