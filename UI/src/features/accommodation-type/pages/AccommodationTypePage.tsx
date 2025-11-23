@@ -9,7 +9,7 @@ import { EAccommodationType } from "../../../types/acommodation";
 import type { City } from "../types/City";
 import type { Property } from "../types/Property";
 import { useScrollToTopOnMount } from "../hooks/useScrollToTopOnMount";
-import { LocationSearchProvider } from "../contexts/LocationSearchContext";
+import { LocationSearchProvider } from "../../../context/SearchContext/Index";
 
 import { ACCOMMODATION_LABELS, CITY_NAMES } from "../constants/Const";
 

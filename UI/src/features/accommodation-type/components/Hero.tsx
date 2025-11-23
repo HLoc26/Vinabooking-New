@@ -1,10 +1,10 @@
-// Hero.tsx  ← This file should be simple and clean
+// Hero.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import { EAccommodationType } from "../../../types/acommodation";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
-import { useLocationSearch } from "../contexts/LocationSearchContext";
-import { HeroSearchBar } from "./HeroSearchBar"; // same folder
+import { useLocationSearch } from "../../../context/SearchContext/Index";
+import { HeroSearchBar } from "./HeroSearchBar";
 import type { DateRange } from "../types/DateRange";
 import type { Guests } from "../types/Guest";
 
@@ -14,16 +14,15 @@ interface HeroProps {
 }
 
 export const Hero: React.FC<HeroProps> = ({ currentType }) => {
-	// All state stays here
+	const { query, updateQuery } = useLocationSearch();
+
+	// Local state for UI
 	const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0, rooms: 1 });
-	const [hasPets, setHasPets] = useState(false);
 	const [dateRange, setDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
 	const [tempDateRange, setTempDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
 	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
 	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
 	const [monthOffset, setMonthOffset] = useState(0);
-
-	const { query, setQuery } = useLocationSearch();
 	const [openLocation, setOpenLocation] = useState(false);
 
 	const locationRef = useRef<HTMLDivElement>(null!);
@@ -32,26 +31,44 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 	const searchRef = useRef<HTMLDivElement>(null!);
 
 	const [sticky, setSticky] = useState(false);
-	const [originalTop, setOriginalTop] = useState(0);
 
-	// scroll logic...
+	// Sync local state to context when changed
 	useEffect(() => {
-		if (searchRef.current && originalTop === 0) {
-			const rect = searchRef.current.getBoundingClientRect();
-			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-			setOriginalTop(rect.top + scrollTop);
-		}
-	}, [originalTop]);
+		updateQuery({
+			adults: guests.adults,
+			children: guests.children,
+			rooms: guests.rooms,
+		});
+	}, [guests, updateQuery]);
 
 	useEffect(() => {
-		const handleScroll = () => {
-			if (!searchRef.current || originalTop === 0) return;
-			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-			setSticky(scrollTop > originalTop - 80);
-		};
-		window.addEventListener("scroll", handleScroll);
-		return () => window.removeEventListener("scroll", handleScroll);
-	}, [originalTop]);
+		updateQuery({
+			checkIn: dateRange.checkIn || undefined,
+			checkOut: dateRange.checkOut || undefined,
+		});
+	}, [dateRange, updateQuery]);
+
+	useEffect(() => {
+		updateQuery({ type: currentType });
+	}, [currentType, updateQuery]);
+
+	// Sticky scroll logic
+	useEffect(() => {
+		if (!searchRef.current) return;
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				setSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+			},
+			{
+				threshold: 0,
+				rootMargin: "-80px 0px 0px 0px",
+			}
+		);
+
+		observer.observe(searchRef.current);
+		return () => observer.disconnect();
+	}, []);
 
 	return (
 		<Box position="relative" sx={{ minHeight: { xs: 650, lg: 750 }, display: "flex", flexDirection: "column" }}>
@@ -101,12 +118,11 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 				</Typography>
 			</Box>
 
-			{/* Pass everything down to HeroSearchBar */}
 			<HeroSearchBar
 				searchRef={searchRef}
 				sticky={sticky}
-				query={query}
-				setQuery={setQuery}
+				keyword={query.keyword}
+				setKeyword={(keyword) => updateQuery({ keyword })}
 				openLocation={openLocation}
 				setOpenLocation={setOpenLocation}
 				locationRef={locationRef}
@@ -122,8 +138,6 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 				setMonthOffset={setMonthOffset}
 				guests={guests}
 				setGuests={setGuests}
-				hasPets={hasPets}
-				setHasPets={setHasPets}
 				isGuestMenuOpen={isGuestMenuOpen}
 				setIsGuestMenuOpen={setIsGuestMenuOpen}
 			/>

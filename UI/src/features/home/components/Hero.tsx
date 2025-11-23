@@ -1,6 +1,14 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Divider, Switch, Stack } from "@mui/material";
-import { Search, Calendar, User, Minus, Plus, BedDouble, ChevronDown, ChevronLeft, ChevronRight } from "lucide-react";
+import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Stack } from "@mui/material";
+import SearchIcon from "@mui/icons-material/Search";
+import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
+import PersonIcon from "@mui/icons-material/Person";
+import RemoveIcon from "@mui/icons-material/Remove";
+import AddIcon from "@mui/icons-material/Add";
+import BedIcon from "@mui/icons-material/Bed";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
+import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 
 interface CounterProps {
 	label: string;
@@ -9,7 +17,7 @@ interface CounterProps {
 	min?: number;
 }
 
-interface DateRange {
+export interface DateRange {
 	checkIn: Date | null;
 	checkOut: Date | null;
 }
@@ -19,11 +27,11 @@ const Counter: React.FC<CounterProps> = ({ label, value, onChange, min = 0 }) =>
 		<Typography variant="body1">{label}</Typography>
 		<Stack direction="row" spacing={1} alignItems="center">
 			<IconButton size="small" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min}>
-				<Minus size={16} />
+				<RemoveIcon fontSize="small" />
 			</IconButton>
 			<Typography>{value}</Typography>
 			<IconButton size="small" onClick={() => onChange(value + 1)}>
-				<Plus size={16} />
+				<AddIcon fontSize="small" />
 			</IconButton>
 		</Stack>
 	</Stack>
@@ -130,7 +138,6 @@ export const Hero: React.FC = () => {
 	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
 
 	const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
-	const [hasPets, setHasPets] = useState(false);
 
 	const [dateRange, setDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
 	const [tempDateRange, setTempDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
@@ -257,7 +264,7 @@ export const Hero: React.FC = () => {
 					left: 0,
 					right: 0,
 					mx: "auto",
-					maxWidth: 1200,
+					maxWidth: 2000,
 					transition: "top 0.2s ease",
 				}}
 			>
@@ -277,7 +284,7 @@ export const Hero: React.FC = () => {
 							placeholder="Where are you going?"
 							variant="outlined"
 							InputProps={{
-								startAdornment: <BedDouble size={24} style={{ marginRight: 8 }} />,
+								startAdornment: <BedIcon sx={{ mr: 1 }} />,
 							}}
 						/>
 					</Box>
@@ -285,7 +292,7 @@ export const Hero: React.FC = () => {
 					{/* Date Picker */}
 					<Box flex={1} p={1} ref={dateRef}>
 						<Button fullWidth onClick={handleDateMenuOpen} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
-							<Calendar size={24} style={{ marginRight: 8 }} />
+							<CalendarMonthIcon sx={{ mr: 1 }} />
 							<Box textAlign="left">
 								<Typography variant="caption" fontWeight={700}>
 									Check-in — Check-out
@@ -305,13 +312,13 @@ export const Hero: React.FC = () => {
 							{/* Month Navigation Header */}
 							<Box display="flex" justifyContent="space-between" alignItems="center" px={2} py={1}>
 								<IconButton onClick={handlePrev} disabled={monthOffset === 0}>
-									<ChevronLeft />
+									<ChevronLeftIcon />
 								</IconButton>
 
 								<Typography fontWeight={700}>Select Dates</Typography>
 
 								<IconButton onClick={handleNext}>
-									<ChevronRight />
+									<ChevronRightIcon />
 								</IconButton>
 							</Box>
 
@@ -339,7 +346,8 @@ export const Hero: React.FC = () => {
 					{/* Guests Picker */}
 					<Box flex={1} p={1} ref={guestRef}>
 						<Button fullWidth onClick={() => setIsGuestMenuOpen(!isGuestMenuOpen)} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
-							<User size={24} style={{ marginRight: 8 }} />
+							<PersonIcon sx={{ mr: 1 }} />
+							<ExpandMoreIcon fontSize="small" />
 							<Box textAlign="left" flexGrow={1}>
 								<Typography variant="caption" fontWeight={700}>
 									Guests
@@ -348,7 +356,7 @@ export const Hero: React.FC = () => {
 									{guests.adults} adults · {guests.children} children · {guests.rooms} room
 								</Typography>
 							</Box>
-							<ChevronDown size={16} />
+							<ExpandMoreIcon />
 						</Button>
 
 						<Menu
@@ -363,20 +371,13 @@ export const Hero: React.FC = () => {
 								<Counter label="Adults" value={guests.adults} onChange={(v) => setGuests({ ...guests, adults: v })} min={1} />
 								<Counter label="Children" value={guests.children} onChange={(v) => setGuests({ ...guests, children: v })} />
 								<Counter label="Rooms" value={guests.rooms} onChange={(v) => setGuests({ ...guests, rooms: v })} min={1} />
-
-								<Divider sx={{ my: 1 }} />
-
-								<Stack direction="row" alignItems="center" justifyContent="space-between">
-									<Typography>Traveling with pets?</Typography>
-									<Switch checked={hasPets} onChange={() => setHasPets(!hasPets)} />
-								</Stack>
 							</Box>
 						</Menu>
 					</Box>
 
 					{/* Search Button */}
 					<Box p={1}>
-						<Button fullWidth variant="contained" color="warning" startIcon={<Search />} sx={{ height: "100%" }}>
+						<Button fullWidth variant="contained" color="warning" startIcon={<SearchIcon />} sx={{ height: "100%" }}>
 							Search
 						</Button>
 					</Box>
