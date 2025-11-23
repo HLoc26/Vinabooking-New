@@ -15,9 +15,17 @@ interface CalendarMonthProps {
 	label: string;
 	tempDateRange: DateRange;
 	onDateClick: (date: Date) => void;
+	minDate?: Date; // Add this prop
 }
 
-export const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, tempDateRange, onDateClick }) => {
+export const CalendarMonth: React.FC<CalendarMonthProps> = ({
+	year,
+	month,
+	label,
+	tempDateRange,
+	onDateClick,
+	minDate, // Add this
+}) => {
 	const daysInMonth = getDaysInMonth(year, month);
 	const firstDay = getFirstDayOfMonth(year, month);
 	const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -37,6 +45,16 @@ export const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label
 		return date > checkIn && date < checkOut;
 	};
 
+	// Add this function to check if date is disabled
+	const isDisabled = (day: number) => {
+		if (!minDate) return false;
+		const date = new Date(year, month, day);
+		date.setHours(0, 0, 0, 0);
+		const min = new Date(minDate);
+		min.setHours(0, 0, 0, 0);
+		return date < min;
+	};
+
 	return (
 		<Box width={280} p={1}>
 			<Typography align="center" fontWeight={700} mb={2} variant="subtitle2">
@@ -53,28 +71,45 @@ export const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label
 				{blanks.map((_, i) => (
 					<Box key={`blank-${i}`} />
 				))}
-				{days.map((d) => (
-					<Button
-						key={d}
-						variant="text"
-						onClick={(e) => {
-							e.stopPropagation();
-							onDateClick(new Date(year, month, d));
-						}}
-						sx={{
-							borderRadius: "50%",
-							minWidth: 32,
-							height: 32,
-							p: 0,
-							fontSize: "0.85rem",
-							bgcolor: isSelected(d) ? "primary.main" : isInRange(d) ? "primary.light" : "transparent",
-							color: isSelected(d) ? "white" : isInRange(d) ? "primary.contrastText" : "inherit",
-							"&:hover": { bgcolor: isSelected(d) ? "primary.dark" : "action.hover" },
-						}}
-					>
-						{d}
-					</Button>
-				))}
+				{days.map((d) => {
+					const disabled = isDisabled(d);
+					const selected = isSelected(d);
+					const inRange = isInRange(d);
+
+					return (
+						<Button
+							key={d}
+							variant="text"
+							disabled={disabled}
+							onClick={(e) => {
+								e.stopPropagation();
+								if (!disabled) {
+									onDateClick(new Date(year, month, d));
+								}
+							}}
+							sx={{
+								borderRadius: "50%",
+								minWidth: 32,
+								height: 32,
+								p: 0,
+								fontSize: "0.85rem",
+								bgcolor: selected ? "primary.main" : inRange ? "primary.light" : "transparent",
+								color: selected ? "white" : inRange ? "primary.contrastText" : disabled ? "text.disabled" : "inherit",
+								opacity: disabled ? 0.3 : 1,
+								cursor: disabled ? "not-allowed" : "pointer",
+								"&:hover": {
+									bgcolor: disabled ? "transparent" : selected ? "primary.dark" : "action.hover",
+								},
+								"&.Mui-disabled": {
+									color: "text.disabled",
+									opacity: 0.3,
+								},
+							}}
+						>
+							{d}
+						</Button>
+					);
+				})}
 			</Box>
 		</Box>
 	);

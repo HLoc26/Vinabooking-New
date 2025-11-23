@@ -1,6 +1,8 @@
 import React, { useState } from "react";
 import { Accordion, AccordionSummary, AccordionDetails, Typography, Container, Box } from "@mui/material";
-import { ChevronDown, ChevronUp, HelpCircle } from "lucide-react";
+import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
+import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
+import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { FAQS } from "../constants/FAQConst";
 
 interface FAQProps {
@@ -26,7 +28,7 @@ const FAQ: React.FC<FAQProps> = ({ items }) => {
 						mb: 5,
 					}}
 				>
-					<HelpCircle size={32} color="#f97316" style={{ marginRight: 12 }} />
+					<HelpOutlineIcon sx={{ fontSize: 32, color: "#f97316", mr: 1.5 }} />
 					<Typography variant="h4" fontWeight="bold" color="text.primary">
 						Frequently Asked Questions
 					</Typography>
@@ -48,11 +50,11 @@ const FAQ: React.FC<FAQProps> = ({ items }) => {
 								boxShadow: isOpen ? 4 : 1,
 								border: isOpen ? "1px solid #fdba74" : "1px solid #e5e7eb",
 								bgcolor: isOpen ? "rgba(251,146,60,0.1)" : "white",
-								"&:before": { display: "none" }, // remove accordion line
+								"&:before": { display: "none" },
 							}}
 						>
 							<AccordionSummary
-								expandIcon={isOpen ? <ChevronUp color="#f97316" /> : <ChevronDown color="#9ca3af" />}
+								expandIcon={isOpen ? <ExpandLessIcon sx={{ color: "#f97316" }} /> : <ExpandMoreIcon sx={{ color: "#9ca3af" }} />}
 								sx={{
 									px: 3,
 									py: 2,

@@ -1,7 +1,8 @@
 import React, { useRef } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
-import { ArrowRight, ArrowLeft } from "lucide-react";
 import { useAccommodationTypeNavigation } from "../hooks/useAccommodationTypeNavigation";
+import ArrowBackIcon from "@mui/icons-material/ArrowBack";
+import ArrowForwardIcon from "@mui/icons-material/ArrowForward";
 
 interface HorizontalListProps<T> {
 	title: string;
@@ -65,7 +66,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				{onSeeAll && (
 					<Button
 						onClick={onSeeAll}
-						endIcon={<ArrowRight />}
+						endIcon={<ArrowForwardIcon />}
 						sx={{
 							textTransform: "none",
 							color: "orange.600",
@@ -95,7 +96,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 						":hover": { bgcolor: "grey.100" },
 					}}
 				>
-					<ArrowLeft />
+					<ArrowBackIcon />
 				</IconButton>
 
 				{/* Scrollable content */}
@@ -139,11 +140,10 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 						":hover": { bgcolor: "grey.100" },
 					}}
 				>
-					<ArrowRight />
+					<ArrowForwardIcon />
 				</IconButton>
 			</Box>
 		</Box>
 	);
 };
-
 export default HorizontalList;

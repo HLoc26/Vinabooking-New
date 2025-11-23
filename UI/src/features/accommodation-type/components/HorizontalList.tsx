@@ -1,6 +1,6 @@
 import React, { useRef } from "react";
 import { Box, Typography, Button, IconButton } from "@mui/material";
-import { ArrowRight, ArrowLeft } from "lucide-react";
+import { ArrowBack, ArrowForward } from "@mui/icons-material";
 
 interface HorizontalListProps<T> {
 	title: string;
@@ -12,7 +12,7 @@ interface HorizontalListProps<T> {
 const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalListProps<T>) => {
 	const scrollRef = useRef<HTMLDivElement>(null);
 
-	// Mouse dragging logic
+	// Mouse drag logic
 	const isDown = useRef(false);
 	const startX = useRef(0);
 	const scrollLeft = useRef(0);
@@ -27,7 +27,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 		if (!isDown.current || !scrollRef.current) return;
 		e.preventDefault();
 		const x = e.pageX - scrollRef.current.offsetLeft;
-		const walk = (x - startX.current) * 1.5; // Drag speed multiplier
+		const walk = (x - startX.current) * 1.5;
 		scrollRef.current.scrollLeft = scrollLeft.current - walk;
 	};
 
@@ -60,7 +60,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				{onSeeAll && (
 					<Button
 						onClick={onSeeAll}
-						endIcon={<ArrowRight size={18} />}
+						endIcon={<ArrowForward sx={{ fontSize: 18 }} />}
 						sx={{
 							textTransform: "none",
 							color: "secondary.main",
@@ -73,7 +73,6 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				)}
 			</Box>
 
-			{/* Scroll Container Wrapper for Arrows */}
 			<Box sx={{ position: "relative" }}>
 				{/* Left Arrow */}
 				<IconButton
@@ -91,7 +90,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 						"&:hover": { bgcolor: "grey.100" },
 					}}
 				>
-					<ArrowLeft size={20} />
+					<ArrowBack sx={{ fontSize: 20 }} />
 				</IconButton>
 
 				{/* Scrollable content */}
@@ -136,7 +135,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 						"&:hover": { bgcolor: "grey.100" },
 					}}
 				>
-					<ArrowRight size={20} />
+					<ArrowForward sx={{ fontSize: 20 }} />
 				</IconButton>
 			</Box>
 		</Box>

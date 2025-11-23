@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, Box, Typography, Chip } from "@mui/material";
-import { MapPin } from "lucide-react";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 import type { CityData } from "../services/types/CityData";
 
 interface CityCardProps {
@@ -50,8 +50,17 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 					background: "linear-gradient(to top, rgba(0,0,0,0.8), rgba(0,0,0,0.2), transparent)",
 				}}
 			>
-				<Typography variant="h6" sx={{ color: "#fff", fontWeight: "bold", display: "flex", alignItems: "center", mb: 0.5 }}>
-					<MapPin size={18} color="#fb923c" style={{ marginRight: 6 }} />
+				<Typography
+					variant="h6"
+					sx={{
+						color: "#fff",
+						fontWeight: "bold",
+						display: "flex",
+						alignItems: "center",
+						mb: 0.5,
+					}}
+				>
+					<LocationOnIcon sx={{ fontSize: 18, color: "#fb923c", mr: 0.8 }} />
 					{data.name}
 				</Typography>
 
