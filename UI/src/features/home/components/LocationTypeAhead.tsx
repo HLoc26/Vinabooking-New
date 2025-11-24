@@ -41,7 +41,13 @@ export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
 				<List sx={{ p: 0 }}>
 					{results.map((loc) => (
 						<ListItemButton key={loc.id} onClick={() => onSelect(loc)}>
-							<ListItemText primary={loc.name} secondary={loc.type} />
+							<ListItemText
+								primary={loc.name}
+								secondary={
+									// Only show secondary if city or type exists
+									[loc.city, loc.type].filter(Boolean).join(" · ") || null
+								}
+							/>
 						</ListItemButton>
 					))}
 				</List>

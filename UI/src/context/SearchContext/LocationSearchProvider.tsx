@@ -49,7 +49,19 @@ export function LocationSearchProvider(props: LocationSearchProviderProps) {
 			});
 
 			console.log("API response:", data);
-			setResults(data.data?.data || data.data || []);
+			// Inside searchLocations() after you get the data
+			const rawResults = data.data?.data || data.data || [];
+
+			// Transform the API response into your Location format
+			const transformedResults: Location[] = rawResults.map((item: any) => ({
+				id: item.id,
+				name: item.name,
+				type: item.type, // HOTEL, APARTMENT, etc.
+				// This is the key: show city (or fallback to ward/street)
+				city: item.address?.city ? (item.address.city === "Hồ Chí Minh" ? "Ho Chi Minh City" : item.address.city) : undefined,
+			}));
+
+			setResults(transformedResults);
 		} catch (err) {
 			console.error("Location search failed:", err);
 			setResults([]);
