@@ -1,5 +1,5 @@
-import apiClient from "../../../services/apiClient";
-import { type AddAccommodationToFavouriteResponse, type ApiResponse } from "../../../types/Response";
+import apiClient from "../services/apiClient";
+import { type AddAccommodationToFavouriteResponse, type ApiResponse } from "../types/Response";
 import type { FavouriteList } from "../types/FavouriteList";
 
 const favouriteApi = {

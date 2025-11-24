@@ -2,11 +2,11 @@ import { useState } from "react";
 import FavouriteDetailView from "./FavouriteDetailView";
 import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import FolderCard from "./FolderCard";
-import useUserFavouriteList from "../../../hooks/useUserFavouriteList";
-import useUserProfileInfo from "../../../../../hooks/useUserProfileInfo";
-import type { FavouriteList } from "../../../types/FavouriteList";
+import useUserFavouriteList from "../../../../../hooks/useUserFavouriteList";
+import type { FavouriteList } from "../../../../../types/FavouriteList";
 import { CreateNewFolderOutlined } from "@mui/icons-material";
-import CreateFavouriteListModal from "../../../../../components/ui/CreateFavouriteListModal";
+import CreateFavouriteListModal from "./CreateFavouriteListModal";
+import useModalContext from "../../../../../context/ModalContext/hook";
 
 const FavouritesTabSkeleton = (
 	<Box sx={{ p: 4, bgcolor: "white", minHeight: "100vh" }}>
@@ -34,11 +34,13 @@ const FavouritesTabSkeleton = (
 const FavouritesTab: React.FC = () => {
 	const [selected, setSelected] = useState<FavouriteList | null>(null);
 
-	const { userInfo } = useUserProfileInfo();
+	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList } = useUserFavouriteList();
 
-	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList } = useUserFavouriteList(userInfo?.id ?? "");
+	const { openModal } = useModalContext();
 
-	const [openCreateModal, setOpenCreateModal] = useState(false);
+	const handleOpenCreateModal = () => {
+		openModal(<CreateFavouriteListModal onCreate={(name: string) => handleCreateFavouriteList(name)} loading={favListLoading} />);
+	};
 
 	if (!favouriteLists) {
 		return FavouritesTabSkeleton;
@@ -61,7 +63,7 @@ const FavouritesTab: React.FC = () => {
 						</Typography>
 					</Box>
 
-					<Button variant="contained" size="small" onClick={() => setOpenCreateModal(true)}>
+					<Button variant="contained" size="small" onClick={() => handleOpenCreateModal()}>
 						<Stack direction={"row"} spacing={1} alignItems={"center"}>
 							<CreateNewFolderOutlined />
 							<Typography variant="subtitle2">New List</Typography>
@@ -77,7 +79,6 @@ const FavouritesTab: React.FC = () => {
 					))}
 				</Grid>
 			</Box>
-			<CreateFavouriteListModal open={openCreateModal} onClose={() => setOpenCreateModal(false)} onCreate={handleCreateFavouriteList} loading={favListLoading} />
 		</Box>
 	);
 };

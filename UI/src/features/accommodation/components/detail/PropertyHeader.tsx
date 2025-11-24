@@ -1,5 +1,5 @@
 import { Paper, Box, Typography, Rating, Chip, IconButton } from "@mui/material";
-import { LocationOn, Favorite, FavoriteBorder, Share } from "@mui/icons-material";
+import { LocationOn, Share, StarRounded, StarOutlineRounded } from "@mui/icons-material";
 import type { AccommodationDetail } from "../../types/accommodation.types";
 
 interface Props {
@@ -41,7 +41,13 @@ export const PropertyHeader = ({ accommodation, isFavorite, onToggleFavorite, av
 				</Box>
 
 				<Box sx={{ display: "flex", gap: 1 }}>
-					<IconButton onClick={onToggleFavorite}>{isFavorite ? <Favorite color="error" /> : <FavoriteBorder />}</IconButton>
+					<IconButton
+						onClick={() => {
+							onToggleFavorite();
+						}}
+					>
+						{isFavorite ? <StarRounded sx={{ color: "gold" }} /> : <StarOutlineRounded />}
+					</IconButton>
 					<IconButton>
 						<Share />
 					</IconButton>
