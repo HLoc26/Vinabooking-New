@@ -1,4 +1,4 @@
-import type { User as UserSchema } from "../../generated/prisma/index.js";
+import type { User as UserSchema } from "../../generated/prisma/client";
 import User from "../classes/User";
 import { getRedisClient } from "../clients/RedisSingleton";
 import BadRequestError from "../errors/BadRequestError";
