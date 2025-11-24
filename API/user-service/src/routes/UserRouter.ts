@@ -4,6 +4,7 @@ import UserController from "../controllers/UserController";
 import type {
 	AuthenticatedAddAccommodationRequest,
 	AuthenticatedCreateFavouriteListRequest,
+	AuthenticatedDeleteFavouriteListRequest,
 	AuthenticatedRemoveAccommodationRequest,
 	FindUserByIdRequest,
 	FindUserRequest,
@@ -70,6 +71,10 @@ class UserRouter {
 
 		this.router.post("/favourites", authMiddleware, (req, res) => {
 			return this.favouriteController.createFavouriteList(req as AuthenticatedCreateFavouriteListRequest, res);
+		});
+
+		this.router.delete("/favourites", authMiddleware, (req, res) => {
+			return this.favouriteController.deleteFavouriteList(req as AuthenticatedDeleteFavouriteListRequest, res);
 		});
 	}
 }

@@ -80,6 +80,32 @@ class FavouriteRepository {
 
 		return result;
 	}
+
+	public async deleteFavouriteList(userId: string, listId: string) {
+		const list = await this.prismaClient.favouriteList.findUnique({
+			where: { id: listId },
+			include: { items: true },
+		});
+
+		if (!list) {
+			throw new Error("Favourite list not found");
+		}
+		if (list.ownerId !== userId) {
+			throw new Error("User does not own this list");
+		}
+
+		if (list.items.length > 0) {
+			await this.prismaClient.favouriteItem.deleteMany({
+				where: { listId },
+			});
+		}
+
+		const deletedList = await this.prismaClient.favouriteList.delete({
+			where: { id: listId },
+		});
+
+		return deletedList;
+	}
 }
 
 export default FavouriteRepository;

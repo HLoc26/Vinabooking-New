@@ -29,3 +29,7 @@ export interface RemoveAccommodationFromFavouriteResponse {
 }
 
 export type CreateFavouriteListResponse = FavouriteListWithItems;
+
+export interface DeleteFavouriteListResponse {
+	success: boolean;
+}
