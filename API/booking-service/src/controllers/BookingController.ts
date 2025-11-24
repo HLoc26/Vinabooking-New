@@ -8,6 +8,7 @@ import { BookingResponse } from "../types/Response";
 import { ConfirmationEmailData, EmailServiceClient } from "../clients/EmailServiceClient";
 import axios from "axios";
 import { AccommodationPayload } from "../types/Accommodation";
+import { CreateBookingInput } from "../types/Booking";
 
 export default class BookingController {
 	constructor(
@@ -73,7 +74,7 @@ export default class BookingController {
 				return ResponseHelper.error(res, "User not authenticated");
 			}
 
-			const bookingData = {
+			const bookingData: CreateBookingInput = {
 				...req.body,
 				userId, // attach authenticated user
 				status: "PENDING",
@@ -89,7 +90,11 @@ export default class BookingController {
 	}
 	public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingResponse>>) {
 		try {
-			const bookingData = { ...req.body, status: "DRAFT", referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)) };
+			const userId = req.user?.id; // comes from middleware
+			if (!userId) {
+				return ResponseHelper.error(res, "User not authenticated");
+			}
+			const bookingData: CreateBookingInput = { ...req.body, userId, status: "DRAFT", referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)) };
 			const newBooking = await this.bookingRepository.createBooking(bookingData);
 			return ResponseHelper.success(res, newBooking, 201);
 		} catch (err: unknown) {

@@ -8,11 +8,9 @@ interface Props {
 	tabValue: number;
 	onChange: (value: number) => void;
 	accommodation: AccommodationDetail;
-	roomQuantities: Record<string, number>;
-	onRoomQuantityChange: (roomId: string, qty: number) => void;
 }
 
-export const DetailTabs = ({ tabValue, onChange, accommodation, roomQuantities, onRoomQuantityChange }: Props) => {
+export const DetailTabs = ({ tabValue, onChange, accommodation }: Props) => {
 	return (
 		<>
 			<Paper sx={{ mb: 3 }}>
@@ -24,7 +22,7 @@ export const DetailTabs = ({ tabValue, onChange, accommodation, roomQuantities, 
 			</Paper>
 
 			{tabValue === 0 && <OverviewTab accommodation={accommodation} />}
-			{tabValue === 1 && <RoomsTab accommodation={accommodation} roomQuantities={roomQuantities} onRoomQuantityChange={onRoomQuantityChange} />}
+			{tabValue === 1 && <RoomsTab accommodation={accommodation} />}
 			{tabValue === 2 && <ReviewsTab />}
 		</>
 	);

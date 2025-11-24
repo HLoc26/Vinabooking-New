@@ -1,10 +1,11 @@
 import { Box, Button, Card, CardContent, Typography } from "@mui/material";
-import type { UserInfo } from "../services/types/UserInfo";
+import type { UserInfo } from "../types/UserInfo";
 import UserInfoItem from "./UserInfoItem";
 import { EmailOutlined, PersonOutline, PhoneOutlined } from "@mui/icons-material";
+import type { UserDto } from "../../../types/UserDto";
 
 type UserInfoPreviewCardProps = {
-	userInfo: UserInfo;
+	userInfo: UserDto;
 	isEditing: boolean;
 	handleToggleEdit: () => void;
 	handleUserInfoUpdate: (field: keyof UserInfo, value: string) => void;
