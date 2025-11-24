@@ -1,5 +1,5 @@
 import { PutObjectCommand } from "@aws-sdk/client-s3";
-import { EEntityType, EVariantType } from "../../generated/prisma/index.js";
+import { EEntityType, EVariantType } from "../../generated/prisma/client";
 import S3ClientSingleton from "../clients/S3Client";
 import { type ImageProcessingResultKey, type UploadResult, type UploadResultProperties } from "../types/Image";
 import { v4 as uuidv4 } from "uuid";

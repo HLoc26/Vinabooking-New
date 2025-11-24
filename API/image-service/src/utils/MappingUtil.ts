@@ -1,4 +1,4 @@
-import { EEntityType } from "../../generated/prisma";
+import { EEntityType } from "../../generated/prisma/client";
 
 import { EEntityType as GRPC_EEntityType } from "../../generated/grpc/image-service/image-service";
 
