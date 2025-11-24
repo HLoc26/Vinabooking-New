@@ -10,7 +10,7 @@
 		"skipLibCheck": true,
 		"baseUrl": ".",
 		"paths": {
-			"@prisma/client": ["generated/prisma"],
+			"@prisma/client": ["generated/prisma/client"],
 			"@src/*": ["src/*"]
 		}
 	},
