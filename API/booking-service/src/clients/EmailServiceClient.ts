@@ -1,7 +1,7 @@
 // src/clients/EmailServiceClient.ts
 import axios from "axios";
 import { AccommodationPayload, AccommodationImage, ImageVariant } from "../types/Accommodation";
-import { EItemType } from "../../generated/prisma";
+import { EItemType } from "../../generated/prisma/client";
 
 export interface ConfirmationEmailData {
 	to: string;
@@ -77,6 +77,7 @@ export class EmailServiceClient {
 
 		// build gallery HTML (skip primary if same as gallery first)
 
+		/* eslint-disable indent, max-len */
 		const html = `
       <!DOCTYPE html>
       <html lang="en">
@@ -137,7 +138,7 @@ export class EmailServiceClient {
                       ${roomType ? `<tr><td style="padding:8px 0; color:#7b7b7b;">Room type</td><td style="padding:8px 0; text-align:right;"><strong>${roomType}</strong></td></tr>` : ""}
                       ${guestCount ? `<tr><td style="padding:8px 0; color:#7b7b7b;">Guests</td><td style="padding:8px 0; text-align:right;"><strong>${guestCount}</strong></td></tr>` : ""}
                       ${nights ? `<tr><td style="padding:8px 0; color:#7b7b7b;">Nights</td><td style="padding:8px 0; text-align:right;"><strong>${nights}</strong></td></tr>` : ""}
-                      ${specialRequest ? `<tr><td style="padding:8px 0; color:#7b7b7b;">Special request</td><td style="padding:8px 0; text-align:right;"><strong>${specialRequest}</strong></td></tr>` : ""}
+                  ${specialRequest ? `<tr><td style="padding:8px 0; color:#7b7b7b;">Special request</td><td style="padding:8px 0; text-align:right;"><strong>${specialRequest}</strong></td></tr>` : ""}
                       ${totalCharge ? `<tr><td style="padding:8px 0; color:#7b7b7b;">Total charge</td><td style="padding:8px 0; text-align:right;"><strong>${totalCharge}</strong></td></tr>` : ""}
                     </table>
                   </td>
@@ -181,6 +182,7 @@ export class EmailServiceClient {
       </html>
     `;
 
+		/* eslint-enable indent, max-len */
 		// POST to email service (body shape: { to, subject, message, html })
 		await this.axiosInstance.post("/", { to, subject, message, html });
 	}
