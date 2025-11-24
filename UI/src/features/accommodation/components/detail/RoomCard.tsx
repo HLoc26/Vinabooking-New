@@ -61,7 +61,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 
 					<Box sx={{ textAlign: "right" }}>
 						<Typography variant="h4" fontWeight={700} color="primary.main" sx={{ lineHeight: 1.2 }}>
-							${price}
+							${price.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 						</Typography>
 						<Typography variant="caption" color="text.secondary" sx={{ fontSize: "0.75rem" }}>
 							per night

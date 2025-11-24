@@ -1,6 +1,10 @@
 import { Paper, Typography, TextField, Button, Box, Divider, Stack } from "@mui/material";
+import { ProtectedLink } from "../../../../components/ui/ProtectedLink";
+import { usePushNotificationContext } from "../../../../context/PushNotification/hook";
+import type { ItemInfo } from "../../../../types/BookingContextInfo";
 
 interface Props {
+	rooms: ItemInfo[];
 	nights: number;
 	totalPrice: number;
 	startDate: Date;
@@ -9,7 +13,8 @@ interface Props {
 	onEndDateChange: (date: Date) => void;
 }
 
-export const BookingCard = ({ nights, totalPrice, startDate, endDate, onStartDateChange, onEndDateChange }: Props) => {
+export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onStartDateChange, onEndDateChange }: Props) => {
+	const { pushNotification } = usePushNotificationContext();
 	return (
 		<Paper sx={{ p: 3, position: "sticky", top: 16, boxShadow: 3 }}>
 			<Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -20,7 +25,7 @@ export const BookingCard = ({ nights, totalPrice, startDate, endDate, onStartDat
 					Total for {nights} {nights === 1 ? "night" : "nights"}
 				</Typography>
 				<Typography variant="h4" fontWeight="bold" color="primary">
-					${totalPrice.toFixed(0)}
+					${totalPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
 				</Typography>
 			</Box>
 			<Divider sx={{ my: 2 }} />
@@ -29,7 +34,7 @@ export const BookingCard = ({ nights, totalPrice, startDate, endDate, onStartDat
 					label="Check-in"
 					type="date"
 					fullWidth
-					InputLabelProps={{ shrink: true }}
+					slotProps={{ inputLabel: { shrink: true } }}
 					value={startDate.toISOString().split("T")[0]}
 					onChange={(e) => onStartDateChange(new Date(e.target.value))}
 				/>
@@ -37,13 +42,19 @@ export const BookingCard = ({ nights, totalPrice, startDate, endDate, onStartDat
 					label="Check-out"
 					type="date"
 					fullWidth
-					InputLabelProps={{ shrink: true }}
+					slotProps={{ inputLabel: { shrink: true } }}
 					value={endDate.toISOString().split("T")[0]}
 					onChange={(e) => onEndDateChange(new Date(e.target.value))}
 				/>
-				<Button variant="contained" size="large" fullWidth>
-					Reserve Now
-				</Button>
+				<ProtectedLink //
+					to="/booking"
+					canNavigate={() => rooms.length > 0}
+					onFail={() => pushNotification("Please choose at least one room", "error")}
+				>
+					<Button variant="contained" size="large" fullWidth>
+						Reserve Now
+					</Button>
+				</ProtectedLink>
 			</Stack>
 			<Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2, textAlign: "center" }}>
 				✓ Free cancellation available

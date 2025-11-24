@@ -33,6 +33,7 @@ class BookingRouter {
 				success: true,
 			});
 		});
+		this.router.post("/booked-counts", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
 		this.router.use((req: Request, res: Response, next: NextFunction) => {
 			return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
 		});
