@@ -1,19 +1,19 @@
 {
-    "compilerOptions": {
-        "target": "ES2022",
-        "module": "CommonJS",
-        "rootDir": "./",
-        "outDir": "dist",
-        "esModuleInterop": true,
-        "forceConsistentCasingInFileNames": true,
-        "strict": true,
-        "skipLibCheck": true,
-        "baseUrl": ".",
-        "paths": {
-            "@prisma/client": ["generated/prisma"],
-            "@src/*": ["src/*"]
-        }
-    },
-    "include": ["src", "generated/grpc"],
-    "exclude": ["node_modules", "generated"]
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "CommonJS",
+		"rootDir": "./",
+		"outDir": "dist",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"baseUrl": ".",
+		"paths": {
+			"@prisma/client": ["generated/prisma"],
+			"@src/*": ["src/*"]
+		}
+	},
+	"include": ["src", "generated/grpc"],
+	"exclude": ["node_modules"]
 }
