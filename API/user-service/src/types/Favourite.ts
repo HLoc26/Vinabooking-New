@@ -3,6 +3,7 @@ import { type FavouriteList as FavouriteListSchema, type FavouriteItem as Favour
 export interface IFavouriteList {
 	id: string;
 	items: Array<IFavouriteItem>;
+	name: string;
 	createdAt?: Date;
 	updatedAt?: Date;
 }
