@@ -3,7 +3,7 @@ import type { CityData } from "../services/types/CityData";
 export const CITIES: CityData[] = [
 	{
 		id: "1",
-		name: "Da Lat",
+		name: "Lâm Đồng",
 		count: 1240,
 		imageUrl: "https://www.dalattrip.com/media/2012/10/Dalat-Vietnam-Dalat-central-lake.jpg",
 	},

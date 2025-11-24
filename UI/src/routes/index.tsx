@@ -1,7 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import { HomePage } from "../features/home/pages/Index";
-import { AcommodationTypePage } from "../features/accommodation-type/pages/AccommodationTypePage";
+import AcommodationTypePage from "../features/accommodation-type/pages/AccommodationTypePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";

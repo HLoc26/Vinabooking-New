@@ -22,7 +22,6 @@ export function useCityImage(cityName: string): string | undefined {
 				setImageUrl(undefined); // fallback if needed
 			}
 		};
-
 		fetchImage();
 	}, [cityName]);
 

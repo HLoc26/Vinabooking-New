@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Typography, Card, CardMedia, CardActionArea } from "@mui/material";
-import type { City } from "../services/types/City";
+import type { City } from "../types/City";
 
 interface CityCardProps {
 	city: City;
