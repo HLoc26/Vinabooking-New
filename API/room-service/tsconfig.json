@@ -13,7 +13,6 @@
 			"@prisma/client": ["generated/prisma/client"],
 			"@src/*": ["src/*"]
 		},
-		"ignoreDeprecations": "6.0"
 	},
 	"include": ["src", "generated/grpc"],
 	"exclude": ["node_modules", "generated"]
