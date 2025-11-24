@@ -12,12 +12,13 @@ import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
 
-import LoginModal from "./LoginModal.tsx";
+import LoginModal from "../../features/auth/components/LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
 import useAuthContextProvider from "../../context/AuthContext/hook.tsx";
 import useUserContextProvider from "../../context/UserContext/hook.ts";
 import { Avatar, ListItemIcon, ListItemText, Stack } from "@mui/material";
 import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineRounded } from "@mui/icons-material";
+import useModalContext from "../../context/ModalContext/hook.ts";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -28,7 +29,9 @@ const NavigationBar: React.FC = () => {
 	const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 	const [anchorElAccommodation, setAnchorElAccommodation] = useState<null | HTMLElement>(null);
 	const [anchorElProfile, setAnchorElProfile] = useState<null | HTMLElement>(null);
-	const [openLoginModal, setOpenLoginModal] = useState(false);
+
+	const { openModal, closeModal } = useModalContext();
+
 	const { pushNotification } = usePushNotificationContext();
 
 	const navigate = useNavigate();
@@ -192,16 +195,13 @@ const NavigationBar: React.FC = () => {
 								</Menu>
 							</>
 						) : (
-							<Button variant="outlined" onClick={() => setOpenLoginModal(true)}>
+							<Button variant="outlined" onClick={() => openModal(<LoginModal onLoginSuccess={() => closeModal()} />)}>
 								Login
 							</Button>
 						)}
 					</Box>
 				</Toolbar>
 			</AppBar>
-
-			{/* Login Modal */}
-			<LoginModal open={openLoginModal} onClose={() => setOpenLoginModal(false)} onLoginSuccess={() => setOpenLoginModal(false)} />
 		</>
 	);
 };

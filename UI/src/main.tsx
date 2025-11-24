@@ -7,6 +7,8 @@ import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
 import AuthContextProvider from "./context/AuthContext/provider.tsx";
 import UserContextProvider from "./context/UserContext/provider.tsx";
+import ModalProvider from "./context/ModalContext/provider.tsx";
+import { BrowserRouter } from "react-router-dom";
 import BookingContextProvider from "./context/BookingContext/provider.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -16,8 +18,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 				<AuthContextProvider>
 					<UserContextProvider>
 						<BookingContextProvider>
-							<CssBaseline />
-							<App />
+							<BrowserRouter>
+								<ModalProvider>
+									<CssBaseline />
+									<App />
+								</ModalProvider>
+							</BrowserRouter>
 						</BookingContextProvider>
 					</UserContextProvider>
 				</AuthContextProvider>

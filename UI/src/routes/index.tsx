@@ -1,4 +1,4 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
 import { HomePage } from "../features/common/pages/HomePage";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 
@@ -9,7 +9,7 @@ import { TravelerLayout } from "../components/layout/TravelerLayout";
 import UserProfilePage from "../features/user/pages/UserProfilePage";
 
 export const AppRouter = () => (
-	<BrowserRouter>
+	<>
 		<Routes>
 			{/* Traveler pages wrapped in layout */}
 			<Route
@@ -35,5 +35,5 @@ export const AppRouter = () => (
 				}
 			/>
 		</Routes>
-	</BrowserRouter>
+	</>
 );
