@@ -9,7 +9,7 @@ export const CITIES: CityData[] = [
 	},
 	{
 		id: "2",
-		name: "Ho Chi Minh City",
+		name: "Hồ Chí Minh",
 		count: 3500,
 		imageUrl:
 			"https://i.guim.co.uk/img/media/419ec73563a575817aa5c2edac3ebaac51826ccd/0_339_5300_3180/master/5300.jpg?width=1200&height=900&quality=85&auto=format&fit=crop&s=9880f527dc3922890f3c71f578473af6",

@@ -1,15 +1,22 @@
 import React from "react";
 import { Card, Box, Typography, Chip } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
-import type { CityData } from "../services/types/CityData";
+import { useNavigate } from "react-router-dom";
 
 interface CityCardProps {
-	data: CityData;
+	data: {
+		city: string;
+		count: number;
+		imageUrl?: string; // allow optional override if needed
+	};
 }
 
 const CityCard: React.FC<CityCardProps> = ({ data }) => {
+	const navigate = useNavigate();
+
 	return (
 		<Card
+			onClick={() => navigate(`/search?keyword=${encodeURIComponent(data.city)}`)}
 			sx={{
 				position: "relative",
 				borderRadius: 4,
@@ -24,11 +31,10 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 				},
 			}}
 		>
-			{/* Image */}
 			<Box
 				component="img"
-				src={data.imageUrl}
-				alt={data.name}
+				src={data.imageUrl ?? "/placeholder-city.jpg"}
+				alt={data.city}
 				sx={{
 					width: "100%",
 					height: "100%",
@@ -38,7 +44,6 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 				}}
 			/>
 
-			{/* Gradient overlay */}
 			<Box
 				sx={{
 					position: "absolute",
@@ -61,7 +66,7 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 					}}
 				>
 					<LocationOnIcon sx={{ fontSize: 18, color: "#fb923c", mr: 0.8 }} />
-					{data.name}
+					{data.city}
 				</Typography>
 
 				<Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)" }}>
@@ -69,7 +74,6 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 				</Typography>
 			</Box>
 
-			{/* Popular Badge */}
 			<Chip
 				label="Popular"
 				size="small"
