@@ -6,7 +6,7 @@
 		"test": "echo \"Error: no test specified\" && exit 1",
 		"dev": "npx nodemon --legacy-watch ./src/index.js",
 		"build": "npx tsc",
-		"start": "node dist/src/index.js"
+		"start": "node ./src/index.js"
 	},
 	"keywords": [],
 	"author": "",
