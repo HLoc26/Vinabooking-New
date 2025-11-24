@@ -10,12 +10,14 @@ import MenuIcon from "@mui/icons-material/Menu";
 import Button from "@mui/material/Button";
 import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
-import AccountCircleIcon from "@mui/icons-material/AccountCircle";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
 
 import LoginModal from "./LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
 import useAuthContextProvider from "../../context/AuthContext/hook.tsx";
+import useUserContextProvider from "../../context/UserContext/hook.ts";
+import { Avatar, ListItemIcon, ListItemText, Stack } from "@mui/material";
+import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineRounded } from "@mui/icons-material";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -30,8 +32,9 @@ const NavigationBar: React.FC = () => {
 	const { pushNotification } = usePushNotificationContext();
 
 	const navigate = useNavigate();
-	const { logout, getCurrentUser } = useAuthContextProvider();
-	const user = getCurrentUser();
+	const { logout } = useAuthContextProvider();
+	const { userInfo: user, userAvatars } = useUserContextProvider();
+	const thumbnail = userAvatars.find((a) => a.variant === "THUMBNAIL");
 
 	const handleLogout = async () => {
 		try {
@@ -49,7 +52,7 @@ const NavigationBar: React.FC = () => {
 
 	return (
 		<>
-			<AppBar position="static" color="inherit" elevation={1}>
+			<AppBar position="sticky" color="inherit" elevation={1}>
 				<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
 					{/* Left */}
 					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
@@ -138,24 +141,54 @@ const NavigationBar: React.FC = () => {
 					</Box>
 
 					{/* Right side */}
-					<Box>
+					<Box mr={7}>
 						{user ? (
 							<>
-								<Button startIcon={<AccountCircleIcon />} endIcon={<ArrowDropDownIcon />} onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
-									{user.name || "Profile"}
+								<Button endIcon={<ArrowDropDownIcon />} onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
+									<Stack direction={"row"} alignItems={"center"} gap={2}>
+										<Avatar alt={user.name} src={thumbnail?.url} />
+										<Typography variant="subtitle2">{user.name || "Profile"}</Typography>
+									</Stack>
 								</Button>
 
-								<Menu anchorEl={anchorElProfile} open={Boolean(anchorElProfile)} onClose={() => setAnchorElProfile(null)}>
-									<MenuItem component={RouterLink} to="/profile" onClick={() => setAnchorElProfile(null)}>
-										My Profile
+								<Menu
+									anchorOrigin={{
+										vertical: "bottom",
+										horizontal: "right",
+									}}
+									transformOrigin={{
+										vertical: "top",
+										horizontal: "right",
+									}}
+									anchorEl={anchorElProfile}
+									open={Boolean(anchorElProfile)}
+									onClose={() => setAnchorElProfile(null)}
+								>
+									<MenuItem component={RouterLink} to="/user/me" onClick={() => setAnchorElProfile(null)}>
+										<ListItemIcon>
+											<PersonOutlineOutlined />
+										</ListItemIcon>
+										<ListItemText>My Profile</ListItemText>
 									</MenuItem>
 									<MenuItem component={RouterLink} to="/favorites" onClick={() => setAnchorElProfile(null)}>
-										Favorites
+										<ListItemIcon>
+											<StarOutlineRounded />
+										</ListItemIcon>
+										<ListItemText>Favorites</ListItemText>
 									</MenuItem>
 									<MenuItem component={RouterLink} to="/my-bookings" onClick={() => setAnchorElProfile(null)}>
-										My Bookings
+										<ListItemIcon>
+											<LuggageOutlined />
+										</ListItemIcon>
+										<ListItemText>My Bookings</ListItemText>
 									</MenuItem>
-									<MenuItem onClick={handleLogout}>Logout</MenuItem>
+									<MenuItem onClick={handleLogout}>
+										{" "}
+										<ListItemIcon>
+											<ExitToAppOutlined />
+										</ListItemIcon>
+										<ListItemText>Logout</ListItemText>
+									</MenuItem>
 								</Menu>
 							</>
 						) : (
