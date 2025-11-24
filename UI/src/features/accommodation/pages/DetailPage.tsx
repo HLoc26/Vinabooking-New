@@ -1,14 +1,16 @@
 import { useState, useMemo, useEffect } from "react";
-import { useParams } from "react-router-dom";
+import { useNavigate, useParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
-import { HeroGallery, PropertyHeader, DetailTabs, BookingCard, ImageGalleryDialog } from "../components/detail";
+import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
 import useUserFavourites from "../../../hooks/useUserFavouriteList";
 import useModalContext from "../../../context/ModalContext/hook";
 import FavouritePickerModal from "../../user/components/FavouritePickerModal";
+import useBookingContextProvider from "../../../context/BookingContext/hook";
+import ImageGallery from "../../../components/ui/ImageGallery";
 
-export default function DetailPage() {useNavigate
+export default function DetailPage() {
 	const navigate = useNavigate();
 	const { accommodationId } = useParams<{ accommodationId: string }>();
 	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId);
