@@ -25,7 +25,7 @@ class AuthRouterFactory {
 		if (!googleClientSecret) {
 			throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_SECRET");
 		}
-		const redirectUri = "http://localhost:3000/auth/google/callback";
+		const redirectUri = process.env["REDIRECT_URI"] || "";
 
 		const authServiceConfig: AuthServiceConfig = {
 			cognitoAppClientId: cognitoAppClientId,
