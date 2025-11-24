@@ -1,7 +1,7 @@
 import { Divider, Stack } from "@mui/material";
-import BookingStatsOverview from "../BookingStatsOverview";
-import { bookings } from "../../constants/mock";
-import BookingTabsView from "../BookingTabsView";
+import BookingStatsOverview from "./BookingStatsOverview";
+import { bookings } from "../../../constants/mock";
+import BookingTabsView from "./BookingTabsView";
 
 const BookingTab: React.FC = () => {
 	return (

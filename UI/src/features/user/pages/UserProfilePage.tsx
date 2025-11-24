@@ -1,9 +1,10 @@
 import { Container, Grid, Paper } from "@mui/material";
 import SideBar from "../components/SideBar";
-import ProfileTab from "../components/tabs/ProfileTab";
+import ProfileTab from "../components/tabs/ProfileTab/ProfileTab";
 import { useState } from "react";
 import type { TabLabel } from "../types/tabs";
-import BookingTab from "../components/tabs/BookingsTab";
+import BookingTab from "../components/tabs/BookingsTab/BookingsTab";
+import FavouritesTab from "../components/tabs/FavouritesTab/FavouritesTab";
 
 const UserProfilePage: React.FC = () => {
 	const [selectedTab, setSelectedTab] = useState<TabLabel>("Profile");
@@ -18,6 +19,8 @@ const UserProfilePage: React.FC = () => {
 				return <ProfileTab />;
 			case "Bookings":
 				return <BookingTab />;
+			case "Favourite List":
+				return <FavouritesTab />;
 			default:
 				return <ProfileTab />;
 		}

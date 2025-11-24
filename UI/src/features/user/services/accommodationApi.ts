@@ -1,7 +1,9 @@
 import apiClient from "../../../services/apiClient";
+import type { ApiResponse } from "../../../types/Response";
+import type { Accommodation } from "../types/Accommodation";
 
 const accommodationApi = {
-	getInfoById: (accommodationId: string) => apiClient.get(`/accommodatinos/${accommodationId}`).then((r) => r.data),
+	getInfoById: (accommodationId: string) => apiClient.get<ApiResponse<Accommodation>>(`/accommodations/${accommodationId}`).then((r) => r.data),
 	getByEntity: (entity: string, entityId: string) =>
 		apiClient //
 			.get(`/accommodations`, { params: { byEntity: entity, entityId } })

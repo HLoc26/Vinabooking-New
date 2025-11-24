@@ -1,7 +1,7 @@
 import { Paper, Stack, Typography, Box, Skeleton } from "@mui/material";
-import type { Booking } from "../types/Booking";
+import type { Booking } from "../../../types/Booking";
 import { WalletOutlined, LuggageOutlined, NightsStayOutlined, StarRateRounded } from "@mui/icons-material";
-import { standardize } from "../../../utils/moneyConverter";
+import { standardize } from "../../../../../utils/moneyConverter";
 
 type BookingStatsOverviewProps = {
 	bookings: Booking[];

@@ -7,14 +7,25 @@ import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
 import type User from "../classes/User";
-import type { SaveUserResponse, CacheUserResponse, UserResponse } from "../types/Response";
-import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest } from "../types/Request";
+import { type SaveUserResponse, type CacheUserResponse, type UserResponse, type AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavouriteResponse } from "../types/Response";
+import type {
+	CacheInfo,
+	CacheUserRequest,
+	FindUserRequest,
+	FindUserByIdRequest,
+	SaveUserDirectRequest,
+	SaveUserRequest,
+	AuthenticatedAddAccommodationRequest,
+	AuthenticatedRemoveAccommodationRequest,
+} from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
+import FavouriteRepository from "../repositories/FavouriteRepository";
 
 class UserController {
 	private userService = new UserService();
+	private favouriteRepository = new FavouriteRepository();
 
 	public async getUser(req: FindUserRequest, res: Response<ApiResponse<UserResponse>>) {
 		const { id, email } = req.query;
