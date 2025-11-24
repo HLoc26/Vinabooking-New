@@ -6,6 +6,7 @@ import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
 import AuthContextProvider from "./context/AuthContext/provider.tsx";
+import UserContextProvider from "./context/UserContext/provider.tsx";
 import BookingContextProvider from "./context/BookingContext/provider.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
@@ -13,10 +14,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 		<ThemeProvider theme={theme}>
 			<PushNotificationProvider>
 				<AuthContextProvider>
-					<BookingContextProvider>
-						<CssBaseline />
-						<App />
-					</BookingContextProvider>
+					<UserContextProvider>
+						<BookingContextProvider>
+							<CssBaseline />
+							<App />
+						</BookingContextProvider>
+					</UserContextProvider>
 				</AuthContextProvider>
 			</PushNotificationProvider>
 		</ThemeProvider>
