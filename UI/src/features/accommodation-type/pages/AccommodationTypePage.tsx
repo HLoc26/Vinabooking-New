@@ -1,86 +1,59 @@
 import { useState, useMemo, useEffect } from "react";
 import { useParams, useNavigate } from "react-router-dom";
-import { Box, Container } from "@mui/material";
+import { Box, Container, Typography } from "@mui/material";
 import { Hero } from "../components/Hero";
 import HorizontalList from "../components/HorizontalList";
 import { CityCard } from "../components/CityCard";
-import { PropertyCard } from "../components/PropertyCard";
 import { EAccommodationType } from "../../../types/acommodation";
 import type { City } from "../types/City";
-import type { Property } from "../types/Property";
 import { useScrollToTopOnMount } from "../hooks/useScrollToTopOnMount";
 import { LocationSearchProvider } from "../../../context/SearchContext/Index";
-
+import { useCityCounts } from "../hooks/useCityCount";
 import { ACCOMMODATION_LABELS, CITY_NAMES } from "../constants/Const";
+import { CITIES } from "../../home/constants/CityConst";
 
-// Helper function to convert URL param to EAccommodationType
-// Helper function to convert URL param to EAccommodationType
+const CITY_IMAGES: Record<string, string> = Object.fromEntries(CITIES.map((c) => [c.name.toLowerCase(), c.imageUrl]));
+
 const parseAccommodationType = (param: string | undefined): EAccommodationType => {
 	if (!param) return EAccommodationType.HOTEL;
-
-	// Normalize: replace hyphens and spaces with underscores, then uppercase
-	const normalized = param
-		.toUpperCase()
-		.replace(/-/g, "_") // "vacation-home" → "VACATION_HOME"
-		.replace(/\s+/g, "_"); // "vacation home"  → "VACATION_HOME"
-
-	// Check if it matches any enum value
-	if (Object.values(EAccommodationType).includes(normalized as EAccommodationType)) {
-		return normalized as EAccommodationType;
-	}
-
-	// Fallback to HOTEL
-	return EAccommodationType.HOTEL;
+	const normalized = param.toUpperCase().replace(/-/g, "*").replace(/\s+/g, "*");
+	return Object.values(EAccommodationType).includes(normalized as EAccommodationType) ? (normalized as EAccommodationType) : EAccommodationType.HOTEL;
 };
 
-// Helper function to convert EAccommodationType to URL param
-const accommodationTypeToParam = (type: EAccommodationType): string => {
-	return type.toLowerCase();
-};
+const accommodationTypeToParam = (type: EAccommodationType) => type.toLowerCase();
 
-export function AcommodationTypePage() {
+export default function AccommodationTypePage() {
 	const { accommodationType: accommodationTypeParam } = useParams<{ accommodationType: string }>();
 	const navigate = useNavigate();
 
 	const [accommodationType, setAccommodationType] = useState<EAccommodationType>(parseAccommodationType(accommodationTypeParam));
 
-	// Sync state with URL parameter
 	useEffect(() => {
-		const parsedType = parseAccommodationType(accommodationTypeParam);
-		setAccommodationType(parsedType);
+		setAccommodationType(parseAccommodationType(accommodationTypeParam));
 	}, [accommodationTypeParam]);
 
-	// Handle accommodation type change and update URL
 	const handleTypeChange = (newType: EAccommodationType) => {
 		setAccommodationType(newType);
 		navigate(`/${accommodationTypeToParam(newType)}`, { replace: true });
 	};
 
-	const { currentCities, currentProperties } = useMemo(() => {
-		const label = ACCOMMODATION_LABELS[accommodationType];
+	const { cityCounts, loading } = useCityCounts(CITY_NAMES, accommodationType);
 
-		const cities: City[] = CITY_NAMES.map((name, index) => ({
-			id: `city-${index}`,
-			name: name,
-			propertyCount: Math.floor(Math.random() * 1000) + 150,
-			imageUrl: `https://picsum.photos/seed/${name.replace(" ", "")}${accommodationType}/400/300`,
-		}));
-
-		const properties: Property[] = Array.from({ length: 8 }).map((_, i) => ({
-			id: `${accommodationType}-${i}`,
-			title: i === 0 ? `Grand ${label} ${CITY_NAMES[0]}` : `The ${label} at ${CITY_NAMES[i % CITY_NAMES.length]}`,
-			location: CITY_NAMES[i % CITY_NAMES.length],
-			imageUrl: `https://picsum.photos/seed/${accommodationType}${i}v2/600/400`,
-			price: (accommodationType === EAccommodationType.VILLA ? 300 : 80) + i * 15,
-			rating: 4.0 + Math.random(),
-			reviews: Math.floor(Math.random() * 500) + 50,
-			type: accommodationType,
-		}));
-
-		return { currentCities: cities, currentProperties: properties };
-	}, [accommodationType]);
+	// Only include cities with at least 1 property
+	const currentCities: City[] = useMemo(
+		() =>
+			CITY_NAMES.filter((name) => (cityCounts[name] ?? 0) > 0).map((name) => ({
+				id: name.toLowerCase(),
+				name,
+				propertyCount: cityCounts[name] ?? 0,
+				imageUrl: CITY_IMAGES[name.toLowerCase()],
+			})),
+		[cityCounts]
+	);
 
 	useScrollToTopOnMount();
+
+	if (loading) return <div>Loading...</div>;
 
 	return (
 		<Box sx={{ minHeight: "100vh", pb: 8 }}>
@@ -88,20 +61,27 @@ export function AcommodationTypePage() {
 				<Hero currentType={accommodationType} onTypeChange={handleTypeChange} />
 			</LocationSearchProvider>
 			<Container maxWidth="lg">
-				<Box mt={-4} position="relative" zIndex={10}></Box>
-
-				<HorizontalList
-					title={`Famous cities for ${ACCOMMODATION_LABELS[accommodationType]}s`}
-					items={currentCities}
-					renderItem={(city) => <CityCard city={city} typeLabel={ACCOMMODATION_LABELS[accommodationType] ?? "Unknown"} />}
-				/>
-
-				<HorizontalList
-					title={`Most booked ${ACCOMMODATION_LABELS[accommodationType]}s`}
-					items={currentProperties}
-					onSeeAll={() => console.log("See all properties")}
-					renderItem={(property) => <PropertyCard property={property} />}
-				/>
+				{" "}
+				{currentCities.length > 0 ? (
+					<HorizontalList
+						title={`Cities with ${ACCOMMODATION_LABELS[accommodationType]}s`}
+						items={currentCities}
+						renderItem={(city) => <CityCard city={city} typeLabel={ACCOMMODATION_LABELS[accommodationType] ?? "Unknown"} />}
+					/>
+				) : (
+					<Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 8, p: 4, border: "2px dashed #ccc", borderRadius: 4, backgroundColor: "#f9f9f9" }}>
+						{" "}
+						<img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" alt="Oops cartoon" style={{ width: 150, marginBottom: 24 }} />{" "}
+						<Typography variant="h6" fontWeight="bold" gutterBottom>
+							{" "}
+							Oops!{" "}
+						</Typography>{" "}
+						<Typography variant="body1" color="textSecondary" textAlign="center">
+							{" "}
+							There are no {ACCOMMODATION_LABELS[accommodationType] || "Place".toLowerCase()}s available in these cities yet.{" "}
+						</Typography>{" "}
+					</Box>
+				)}{" "}
 			</Container>
 		</Box>
 	);
