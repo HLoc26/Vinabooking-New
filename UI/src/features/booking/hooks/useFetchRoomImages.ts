@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { bookingApi } from "../services/bookingApi";
-import type { ImageType } from "../services/types/Image";
+import type { ImageType } from "../../../types/Image";
 
 export const useFetchRoomsImages = (roomIds: string[]) => {
 	const [roomImagesMap, setImagesMap] = useState<Record<string, ImageType[]>>({});

@@ -1,9 +1,9 @@
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useMemo, type Dispatch, type SetStateAction } from "react";
-import type { ImageType } from "../services/types/Image";
+import type { ImageType } from "../../../types/Image";
 import { useFetchRoomsImages } from "../hooks/useFetchRoomImages";
 import RoomReviewCard from "./RoomReviewCard";
-import type { RoomInfo } from "../services/types/RoomInfo";
+import type { RoomInfo } from "../types/RoomInfo";
 
 type RoomReviewCardProps = {
 	roomsInfo: RoomInfo[];
@@ -40,8 +40,7 @@ const RoomReviewBox: React.FC<RoomReviewCardProps> = ({ roomsInfo, setGalleryIma
 				{roomsInfo.map((room, idx) => (
 					<Box key={room.id} mb={idx < roomsInfo.length - 1 ? 3 : 0}>
 						<RoomReviewCard
-							roomName={room.name}
-							roomPrice={room.price || "0"}
+							room={room}
 							thumbnail={roomThumbnail[room.id]}
 							images={roomImagesByRoomId[room.id] || []}
 							loading={loading}

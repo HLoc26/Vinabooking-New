@@ -1,9 +1,9 @@
 import { Box, Button } from "@mui/material";
-import type { AccommodationImage } from "../../types/accommodation.types";
+import type { ImageType } from "../../../../types/Image";
 
 interface Props {
-	images: AccommodationImage[];
-	onOpenGallery: () => void;
+	images: ImageType[];
+	onOpenGallery: (i: number) => void;
 }
 
 export const HeroGallery = ({ images, onOpenGallery }: Props) => {
@@ -25,7 +25,7 @@ export const HeroGallery = ({ images, onOpenGallery }: Props) => {
 			{images.slice(0, 5).map((img, idx) => (
 				<Box
 					key={img.id}
-					onClick={onOpenGallery}
+					onClick={() => onOpenGallery(idx)}
 					sx={{
 						cursor: "pointer",
 						bgcolor: "#e0e0e0",
@@ -79,7 +79,7 @@ export const HeroGallery = ({ images, onOpenGallery }: Props) => {
 
 			<Button
 				variant="contained"
-				onClick={onOpenGallery}
+				onClick={() => onOpenGallery(0)}
 				sx={{
 					position: "absolute",
 					bottom: 16,

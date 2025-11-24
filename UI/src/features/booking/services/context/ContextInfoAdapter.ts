@@ -1,4 +1,4 @@
-import type { BookingContextInfo } from "../types/BookingContextInfo";
+import type { BookingContextInfo } from "../../../../types/BookingContextInfo";
 
 export interface ContextInfoAdapter {
 	getInfo(): BookingContextInfo;
