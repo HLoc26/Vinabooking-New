@@ -1,3 +1,5 @@
+import dotenv from "dotenv";
+dotenv.config({ path: ["../common.env", ".env"] });
 import express from "express";
 import UserRouter from "./routes/UserRouter";
 import ErrorHandler from "./middlewares/ErrorHandler";
