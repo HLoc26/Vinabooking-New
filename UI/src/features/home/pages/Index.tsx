@@ -4,12 +4,16 @@ import CityCard from "../components/CityCard";
 import TypeCard from "../components/TypeCard";
 import FAQ from "../components/FAQ";
 import { FAQS } from "../constants/FAQConst";
-import { Container, Box, Typography, Button, Paper } from "@mui/material";
 import { CITIES } from "../constants/CityConst";
+import { Container, Box, Typography, Button, Paper } from "@mui/material";
 import { ACCOMMODATION_TYPES } from "../constants/AccommodationTypeConst";
 import { LocationSearchProvider } from "../../../context/SearchContext/Index";
+import { useStats } from "../context/StatsContext";
 
 export function HomePage() {
+	const { loading, cities } = useStats();
+	if (loading) return <div>Loading...</div>;
+
 	return (
 		<Box minHeight="100vh" display="flex" flexDirection="column" bgcolor="#f9fafb">
 			{/* Hero Section */}
@@ -20,8 +24,23 @@ export function HomePage() {
 			{/* Main Content */}
 			<Box flexGrow={1}>
 				<Container sx={{ py: 4 }}>
-					{/* Cities */}
-					<HorizontalList title="Top places by cities" items={CITIES} renderItem={(city) => <CityCard data={city} />} onSeeAll={() => console.log("See all cities")} />
+					<HorizontalList
+						title="Top places by cities"
+						items={cities}
+						renderItem={(city) => {
+							const fallbackImage = CITIES.find((c) => c.name.toLowerCase() === city.city.toLowerCase())?.imageUrl;
+							const imageUrl = fallbackImage || "/images/city/default.jpg";
+							return (
+								<CityCard
+									data={{
+										city: city.city,
+										count: city.count,
+										imageUrl,
+									}}
+								/>
+							);
+						}}
+					/>
 				</Container>
 
 				{/* Types */}
