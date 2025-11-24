@@ -1,5 +1,7 @@
 import { useState, useEffect } from "react";
-import type { AccommodationDetail, AccommodationImage } from "../types/accommodation.types";
+import type { AccommodationDetail } from "../types/accommodation.types";
+import accommodationApi from "../service/accommodationApi";
+import type { ImageType } from "../../../types/Image";
 
 export const useAccommodationDetail = (accommodationId: string | undefined) => {
 	const [accommodation, setAccommodation] = useState<AccommodationDetail | null>(null);
@@ -12,9 +14,10 @@ export const useAccommodationDetail = (accommodationId: string | undefined) => {
 		const fetchData = async () => {
 			setLoading(true);
 			try {
-				const res = await fetch(`http://localhost:3000/accommodations/${accommodationId}`);
-				if (!res.ok) throw new Error(`HTTP ${res.status}`);
-				const json = await res.json();
+				const res = await accommodationApi.getAccommodationById(accommodationId);
+				if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}`);
+				const json = res.data;
+
 				if (json.success) {
 					setAccommodation(json.data);
 				} else {
@@ -30,31 +33,23 @@ export const useAccommodationDetail = (accommodationId: string | undefined) => {
 		fetchData();
 	}, [accommodationId]);
 
-	const getDisplayImages = (): AccommodationImage[] => {
+	const getThumbnails = (): ImageType[] => {
 		if (!accommodation?.images) return [];
 
-		const groups: Record<string, AccommodationImage[]> = {};
+		return accommodation?.images.filter((img) => img.variant === "THUMBNAIL").filter((img): img is ImageType => !!img);
+	};
 
-		for (const img of accommodation.images) {
-			if (!groups[img.imageId]) {
-				groups[img.imageId] = [];
-			}
-			groups[img.imageId].push(img);
-		}
+	const getDisplayImages = (): ImageType[] => {
+		if (!accommodation?.images) return [];
 
-		return Object.values(groups)
-			.map((group) => {
-				return (
-					group.find((i) => i.variant === "OPTIMIZED") || group.find((i) => i.variant === "WEBP") || group.find((i) => i.variant === "ORIGINAL") || group[0] // fallback to first image if exists
-				);
-			})
-			.filter((img): img is AccommodationImage => !!img);
+		return accommodation?.images.filter((img) => img.variant === "WEBP").filter((img): img is ImageType => !!img);
 	};
 
 	return {
 		accommodation,
 		loading,
 		error,
+		thumbnails: getThumbnails(),
 		displayImages: getDisplayImages(),
 	};
 };
