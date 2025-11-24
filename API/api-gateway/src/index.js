@@ -1,8 +1,8 @@
+import dotenv from "dotenv";
 import express from "express";
 import proxy from "express-http-proxy";
 import cors from "cors";
-
-import "dotenv/config";
+dotenv.config({ path: ["../common.env", ".env"] });
 
 const proxyHeaderOptions = {
 	proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
