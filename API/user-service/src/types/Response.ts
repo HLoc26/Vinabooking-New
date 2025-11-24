@@ -1,4 +1,3 @@
-import { FavouriteList } from "../../generated/prisma";
 import type User from "../classes/User";
 import { FavouriteListWithItems } from "./Favourite";
 
