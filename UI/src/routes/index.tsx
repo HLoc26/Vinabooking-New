@@ -1,6 +1,7 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import { HomePage } from "../features/common/pages/HomePage";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
+import SearchPage from "../features/accommodation/pages/SearchPage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
@@ -23,6 +24,7 @@ export const AppRouter = () => (
 			{/* Auth, OAuth, Booking remain separate */}
 			<Route path="/auth/*" element={<AuthRouter />} />
 			<Route path="/oauth/*" element={<OAuthRouter />} />
+			<Route path="/search" element={<SearchPage />} />
 			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
 		</Routes>
