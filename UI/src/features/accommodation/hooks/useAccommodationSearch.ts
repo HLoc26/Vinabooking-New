@@ -7,6 +7,43 @@ import { ACCOMMODATION_TYPE_OPTIONS, FACILITY_FILTER_OPTIONS, PRICE_FILTER_CONFI
 import type { ActiveFilter } from "../components/search";
 
 /**
+ * Format Date -> "YYYY-MM-DD"
+ */
+function formatDate(date: Date): string {
+	return date.toISOString().split("T")[0];
+}
+
+/**
+ * Validate check-in / check-out
+ * - check-in >= today
+ * - check-out > check-in
+ * Trả về message lỗi hoặc null nếu hợp lệ
+ */
+function validateDates(checkIn: string, checkOut: string): string | null {
+	if (!checkIn || !checkOut) return null;
+
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+
+	const inDate = new Date(checkIn);
+	const outDate = new Date(checkOut);
+
+	if (isNaN(inDate.getTime()) || isNaN(outDate.getTime())) {
+		return "Invalid date format.";
+	}
+
+	if (inDate < today) {
+		return "Check-in date cannot be in the past.";
+	}
+
+	if (outDate <= inDate) {
+		return "Check-out date must be after check-in date.";
+	}
+
+	return null;
+}
+
+/**
  * Quản lý toàn bộ state + logic cho trang search:
  * - đọc URL query
  * - gọi API
@@ -32,10 +69,18 @@ export function useAccommodationSearch() {
 
 	// Parse URL params on mount
 	const getInitialSearchParams = useCallback(() => {
+		// Default: today & today + 2 days
+		const today = new Date();
+		const defaultCheckIn = formatDate(today);
+
+		const after2Days = new Date(today);
+		after2Days.setDate(after2Days.getDate() + 2);
+		const defaultCheckOut = formatDate(after2Days);
+
 		return {
 			keyword: urlSearchParams.get("keyword") || "",
-			checkIn: urlSearchParams.get("checkIn") || "2025-12-24",
-			checkOut: urlSearchParams.get("checkOut") || "2025-12-26",
+			checkIn: urlSearchParams.get("checkIn") || defaultCheckIn,
+			checkOut: urlSearchParams.get("checkOut") || defaultCheckOut,
 			adults: parseInt(urlSearchParams.get("adults") || "2"),
 			children: parseInt(urlSearchParams.get("children") || "0"),
 			rooms: parseInt(urlSearchParams.get("rooms") || "1"),
@@ -107,6 +152,14 @@ export function useAccommodationSearch() {
 	const fetchAccommodations = useCallback(async () => {
 		setLoading(true);
 		setError(null);
+
+		// Validate ngày trước khi gọi API
+		const dateError = validateDates(searchParams.checkIn, searchParams.checkOut);
+		if (dateError) {
+			setError(dateError);
+			setLoading(false);
+			return;
+		}
 
 		try {
 			const params: SearchAccommodationParams = {
