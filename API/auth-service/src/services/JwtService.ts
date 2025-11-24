@@ -1,7 +1,28 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
 import CognitoClient from "../clients/CognitoIdentityProviderClient";
-import { SimpleJwksCache } from "aws-jwt-verify/jwk";
-import { SimpleFetcher } from "aws-jwt-verify/https";
+import { JwksCache, SimpleJwksCache } from "aws-jwt-verify/jwk";
+import { Fetcher, SimpleFetcher } from "aws-jwt-verify/https";
+
+class JwtFetcher implements Fetcher {
+	async fetch(uri: string, requestOptions?: Record<string, unknown>, data?: ArrayBuffer) {
+		const controller = new AbortController();
+		const timeout = setTimeout(() => controller.abort(), 10000);
+
+		try {
+			// ép kiểu an toàn sang RequestInit
+			const options: RequestInit = {
+				...(requestOptions as RequestInit),
+				body: data,
+				signal: controller.signal,
+			};
+
+			const res = await fetch(uri, options);
+			return await res.arrayBuffer();
+		} finally {
+			clearTimeout(timeout);
+		}
+	}
+}
 
 class JwtService {
 	public static async verifyToken(token: string, type: "id" | "access") {
@@ -10,16 +31,9 @@ class JwtService {
 				userPoolId: CognitoClient.userPoolId,
 				tokenUse: type,
 				clientId: CognitoClient.clientId,
+				jwksTimeout: 10000, // tăng timeout từ 3000ms mặc định
 			},
-			{
-				jwksCache: new SimpleJwksCache({
-					fetcher: new SimpleFetcher({
-						defaultRequestOptions: {
-							responseTimeout: 10000,
-						},
-					}),
-				}),
-			}
+			{ jwksCache: new SimpleJwksCache({ fetcher: new JwtFetcher() }) }
 		);
 		const payload = await verifier.verify(token);
 		return payload;
@@ -57,3 +71,4 @@ class JwtService {
 }
 
 export default JwtService;
+
