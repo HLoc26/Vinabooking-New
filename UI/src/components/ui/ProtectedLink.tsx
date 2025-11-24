@@ -7,9 +7,11 @@ import useModalContext from "../../context/ModalContext/hook";
 type ProtectedLinkProps = {
 	to: string;
 	children: React.ReactNode;
+	canNavigate?: () => boolean;
+	onFail?: () => void;
 };
 
-export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children }) => {
+export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children, canNavigate, onFail }) => {
 	const { getCurrentUser } = useAuthContextProvider();
 	const userInfo = getCurrentUser();
 	const navigate = useNavigate();

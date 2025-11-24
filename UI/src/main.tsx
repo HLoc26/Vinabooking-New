@@ -9,6 +9,7 @@ import AuthContextProvider from "./context/AuthContext/provider.tsx";
 import UserContextProvider from "./context/UserContext/provider.tsx";
 import ModalProvider from "./context/ModalContext/provider.tsx";
 import { BrowserRouter } from "react-router-dom";
+import BookingContextProvider from "./context/BookingContext/provider.tsx";
 
 ReactDOM.createRoot(document.getElementById("root")!).render(
 	<React.StrictMode>
@@ -16,12 +17,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 			<PushNotificationProvider>
 				<AuthContextProvider>
 					<UserContextProvider>
-						<BrowserRouter>
-							<ModalProvider>
-								<CssBaseline />
-								<App />
-							</ModalProvider>
-						</BrowserRouter>
+						<BookingContextProvider>
+							<BrowserRouter>
+								<ModalProvider>
+									<CssBaseline />
+									<App />
+								</ModalProvider>
+							</BrowserRouter>
+						</BookingContextProvider>
 					</UserContextProvider>
 				</AuthContextProvider>
 			</PushNotificationProvider>

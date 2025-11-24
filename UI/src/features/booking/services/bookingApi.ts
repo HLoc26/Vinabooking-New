@@ -1,8 +1,7 @@
 import axioInstance from "../../../services/apiClient";
 import Cookies from "js-cookie";
-import type { RoomInfo } from "./types/RoomInfo";
-import type { BookingContextInfo } from "./types/BookingContextInfo";
-import type { UserInfo } from "./types/UserInfo";
+import type { RoomInfo } from "../types/RoomInfo";
+import type { BookingContextInfo } from "../../../types/BookingContextInfo";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const BOOKING_ENDPOINT = "/bookings";
@@ -15,13 +14,11 @@ export const bookingApi = {
 	 * Create a booking (mock or real).
 	 * Maps BookingDto → backend-compatible shape.
 	 */
-	async createBooking(booking: BookingContextInfo, user: UserInfo, rooms: RoomInfo[]) {
+	async createBooking(booking: BookingContextInfo, rooms: RoomInfo[]) {
 		const payload = {
 			startDate: booking.startDate,
 			endDate: booking.endDate,
 			guestCount: booking.guestCount,
-			phone: user.phone,
-			userId: user.id,
 			details: {
 				create: rooms.map((room) => ({
 					itemId: room.id,
@@ -30,6 +27,9 @@ export const bookingApi = {
 					note: room.note ?? "",
 				})),
 			},
+			phone: booking.leader.phone,
+			leaderName: booking.leader.name,
+			leaderEmail: booking.leader.email,
 		};
 		const token = Cookies.get(ACCESS_TOKEN_KEY);
 		const res = await axioInstance.post(BOOKING_ENDPOINT, payload, {
