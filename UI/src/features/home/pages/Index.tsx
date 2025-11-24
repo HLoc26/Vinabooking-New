@@ -1,4 +1,4 @@
-import Hero from "../components/Hero";
+import { Hero } from "../components/Hero";
 import HorizontalList from "../components/HorizontalList";
 import CityCard from "../components/CityCard";
 import TypeCard from "../components/TypeCard";
@@ -7,12 +7,15 @@ import { FAQS } from "../constants/FAQConst";
 import { Container, Box, Typography, Button, Paper } from "@mui/material";
 import { CITIES } from "../constants/CityConst";
 import { ACCOMMODATION_TYPES } from "../constants/AccommodationTypeConst";
+import { LocationSearchProvider } from "../../../context/SearchContext/Index";
 
 export function HomePage() {
 	return (
 		<Box minHeight="100vh" display="flex" flexDirection="column" bgcolor="#f9fafb">
 			{/* Hero Section */}
-			<Hero />
+			<LocationSearchProvider>
+				<Hero />
+			</LocationSearchProvider>
 
 			{/* Main Content */}
 			<Box flexGrow={1}>

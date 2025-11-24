@@ -1,221 +1,65 @@
 import React, { useState, useRef, useEffect } from "react";
-import { Box, Typography, Button, TextField, IconButton, Paper, Menu, Stack } from "@mui/material";
-import SearchIcon from "@mui/icons-material/Search";
-import CalendarMonthIcon from "@mui/icons-material/CalendarMonth";
-import PersonIcon from "@mui/icons-material/Person";
-import RemoveIcon from "@mui/icons-material/Remove";
-import AddIcon from "@mui/icons-material/Add";
-import BedIcon from "@mui/icons-material/Bed";
-import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
-import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
-import ChevronRightIcon from "@mui/icons-material/ChevronRight";
+import { Box, Typography } from "@mui/material";
+import { HeroSearchBar } from "./HeroSearchBar"; // Your original component with typeahead
+import { useLocationSearch } from "../../../context/SearchContext/useLocationSearch";
+import type { DateRange } from "../../accommodation-type/types/DateRange";
+import type { Guests } from "../../accommodation-type/types/Guest";
 
-interface CounterProps {
-	label: string;
-	value: number;
-	onChange: (val: number) => void;
-	min?: number;
-}
-
-export interface DateRange {
-	checkIn: Date | null;
-	checkOut: Date | null;
-}
-
-const Counter: React.FC<CounterProps> = ({ label, value, onChange, min = 0 }) => (
-	<Stack direction="row" justifyContent="space-between" alignItems="center" py={1} px={2}>
-		<Typography variant="body1">{label}</Typography>
-		<Stack direction="row" spacing={1} alignItems="center">
-			<IconButton size="small" onClick={() => onChange(Math.max(min, value - 1))} disabled={value <= min}>
-				<RemoveIcon fontSize="small" />
-			</IconButton>
-			<Typography>{value}</Typography>
-			<IconButton size="small" onClick={() => onChange(value + 1)}>
-				<AddIcon fontSize="small" />
-			</IconButton>
-		</Stack>
-	</Stack>
-);
-
-/* -------------------------------------------
-   Calendar utils
--------------------------------------------- */
-const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
-const getFirstDayOfMonth = (year: number, month: number) => {
-	const day = new Date(year, month, 1).getDay();
-	return day === 0 ? 6 : day - 1;
-};
-
-const CalendarMonth: React.FC<{
-	year: number;
-	month: number;
-	label: string;
-	tempDateRange: DateRange;
-	onDateClick: (date: Date) => void;
-	minDate?: Date;
-	maxDate?: Date;
-}> = ({ year, month, label, tempDateRange, onDateClick, minDate, maxDate }) => {
-	const daysInMonth = getDaysInMonth(year, month);
-	const firstDay = getFirstDayOfMonth(year, month);
-	const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
-	const blanks = Array.from({ length: firstDay }, (_, i) => i);
-
-	const isSelected = (day: number) => {
-		const date = new Date(year, month, day);
-		const { checkIn, checkOut } = tempDateRange;
-		if (!checkIn) return false;
-		return date.toDateString() === checkIn.toDateString() || (checkOut && date.toDateString() === checkOut.toDateString());
-	};
-
-	const isInRange = (day: number) => {
-		const date = new Date(year, month, day);
-		const { checkIn, checkOut } = tempDateRange;
-		if (!checkIn || !checkOut) return false;
-		return date > checkIn && date < checkOut;
-	};
-
-	const isDisabled = (day: number) => {
-		const date = new Date(year, month, day);
-		if (minDate && date < minDate) return true;
-		if (maxDate && date > maxDate) return true;
-		return false;
-	};
-
-	return (
-		<Box width={256}>
-			<Typography align="center" fontWeight={700} mb={1}>
-				{label}
-			</Typography>
-
-			{/* Weekdays */}
-			<Box display="grid" gridTemplateColumns="repeat(7, 1fr)" textAlign="center" mb={1}>
-				{["Mo", "Tu", "We", "Th", "Fr", "Sa", "Su"].map((d) => (
-					<Typography key={d} variant="caption" color="text.secondary">
-						{d}
-					</Typography>
-				))}
-			</Box>
-
-			{/* Days */}
-			<Box display="grid" gridTemplateColumns="repeat(7, 1fr)" textAlign="center" gap={0.5}>
-				{blanks.map((b) => (
-					<Box key={`blank-${b}`} />
-				))}
-
-				{days.map((d) => (
-					<Button
-						key={d}
-						variant="text"
-						onClick={(e) => {
-							e.stopPropagation();
-							if (!isDisabled(d)) onDateClick(new Date(year, month, d));
-						}}
-						disabled={isDisabled(d)}
-						sx={{
-							borderRadius: "50%",
-							minWidth: 32,
-							height: 32,
-							bgcolor: isSelected(d) ? "warning.main" : isInRange(d) ? "warning.light" : "transparent",
-							color: isSelected(d) ? "white" : "inherit",
-							"&:hover": {
-								bgcolor: isSelected(d) ? "warning.dark" : !isDisabled(d) ? "action.hover" : "transparent",
-							},
-						}}
-					>
-						{d}
-					</Button>
-				))}
-			</Box>
-		</Box>
-	);
-};
-
-/* -------------------------------------------
-   MAIN HERO COMPONENT
--------------------------------------------- */
 export const Hero: React.FC = () => {
-	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
-	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
+	const { query, updateQuery } = useLocationSearch();
 
-	const [guests, setGuests] = useState({ adults: 2, children: 0, rooms: 1 });
-
+	// Local state for UI
+	const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0, rooms: 1 });
 	const [dateRange, setDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
 	const [tempDateRange, setTempDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
-
-	const guestRef = useRef<HTMLDivElement>(null);
-	const dateRef = useRef<HTMLDivElement>(null);
-	const searchRef = useRef<HTMLDivElement>(null);
-
-	/* Sticky search bar logic */
-	const [sticky, setSticky] = useState(false);
-	const [originalTop, setOriginalTop] = useState(0);
-
-	useEffect(() => {
-		if (searchRef.current && originalTop === 0) {
-			const rect = searchRef.current.getBoundingClientRect();
-			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-			setOriginalTop(rect.top + scrollTop);
-		}
-	}, [originalTop]);
-
-	useEffect(() => {
-		const handleScroll = () => {
-			if (!searchRef.current || originalTop === 0) return;
-			const scrollTop = window.pageYOffset || document.documentElement.scrollTop;
-			setSticky(scrollTop > originalTop - 80);
-		};
-		window.addEventListener("scroll", handleScroll);
-		return () => window.removeEventListener("scroll", handleScroll);
-	}, [originalTop]);
-
-	/* Date selection */
-	const handleDateClick = (date: Date) => {
-		if (!tempDateRange.checkIn || (tempDateRange.checkIn && tempDateRange.checkOut)) {
-			setTempDateRange({ checkIn: date, checkOut: null });
-		} else {
-			if (date < tempDateRange.checkIn) setTempDateRange({ checkIn: date, checkOut: tempDateRange.checkIn });
-			else setTempDateRange({ ...tempDateRange, checkOut: date });
-		}
-	};
-
-	const handleDateMenuOpen = () => {
-		setTempDateRange(dateRange);
-		setIsDateMenuOpen(true);
-	};
-
-	const handleDateMenuClose = () => {
-		if (tempDateRange.checkIn && tempDateRange.checkOut) setDateRange(tempDateRange);
-		setIsDateMenuOpen(false);
-	};
-
-	const formatDateRange = () => {
-		if (!dateRange.checkIn) return "Add dates for prices";
-		const checkInStr = dateRange.checkIn.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-		if (!dateRange.checkOut) return checkInStr;
-		const checkOutStr = dateRange.checkOut.toLocaleDateString("en-US", { month: "short", day: "numeric" });
-		return `${checkInStr} — ${checkOutStr}`;
-	};
-
-	/* -------- Calendar Navigation (2 months only) -------- */
-	const today = new Date();
-	const maxDate = new Date(today.getFullYear(), today.getMonth() + 12, today.getDate());
-
-	// This month index relative to current date
+	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
+	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
 	const [monthOffset, setMonthOffset] = useState(0);
+	const [openLocation, setOpenLocation] = useState(false);
 
-	// Always show 2 months
-	const visibleMonths = [new Date(today.getFullYear(), today.getMonth() + monthOffset), new Date(today.getFullYear(), today.getMonth() + monthOffset + 1)];
+	const locationRef = useRef<HTMLDivElement>(null!);
+	const dateRef = useRef<HTMLDivElement>(null!);
+	const guestRef = useRef<HTMLDivElement>(null!);
+	const searchRef = useRef<HTMLDivElement>(null!);
 
-	const handlePrev = () => {
-		setMonthOffset((prev) => Math.max(0, prev - 1)); // prevent going before today
-	};
+	const [sticky, setSticky] = useState(false);
 
-	const handleNext = () => {
-		setMonthOffset((prev) => prev + 1);
-	};
+	// Sync local state to context when changed
+	useEffect(() => {
+		updateQuery({
+			adults: guests.adults,
+			children: guests.children,
+			rooms: guests.rooms,
+		});
+	}, [guests, updateQuery]);
+
+	useEffect(() => {
+		updateQuery({
+			checkIn: dateRange.checkIn || undefined,
+			checkOut: dateRange.checkOut || undefined,
+		});
+	}, [dateRange, updateQuery]);
+
+	// Sticky scroll logic
+	useEffect(() => {
+		if (!searchRef.current) return;
+
+		const observer = new IntersectionObserver(
+			([entry]) => {
+				setSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
+			},
+			{
+				threshold: 0,
+				rootMargin: "-80px 0px 0px 0px",
+			}
+		);
+
+		observer.observe(searchRef.current);
+		return () => observer.disconnect();
+	}, []);
 
 	return (
-		<Box position="relative" height={{ xs: 600, lg: 700 }}>
+		<Box position="relative" sx={{ minHeight: { xs: 600, lg: 700 }, display: "flex", flexDirection: "column" }}>
 			{/* Background */}
 			<Box
 				position="absolute"
@@ -233,157 +77,75 @@ export const Hero: React.FC = () => {
 				position="absolute"
 				sx={{
 					inset: 0,
-					bgcolor: "rgba(0,0,0,0.4)",
-					backdropFilter: "blur(2px)",
+					background: "linear-gradient(to bottom, rgba(0,0,0,0.3) 0%, rgba(0,0,0,0.1) 50%, rgba(0,0,0,0.5) 100%)",
 					zIndex: 1,
 				}}
 			/>
 
 			{/* Hero Text */}
-			<Box position="relative" zIndex={5} textAlign="center" px={2} pt={8}>
-				<Typography variant="h2" fontWeight={700} color="white" mb={2}>
-					Find your booking with{" "}
-					<Box component="span" color="orange.400">
+			<Box position="relative" zIndex={5} textAlign="center" px={2} mt={8} maxWidth={900} mx="auto" pb={12}>
+				<Typography
+					variant="h2"
+					fontWeight={800}
+					color="white"
+					mb={3}
+					sx={{
+						fontSize: { xs: "2.5rem", md: "3.5rem", lg: "4rem" },
+						textShadow: "0px 4px 12px rgba(0,0,0,0.3)",
+						lineHeight: 1.1,
+					}}
+				>
+					Find your perfect booking with{" "}
+					<Box component="span" color="secondary.main" sx={{ position: "relative", display: "inline-block" }}>
 						Vinabooking
+						<Box
+							component="svg"
+							viewBox="0 0 200 9"
+							sx={{
+								position: "absolute",
+								bottom: -5,
+								left: 0,
+								width: "100%",
+								height: 12,
+								fill: "none",
+								stroke: "#f97316",
+								strokeWidth: 4,
+								opacity: 0.8,
+							}}
+						>
+							<path d="M2.00025 6.99997C38.5002 3.00004 150.001 -2.00002 198 3.99999" />
+						</Box>
 					</Box>
 				</Typography>
-				<Typography variant="h6" color="white" mb={4}>
+				<Typography variant="h6" color="rgba(255,255,255,0.9)" fontWeight={400}>
 					Experience the finest accommodations across Vietnam's most scenic destinations.
 				</Typography>
 			</Box>
 
-			{/* Search Bar */}
-			<Box
-				ref={searchRef}
-				sx={{
-					width: "100%",
-					px: 2,
-					zIndex: 10,
-					position: sticky ? "fixed" : "relative",
-					top: sticky ? 10 : "auto",
-					left: 0,
-					right: 0,
-					mx: "auto",
-					maxWidth: 2000,
-					transition: "top 0.2s ease",
-				}}
-			>
-				<Paper
-					elevation={6}
-					sx={{
-						display: "flex",
-						flexDirection: { xs: "column", lg: "row" },
-						borderRadius: 2,
-						overflow: "hidden",
-					}}
-				>
-					{/* Destination */}
-					<Box flex={1} p={1}>
-						<TextField
-							fullWidth
-							placeholder="Where are you going?"
-							variant="outlined"
-							InputProps={{
-								startAdornment: <BedIcon sx={{ mr: 1 }} />,
-							}}
-						/>
-					</Box>
-
-					{/* Date Picker */}
-					<Box flex={1} p={1} ref={dateRef}>
-						<Button fullWidth onClick={handleDateMenuOpen} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
-							<CalendarMonthIcon sx={{ mr: 1 }} />
-							<Box textAlign="left">
-								<Typography variant="caption" fontWeight={700}>
-									Check-in — Check-out
-								</Typography>
-								<Typography variant="body2">{formatDateRange()}</Typography>
-							</Box>
-						</Button>
-
-						<Menu
-							open={isDateMenuOpen}
-							onClose={handleDateMenuClose}
-							anchorEl={dateRef.current}
-							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-							disableAutoFocusItem
-							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
-						>
-							{/* Month Navigation Header */}
-							<Box display="flex" justifyContent="space-between" alignItems="center" px={2} py={1}>
-								<IconButton onClick={handlePrev} disabled={monthOffset === 0}>
-									<ChevronLeftIcon />
-								</IconButton>
-
-								<Typography fontWeight={700}>Select Dates</Typography>
-
-								<IconButton onClick={handleNext}>
-									<ChevronRightIcon />
-								</IconButton>
-							</Box>
-
-							{/* Calendar Grid */}
-							<Box display="flex" p={2} gap={2} onClick={(e) => e.stopPropagation()}>
-								{visibleMonths.map((d, i) => (
-									<CalendarMonth
-										key={i}
-										year={d.getFullYear()}
-										month={d.getMonth()}
-										label={d.toLocaleString("default", {
-											month: "long",
-											year: "numeric",
-										})}
-										tempDateRange={tempDateRange}
-										onDateClick={handleDateClick}
-										minDate={today}
-										maxDate={maxDate}
-									/>
-								))}
-							</Box>
-						</Menu>
-					</Box>
-
-					{/* Guests Picker */}
-					<Box flex={1} p={1} ref={guestRef}>
-						<Button fullWidth onClick={() => setIsGuestMenuOpen(!isGuestMenuOpen)} sx={{ justifyContent: "flex-start", textTransform: "none" }}>
-							<PersonIcon sx={{ mr: 1 }} />
-							<ExpandMoreIcon fontSize="small" />
-							<Box textAlign="left" flexGrow={1}>
-								<Typography variant="caption" fontWeight={700}>
-									Guests
-								</Typography>
-								<Typography variant="body2">
-									{guests.adults} adults · {guests.children} children · {guests.rooms} room
-								</Typography>
-							</Box>
-							<ExpandMoreIcon />
-						</Button>
-
-						<Menu
-							open={isGuestMenuOpen}
-							onClose={() => setIsGuestMenuOpen(false)}
-							anchorEl={guestRef.current}
-							anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-							disableAutoFocusItem
-							MenuListProps={{ onClick: (e) => e.stopPropagation() }}
-						>
-							<Box p={2} onClick={(e) => e.stopPropagation()}>
-								<Counter label="Adults" value={guests.adults} onChange={(v) => setGuests({ ...guests, adults: v })} min={1} />
-								<Counter label="Children" value={guests.children} onChange={(v) => setGuests({ ...guests, children: v })} />
-								<Counter label="Rooms" value={guests.rooms} onChange={(v) => setGuests({ ...guests, rooms: v })} min={1} />
-							</Box>
-						</Menu>
-					</Box>
-
-					{/* Search Button */}
-					<Box p={1}>
-						<Button fullWidth variant="contained" color="warning" startIcon={<SearchIcon />} sx={{ height: "100%" }}>
-							Search
-						</Button>
-					</Box>
-				</Paper>
-			</Box>
-			{sticky && <Box sx={{ height: 100 }} />}
+			{/* Search Bar - Using your original HeroSearchBar with typeahead */}
+			<HeroSearchBar
+				searchRef={searchRef}
+				sticky={sticky}
+				keyword={query.keyword || ""}
+				setKeyword={(keyword) => updateQuery({ keyword })}
+				openLocation={openLocation}
+				setOpenLocation={setOpenLocation}
+				locationRef={locationRef}
+				dateRef={dateRef}
+				guestRef={guestRef}
+				dateRange={dateRange}
+				tempDateRange={tempDateRange}
+				setTempDateRange={setTempDateRange}
+				setDateRange={setDateRange}
+				isDateMenuOpen={isDateMenuOpen}
+				setIsDateMenuOpen={setIsDateMenuOpen}
+				monthOffset={monthOffset}
+				setMonthOffset={setMonthOffset}
+				guests={guests}
+				setGuests={setGuests}
+				isGuestMenuOpen={isGuestMenuOpen}
+				setIsGuestMenuOpen={setIsGuestMenuOpen}
+			/>
 		</Box>
 	);
 };
