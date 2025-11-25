@@ -141,6 +141,75 @@ export class RoomRepository {
 			},
 		});
 	}
+
+	/**
+	 * (R) Tìm danh sách Accommodation IDs theo bộ lọc: Giá & Số người.
+	 */
+	async findAccommodationIdsByFilter(filters: {
+		minPrice?: number;
+		maxPrice?: number;
+		adults?: number;
+		children?: number;
+		sortBy?: string;
+	}): Promise<string[]> {
+		const where: Prisma.RoomWhereInput = {
+			isActive: true,
+		};
+
+		// 1. Lọc theo Giá
+		if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
+			where.price = {};
+			if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
+			if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+		}
+
+		// 2. Lọc theo Sức chứa
+		// Logic (đơn giản): Chỉ cần phòng chứa đủ số người lớn yêu cầu.
+		if (filters.adults) {
+			where.maxAdults = {
+				gte: filters.adults,
+			};
+		}
+
+		// 3. Lấy dữ liệu để xử lý Group và Sort
+		const rooms = await prisma.room.findMany({
+			where,
+			select: {
+				accommodationId: true,
+				price: true,
+			},
+		});
+
+		// 4. Group by accommodationId và tìm minPrice
+		const accMap = new Map<string, number>();
+
+		rooms.forEach((room) => {
+			const currentMin = accMap.get(room.accommodationId) || Infinity;
+			const roomPrice = Number(room.price);
+
+			if (roomPrice < currentMin) {
+				accMap.set(room.accommodationId, roomPrice);
+			}
+		});
+
+		// Chuyển Map thành mảng các object { id, price } để sort
+		const sortedAccs = Array.from(accMap.entries()).map(([id, price]) => ({
+			id,
+			price,
+		}));
+
+		// 5. Xử lý Sắp xếp (Sort)
+		const sortBy = filters.sortBy;
+
+		if (sortBy === "price_asc" || sortBy === "recommended") {
+			sortedAccs.sort((a, b) => a.price - b.price);
+		} else if (sortBy === "price_desc") {
+			sortedAccs.sort((a, b) => b.price - a.price);
+		}
+
+		// 6. Trả về danh sách ID đã được sắp xếp
+		return sortedAccs.map((item) => item.id);
+	}
 }
 
 // Xuất ra một instance (singleton) của repository

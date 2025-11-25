@@ -2,6 +2,13 @@ import prisma from "../prisma/client";
 //import { AccommodationEntity } from "../types/accommodation";
 import { Prisma, EAccommodationType } from "@prisma/client";
 
+export interface SearchFilters {
+	keyword?: string;
+	type?: EAccommodationType;
+	ids?: string[]; // List ID từ room-service
+	facilities?: string[];
+}
+
 export class AccommodationRepository {
 	async findById(id: string) {
 		return prisma.accommodation.findUnique({
@@ -71,6 +78,59 @@ export class AccommodationRepository {
 		return prisma.accommodation.count({
 			where,
 		});
+	}
+
+	async search(filters: SearchFilters, offset: number, limit: number, sortBy: string = "newest") {
+		const where: Prisma.AccommodationWhereInput = {
+			isActive: true,
+		};
+
+		// 1. Keyword: Tìm theo Tên HOẶC Thành phố HOẶC Địa chỉ đầy đủ
+		if (filters.keyword) {
+			where.OR = [{ name: { contains: filters.keyword } }, { address: { city: { contains: filters.keyword } } }, { address: { fullAddress: { contains: filters.keyword } } }];
+		}
+
+		// 2. Type
+		if (filters.type) {
+			where.type = filters.type;
+		}
+
+		// 3. IDs (Lọc giá/người)
+		if (filters.ids !== undefined) {
+			// Nếu mảng ID rỗng (tức là filter giá/người không tìm thấy gì) -> Trả về rỗng luôn
+			if (filters.ids.length === 0) {
+				return { data: [], total: 0 };
+			}
+			where.id = { in: filters.ids };
+		}
+
+		// 4. Facilities
+		if (filters.facilities && filters.facilities.length > 0) {
+			where.facilities = {
+				some: {
+					facility: { name: { in: filters.facilities } },
+				},
+			};
+		}
+
+		// 5. Sort
+		let orderBy: Prisma.AccommodationOrderByWithRelationInput = { createdAt: "desc" };
+		if (sortBy === "name_asc") orderBy = { name: "asc" };
+		else if (sortBy === "name_desc") orderBy = { name: "desc" };
+
+		// Execute query
+		const [data, total] = await Promise.all([
+			prisma.accommodation.findMany({
+				where,
+				include: { address: true },
+				skip: offset,
+				take: limit,
+				orderBy,
+			}),
+			prisma.accommodation.count({ where }),
+		]);
+
+		return { data, total };
 	}
 }
 
