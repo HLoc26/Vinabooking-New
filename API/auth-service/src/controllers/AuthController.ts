@@ -39,6 +39,7 @@ import AuthRepository from "../repositories/AuthRespository";
 
 class AuthController {
 	constructor(
+		private clientUrl: string,
 		private authService: AuthService,
 		private userService: UserService,
 		private oauthService: OAuthService,
@@ -283,7 +284,7 @@ class AuthController {
 		// If used password, ask user to login with password instead
 		if (userAuthProvider == EProvider.Credentials) {
 			const message = encodeURIComponent("This account was registered using password, please try login again with your password");
-			return res.redirect(`http://localhost:5173/oauth/error?message=${message}`);
+			return res.redirect(`${this.clientUrl}/oauth/error?message=${message}`);
 		}
 
 		const awsResponse = await this.authService.oAuthLogin(email);
@@ -318,7 +319,7 @@ class AuthController {
 			})
 		);
 
-		res.redirect(`http://localhost:5173/oauth/success?accessToken=${auth.AccessToken}&idToken=${auth.IdToken}&expiresIn=${auth.ExpiresIn}&user=${encodedUser}`);
+		res.redirect(`${this.clientUrl}/oauth/success?accessToken=${auth.AccessToken}&idToken=${auth.IdToken}&expiresIn=${auth.ExpiresIn}&user=${encodedUser}`);
 	}
 
 	public async forgotPassword(req: ForgotPasswordRequest, res: Response<ApiResponse<ForgotPasswordResponse>>) {

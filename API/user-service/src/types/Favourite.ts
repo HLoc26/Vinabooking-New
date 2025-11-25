@@ -1,4 +1,4 @@
-import { type FavouriteList as FavouriteListSchema, type FavouriteItem as FavouriteItemSchema } from "../../generated/prisma/index.js";
+import { type FavouriteList as FavouriteListSchema, type FavouriteItem as FavouriteItemSchema } from "../../generated/prisma/client";
 
 export interface IFavouriteList {
 	id: string;

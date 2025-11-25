@@ -1,4 +1,4 @@
-import { EVariantType } from "../../generated/prisma/index.js";
+import { EVariantType } from "../../generated/prisma/client";
 
 export interface IImage {
 	id: string;

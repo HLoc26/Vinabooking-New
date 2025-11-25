@@ -25,7 +25,14 @@ class AuthRouterFactory {
 		if (!googleClientSecret) {
 			throw new EnvironmentNotSetError("Missing GOOGLE_CLIENT_SECRET");
 		}
-		const redirectUri = "http://localhost:3000/auth/google/callback";
+		const redirectUri = process.env["REDIRECT_URI"];
+		if (!redirectUri) {
+			throw new EnvironmentNotSetError("Missing REDIRECT_URI");
+		}
+		const clientUrl = process.env["CLIENT_URL"];
+		if (!clientUrl) {
+			throw new EnvironmentNotSetError("Missing CLIENT_URL");
+		}
 
 		const authServiceConfig: AuthServiceConfig = {
 			cognitoAppClientId: cognitoAppClientId,
@@ -45,7 +52,7 @@ class AuthRouterFactory {
 		const oAuthService = new OAuthService(oAuthServiceConfig);
 		const userService = new UserService(userAxiosInstance);
 		const authRepository = new AuthRepository(prismaClient);
-		const authController = new AuthController(authService, userService, oAuthService, authRepository);
+		const authController = new AuthController(clientUrl, authService, userService, oAuthService, authRepository);
 		const authRouter = new AuthRouter(Router(), authController);
 		return authRouter.router;
 	}

@@ -3,7 +3,7 @@ import ImageRepository from "../repositories/ImageRepository";
 import { FileType, UploadedImage, UploadResult } from "../types/Image";
 import { CreateOptimized, CreateThumbnail, CreateWEBP, ImageProcessingPipeline } from "../utils/ImageProcessor";
 import S3Service from "./S3Service";
-import { EEntityType, EVariantType } from "../../generated/prisma/index.js";
+import { EEntityType, EVariantType } from "../../generated/prisma/client";
 
 import { EEntityType as GRPC_EEntityType } from "../../generated/grpc/image-service/image-service";
 import MappingUtil from "../utils/MappingUtil";

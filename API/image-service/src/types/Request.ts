@@ -1,5 +1,5 @@
 import { type Request } from "express";
-import { EEntityType } from "../../generated/prisma/index.js";
+import { EEntityType } from "../../generated/prisma/client";
 import type { ApiResponse, GetImageResponse, UploadResponse } from "./Response";
 
 export type ImageEntityType = "profile" | "accommodation" | "room" | "review";

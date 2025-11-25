@@ -1,4 +1,4 @@
-import { type User as UserSchema } from "../../generated/prisma/index.js";
+import { type User as UserSchema } from "../../generated/prisma/client";
 
 import { type FavouriteListWithItems, type IFavouriteList } from "./Favourite";
 import type { CacheInfo } from "./Request";

@@ -1,4 +1,4 @@
-import { EEntityType, EVariantType } from "../../generated/prisma/index.js";
+import { EEntityType, EVariantType } from "../../generated/prisma/client";
 import PrismaSingleton from "../clients/PrismaSingleton";
 import type { FileType, UploadedImage, UploadResult } from "../types/Image";
 
