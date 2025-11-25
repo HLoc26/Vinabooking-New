@@ -280,7 +280,7 @@ export default class BookingController {
 			await emailClient.sendCancellationEmail(leaderEmailData);
 
 			// 6. Return to FE
-			return ResponseHelper.success(res, booking);
+			return ResponseHelper.success(res, { success: true });
 		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);
