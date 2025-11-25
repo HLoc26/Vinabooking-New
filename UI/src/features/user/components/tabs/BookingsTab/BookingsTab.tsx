@@ -1,9 +1,11 @@
 import { Divider, Stack } from "@mui/material";
 import BookingStatsOverview from "./BookingStatsOverview";
-import { bookings } from "../../../constants/mock";
 import BookingTabsView from "./BookingTabsView";
+import useUserBookings from "../../../hooks/useUserBookings";
 
 const BookingTab: React.FC = () => {
+	const bookings = useUserBookings();
+
 	return (
 		<Stack spacing={3}>
 			<BookingStatsOverview bookings={bookings} />
