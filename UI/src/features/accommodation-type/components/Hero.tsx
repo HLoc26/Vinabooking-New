@@ -29,8 +29,8 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 
 	// Local state for UI
 	const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0, rooms: 1 });
-	const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
-	const [tempDateRange, setTempDateRange] = useState<DateRange>(getDefaultDateRange());
+	const [dateRange, setDateRange] = useState<DateRange>(() => getDefaultDateRange());
+	const [tempDateRange, setTempDateRange] = useState<DateRange>(() => getDefaultDateRange());
 	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
 	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
 	const [monthOffset, setMonthOffset] = useState(0);
