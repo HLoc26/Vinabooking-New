@@ -98,12 +98,13 @@ export class RoomService {
 	/**
 	 * (*) Lọc accommodationId theo điều kiện giá/người
 	 */
-	async filterAccommodationIds(minPrice?: number, maxPrice?: number, adults?: number, children?: number) {
+	async filterAccommodationIds(minPrice?: number, maxPrice?: number, adults?: number, children?: number, sortBy?: string) {
 		return await roomRepository.findAccommodationIdsByFilter({
 			minPrice,
 			maxPrice,
 			adults,
 			children,
+			sortBy,
 		});
 	}
 

@@ -85,13 +85,14 @@ export class RoomController {
 	 */
 	async getFilteredAccommodationIds(req: Request, res: Response, next: NextFunction) {
 		try {
-			const { minPrice, maxPrice, adults, children } = req.query;
+			const { minPrice, maxPrice, adults, children, sortBy } = req.query;
 
 			const ids = await roomService.filterAccommodationIds(
 				minPrice ? Number(minPrice) : undefined,
 				maxPrice ? Number(maxPrice) : undefined,
 				adults ? Number(adults) : undefined,
-				children ? Number(children) : undefined
+				children ? Number(children) : undefined,
+				sortBy as string
 			);
 
 			sendSuccess(res, ids);
