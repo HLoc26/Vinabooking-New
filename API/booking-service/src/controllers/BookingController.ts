@@ -2,10 +2,10 @@ import type { Request, Response } from "express";
 import ResponseHelper from "../utils/ResponseHelper";
 import type { ApiResponse } from "../types/Response";
 import BookingService from "../services/BookingService";
-import { AuthenticatedRequest, BookingRequest, ConfirmRequest } from "../types/Request";
+import { AuthenticatedCancelRequest, AuthenticatedRequest, BookingRequest, ConfirmRequest } from "../types/Request";
 import BookingRepository from "../repositories/BookingRepository";
 import { BookingResponse } from "../types/Response";
-import { ConfirmationEmailData, EmailServiceClient } from "../clients/EmailServiceClient";
+import { CancellationEmailData, ConfirmationEmailData, EmailServiceClient } from "../clients/EmailServiceClient";
 import axios from "axios";
 import { AccommodationPayload } from "../types/Accommodation";
 import { CreateBookingInput } from "../types/Booking";
@@ -213,6 +213,73 @@ export default class BookingController {
 			await emailClient.sendConfirmationEmail(leaderEmailData);
 
 			// 7. Return to FE
+			return ResponseHelper.success(res, booking);
+		} catch (err: unknown) {
+			const e = err as Error;
+			return ResponseHelper.error(res, e.message);
+		}
+	}
+
+	public async cancelBooking(req: AuthenticatedCancelRequest, res: Response<ApiResponse<{ success: boolean }>>) {
+		try {
+			const { id } = req.query;
+			if (!id) return ResponseHelper.error(res, "Missing booking ID in request query");
+
+			// 1. Confirm booking
+			const booking = await this.bookingRepository.cancelBooking(id);
+			console.log(`[BookingController] Booking cancelled: ${JSON.stringify(booking)}`);
+			if (!booking) return ResponseHelper.error(res, "Booking not found");
+
+			// --- Start: Validation for New Fields ---
+			// Ensure the necessary fields for email are present on the booking object
+			if (!booking.leaderEmail || !booking.leaderName) {
+				// Depending on your system, you might:
+				// a) Fallback to the user service if these fields are missing.
+				// b) Throw a specific error indicating required data is missing on the booking.
+				// For this example, we'll throw an error if the required fields aren't there.
+				return ResponseHelper.error(res, "Booking object is missing leaderEmail or leaderName required for cancellation email.");
+			}
+			// --- End: Validation for New Fields ---
+
+			const firstDetail = booking.details[0];
+			console.log(`[BookingController] Fetching accommodation data: ${firstDetail}`);
+
+			// 2. Get accommodation
+			const accommodationRes = await axios.get<AccommodationPayload>(`${process.env.ACCOMMODATION_ENDPOINT}?byEntity=room&entityId=${firstDetail.itemId}`);
+			const accommodation = accommodationRes.data;
+
+			// 3. Skip: Get user (Using booking.leaderEmail and booking.leaderName instead)
+			// Note: The original step 3 and associated console logs are removed.
+			console.log(`[BookingController] Fetching user data for userId: ${booking.userId} and url: ${process.env.USER_ENDPOINT}/${booking.userId}`);
+			const userRes = await axios.get(`${process.env.USER_ENDPOINT}/${booking.userId}`);
+			console.log("[BookingController] Fetched user data:");
+			console.log(userRes.data.data);
+			const user = userRes.data.data;
+			// 4. Prepare email payload
+			const userEmailData: CancellationEmailData = {
+				to: user.email,
+				accommodation,
+				guestName: user.name, // guestName as user.name
+				referenceNo: booking.referenceNo,
+				roomType: firstDetail.itemType,
+				nights: firstDetail.count,
+			};
+
+			const leaderEmailData: CancellationEmailData = {
+				to: booking.leaderEmail,
+				accommodation,
+				guestName: booking.leaderName, // guestName as booking.leaderName
+				referenceNo: booking.referenceNo,
+				roomType: firstDetail.itemType,
+				nights: firstDetail.count,
+			};
+
+			// 5. Send email
+			const emailClient = new EmailServiceClient();
+			await emailClient.sendCancellationEmail(userEmailData);
+			await emailClient.sendCancellationEmail(leaderEmailData);
+
+			// 6. Return to FE
 			return ResponseHelper.success(res, booking);
 		} catch (err: unknown) {
 			const e = err as Error;

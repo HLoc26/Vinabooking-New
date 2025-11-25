@@ -4,7 +4,7 @@ import BookingController from "../controllers/BookingController";
 import BookingRepository from "../repositories/BookingRepository";
 import BookingService from "../services/BookingService";
 import { AuthMiddleware } from "../middleware/AuthMiddleware";
-import { AuthenticatedRequest, ConfirmRequest } from "../types/Request";
+import { AuthenticatedCancelRequest, AuthenticatedRequest, ConfirmRequest } from "../types/Request";
 import accommodationClient from "../clients/AccommodationServiceClient";
 
 class BookingRouterFactory {
@@ -64,6 +64,9 @@ class BookingRouter {
 		});
 		this.router.post("/confirm", (req, res: Response) => {
 			return this.bookingController.confirmBooking(req as ConfirmRequest, res);
+		});
+		this.router.patch("/cancel", (req, res) => {
+			return this.bookingController.cancelBooking(req as AuthenticatedCancelRequest, res);
 		});
 	}
 }
