@@ -7,34 +7,37 @@ import useAuthContextProvider from "../../../context/AuthContext/hook";
 const useUserBookingDetail = (bookingId: string) => {
 	const { getCurrentUser } = useAuthContextProvider();
 	const [user, setUser] = useState<UserDto | null>(null);
+	const [booking, setBooking] = useState<Booking | null>(null);
+	const [loading, setLoading] = useState<boolean>(true);
+	const [initialized, setInitialized] = useState(false);
 
 	useEffect(() => {
 		const loggedIn = getCurrentUser();
 		setUser(loggedIn);
 	}, [getCurrentUser]);
 
-	const [booking, setBooking] = useState<Booking | null>(null);
-
 	useEffect(() => {
 		let isMounted = true;
 
 		(async () => {
+			if (!user?.id || !bookingId) return;
+
+			setLoading(true);
 			try {
-				if (!user?.id) return;
-				if (!bookingId) return;
-
 				const res = await bookingApi.getById(bookingId);
-
-				console.log(res);
 				if (!res.data) {
-					setBooking(null);
-					return;
+					if (isMounted) setBooking(null);
+				} else {
+					if (isMounted) setBooking(res.data);
 				}
-
-				if (isMounted) setBooking(res.data);
-			} catch (e: unknown) {
+			} catch (e) {
 				console.log(e);
 				if (isMounted) setBooking(null);
+			} finally {
+				if (isMounted) {
+					setLoading(false);
+					setInitialized(true);
+				}
 			}
 		})();
 
@@ -43,7 +46,7 @@ const useUserBookingDetail = (bookingId: string) => {
 		};
 	}, [user?.id, bookingId]);
 
-	return booking;
+	return { booking, loading, initialized };
 };
 
 export default useUserBookingDetail;

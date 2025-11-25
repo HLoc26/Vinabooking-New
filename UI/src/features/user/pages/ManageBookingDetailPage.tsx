@@ -10,7 +10,7 @@ import BookingDetailItem from "../components/tabs/BookingsTab/BookingDetailItem"
 
 const ManageBookingDetailPage = () => {
 	const { bookingId } = useParams<{ bookingId: string }>();
-	const booking = useUserBookingDetail(bookingId ?? "");
+	const { booking, loading, initialized } = useUserBookingDetail(bookingId ?? "");
 
 	const [loadingCancel, setLoadingCancel] = useState(false);
 
@@ -56,6 +56,21 @@ const ManageBookingDetailPage = () => {
 				};
 		}
 	};
+
+	if (loading || !initialized) {
+		return (
+			<Box
+				sx={{
+					minHeight: "60vh",
+					display: "flex",
+					alignItems: "center",
+					justifyContent: "center",
+				}}
+			>
+				<CircularProgress />
+			</Box>
+		);
+	}
 
 	if (!booking) {
 		return (
