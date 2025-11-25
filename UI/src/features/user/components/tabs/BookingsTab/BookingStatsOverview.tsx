@@ -1,4 +1,4 @@
-import { Paper, Stack, Typography, Box, Skeleton } from "@mui/material";
+import { Paper, Stack, Typography, Box } from "@mui/material";
 import type { Booking } from "../../../types/Booking";
 import { WalletOutlined, LuggageOutlined, NightsStayOutlined, StarRateRounded } from "@mui/icons-material";
 import { standardize } from "../../../../../utils/moneyConverter";
@@ -22,13 +22,13 @@ const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings })
 		{
 			label: "Upcoming Trip",
 			icon: <LuggageOutlined fontSize="large" />,
-			value: upcomingBookings.length,
+			value: upcomingBookings.length || 0,
 			bgColor: "#d4eaff", // xanh biển nhạt
 		},
 		{
 			label: "Total Nights",
 			icon: <NightsStayOutlined fontSize="large" />,
-			value: completedBookings.length,
+			value: completedBookings.length ?? 0,
 			bgColor: "#ead8ff", // tím nhạt
 		},
 		{
@@ -79,7 +79,7 @@ const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings })
 					</Typography>
 
 					<Typography variant="h6" fontWeight={700}>
-						{stat.value ? stat.value : <Skeleton variant="text" />}
+						{stat.value}
 					</Typography>
 				</Paper>
 			))}

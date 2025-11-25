@@ -73,4 +73,14 @@ export default class BookingRepository {
 			},
 		});
 	}
+
+	public async cancelBooking(id: string) {
+		return await this.prisma.booking.update({
+			where: { id },
+			data: { status: "CANCELLED" },
+			include: {
+				details: true,
+			},
+		});
+	}
 }
