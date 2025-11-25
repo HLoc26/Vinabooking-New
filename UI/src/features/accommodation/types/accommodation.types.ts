@@ -75,3 +75,81 @@ export interface AccommodationDetail {
 }
 
 export type FacilityIconMap = Record<string, ReactNode>;
+
+/* =========================================================================
+ * SEARCH
+ * ========================================================================= */
+
+export interface Address {
+	id?: string;
+	street: string;
+	ward?: string;
+	district?: string;
+	city: string;
+	country?: string;
+	countryCode?: string;
+	postalCode?: string;
+	latitude?: string;
+	longitude?: string;
+	fullAddress: string;
+	placeId?: string;
+	createdAt?: string;
+	updatedAt?: string;
+}
+
+export type AccommodationType = "HOTEL" | "APARTMENT" | "RESORT" | "VILLA" | "HOMESTAY" | "HOSTEL" | string;
+
+export type SortOption = "price_asc" | "price_desc" | "newest" | "rating" | "recommended";
+
+export interface AccommodationListItem {
+	id: string;
+	name: string;
+	description: string;
+	type: AccommodationType;
+	rentalType: string;
+	isActive: boolean;
+	ownerId?: string;
+	createdAt?: string;
+	updatedAt?: string;
+	addressId?: string;
+	address: Address;
+	thumbnail: string;
+	rating?: number;
+	reviewCount?: number;
+	distance?: number;
+	minPrice?: number;
+}
+
+export interface PaginationMeta {
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
+}
+
+export interface ApiResponse<T> {
+	success: boolean;
+	data: T;
+	error: any;
+}
+
+export interface AccommodationSearchData {
+	data: AccommodationListItem[];
+	meta: PaginationMeta;
+}
+
+export interface SearchAccommodationParams {
+	keyword?: string;
+	checkIn?: string;
+	checkOut?: string;
+	adults?: number;
+	children?: number;
+	rooms?: number;
+	type?: string;
+	minPrice?: number;
+	maxPrice?: number;
+	facilities?: string[];
+	sortBy?: string;
+	page?: number;
+	limit?: number;
+}
