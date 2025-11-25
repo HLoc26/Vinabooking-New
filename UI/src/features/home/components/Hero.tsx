@@ -5,13 +5,27 @@ import { useLocationSearch } from "../../../context/SearchContext/useLocationSea
 import type { DateRange } from "../../accommodation-type/types/DateRange";
 import type { Guests } from "../../accommodation-type/types/Guest";
 
+// Helper function to get default date range
+const getDefaultDateRange = (): DateRange => {
+	const today = new Date();
+	today.setHours(0, 0, 0, 0);
+
+	const checkOut = new Date(today);
+	checkOut.setDate(today.getDate() + 2);
+
+	return {
+		checkIn: today,
+		checkOut: checkOut,
+	};
+};
+
 export const Hero: React.FC = () => {
 	const { query, updateQuery } = useLocationSearch();
 
-	// Local state for UI
+	// Local state for UI - Initialize with default dates
 	const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0, rooms: 1 });
-	const [dateRange, setDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
-	const [tempDateRange, setTempDateRange] = useState<DateRange>({ checkIn: null, checkOut: null });
+	const [dateRange, setDateRange] = useState<DateRange>(getDefaultDateRange());
+	const [tempDateRange, setTempDateRange] = useState<DateRange>(getDefaultDateRange());
 	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
 	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
 	const [monthOffset, setMonthOffset] = useState(0);
@@ -71,7 +85,6 @@ export const Hero: React.FC = () => {
 					zIndex: 0,
 				}}
 			/>
-
 			{/* Overlay */}
 			<Box
 				position="absolute"
