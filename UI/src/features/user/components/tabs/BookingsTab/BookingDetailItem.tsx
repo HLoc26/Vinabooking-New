@@ -177,11 +177,19 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 								</Button>
 							)}
 
-							{status === "BOOKED" && (
-								<Button variant="contained" color="primary" size="small" sx={{ fontSize: 13, py: 0.5, px: 2 }}>
-									Manage Booking
-								</Button>
-							)}
+							{status === "BOOKED" ||
+								(status === "PENDING" && (
+									<Button //
+										component={RouterLink}
+										to={`/user/manage-booking/${booking.id}`}
+										variant="contained"
+										color="primary"
+										size="small"
+										sx={{ fontSize: 13, py: 0.5, px: 2 }}
+									>
+										Manage Booking
+									</Button>
+								))}
 
 							{status === "CANCELLED" && (
 								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} disabled>
