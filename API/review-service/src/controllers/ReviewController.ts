@@ -15,8 +15,7 @@ class ReviewController {
 
 	async createReview(req: CreateReviewRequest, res: Response<ApiResponse<CreateReviewResponse>>) {
 		const reviewData = req.body;
-		const user = req.user;
-		const userId = reviewData.userId; //req.user.id
+		const userId = req.user.id;
 		const isReply = reviewData.parentId ? true : false;
 
 		const bookingId = reviewData.bookingId;
