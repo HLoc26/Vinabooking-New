@@ -95,6 +95,19 @@ export class RoomService {
 		return deletedRoom;
 	}
 
+	/**
+	 * (*) Lọc accommodationId theo điều kiện giá/người
+	 */
+	async filterAccommodationIds(minPrice?: number, maxPrice?: number, adults?: number, children?: number, sortBy?: string) {
+		return await roomRepository.findAccommodationIdsByFilter({
+			minPrice,
+			maxPrice,
+			adults,
+			children,
+			sortBy,
+		});
+	}
+
 	// --- Quản lý Beds ---
 
 	/**
