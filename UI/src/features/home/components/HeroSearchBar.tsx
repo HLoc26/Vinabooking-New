@@ -1,6 +1,7 @@
 // HeroSearchBar.tsx
 import React from "react";
 import { Box, Paper, Button, TextField, Typography, useTheme } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 // 1. Replaced Lucide imports with MUI Icons
 import SearchIcon from "@mui/icons-material/SearchRounded";
@@ -97,6 +98,7 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 		isGuestMenuOpen,
 		setIsGuestMenuOpen,
 	} = props;
+	const navigate = useNavigate();
 
 	// --- Logic functions remain unchanged ---
 	const handleDateClick = (date: Date) => {
@@ -112,22 +114,39 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 	const { query } = useLocationSearch();
 
 	const handleMainSearch = () => {
-		const params: Record<string, any> = {
-			keyword: keyword.trim(),
-		};
+		const params = new URLSearchParams();
 
-		if (query.type) params.type = query.type;
+		// Add keyword if present
+		if (keyword.trim()) {
+			params.append("keyword", keyword.trim());
+		}
+
+		// Add type if present
+		if (query.type) {
+			params.append("type", query.type);
+		}
+
+		// Add dates if present
 		if (dateRange.checkIn) {
-			params.checkIn = dateRange.checkIn.toISOString().split("T")[0];
+			params.append("checkIn", dateRange.checkIn.toISOString().split("T")[0]);
 		}
 		if (dateRange.checkOut) {
-			params.checkOut = dateRange.checkOut.toISOString().split("T")[0];
+			params.append("checkOut", dateRange.checkOut.toISOString().split("T")[0]);
 		}
-		if (guests.adults) params.adults = guests.adults;
-		if (guests.children) params.children = guests.children;
-		if (guests.rooms) params.rooms = guests.rooms;
 
-		console.log("Full search params:", params);
+		// Add guest info
+		if (guests.adults) {
+			params.append("adults", guests.adults.toString());
+		}
+		if (guests.children) {
+			params.append("children", guests.children.toString());
+		}
+		if (guests.rooms) {
+			params.append("rooms", guests.rooms.toString());
+		}
+
+		// Navigate to search page with query params
+		navigate(`/search?${params.toString()}`);
 	};
 
 	const handleDateClose = () => {
