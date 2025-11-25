@@ -6,6 +6,7 @@ import ReviewService from "../services/ReviewService";
 import BookingService from "../services/BookingService";
 import ResponseHelper from "../utils/ResponseHelper";
 import BadRequestError from "../errors/BadRequestError";
+import ForbiddenError from "../errors/ForbiddenError";
 
 class ReviewController {
 	constructor(
@@ -14,40 +15,32 @@ class ReviewController {
 	) {}
 
 	async createReview(req: CreateReviewRequest, res: Response<ApiResponse<CreateReviewResponse>>) {
-		const reviewData = req.body;
+		const data = req.body;
 		const userId = req.user.id;
-		const isReply = reviewData.parentId ? true : false;
 
-		const bookingId = reviewData.bookingId;
-		const parentId = reviewData.parentId;
+		// XOR validation
+		const hasBooking = Boolean(data.bookingId);
+		const hasParent = Boolean(data.parentId);
 
-		let response;
-
-		if (isReply) {
-			// Reply review should have a parent
-			if (!parentId) {
-				throw new BadRequestError("Invalid request: Reply review should include parentId");
-			}
-			// Reply review should not include bookingId
-			if (bookingId) {
-				throw new BadRequestError("Invalid request: Reply review should not include bookingId");
-			}
-			response = await this.reviewService.createReply(reviewData as CreateReplyInput, userId);
-		} else {
-			// Straight review should include booking ID, reply review does not need
-			if (!bookingId) {
-				throw new BadRequestError("Invalid request: Review should include bookingId");
-			}
-			const isValidBooking = await this.bookingService.verify(bookingId, userId);
-
-			// User does not own the booking, or booking state is not COMPLETED
-			if (!isValidBooking) {
-				throw new BadRequestError("Invalid request: Booking info is not valid for submitting review");
-			}
-			response = await this.reviewService.createReview(reviewData as CreateReviewInput, userId);
+		// Both true or both false
+		if (hasBooking === hasParent) {
+			throw new BadRequestError("Invalid request: exactly one of bookingId or parentId must be provided");
 		}
 
-		ResponseHelper.success(res, response, 201);
+		// Handle reply
+		if (hasParent) {
+			const response = await this.reviewService.createReply(data as CreateReplyInput, userId);
+			return ResponseHelper.success(res, response, 201);
+		}
+
+		// Handle review
+		const isValidBooking = await this.bookingService.verify(data.bookingId!, userId);
+		if (!isValidBooking) {
+			throw new ForbiddenError("Booking info is not valid for submitting review");
+		}
+
+		const response = await this.reviewService.createReview(data as CreateReviewInput, userId);
+		return ResponseHelper.success<CreateReviewResponse>(res, response, 201);
 	}
 }
 
