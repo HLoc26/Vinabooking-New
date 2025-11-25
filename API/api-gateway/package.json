@@ -1,26 +1,28 @@
 {
-    "name": "api-gateway",
-    "version": "1.0.0",
-    "main": "index.js",
-    "scripts": {
-        "test": "echo \"Error: no test specified\" && exit 1",
-        "dev": "npx nodemon --legacy-watch ./src/index.js"
-    },
-    "keywords": [],
-    "author": "",
-    "license": "ISC",
-    "type": "module",
-    "description": "",
-    "dependencies": {
-        "cors": "^2.8.5",
-        "dotenv": "^17.2.1",
-        "express": "^5.1.0",
-        "express-http-proxy": "^2.1.1",
-        "nodemon": "^3.1.10"
-    },
-    "devDependencies": {
-        "@types/cors": "^2.8.19",
-        "@types/express": "^5.0.5",
-        "@types/express-http-proxy": "^1.6.7"
-    }
+	"name": "api-gateway",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "npx nodemon --legacy-watch ./src/index.js",
+		"build": "npx tsc",
+		"start": "node ./src/index.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "module",
+	"description": "",
+	"dependencies": {
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.1",
+		"express": "^5.1.0",
+		"express-http-proxy": "^2.1.1",
+		"nodemon": "^3.1.10"
+	},
+	"devDependencies": {
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.5",
+		"@types/express-http-proxy": "^1.6.7"
+	}
 }

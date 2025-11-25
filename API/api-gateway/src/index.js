@@ -2,7 +2,8 @@ import dotenv from "dotenv";
 import express from "express";
 import proxy from "express-http-proxy";
 import cors from "cors";
-dotenv.config({ path: ["../common.env", ".env"] });
+dotenv.config({ path: [".env"] });
+const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net/"];
 
 const proxyHeaderOptions = {
 	proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
@@ -11,10 +12,14 @@ const proxyHeaderOptions = {
 		}
 		return proxyReqOpts;
 	},
-	userResHeaderDecorator: (headers) => {
-		headers["Access-Control-Allow-Origin"] = "http://localhost:5173";
-		headers["Access-Control-Allow-Credentials"] = "true";
-		headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization";
+	userResHeaderDecorator: (headers, userReq) => {
+		const origin = userReq.headers.origin;
+		if (origin && allowed.includes(origin)) {
+			headers["Access-Control-Allow-Origin"] = origin;
+			headers["Access-Control-Allow-Credentials"] = "true";
+			headers["Access-Control-Allow-Methods"] = "GET,POST,PUT,PATCH,DELETE,OPTIONS";
+			headers["Access-Control-Allow-Headers"] = "Content-Type,Authorization";
+		}
 		return headers;
 	},
 	proxyErrorHandler: (err, res, _next) => {
@@ -25,16 +30,18 @@ const proxyHeaderOptions = {
 
 const app = express();
 
-const CLIENT = "http://localhost:5173";
-
 app.use(
 	cors({
-		origin: CLIENT, // hoặc '*' nếu đang dev
-		methods: ["GET", "POST", "PUT", "PATCH", "DELETE", "OPTIONS"],
-		allowedHeaders: ["Content-Type", "Authorization"],
+		origin: (origin, callback) => {
+			if (!origin || allowed.includes(origin)) {
+				return callback(null, true);
+			}
+			return callback(new Error("Not allowed by CORS"));
+		},
 		credentials: true,
 	})
 );
+
 app.use(express.json());
 
 // Middleware check auth cho tất cả request
@@ -63,3 +70,4 @@ app.use(
 app.use("/email", proxy(process.env.EMAIL_ENDPOINT, proxyHeaderOptions));
 
 app.listen(3000, () => console.log("API Gateway running on port 3000"));
+

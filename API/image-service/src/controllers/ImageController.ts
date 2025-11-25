@@ -7,7 +7,7 @@ import BadRequestError from "../errors/BadRequestError";
 import { UploadService } from "../services/UploadService.js";
 import ImageRepository from "../repositories/ImageRepository";
 import S3Service from "../services/S3Service";
-import { EVariantType } from "../../generated/prisma";
+import { EVariantType } from "../../generated/prisma/client";
 
 class ImageController {
 	constructor(
