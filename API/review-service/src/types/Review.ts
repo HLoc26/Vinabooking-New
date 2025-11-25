@@ -1,6 +1,6 @@
 import { ReviewUncheckedCreateInput } from "../../generated/prisma/models";
 
-type InputOmit = "createdAt" | "updatedAt" | "replies" | "id";
+type InputOmit = "createdAt" | "updatedAt" | "replies" | "id" | "userId";
 
 export type CreateReviewPayload = Omit<ReviewUncheckedCreateInput, InputOmit>;
 
