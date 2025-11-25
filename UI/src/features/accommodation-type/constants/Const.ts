@@ -70,4 +70,98 @@ export const ACCOMMODATION_HERO_IMAGES: Partial<Record<EAccommodationType, strin
 };
 
 // Keep basic cities structure but they can be enhanced dynamically in App.tsx
-export const CITY_NAMES = ["Da Nang", "Ho Chi Minh City", "Hanoi", "Hoi An", "Phu Quoc", "Nha Trang", "Da Lat", "Sapa"];
+export const CITY_NAMES = [
+	// 5 major central-governed cities
+	"Hà Nội",
+	"Hồ Chí Minh",
+	"Đà Nẵng",
+	"Hải Phòng",
+	"Cần Thơ",
+	// Tier-1 tourist superstars
+	"Hội An",
+	"Huế",
+	"Đà Lạt",
+	"Nha Trang",
+	"Phú Quốc",
+	"Vũng Tàu",
+	"Sa Pa",
+	"Hà Giang",
+	"Ninh Bình",
+	"Phong Nha",
+	"Mũi Né",
+	"Phan Thiết",
+	"Côn Đảo",
+	// Tier-2 rising & very popular destinations
+	"Quy Nhơn",
+	"Phú Yên",
+	"Đồng Hới",
+	"Mai Châu",
+	"Cao Bằng",
+	"Bản Giốc", // often searched separately
+	"Mộc Châu",
+	"Điện Biên",
+	"Lý Sơn",
+	"Cù Lao Chàm",
+	"An Bàng", // people search by beach name
+	"Mỹ Khê",
+	"Lăng Cô",
+	// Central Highlands
+	"Buôn Ma Thuột",
+	"Pleiku",
+	"Kon Tum",
+	"Gia Nghĩa",
+	"Đắk Lắk", // province name also used
+	"Lâm Đồng",
+	// Mekong Delta hotspots
+	"Cà Mau",
+	"Châu Đốc",
+	"Trà Vinh",
+	"Bến Tre",
+	"Vĩnh Long",
+	"Long Xuyên",
+	"Rạch Giá",
+	"Hà Tiên",
+	// Coastal & emerging
+	"Bà Rịa - Vũng Tàu", // full province name often used
+	"Bình Định",
+	"Quảng Bình",
+	"Quảng Nam",
+	"Thừa Thiên Huế",
+	"Khánh Hòa",
+	"Kiên Giang",
+	"Ninh Thuận",
+	"Bình Thuận",
+	"Phan Rang",
+	"Cam Ranh",
+	"Tuy Hòa",
+	"Đồ Sơn",
+
+	// Northern mountain & border
+	"Lào Cai",
+	"Yên Bái",
+	"Lai Châu",
+	"Sơn La",
+	"Bắc Kạn",
+	"Tuyên Quang",
+	"Thái Nguyên",
+
+	// Other notable mentions (niche but searched)
+	"Cát Bà",
+	"Cô Tô",
+	"Quan Lạn",
+	"Bái Tử Long Bay",
+	"Tam Đảo",
+	"Ba Vì",
+	"Hạ Long", // obviously
+	"Bái Đính",
+	"Tràng An",
+	"Chùa Hương",
+	"Cúc Phương",
+	"Pù Luông",
+	"Sơn Đoòng ", // world’s largest cave
+	"Paradise ",
+	"Tú Làn ",
+	"Đà Bắc",
+	"Ngân Sơn",
+	"Vịnh Lan Hạ",
+];
