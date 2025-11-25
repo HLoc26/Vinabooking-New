@@ -3,6 +3,9 @@ import { roomController } from "../controllers/room.controller";
 
 const router = Router();
 
+// GET /filter-ids
+router.get("/filter-ids", roomController.getFilteredAccommodationIds.bind(roomController));
+
 // GET /accommodation/:accommodationId
 router.get("/accommodation/:accommodationId", roomController.getRoomsByAccommodationId);
 
