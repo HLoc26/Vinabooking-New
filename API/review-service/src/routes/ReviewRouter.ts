@@ -1,11 +1,12 @@
 import { Router } from "express";
-import { CreateReviewRequest } from "../types/Request";
+import { AuthenticatedRequest, CreateReviewRequest } from "../types/Request";
 import ReviewController from "../controllers/ReviewController";
 import ReviewService from "../services/ReviewService";
 import BookingService from "../services/BookingService";
 import BookingServiceClient from "../clients/BookingServiceClient";
 import ReviewRepository from "../repositories/ReviewRepository";
 import PrismaSingleton from "../clients/PrismaSingleton";
+import { AuthMiddleware } from "../middlewares/AuthMiddleware";
 
 class ReviewRouterFactory {
 	// Dependency Injection
@@ -37,9 +38,15 @@ class ReviewRouter {
 	}
 
 	private initializeRoutes() {
-		this.router.post("/", (req, res) => {
-			return this.reviewController.createReview(req as CreateReviewRequest, res);
-		});
+		this.router.post(
+			"/",
+			(req, res, next) => {
+				return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
+			},
+			(req, res) => {
+				return this.reviewController.createReview(req as CreateReviewRequest, res);
+			}
+		);
 	}
 }
 
