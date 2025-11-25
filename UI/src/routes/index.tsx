@@ -8,6 +8,7 @@ import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
 import { TravelerLayout } from "../components/layout/TravelerLayout";
 import UserProfilePage from "../features/user/pages/UserProfilePage";
+import ManageBookingDetailPage from "../features/user/pages/ManageBookingDetailPage";
 
 export const AppRouter = () => (
 	<>
@@ -33,6 +34,14 @@ export const AppRouter = () => (
 				element={
 					<TravelerLayout>
 						<UserProfilePage />
+					</TravelerLayout>
+				}
+			/>
+			<Route
+				path="/user/manage-booking/:bookingId"
+				element={
+					<TravelerLayout>
+						<ManageBookingDetailPage />{" "}
 					</TravelerLayout>
 				}
 			/>
