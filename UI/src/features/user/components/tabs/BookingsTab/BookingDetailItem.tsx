@@ -1,10 +1,11 @@
 import React from "react";
-import { Card, CardContent, CardMedia, Typography, Stack, Box, Button, Chip, Divider, Skeleton } from "@mui/material";
+import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
 import type { Booking } from "../../../types/Booking";
 import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
 import useRoomInfo from "../../../hooks/useRoomInfo";
 import { formatDate } from "../../../../../utils/dateFormatter";
+import { Link as RouterLink } from "react-router-dom";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -84,9 +85,22 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 				<Box>
 					{/* Name */}
 					{accommodationName ? (
-						<Typography variant="h6" fontWeight={700} noWrap mb={1}>
-							{accommodationName}
-						</Typography>
+						<Link
+							component={RouterLink}
+							to={`/accommodation/${accommodation?.id}`}
+							underline="none"
+							sx={{
+								"&:hover": {
+									color: "primary.main",
+									textDecoration: "underline",
+									cursor: "pointer",
+								},
+							}}
+						>
+							<Typography variant="h6" fontWeight={700} noWrap mb={1}>
+								{accommodationName}
+							</Typography>
+						</Link>
 					) : (
 						<Skeleton variant="text" sx={{ fontSize: 24, fontWeight: 700, width: 200 }} />
 					)}
