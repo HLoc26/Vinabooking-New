@@ -9,6 +9,9 @@ router.get("/stats", accommodationController.getHomepageStats.bind(accommodation
 // GET /count?city=...&type=...
 router.get("/count", accommodationController.getCount.bind(accommodationController));
 
+// Route search
+router.get("/search", accommodationController.search.bind(accommodationController));
+
 /**
  * GET /?byEntity=room&entityId=:roomId
  * Get accommodation details by Room ID.
