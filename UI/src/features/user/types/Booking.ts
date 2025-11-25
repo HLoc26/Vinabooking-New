@@ -9,8 +9,8 @@ export type BookingDetail = {
 
 export type Booking = {
 	id: string;
-	startDate: Date;
-	endDate: Date;
+	startDate: Date | string;
+	endDate: Date | string;
 	guestCount: number;
 	leaderName: string | null;
 	leaderEmail: string | null;

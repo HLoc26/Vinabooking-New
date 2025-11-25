@@ -4,6 +4,7 @@ import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from 
 import type { Booking } from "../../../types/Booking";
 import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
 import useRoomInfo from "../../../hooks/useRoomInfo";
+import { formatDate } from "../../../../../utils/dateFormatter";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -39,6 +40,10 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 	const accommodationName = accommodation?.name ?? "";
 	const fullAddress = accommodation?.address?.fullAddress ?? "";
 
+	const images = accommodation?.images;
+
+	const thumbnails = images?.filter((i) => i.variant == "THUMBNAIL");
+
 	return (
 		<Card
 			elevation={2}
@@ -57,7 +62,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: 210 }}>
 				{accommodation ? (
 					<>
-						<CardMedia component="img" image={image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
+						<CardMedia component="img" image={thumbnails?.[0].url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
 						<StatusBadge status={status} />
 					</>
 				) : (
@@ -104,14 +109,14 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 							<Stack direction="row" spacing={0.5} alignItems="center">
 								<CalendarMonthOutlined fontSize="small" sx={{ fontSize: 16 }} />
 								<Typography variant="body2" fontSize={15}>
-									{startDate.toLocaleDateString()}
+									{formatDate(startDate instanceof Date ? startDate.toString() : startDate)}
 								</Typography>
 							</Stack>
 
 							<ArrowForward fontSize="small" sx={{ fontSize: 16 }} />
 
 							<Typography variant="body2" fontSize={15}>
-								{endDate.toLocaleDateString()}
+								{formatDate(endDate instanceof Date ? endDate.toString() : endDate)}
 							</Typography>
 						</Stack>
 					) : (
