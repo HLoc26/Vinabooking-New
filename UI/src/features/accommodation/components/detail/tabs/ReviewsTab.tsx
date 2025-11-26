@@ -26,7 +26,8 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const unreviewedBookings = userBookings
 		.filter((booking) => booking.status === "COMPLETED")
 		.filter((booking) => booking.details.some((d) => accommodationRoomIds.has(d.itemId)))
-		.filter((booking) => !reviewedBookingIds.has(booking.id));
+		.filter((booking) => !reviewedBookingIds.has(booking.id))
+		.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()); // sort by most recent first
 
 	const canLeaveReview = user && unreviewedBookings.length > 0;
 
@@ -40,6 +41,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 			<ReviewModal
 				accommodationId={accommodation.id}
 				bookingId={oldestUnreviewedBooking.id}
+				booking={oldestUnreviewedBooking}
 				onSuccess={() => {
 					refresh();
 					pushNotification("Create review successfully", "success");
