@@ -6,6 +6,9 @@ import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
 import useRoomInfo from "../../../hooks/useRoomInfo";
 import { formatDate } from "../../../../../utils/dateFormatter";
 import { Link as RouterLink } from "react-router-dom";
+import useModalContext from "../../../../../context/ModalContext/hook";
+import ReviewModal from "../../../../../components/ui/ReviewModal";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -44,6 +47,21 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 	const images = accommodation?.images;
 
 	const thumbnails = images?.filter((i) => i.variant == "THUMBNAIL");
+
+	const { openModal } = useModalContext();
+	const { pushNotification } = usePushNotificationContext();
+
+	const handleOpenReview = () => {
+		openModal(
+			<ReviewModal //
+				accommodationId={accommodation?.id || ""}
+				bookingId={booking.id}
+				onSuccess={() => {
+					pushNotification("Create review successfully", "success");
+				}}
+			/>
+		);
+	};
 
 	return (
 		<Card
@@ -172,7 +190,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 					{accommodation ? (
 						<>
 							{status === "COMPLETED" && (
-								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }}>
+								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} onClick={handleOpenReview}>
 									Write a Review
 								</Button>
 							)}
