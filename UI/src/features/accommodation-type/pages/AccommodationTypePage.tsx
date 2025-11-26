@@ -4,7 +4,7 @@ import { Box, Container, Typography } from "@mui/material";
 import { Hero } from "../components/Hero";
 import HorizontalList from "../components/HorizontalList";
 import { CityCard } from "../components/CityCard";
-import { EAccommodationType } from "../../../types/acommodation";
+import { EAccommodationType } from "../../../types/Accommodation";
 import type { City } from "../types/City";
 import { useScrollToTopOnMount } from "../hooks/useScrollToTopOnMount";
 import { LocationSearchProvider } from "../../../context/SearchContext/Index";

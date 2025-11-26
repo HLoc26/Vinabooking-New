@@ -1,7 +1,7 @@
 // Hero.tsx
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
-import { EAccommodationType } from "../../../types/acommodation";
+import { EAccommodationType } from "../../../types/Accommodation";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
 import { useLocationSearch } from "../../../context/SearchContext/Index";
 import { HeroSearchBar } from "./HeroSearchBar";
