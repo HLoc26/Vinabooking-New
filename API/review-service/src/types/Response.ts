@@ -1,5 +1,5 @@
 import { Review } from "../../generated/prisma/client";
-import { AccommodationReply, AccommodationReview } from "./Review";
+import { AccommodationReview } from "./Review";
 
 export interface ApiResponse<T> {
 	success: boolean;
