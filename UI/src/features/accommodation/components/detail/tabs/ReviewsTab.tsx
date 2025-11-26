@@ -1,51 +1,110 @@
-import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack } from "@mui/material";
+import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
 import { Star } from "@mui/icons-material";
+import { useAccommodationReview } from "../../../hooks/useAccommodationReview";
+import useUserBookings from "../../../../user/hooks/useUserBookings";
+import useAuthContextProvider from "../../../../../context/AuthContext/hook";
+import useModalContext from "../../../../../context/ModalContext/hook";
+import ReviewModal from "../../../../../components/ui/ReviewModal";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
+import { type AccommodationDetail } from "../../../types/accommodation.types";
+import { type Booking } from "../../../../user/types/Booking";
+import BookingSelectionModal from "../../../../../components/ui/BookingSelectionModal";
+import { useState } from "react";
 
-const mockReviews = [
-	{
-		id: "rev1",
-		star: 5,
-		comment: "Excellent location and friendly staff. The rooftop pool is amazing!",
-		createdAt: "2025-10-27T10:00:00Z",
-		userName: "John Doe",
-	},
-	{
-		id: "rev2",
-		star: 4,
-		comment: "Good value for money. Room was clean and comfortable.",
-		createdAt: "2025-10-26T15:30:00Z",
-		userName: "Jane Smith",
-	},
-	{
-		id: "rev3",
-		star: 5,
-		comment: "Amazing experience! Will definitely come back.",
-		createdAt: "2025-10-25T08:00:00Z",
-		userName: "Mike Johnson",
-	},
-	{
-		id: "rev4",
-		star: 4,
-		comment: "Great hotel with excellent facilities. Breakfast was delicious.",
-		createdAt: "2025-10-24T12:00:00Z",
-		userName: "Sarah Wilson",
-	},
-];
+interface ReviewsTabProps {
+	accommodation: AccommodationDetail;
+}
 
-const averageRating = 4.5;
-const totalReviews = mockReviews.length;
+const REVIEWS_PER_PAGE = 5;
 
-export const ReviewsTab = () => {
+export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
+	const { reviews, loading, error, refresh } = useAccommodationReview(accommodation.id);
+	const { getCurrentUser } = useAuthContextProvider();
+	const user = getCurrentUser();
+	const userBookings = useUserBookings();
+	const { openModal } = useModalContext();
+	const { pushNotification } = usePushNotificationContext();
+	const [page, setPage] = useState(1);
+
+	const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
+	const accommodationRoomIds = new Set(accommodation.rooms.map((r) => r.id));
+
+	const unreviewedBookings = userBookings
+		.filter((booking) => booking.status === "COMPLETED")
+		.filter((booking) => booking.details.some((d) => accommodationRoomIds.has(d.itemId)))
+		.filter((booking) => !reviewedBookingIds.has(booking.id))
+		.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()); // sort by most recent first
+
+	const canLeaveReview = user && unreviewedBookings.length > 0;
+
+	const openReviewModal = (booking: Booking) => {
+		openModal(
+			<ReviewModal
+				accommodationId={accommodation.id}
+				bookingId={booking.id}
+				booking={booking}
+				onSuccess={() => {
+					refresh();
+					pushNotification("Create review successfully", "success");
+				}}
+			/>
+		);
+	};
+
+	const handleOpenReview = () => {
+		if (!canLeaveReview) return;
+
+		if (unreviewedBookings.length === 1) {
+			openReviewModal(unreviewedBookings[0]);
+		} else {
+			openModal(<BookingSelectionModal bookings={unreviewedBookings} onSelect={openReviewModal} />);
+		}
+	};
+
+	const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+		setPage(value);
+	};
+
+	const paginatedReviews = reviews.slice((page - 1) * REVIEWS_PER_PAGE, page * REVIEWS_PER_PAGE);
+
+	if (loading) {
+		return (
+			<Paper sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
+				<CircularProgress />
+			</Paper>
+		);
+	}
+
+	if (error) {
+		return (
+			<Paper sx={{ p: 3, textAlign: "center", minHeight: 200 }}>
+				<Typography color="error">Error loading reviews: {error}</Typography>
+				<Button onClick={refresh} sx={{ mt: 2 }}>
+					Retry
+				</Button>
+			</Paper>
+		);
+	}
+
+	const totalReviews = reviews.length;
+	const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + (r.star ?? 0), 0) / totalReviews : 0;
+
 	return (
 		<Paper sx={{ p: 3 }}>
+			{/* Header */}
 			<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 3 }}>
 				<Typography variant="h6" fontWeight="bold">
 					Guest Reviews
 				</Typography>
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+					{canLeaveReview && (
+						<Button variant="contained" color="primary" size="small" onClick={handleOpenReview}>
+							Write a Review
+						</Button>
+					)}
 					<Star sx={{ color: "#ffa726" }} />
 					<Typography variant="h6" fontWeight="bold">
-						{averageRating}
+						{averageRating.toFixed(1)}
 					</Typography>
 					<Typography variant="body2" color="text.secondary">
 						({totalReviews} reviews)
@@ -55,22 +114,17 @@ export const ReviewsTab = () => {
 
 			<Divider sx={{ mb: 3 }} />
 
+			{/* Review List */}
 			<Stack spacing={3}>
-				{mockReviews.map((review) => (
+				{paginatedReviews.map((review) => (
 					<Box key={review.id}>
 						<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
-							<Avatar sx={{ bgcolor: "primary.main" }}>{review.userName.charAt(0).toUpperCase()}</Avatar>
+							<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
 							<Box sx={{ flex: 1 }}>
-								<Box
-									sx={{
-										display: "flex",
-										justifyContent: "space-between",
-										alignItems: "start",
-									}}
-								>
+								<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
 									<Box>
 										<Typography variant="subtitle2" fontWeight="bold">
-											{review.userName}
+											{review.user.name}
 										</Typography>
 										<Rating value={review.star} readOnly size="small" />
 									</Box>
@@ -92,9 +146,11 @@ export const ReviewsTab = () => {
 				))}
 			</Stack>
 
-			<Button variant="outlined" fullWidth sx={{ mt: 3 }}>
-				Load More Reviews
-			</Button>
+			{totalReviews > REVIEWS_PER_PAGE && (
+				<Stack alignItems="center" mt={3}>
+					<Pagination count={Math.ceil(totalReviews / REVIEWS_PER_PAGE)} page={page} onChange={handlePageChange} />
+				</Stack>
+			)}
 		</Paper>
 	);
 };
