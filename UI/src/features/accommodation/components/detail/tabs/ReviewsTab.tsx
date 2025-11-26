@@ -1,4 +1,4 @@
-import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress } from "@mui/material";
+import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
 import { Star } from "@mui/icons-material";
 import { useAccommodationReview } from "../../../hooks/useAccommodationReview";
 import useUserBookings from "../../../../user/hooks/useUserBookings";
@@ -9,10 +9,13 @@ import { usePushNotificationContext } from "../../../../../context/PushNotificat
 import { type AccommodationDetail } from "../../../types/accommodation.types";
 import { type Booking } from "../../../../user/types/Booking";
 import BookingSelectionModal from "../../../../../components/ui/BookingSelectionModal";
+import { useState } from "react";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
 }
+
+const REVIEWS_PER_PAGE = 5;
 
 export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const { reviews, loading, error, refresh } = useAccommodationReview(accommodation.id);
@@ -21,6 +24,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const userBookings = useUserBookings();
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
+	const [page, setPage] = useState(1);
 
 	const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
 	const accommodationRoomIds = new Set(accommodation.rooms.map((r) => r.id));
@@ -56,6 +60,12 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 			openModal(<BookingSelectionModal bookings={unreviewedBookings} onSelect={openReviewModal} />);
 		}
 	};
+
+	const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+		setPage(value);
+	};
+
+	const paginatedReviews = reviews.slice((page - 1) * REVIEWS_PER_PAGE, page * REVIEWS_PER_PAGE);
 
 	if (loading) {
 		return (
@@ -106,7 +116,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 
 			{/* Review List */}
 			<Stack spacing={3}>
-				{reviews.map((review) => (
+				{paginatedReviews.map((review) => (
 					<Box key={review.id}>
 						<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
 							<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
@@ -135,6 +145,12 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 					</Box>
 				))}
 			</Stack>
+
+			{totalReviews > REVIEWS_PER_PAGE && (
+				<Stack alignItems="center" mt={3}>
+					<Pagination count={Math.ceil(totalReviews / REVIEWS_PER_PAGE)} page={page} onChange={handlePageChange} />
+				</Stack>
+			)}
 		</Paper>
 	);
 };
