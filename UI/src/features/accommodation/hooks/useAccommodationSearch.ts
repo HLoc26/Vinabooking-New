@@ -56,6 +56,7 @@ export function useAccommodationSearch() {
 	const [totalResults, setTotalResults] = useState<number>(0);
 	const [totalPages, setTotalPages] = useState<number>(1);
 	const [loading, setLoading] = useState<boolean>(true);
+	const [isUpdating, setIsUpdating] = useState<boolean>(false);
 	const [error, setError] = useState<string | null>(null);
 
 	// Search and Filter State
@@ -87,13 +88,18 @@ export function useAccommodationSearch() {
 
 	// Fetch data logic
 	const fetchAccommodations = useCallback(async () => {
-		setLoading(true);
+		if (isInitialLoad) {
+			setLoading(true);
+		} else {
+			setIsUpdating(true);
+		}
 		setError(null);
 
 		const dateError = validateDates(searchState.checkIn, searchState.checkOut);
 		if (dateError) {
 			setError(dateError);
 			setLoading(false);
+			setIsUpdating(false);
 			return;
 		}
 
@@ -119,6 +125,10 @@ export function useAccommodationSearch() {
 			setError("An error occurred while loading accommodations. Please try again.");
 		} finally {
 			setLoading(false);
+			setIsUpdating(false);
+			if (isInitialLoad) {
+				setIsInitialLoad(false);
+			}
 			if (!isInitialLoad) {
 				window.scrollTo({ top: 0, behavior: "smooth" });
 			}
@@ -130,7 +140,6 @@ export function useAccommodationSearch() {
 		// Skip debounce on initial load, fetch immediately
 		if (isInitialLoad) {
 			fetchAccommodations();
-			setIsInitialLoad(false);
 			return;
 		}
 
@@ -249,6 +258,7 @@ export function useAccommodationSearch() {
 
 		// UI State
 		loading,
+		isUpdating,
 		error,
 		setError,
 		viewMode,
