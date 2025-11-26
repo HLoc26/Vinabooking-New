@@ -7,7 +7,7 @@ import BadRequestError from "../errors/BadRequestError";
 import { UploadService } from "../services/UploadService.js";
 import ImageRepository from "../repositories/ImageRepository";
 import S3Service from "../services/S3Service";
-import { EVariantType } from "../../generated/prisma";
+import { EVariantType } from "../../generated/prisma/client";
 
 class ImageController {
 	constructor(
@@ -46,17 +46,20 @@ class ImageController {
          }
          */
 		const response = images.flatMap((img) => {
+			const isPrimary = img.references[0].isPrimary;
 			const baseVariant = {
 				id: img.id,
 				url: this.s3Service.getS3Url(img.s3Key),
 				variant: EVariantType.ORIGINAL,
 				imageId: img.id,
+				isPrimary: isPrimary,
 			};
 			const variants = img.variants.map((img) => ({
 				id: img.id,
 				url: this.s3Service.getS3Url(img.s3Key),
 				variant: img.variant,
 				imageId: img.id,
+				isPrimary: isPrimary,
 			}));
 			return [baseVariant, ...variants];
 		});

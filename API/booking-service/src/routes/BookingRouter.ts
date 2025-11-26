@@ -4,7 +4,7 @@ import BookingController from "../controllers/BookingController";
 import BookingRepository from "../repositories/BookingRepository";
 import BookingService from "../services/BookingService";
 import { AuthMiddleware } from "../middleware/AuthMiddleware";
-import { AuthenticatedRequest, ConfirmRequest } from "../types/Request";
+import { AuthenticatedCancelRequest, AuthenticatedRequest, ConfirmRequest } from "../types/Request";
 import accommodationClient from "../clients/AccommodationServiceClient";
 
 class BookingRouterFactory {
@@ -33,6 +33,10 @@ class BookingRouter {
 				success: true,
 			});
 		});
+		this.router.post("/booked-counts", (req, res: Response) => this.bookingController.getBookingSummary(req, res));
+
+		this.router.get("/internal", (req, res) => this.bookingController.getBookings(req, res));
+
 		this.router.use((req: Request, res: Response, next: NextFunction) => {
 			return AuthMiddleware.verifyUser(req as AuthenticatedRequest, res, next);
 		});
@@ -63,6 +67,9 @@ class BookingRouter {
 		});
 		this.router.post("/confirm", (req, res: Response) => {
 			return this.bookingController.confirmBooking(req as ConfirmRequest, res);
+		});
+		this.router.patch("/cancel", (req, res) => {
+			return this.bookingController.cancelBooking(req as AuthenticatedCancelRequest, res);
 		});
 	}
 }

@@ -1,4 +1,5 @@
 import type User from "../classes/User";
+import { FavouriteListWithItems } from "./Favourite";
 
 export interface ApiResponse<T> {
 	success: boolean;
@@ -13,5 +14,21 @@ export interface CacheUserResponse {
 }
 
 export interface SaveUserResponse {
+	success: boolean;
+}
+
+export interface AddAccommodationToFavouriteResponse {
+	id: string;
+	listId: string;
+	accommodationId: string;
+}
+
+export interface RemoveAccommodationFromFavouriteResponse {
+	success: boolean;
+}
+
+export type CreateFavouriteListResponse = FavouriteListWithItems;
+
+export interface DeleteFavouriteListResponse {
 	success: boolean;
 }

@@ -1,4 +1,4 @@
-import { EEntityType, EVariantType } from "../../generated/prisma/index.js";
+import { EEntityType, EVariantType } from "../../generated/prisma/client";
 import PrismaSingleton from "../clients/PrismaSingleton";
 import type { FileType, UploadedImage, UploadResult } from "../types/Image";
 
@@ -17,6 +17,8 @@ export default class ImageRepository {
 			})
 			.filter(Boolean) as UploadedImage[];
 
+		if (entityType === EEntityType.USER_PROFILE) await this.removePrimary(entityId);
+
 		const image = await this.prisma.image.create({
 			data: {
 				s3Key,
@@ -24,7 +26,7 @@ export default class ImageRepository {
 				contentType: original.mimetype,
 				size: BigInt(original.size),
 				variants: { createMany: { data: variants } },
-				references: { create: { entityType, entityId } },
+				references: { create: { entityType, entityId, isPrimary: entityType === "USER_PROFILE" } },
 			},
 		});
 
@@ -35,6 +37,19 @@ export default class ImageRepository {
 		});
 
 		return variants;
+	}
+
+	private async removePrimary(userId: string) {
+		// Make other images not primary
+		await this.prisma.imageReference.updateMany({
+			where: {
+				entityId: userId,
+				isPrimary: true,
+			},
+			data: {
+				isPrimary: false,
+			},
+		});
 	}
 
 	public async getEntityImage(entityType: EEntityType, entityId: string) {
@@ -49,6 +64,11 @@ export default class ImageRepository {
 			},
 			include: {
 				variants: true,
+				references: {
+					select: {
+						isPrimary: true,
+					},
+				},
 			},
 		});
 		return images;

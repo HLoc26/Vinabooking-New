@@ -74,13 +74,14 @@ class RoomClient {
 	/**
 	 * Gọi room-service để lấy danh sách ID thỏa mãn bộ lọc
 	 */
-	async getFilteredAccommodationIds(minPrice?: number, maxPrice?: number, adults?: number, children?: number): Promise<string[]> {
+	async getFilteredAccommodationIds(minPrice?: number, maxPrice?: number, adults?: number, children?: number, sortBy?: string): Promise<string[]> {
 		try {
 			const params: any = {};
 			if (minPrice) params.minPrice = minPrice;
 			if (maxPrice) params.maxPrice = maxPrice;
 			if (adults) params.adults = adults;
 			if (children) params.children = children;
+			if (sortBy) params.sortBy = sortBy;
 
 			// Nếu không có filter gì liên quan đến Room thì trả về undefined
 			if (Object.keys(params).length === 0) return undefined as any;
