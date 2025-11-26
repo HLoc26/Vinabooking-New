@@ -15,6 +15,7 @@ export default function AccommodationSearchResults() {
 		totalResults,
 		totalPages,
 		loading,
+		isUpdating,
 		error,
 		setError,
 		viewMode,
@@ -49,6 +50,8 @@ export default function AccommodationSearchResults() {
 		return availableFacilities;
 	}, [accommodations]);
 
+	const isFetching = loading || isUpdating;
+
 	return (
 		<Box sx={{ bgcolor: "#f5f7fa", minHeight: "100vh", py: 4 }}>
 			<Container maxWidth="xl">
@@ -64,7 +67,7 @@ export default function AccommodationSearchResults() {
 					{/* Left Sidebar - Filters */}
 					<Grid size={{ xs: 12, md: 3 }}>
 						<SearchFiltersSidebar
-							loading={loading}
+							loading={isFetching}
 							selectedType={searchState.type}
 							onChangeType={(type) => setSearchState({ type })}
 							priceRange={[searchState.minPrice, searchState.maxPrice]}
@@ -99,7 +102,7 @@ export default function AccommodationSearchResults() {
 						{/* Results Header */}
 						<ResultsHeader
 							totalResults={totalResults}
-							loading={loading}
+							loading={isFetching}
 							sortBy={searchState.sortBy}
 							onChangeSort={(value) => setSearchState({ sortBy: value })}
 							viewMode={viewMode}
@@ -141,7 +144,7 @@ export default function AccommodationSearchResults() {
 							</Box>
 						)}
 
-						{!loading && accommodations.length > 0 && <PaginationBar page={currentPage} totalPages={totalPages} disabled={loading} onChangePage={(page) => setCurrentPage(page)} />}
+						{!loading && accommodations.length > 0 && <PaginationBar page={currentPage} totalPages={totalPages} disabled={isFetching} onChangePage={(page) => setCurrentPage(page)} />}
 					</Grid>
 				</Grid>
 			</Container>

@@ -26,7 +26,7 @@ export const ResultsHeader: React.FC<ResultsHeaderProps> = ({ totalResults, load
 			}}
 		>
 			<Typography variant="h5" fontWeight="bold">
-				{loading ? "Searching..." : `${totalResults} accommodations found`}
+				{`${totalResults} accommodations found`}
 			</Typography>
 
 			<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
