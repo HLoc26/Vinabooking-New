@@ -1,4 +1,4 @@
-import { useState, useEffect, useCallback, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import { useNavigate, useSearchParams as useRouterSearchParams } from "react-router-dom";
 
 import { accommodationService } from "../services/accommodationService";
@@ -6,157 +6,91 @@ import type { AccommodationListItem, SearchAccommodationParams, SortOption } fro
 import { ACCOMMODATION_TYPE_OPTIONS, FACILITY_FILTER_OPTIONS, PRICE_FILTER_CONFIG } from "../constants/searchFilters";
 import type { ActiveFilter } from "../components/search";
 
-/**
- * Format Date -> "YYYY-MM-DD"
- */
+// Helper functions (unchanged)
 function formatDate(date: Date): string {
 	return date.toISOString().split("T")[0];
 }
 
-/**
- * Validate check-in / check-out
- * - check-in >= today
- * - check-out > check-in
- * Trả về message lỗi hoặc null nếu hợp lệ
- */
 function validateDates(checkIn: string, checkOut: string): string | null {
 	if (!checkIn || !checkOut) return null;
-
 	const today = new Date();
 	today.setHours(0, 0, 0, 0);
-
 	const inDate = new Date(checkIn);
 	const outDate = new Date(checkOut);
-
-	if (isNaN(inDate.getTime()) || isNaN(outDate.getTime())) {
-		return "Invalid date format.";
-	}
-
-	if (inDate < today) {
-		return "Check-in date cannot be in the past.";
-	}
-
-	if (outDate <= inDate) {
-		return "Check-out date must be after check-in date.";
-	}
-
+	if (isNaN(inDate.getTime()) || isNaN(outDate.getTime())) return "Invalid date format.";
+	if (inDate < today) return "Check-in date cannot be in the past.";
+	if (outDate <= inDate) return "Check-out date must be after check-in date.";
 	return null;
 }
 
-/**
- * Quản lý toàn bộ state + logic cho trang search:
- * - đọc URL query
- * - gọi API
- * - filter (type, facilities, price)
- * - sort, pagination
- * - favorites (tạm thời giữ ở đây luôn cho gọn)
- */
+// Initial state creator
+const getInitialState = (urlSearchParams: URLSearchParams) => {
+	const today = new Date();
+	const tomorrow = new Date(today);
+	tomorrow.setDate(tomorrow.getDate() + 1);
+	const after2Days = new Date(today);
+	after2Days.setDate(after2Days.getDate() + 2);
+
+	return {
+		keyword: urlSearchParams.get("keyword") || "",
+		checkIn: urlSearchParams.get("checkIn") || formatDate(tomorrow),
+		checkOut: urlSearchParams.get("checkOut") || formatDate(after2Days),
+		adults: parseInt(urlSearchParams.get("adults") || "2"),
+		children: parseInt(urlSearchParams.get("children") || "0"),
+		rooms: parseInt(urlSearchParams.get("rooms") || "1"),
+		sortBy: (urlSearchParams.get("sortBy") as SortOption) || "recommended",
+		page: parseInt(urlSearchParams.get("page") || "1"),
+		type: urlSearchParams.get("type") || "",
+		minPrice: parseInt(urlSearchParams.get("minPrice") || String(PRICE_FILTER_CONFIG.MIN)),
+		maxPrice: parseInt(urlSearchParams.get("maxPrice") || String(PRICE_FILTER_CONFIG.MAX)),
+		facilities: urlSearchParams.get("facilities")?.split(",") || [],
+	};
+};
+
 export function useAccommodationSearch() {
 	const navigate = useNavigate();
 	const [urlSearchParams] = useRouterSearchParams();
 
-	// Data states
+	// Core State
 	const [accommodations, setAccommodations] = useState<AccommodationListItem[]>([]);
 	const [totalResults, setTotalResults] = useState<number>(0);
 	const [totalPages, setTotalPages] = useState<number>(1);
-
-	// UI states
-	const [loading, setLoading] = useState<boolean>(false);
+	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
+
+	// Search and Filter State
+	const [searchState, setSearchState] = useState(() => getInitialState(urlSearchParams));
+	const [isInitialLoad, setIsInitialLoad] = useState(true);
+
+	// UI State
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 	const [favorites, setFavorites] = useState<Set<string>>(new Set());
-	const [isInitialized, setIsInitialized] = useState<boolean>(false);
 
-	// Parse URL params on mount
-	const getInitialSearchParams = useCallback(() => {
-		// Default: today & today + 2 days
-		const today = new Date();
-		const tomorrow = new Date(today);
-		tomorrow.setDate(tomorrow.getDate() + 1);
-		const defaultCheckIn = formatDate(tomorrow);
+	// Memoized dependency strings for debouncing effect
+	const searchStateString = useMemo(() => {
+		// eslint-disable-next-line @typescript-eslint/no-unused-vars
+		const { page, ...rest } = searchState; // Don't debounce on page change
+		return JSON.stringify(rest);
+	}, [searchState]);
 
-		const after2Days = new Date(today);
-		after2Days.setDate(after2Days.getDate() + 2);
-		const defaultCheckOut = formatDate(after2Days);
-
-		return {
-			keyword: urlSearchParams.get("keyword") || "",
-			checkIn: urlSearchParams.get("checkIn") || defaultCheckIn,
-			checkOut: urlSearchParams.get("checkOut") || defaultCheckOut,
-			adults: parseInt(urlSearchParams.get("adults") || "2"),
-			children: parseInt(urlSearchParams.get("children") || "0"),
-			rooms: parseInt(urlSearchParams.get("rooms") || "1"),
-			sortBy: (urlSearchParams.get("sortBy") as SortOption) || "recommended",
-		};
-	}, [urlSearchParams]);
-
-	const getInitialPriceRange = useCallback((): number[] => {
-		const minPrice = parseInt(urlSearchParams.get("minPrice") || String(PRICE_FILTER_CONFIG.MIN));
-		const maxPrice = parseInt(urlSearchParams.get("maxPrice") || String(PRICE_FILTER_CONFIG.MAX));
-		return [minPrice, maxPrice];
-	}, [urlSearchParams]);
-
-	const getInitialFacilities = useCallback((): string[] => {
-		const facilitiesParam = urlSearchParams.get("facilities");
-		return facilitiesParam ? facilitiesParam.split(",") : [];
-	}, [urlSearchParams]);
-
-	// Search & Filter states
-	const [currentPage, setCurrentPage] = useState<number>(parseInt(urlSearchParams.get("page") || "1"));
-	const [searchParams, setSearchParams] = useState(getInitialSearchParams());
-	const [priceRange, setPriceRange] = useState<number[]>(getInitialPriceRange());
-	const [selectedFacilities, setSelectedFacilities] = useState<string[]>(getInitialFacilities());
-	const [selectedType, setSelectedType] = useState<string>(urlSearchParams.get("type") || "");
-
-	// Price input states
-	const [minPriceInput, setMinPriceInput] = useState<string>(String(priceRange[0]));
-	const [maxPriceInput, setMaxPriceInput] = useState<string>(String(priceRange[1]));
-
-	// Sync URL with state
-	const updateURL = useCallback(
-		(params: {
-			keyword?: string;
-			checkIn?: string;
-			checkOut?: string;
-			adults?: number;
-			children?: number;
-			rooms?: number;
-			type?: string;
-			minPrice?: number;
-			maxPrice?: number;
-			facilities?: string[];
-			sortBy?: string;
-			page?: number;
-		}) => {
-			const urlParams = new URLSearchParams();
-
-			if (params.keyword) urlParams.set("keyword", params.keyword);
-			if (params.checkIn) urlParams.set("checkIn", params.checkIn);
-			if (params.checkOut) urlParams.set("checkOut", params.checkOut);
-			if (params.adults) urlParams.set("adults", String(params.adults));
-			if (params.children) urlParams.set("children", String(params.children));
-			if (params.rooms) urlParams.set("rooms", String(params.rooms));
-			if (params.type) urlParams.set("type", params.type);
-			if (params.minPrice !== undefined) urlParams.set("minPrice", String(params.minPrice));
-			if (params.maxPrice !== undefined) urlParams.set("maxPrice", String(params.maxPrice));
-			if (params.facilities && params.facilities.length > 0) {
-				urlParams.set("facilities", params.facilities.join(","));
+	// Update URL whenever search state changes
+	useEffect(() => {
+		const params = new URLSearchParams();
+		Object.entries(searchState).forEach(([key, value]) => {
+			if (value !== undefined && value !== null && value !== "" && !(Array.isArray(value) && value.length === 0)) {
+				if (key === "page" && value === 1) return; // Don't add page=1
+				params.set(key, Array.isArray(value) ? value.join(",") : String(value));
 			}
-			if (params.sortBy) urlParams.set("sortBy", params.sortBy);
-			if (params.page && params.page > 1) urlParams.set("page", String(params.page));
+		});
+		navigate(`/search?${params.toString()}`, { replace: true });
+	}, [searchState, navigate]);
 
-			navigate(`/search?${urlParams.toString()}`, { replace: true });
-		},
-		[navigate]
-	);
-
-	// Gọi API
+	// Fetch data logic
 	const fetchAccommodations = useCallback(async () => {
 		setLoading(true);
 		setError(null);
 
-		// Validate ngày trước khi gọi API
-		const dateError = validateDates(searchParams.checkIn, searchParams.checkOut);
+		const dateError = validateDates(searchState.checkIn, searchState.checkOut);
 		if (dateError) {
 			setError(dateError);
 			setLoading(false);
@@ -164,38 +98,14 @@ export function useAccommodationSearch() {
 		}
 
 		try {
-			const params: SearchAccommodationParams = {
-				keyword: searchParams.keyword || undefined,
-				checkIn: searchParams.checkIn,
-				checkOut: searchParams.checkOut,
-				adults: searchParams.adults,
-				children: searchParams.children,
-				rooms: searchParams.rooms,
-				type: selectedType || undefined,
-				minPrice: priceRange[0],
-				maxPrice: priceRange[1],
-				facilities: selectedFacilities.length > 0 ? selectedFacilities : undefined,
-				sortBy: searchParams.sortBy,
-				page: currentPage,
+			const apiParams: SearchAccommodationParams = {
+				...searchState,
 				limit: 20,
+				keyword: searchState.keyword || undefined,
+				type: searchState.type || undefined,
+				facilities: searchState.facilities.length > 0 ? searchState.facilities : undefined,
 			};
-
-			updateURL({
-				keyword: searchParams.keyword,
-				checkIn: searchParams.checkIn,
-				checkOut: searchParams.checkOut,
-				adults: searchParams.adults,
-				children: searchParams.children,
-				rooms: searchParams.rooms,
-				type: selectedType,
-				minPrice: priceRange[0],
-				maxPrice: priceRange[1],
-				facilities: selectedFacilities,
-				sortBy: searchParams.sortBy,
-				page: currentPage,
-			});
-
-			const result = await accommodationService.searchAccommodations(params);
+			const result = await accommodationService.searchAccommodations(apiParams);
 
 			if (result.success) {
 				setAccommodations(result.data.data);
@@ -209,70 +119,69 @@ export function useAccommodationSearch() {
 			setError("An error occurred while loading accommodations. Please try again.");
 		} finally {
 			setLoading(false);
+			if (!isInitialLoad) {
+				window.scrollTo({ top: 0, behavior: "smooth" });
+			}
 		}
-	}, [searchParams, selectedType, priceRange, selectedFacilities, currentPage, updateURL]);
+	}, [searchState, isInitialLoad]);
 
-	// Initial load
+	// Effect for debouncing
 	useEffect(() => {
-		if (!isInitialized) {
-			setIsInitialized(true);
+		// Skip debounce on initial load, fetch immediately
+		if (isInitialLoad) {
 			fetchAccommodations();
+			setIsInitialLoad(false);
+			return;
 		}
-	}, [isInitialized, fetchAccommodations]);
 
-	// Memoized dependency strings
-	const priceRangeString = useMemo(() => JSON.stringify(priceRange), [priceRange]);
-	const facilitiesString = useMemo(() => JSON.stringify(selectedFacilities), [selectedFacilities]);
+		const handler = setTimeout(() => {
+			// When filters change, always go back to page 1
+			setSearchState((prev) => (prev.page === 1 ? prev : { ...prev, page: 1 }));
 
-	// Auto-fetch khi filters đổi (debounce)
-	useEffect(() => {
-		if (!isInitialized) return;
+			// If we are already on page 1, fetch immediately
+			// otherwise, the page change effect will trigger the fetch
+			if (searchState.page === 1) {
+				fetchAccommodations();
+			}
+		}, 500); // 500ms debounce delay
 
-		const timer = setTimeout(() => {
-			setCurrentPage(1);
-			fetchAccommodations();
-			window.scrollTo({ top: 0, behavior: "smooth" });
-		}, 800);
-
-		return () => clearTimeout(timer);
+		return () => {
+			clearTimeout(handler);
+		};
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [selectedType, priceRangeString, facilitiesString]);
+	}, [searchStateString]); // Re-run only when filters (not page) change
 
-	// Fetch khi đổi page
+	// Effect for pagination
 	useEffect(() => {
-		if (!isInitialized) return;
-		if (currentPage !== 1) {
+		// Do not fetch on initial load as the other effect handles it
+		if (!isInitialLoad) {
 			fetchAccommodations();
-			window.scrollTo({ top: 0, behavior: "smooth" });
-		}
-		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [currentPage]);
-
-	// Fetch khi đổi sort
-	useEffect(() => {
-		if (!isInitialized) return;
-
-		if (currentPage === 1) {
-			fetchAccommodations();
-		} else {
-			setCurrentPage(1);
 		}
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [searchParams.sortBy]);
-
-	// Format price
-	const formatPrice = (price: number): string => {
-		return new Intl.NumberFormat("en-US", {
-			style: "currency",
-			currency: "USD",
-			minimumFractionDigits: 0,
-			maximumFractionDigits: 0,
-		}).format(price);
-	};
+	}, [searchState.page]); // Re-run only when page changes
 
 	// Handlers
+	const updateSearch = (patch: Partial<typeof searchState>) => {
+		setSearchState((prev) => ({ ...prev, page: 1, ...patch }));
+	};
+
+	const setCurrentPage = (page: number) => {
+		setSearchState((prev) => ({ ...prev, page }));
+	};
+
 	const handleFacilityChange = (value: string) => {
-		setSelectedFacilities((prev) => (prev.includes(value) ? prev.filter((f) => f !== value) : [...prev, value]));
+		updateSearch({
+			facilities: searchState.facilities.includes(value) ? searchState.facilities.filter((f) => f !== value) : [...searchState.facilities, value],
+		});
+	};
+
+	const handleClearAllFilters = () => {
+		updateSearch({
+			type: "",
+			minPrice: PRICE_FILTER_CONFIG.MIN,
+			maxPrice: PRICE_FILTER_CONFIG.MAX,
+			facilities: [],
+		});
 	};
 
 	const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
@@ -285,94 +194,60 @@ export function useAccommodationSearch() {
 		});
 	};
 
-	const handlePriceRangeChange = (range: number[]) => {
-		setPriceRange(range);
-		setMinPriceInput(String(range[0]));
-		setMaxPriceInput(String(range[1]));
-	};
-
-	const handleMinPriceInputChange = (value: string) => {
-		setMinPriceInput(value);
-		const numValue = parseInt(value);
-		if (!isNaN(numValue) && numValue >= PRICE_FILTER_CONFIG.MIN && numValue < priceRange[1]) {
-			setPriceRange([numValue, priceRange[1]]);
-		}
-	};
-
-	const handleMaxPriceInputChange = (value: string) => {
-		setMaxPriceInput(value);
-		const numValue = parseInt(value);
-		if (!isNaN(numValue) && numValue <= PRICE_FILTER_CONFIG.MAX && numValue > priceRange[0]) {
-			setPriceRange([priceRange[0], numValue]);
-		}
-	};
-
-	const handleClearAllFilters = () => {
-		setSelectedType("");
-		setPriceRange([PRICE_FILTER_CONFIG.MIN, PRICE_FILTER_CONFIG.MAX]);
-		setMinPriceInput(String(PRICE_FILTER_CONFIG.MIN));
-		setMaxPriceInput(String(PRICE_FILTER_CONFIG.MAX));
-		setSelectedFacilities([]);
-	};
-
-	const getTypeLabel = (type: string): string => {
-		const found = ACCOMMODATION_TYPE_OPTIONS.find((t) => t.value === type);
-		return found ? found.label : type;
-	};
-
+	// Derived State: Active Filters
 	const activeFilters: ActiveFilter[] = useMemo(() => {
 		const filters: ActiveFilter[] = [];
+		const { type, minPrice, maxPrice, facilities } = searchState;
 
-		if (selectedType) {
-			filters.push({
-				key: "type",
-				label: "Type",
-				value: getTypeLabel(selectedType),
-			});
+		if (type) {
+			const typeLabel = ACCOMMODATION_TYPE_OPTIONS.find((t) => t.value === type)?.label || type;
+			filters.push({ key: "type", label: "Type", value: typeLabel });
 		}
 
-		if (priceRange[0] > PRICE_FILTER_CONFIG.MIN || priceRange[1] < PRICE_FILTER_CONFIG.MAX) {
+		if (minPrice > PRICE_FILTER_CONFIG.MIN || maxPrice < PRICE_FILTER_CONFIG.MAX) {
 			filters.push({
 				key: "price",
 				label: "Price Range",
-				value: `${formatPrice(priceRange[0])} - ${formatPrice(priceRange[1])}`,
+				value: `${formatPrice(minPrice)} - ${formatPrice(maxPrice)}`,
 			});
 		}
 
-		selectedFacilities.forEach((facility) => {
-			const found = FACILITY_FILTER_OPTIONS.find((f) => f.value === facility);
-			if (found) {
-				filters.push({
-					key: `facility-${facility}`,
-					label: "Facility",
-					value: found.label,
-				});
+		facilities.forEach((facility) => {
+			const label = FACILITY_FILTER_OPTIONS.find((f) => f.value === facility)?.label;
+			if (label) {
+				filters.push({ key: `facility-${facility}`, label: "Facility", value: label });
 			}
 		});
 
 		return filters;
-	}, [selectedType, priceRange, selectedFacilities]);
+	}, [searchState]);
 
 	const handleRemoveFilter = (filterKey: string) => {
-		if (filterKey === "type") {
-			setSelectedType("");
-		} else if (filterKey === "price") {
-			setPriceRange([PRICE_FILTER_CONFIG.MIN, PRICE_FILTER_CONFIG.MAX]);
-			setMinPriceInput(String(PRICE_FILTER_CONFIG.MIN));
-			setMaxPriceInput(String(PRICE_FILTER_CONFIG.MAX));
+		if (filterKey === "type") updateSearch({ type: "" });
+		else if (filterKey === "price") {
+			updateSearch({ minPrice: PRICE_FILTER_CONFIG.MIN, maxPrice: PRICE_FILTER_CONFIG.MAX });
 		} else if (filterKey.startsWith("facility-")) {
 			const facilityValue = filterKey.replace("facility-", "");
-			setSelectedFacilities((prev) => prev.filter((f) => f !== facilityValue));
+
+			updateSearch({ facilities: searchState.facilities.filter((f) => f !== facilityValue) });
 		}
 	};
 
+	const formatPrice = (price: number): string =>
+		new Intl.NumberFormat("en-US", {
+			style: "currency",
+			currency: "USD",
+			minimumFractionDigits: 0,
+			maximumFractionDigits: 0,
+		}).format(price);
+
 	return {
-		// data
+		// Data
 		accommodations,
 		totalResults,
 		totalPages,
 
-		// ui
+		// UI State
 		loading,
 		error,
 		setError,
@@ -380,30 +255,20 @@ export function useAccommodationSearch() {
 		setViewMode,
 		favorites,
 
-		// search & filter state
-		searchParams,
-		setSearchParams,
-		currentPage,
+		// Search & Filter State
+		searchState,
+		setSearchState: updateSearch, // Renamed for clarity
+		currentPage: searchState.page,
 		setCurrentPage,
-		priceRange,
-		minPriceInput,
-		maxPriceInput,
-		selectedFacilities,
-		selectedType,
-		setSelectedType,
 
-		// derived
+		// Derived
 		activeFilters,
 
-		// handlers
+		// Handlers
 		handleFacilityChange,
 		handleToggleFavorite,
-		handlePriceRangeChange,
-		handleMinPriceInputChange,
-		handleMaxPriceInputChange,
 		handleClearAllFilters,
 		handleRemoveFilter,
-
 		formatPrice,
 	};
 }
