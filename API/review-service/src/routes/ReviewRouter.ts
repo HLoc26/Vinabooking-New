@@ -1,5 +1,5 @@
 import { Router } from "express";
-import { AuthenticatedRequest, CreateReviewRequest } from "../types/Request";
+import { AuthenticatedRequest, CreateReviewRequest, GetAccommodationReviewsRequest } from "../types/Request";
 import ReviewController from "../controllers/ReviewController";
 import ReviewService from "../services/ReviewService";
 import BookingService from "../services/BookingService";
@@ -47,6 +47,10 @@ class ReviewRouter {
 				return this.reviewController.createReview(req as CreateReviewRequest, res);
 			}
 		);
+
+		this.router.get("/accommodation/:accommodationId", (req, res) => {
+			return this.reviewController.getAccommodationReviews(req as GetAccommodationReviewsRequest, res);
+		});
 	}
 }
 
