@@ -74,6 +74,8 @@ const FIXED_TOP_OFFSET = 16; // The 'top' value when fixed (16px)
 // Placeholder Height = PAPER_HEIGHT + FIXED_TOP_OFFSET
 const PLACEHOLDER_HEIGHT = PAPER_HEIGHT + FIXED_TOP_OFFSET;
 
+const formatLocalDate = (date: Date) => date.toLocaleDateString("en-CA"); // returns YYYY-MM-DD in local timezone
+
 export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 	const {
 		searchRef,
@@ -128,10 +130,10 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 
 		// Add dates if present
 		if (dateRange.checkIn) {
-			params.append("checkIn", dateRange.checkIn.toISOString().split("T")[0]);
+			params.append("checkIn", formatLocalDate(dateRange.checkIn));
 		}
 		if (dateRange.checkOut) {
-			params.append("checkOut", dateRange.checkOut.toISOString().split("T")[0]);
+			params.append("checkOut", formatLocalDate(dateRange.checkOut));
 		}
 
 		// Add guest info
@@ -173,9 +175,10 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 				mx: "auto",
 				px: { xs: 2, md: 3 },
 				zIndex: sticky ? 1300 : 50,
-				// **Crucial Fix**: Set the placeholder height exactly equal to the fixed element's occupied space.
+
+				// 🛠 Keep placeholder behavior
 				minHeight: sticky ? `${PLACEHOLDER_HEIGHT}px` : "auto",
-				transition: "min-height 0.25s ease",
+				transition: "all 0.25s ease",
 			}}
 		>
 			<Paper
@@ -183,8 +186,9 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 				elevation={sticky ? 12 : 8}
 				sx={{
 					position: sticky ? "fixed" : "relative",
-					top: sticky ? FIXED_TOP_OFFSET : "auto", // 16px from the top when fixed
+					mt: sticky ? { xs: "56px", md: "64px" } : 0,
 
+					top: sticky ? 8 : "auto", // not 16px anymore!
 					// Use left: 50% and transform to center the element reliably
 					left: sticky ? "50%" : "auto",
 					transform: sticky ? "translateX(-50%)" : "none",
