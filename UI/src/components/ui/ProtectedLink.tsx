@@ -19,11 +19,17 @@ export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children, canN
 	const { openModal, closeModal } = useModalContext();
 
 	const handleClick = () => {
-		if (userInfo) {
-			navigate(to); // đã login thì chuyển thẳng
-		} else {
-			openModal(<LoginModal onLoginSuccess={() => closeModal()} />); // chưa login thì mở modal
+		if (canNavigate && !canNavigate()) {
+			onFail?.();
+			return;
 		}
+
+		if (!userInfo) {
+			openModal(<LoginModal onLoginSuccess={() => closeModal()} />); // chưa login thì mở modal
+			return;
+		}
+
+		navigate(to);
 	};
 
 	return (
