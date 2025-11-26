@@ -1,4 +1,4 @@
-import type { EAccommodationType } from "./acommodation";
+import type { EAccommodationType } from "./Accommodation";
 
 export type Query = {
 	keyword: string;

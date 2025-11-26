@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import axios from "axios";
-import { EAccommodationType } from "../../../types/acommodation";
+import { EAccommodationType } from "../../../types/Accommodation";
 
 export function useCityCounts(cities: string[], type: EAccommodationType) {
 	const [cityCounts, setCityCounts] = useState<Record<string, number>>({});
