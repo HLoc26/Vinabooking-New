@@ -1,18 +1,11 @@
-// src/context/SearchContext/LocationSearchProvider.tsx
 import { useState, useCallback } from "react";
 import type { ReactNode } from "react";
 import axios from "axios";
 import { LocationSearchContext } from "./LocationSearchContext";
 import type { Query } from "../../types/Query";
-import type { Location } from "./LocationSearchContext";
+import type { Location } from "../../types/Location";
 
-interface LocationSearchProviderProps {
-	children: ReactNode;
-}
-
-export function LocationSearchProvider(props: LocationSearchProviderProps) {
-	const { children } = props;
-
+const LocationSearchProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 	const [query, setQuery] = useState<Query>({
 		keyword: "",
 	});
@@ -84,4 +77,6 @@ export function LocationSearchProvider(props: LocationSearchProviderProps) {
 			{children}
 		</LocationSearchContext.Provider>
 	);
-}
+};
+
+export default LocationSearchProvider;
