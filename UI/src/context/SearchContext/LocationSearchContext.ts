@@ -1,13 +1,6 @@
-// src/context/SearchContext/LocationSearchContext.tsx
 import { createContext } from "react";
 import type { Query } from "../../types/Query";
-
-export interface Location {
-	id: string;
-	name: string;
-	type?: string;
-	city?: string;
-}
+import type { Location } from "../../types/Location";
 
 export interface LocationSearchContextType {
 	query: Query;
