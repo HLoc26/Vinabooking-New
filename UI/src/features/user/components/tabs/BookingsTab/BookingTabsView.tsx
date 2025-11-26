@@ -1,5 +1,5 @@
-import React, { useState, useMemo } from "react";
-import { Tabs, Tab, Box, Typography } from "@mui/material";
+import React, { useState, useMemo, useEffect } from "react";
+import { Tabs, Tab, Box, Typography, Stack, Pagination } from "@mui/material";
 import type { Booking } from "../../../types/Booking";
 import BookingDetailItem from "./BookingDetailItem";
 
@@ -8,12 +8,23 @@ type BookingTabsViewProps = {
 	defaultImage: string; // Dùng cho tất cả ảnh placeholder
 };
 
+const BOOKINGS_PER_PAGE = 3;
+
 const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImage }) => {
 	const [currentTab, setCurrentTab] = useState(0);
+	const [page, setPage] = useState(1);
 
 	const handleChange = (_: React.SyntheticEvent, newValue: number) => {
 		setCurrentTab(newValue);
 	};
+
+	const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+		setPage(value);
+	};
+
+	useEffect(() => {
+		setPage(1);
+	}, [currentTab]);
 
 	const filteredBookings = useMemo(() => {
 		switch (currentTab) {
@@ -28,6 +39,8 @@ const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImag
 		}
 	}, [currentTab, bookings]);
 
+	const paginatedBookings = filteredBookings.slice((page - 1) * BOOKINGS_PER_PAGE, page * BOOKINGS_PER_PAGE);
+
 	return (
 		<Box>
 			<Tabs value={currentTab} onChange={handleChange} variant="standard" textColor="primary" indicatorColor="primary">
@@ -38,14 +51,19 @@ const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImag
 			</Tabs>
 
 			<Box mt={2}>
-				{filteredBookings.length === 0 ? (
+				{paginatedBookings.length === 0 ? (
 					<Typography variant="body2" color="text.secondary">
 						No bookings found.
 					</Typography>
 				) : (
-					filteredBookings.map((b) => <BookingDetailItem key={b.id} booking={b} image={defaultImage} />)
+					paginatedBookings.map((b) => <BookingDetailItem key={b.id} booking={b} image={defaultImage} />)
 				)}
 			</Box>
+			{filteredBookings.length > BOOKINGS_PER_PAGE && (
+				<Stack alignItems="center" mt={3}>
+					<Pagination count={Math.ceil(filteredBookings.length / BOOKINGS_PER_PAGE)} page={page} onChange={handlePageChange} />
+				</Stack>
+			)}
 		</Box>
 	);
 };
