@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { HomePage } from "../features/common/pages/HomePage";
+import { HomePage } from "../features/home/pages/Index";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import SearchPage from "../features/accommodation/pages/SearchPage";
 import AcommodationTypePage from "../features/accommodation-type/pages/AccommodationTypePage";
