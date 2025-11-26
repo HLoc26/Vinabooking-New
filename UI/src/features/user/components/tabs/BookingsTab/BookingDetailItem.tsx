@@ -1,5 +1,5 @@
 import React from "react";
-import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton } from "@mui/material";
+import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton, Avatar, Rating } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
 import type { Booking } from "../../../types/Booking";
 import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
@@ -9,6 +9,9 @@ import { Link as RouterLink } from "react-router-dom";
 import useModalContext from "../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../components/ui/ReviewModal";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
+import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
+import useAuthContextProvider from "../../../../../context/AuthContext/hook";
+import { type ReviewData } from "../../../../../types/Review";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -33,6 +36,29 @@ const StatusBadge: React.FC<{ status: Booking["status"] }> = ({ status }) => {
 	return <Chip label={label} color={color} size="small" sx={{ position: "absolute", top: 6, left: 6, fontWeight: 400 }} />;
 };
 
+const BookingReview: React.FC<{ review: ReviewData }> = ({ review }) => {
+	return (
+		<Box mt={2}>
+			<Divider />
+			<Box mt={2}>
+				<Typography variant="subtitle1" fontWeight={600} mb={1}>
+					Your Review
+				</Typography>
+				<Stack direction="row" spacing={1} alignItems="center">
+					<Avatar sx={{ bgcolor: "primary.main", width: 24, height: 24, fontSize: 14 }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
+					<Typography variant="body1" fontWeight={600}>
+						{review.user.name}
+					</Typography>
+					<Rating value={review.star} readOnly size="small" />
+					<Typography variant="body2" color="text.secondary" noWrap>
+						{review.comment}
+					</Typography>
+				</Stack>
+			</Box>
+		</Box>
+	);
+};
+
 const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image }) => {
 	const { startDate, endDate, guestCount, status, referenceNo } = booking;
 
@@ -43,6 +69,12 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 	const roomName = room?.name ?? "";
 	const accommodationName = accommodation?.name ?? "";
 	const fullAddress = accommodation?.address?.fullAddress ?? "";
+
+	const { reviews, loading: reviewsLoading } = useAccommodationReview(accommodation?.id || "");
+	const { getCurrentUser } = useAuthContextProvider();
+	const user = getCurrentUser();
+
+	const userReview = reviews.find((review) => review.bookingId === booking.id && review.user.id === user?.id);
 
 	const images = accommodation?.images;
 
@@ -78,7 +110,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 			}}
 		>
 			{/* Image */}
-			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: 210 }}>
+			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: "auto" }}>
 				{accommodation ? (
 					<>
 						<CardMedia component="img" image={thumbnails?.[0].url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
@@ -189,8 +221,8 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 
 					{accommodation ? (
 						<>
-							{status === "COMPLETED" && (
-								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} onClick={handleOpenReview}>
+							{status === "COMPLETED" && !userReview && (
+								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} onClick={handleOpenReview} disabled={reviewsLoading}>
 									Write a Review
 								</Button>
 							)}
@@ -219,6 +251,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 						<></>
 					)}
 				</Box>
+				{userReview && <BookingReview review={userReview} />}
 			</CardContent>
 		</Card>
 	);
