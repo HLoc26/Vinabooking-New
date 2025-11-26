@@ -42,9 +42,8 @@ const LocationSearchProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 			const data = res.data;
 
-			console.log("API response:", data);
 			// Inside searchLocations() after you get the data
-			const rawResults = data || [];
+			const rawResults = data?.data || [];
 
 			// Transform the API response into your Location format
 			const transformedResults: Location[] = rawResults.map((item) => ({
