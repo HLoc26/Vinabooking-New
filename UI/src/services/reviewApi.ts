@@ -1,13 +1,13 @@
 import apiClient from "./apiClient";
 import type { ApiResponse } from "../types/Response";
-import type { ReviewData } from "../types/Review";
+import type { ReviewDto } from "../types/Review";
 
 const reviewApi = {
-	create: (data: ReviewData) => apiClient.post<ApiResponse<ReviewData>>("/reviews", data).then((r) => r.data.data),
+	create: (data: ReviewDto) => apiClient.post<ApiResponse<ReviewDto>>("/reviews", data).then((r) => r.data.data),
 
 	getByAccommodation: (accommodationId: string) =>
 		apiClient
-			.get<ApiResponse<{ reviews: ReviewData[] }>>("/reviews", {
+			.get<ApiResponse<{ reviews: ReviewDto[] }>>("/reviews", {
 				params: { accommodationId },
 			})
 			.then((r) => r.data),

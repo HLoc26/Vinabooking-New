@@ -1,4 +1,4 @@
-export interface ReviewData {
+export interface ReviewDto {
 	star?: number | null;
 	comment: string;
 	accommodationId: string;

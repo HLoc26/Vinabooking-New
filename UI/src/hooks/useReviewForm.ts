@@ -1,6 +1,6 @@
 import { useState } from "react";
 import reviewApi from "../services/reviewApi";
-import type { ReviewData } from "../types/Review";
+import type { ReviewDto } from "../types/Review";
 
 interface UseReviewFormProps {
 	accommodationId: string;
@@ -27,7 +27,7 @@ export const useReviewForm = ({ accommodationId, bookingId, parentId, onSuccess 
 		setError(null);
 		setLoading(true);
 
-		const payload: ReviewData = {
+		const payload: ReviewDto = {
 			comment,
 			accommodationId,
 			parentId: parentId || undefined,
