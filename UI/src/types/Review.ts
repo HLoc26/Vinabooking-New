@@ -12,6 +12,10 @@ export type ReviewData = ReviewDto & {
 	updatedAt: Date | string;
 	userId: string;
 	children: ReviewReply[];
+	user: {
+		id: string;
+		name: string;
+	};
 };
 
 export type ReviewReply = Omit<ReviewData, "bookingId" | "children">;
