@@ -5,12 +5,14 @@ import { type IFavouriteList, type FavouriteListWithItems } from "../types/Favou
 class FavouriteList {
 	#id: string;
 	#items: Array<FavouriteItem>;
+	#name: string;
 	#createdAt: Date;
 	#updatedAt: Date;
 
 	constructor(props: IFavouriteList) {
 		this.#id = props.id;
 		this.#items = props.items?.map((item) => new FavouriteItem(item));
+		this.#name = props.name;
 		this.#createdAt = props.createdAt ?? new Date();
 		this.#updatedAt = props.updatedAt ?? new Date();
 	}
@@ -19,6 +21,7 @@ class FavouriteList {
 		return new FavouriteList({
 			id: schema.id,
 			items: schema.items,
+			name: schema.name,
 			createdAt: schema.createdAt,
 			updatedAt: schema.updatedAt,
 		});
@@ -28,6 +31,7 @@ class FavouriteList {
 		return {
 			id: this.id,
 			items: this.items.map((item) => item.toJson()),
+			name: this.name,
 			createdAt: this.createdAt,
 			updatedAt: this.updatedAt,
 		};
@@ -38,6 +42,9 @@ class FavouriteList {
 	}
 	get items() {
 		return this.#items;
+	}
+	get name() {
+		return this.#name;
 	}
 	get createdAt() {
 		return this.#createdAt;

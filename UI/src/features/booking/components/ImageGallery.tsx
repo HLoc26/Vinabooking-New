@@ -1,7 +1,7 @@
 import { ChevronLeft, ChevronRight, Close } from "@mui/icons-material";
 import { Box, Dialog, IconButton } from "@mui/material";
 import type { Dispatch, SetStateAction } from "react";
-import type { ImageType } from "../services/types/Image";
+import type { ImageType } from "../../../types/Image";
 
 type ImageGalleryProps = {
 	galleryImages: ImageType[];

@@ -1,11 +1,11 @@
 import React, { type Dispatch, type SetStateAction } from "react";
 import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel } from "@mui/material";
-import type { ImageType } from "../services/types/Image";
+import type { ImageType } from "../../../types/Image";
 import { useFetchAccommodationImages } from "../hooks/useFetchAccommodationImages";
-import type { RoomInfo } from "../services/types/RoomInfo";
-import { useBookingContext } from "../hooks/useBookingContext";
-import type { AccommodationInfo } from "../services/types/Accommodation";
+import type { RoomInfo } from "../types/RoomInfo";
+import type { AccommodationInfo } from "../types/Accommodation";
 import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
+import useBookingContextProvider from "../../../context/BookingContext/hook";
 
 interface Props {
 	accommInfo: AccommodationInfo;
@@ -18,14 +18,21 @@ interface Props {
 }
 
 const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
-	const { context } = useBookingContext();
+	const { bookingInfo: context } = useBookingContextProvider();
 	const { accomImages, accomImagesLoading } = useFetchAccommodationImages(accommInfo?.id ?? "");
 
 	if (!accommInfo) {
 		return <Typography>Accommodation not found</Typography>;
 	}
 
-	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) || 0), 0);
+	// Calculate number of nights
+	const checkInDate = new Date(context.startDate);
+	const checkOutDate = new Date(context.endDate);
+	const nights = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+	// Calculate total price
+	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) * (room.count || 0) * nights || 0), 0);
+
 	const webp = accomImages.filter((i) => i.variant === "WEBP");
 	const thumbnails = accomImages.filter((i) => i.variant === "THUMBNAIL");
 

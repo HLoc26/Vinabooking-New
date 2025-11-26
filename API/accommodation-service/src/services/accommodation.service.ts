@@ -95,9 +95,6 @@ export class AccommodationService {
 	/**
 	 * SEARCH API (Full Flow)
 	 */
-	/**
-	 * SEARCH API (Full Flow - Level 2)
-	 */
 	async searchAccommodations(query: SearchQuery) {
 		const { keyword, type, checkIn, checkOut, adults, children, rooms, minPrice, maxPrice, facilities, page = "1", limit = "20", sortBy } = query;
 
@@ -107,12 +104,14 @@ export class AccommodationService {
 
 		// --- BƯỚC 1: Lọc ID theo Giá & Người ---
 		let filteredIds: string[] | undefined = undefined;
-		if (minPrice || maxPrice || adults || children) {
+		const needsRoomSort = sortBy === "price_asc" || sortBy === "price_desc" || sortBy === "recommended";
+		if (minPrice || maxPrice || adults || children || needsRoomSort) {
 			const result = await roomClient.getFilteredAccommodationIds(
 				minPrice ? Number(minPrice) : undefined,
 				maxPrice ? Number(maxPrice) : undefined,
 				adults ? Number(adults) : undefined,
-				children ? Number(children) : undefined
+				children ? Number(children) : undefined,
+				sortBy
 			);
 
 			// Nếu lọc mà không tìm thấy ID nào -> Trả về rỗng ngay
@@ -197,18 +196,44 @@ export class AccommodationService {
 		// --- BƯỚC 3: Format & Lấy ảnh ---
 		const slicedResults = finalResults.slice(0, limitNum);
 
-		const dataWithImages = await Promise.all(
+		const dataWithImagesAndPrice = await Promise.all(
 			slicedResults.map(async (acc: AccommodationEntity) => {
-				const images = await imageClient.getImagesForEntity(acc.id);
+				// 1. Lấy ảnh
+				const imagesPromise = imageClient.getImagesForEntity(acc.id);
+
+				// 2. Lấy phòng (Để tính giá)
+				const roomsPromise = roomClient.getRoomsByAccommodationId(acc.id);
+
+				const [images, rooms] = await Promise.all([imagesPromise, roomsPromise]);
+
+				// Xử lý ảnh
 				const firstImage = images.length > 0 ? (images[0] as any) : null;
 				const thumbnail = firstImage ? firstImage.url || firstImage.s3Key : null;
 
-				return { ...acc, thumbnail };
+				// Xử lý giá (Tính minPrice)
+				let minPrice = 0;
+				if (rooms && rooms.length > 0) {
+					const prices = rooms.map((r: any) => Number(r.price));
+					minPrice = Math.min(...prices);
+				}
+
+				return {
+					...acc,
+					thumbnail,
+					minPrice,
+				};
 			})
 		);
 
+		// --- BƯỚC 4: Sắp xếp lại kết quả cuối cùng (Client-side Sort) ---
+		if (sortBy === "price_asc" || sortBy === "recommended") {
+			dataWithImagesAndPrice.sort((a, b) => (a.minPrice || 0) - (b.minPrice || 0));
+		} else if (sortBy === "price_desc") {
+			dataWithImagesAndPrice.sort((a, b) => (b.minPrice || 0) - (a.minPrice || 0));
+		}
+
 		return {
-			data: dataWithImages,
+			data: dataWithImagesAndPrice,
 			meta: {
 				page: pageNum,
 				limit: limitNum,

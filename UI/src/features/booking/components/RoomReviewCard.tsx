@@ -1,11 +1,10 @@
 import { Box, Typography, Modal, Chip } from "@mui/material";
 import { useState } from "react";
-import type { ImageType } from "../services/types/Image";
-import type { AmenityConfig } from "../services/types/RoomInfo";
+import type { ImageType } from "../../../types/Image";
+import type { AmenityConfig, RoomInfo } from "../types/RoomInfo";
 
 type RoomReviewCardProps = {
-	roomName: string;
-	roomPrice: string;
+	room: RoomInfo;
 	thumbnail?: string;
 	images: ImageType[];
 	loading: boolean;
@@ -14,7 +13,7 @@ type RoomReviewCardProps = {
 	amenities: AmenityConfig[];
 };
 
-const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ roomName, roomPrice, thumbnail, images, loading, setGalleryImages, openImageGallery, amenities }) => {
+const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images, loading, setGalleryImages, openImageGallery, amenities }) => {
 	const [open, setOpen] = useState(false);
 
 	const flatAmenities = amenities.map((c) => c.amenity);
@@ -51,7 +50,7 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ roomName, roomPrice, th
 						<Box
 							component="img"
 							src={thumbnail || images[0].url}
-							alt={roomName}
+							alt={room.name}
 							onClick={() => {
 								setGalleryImages(images);
 								setTimeout(() => openImageGallery(0), 0);
@@ -74,7 +73,7 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ roomName, roomPrice, th
 				<Box flex={1} display="flex" flexDirection="column" justifyContent="space-between">
 					<Box>
 						<Typography variant="subtitle1" fontWeight={600} mb={0.5}>
-							{roomName}
+							{room.name}
 						</Typography>
 
 						{/* Amenities preview */}
@@ -89,10 +88,11 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ roomName, roomPrice, th
 
 					<Typography variant="h6" sx={{ color: "text.primary", mt: 1, mb: 0 }} textAlign="right">
 						$
-						{Number.parseInt(roomPrice).toLocaleString("en-US", {
+						{Number.parseFloat(room.price).toLocaleString("en-US", {
 							minimumFractionDigits: 2,
 							maximumFractionDigits: 2,
-						})}
+						})}{" "}
+						× {room.count} {room.type?.toLowerCase() ?? "room"}(s)
 					</Typography>
 				</Box>
 			</Box>

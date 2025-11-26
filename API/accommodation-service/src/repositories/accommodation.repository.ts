@@ -97,7 +97,10 @@ export class AccommodationRepository {
 
 		// 3. IDs (Lọc giá/người)
 		if (filters.ids !== undefined) {
-			if (filters.ids.length === 0) return { data: [], total: 0 }; // Không có ID nào khớp
+			// Nếu mảng ID rỗng (tức là filter giá/người không tìm thấy gì) -> Trả về rỗng luôn
+			if (filters.ids.length === 0) {
+				return { data: [], total: 0 };
+			}
 			where.id = { in: filters.ids };
 		}
 
@@ -113,7 +116,7 @@ export class AccommodationRepository {
 		// 5. Sort
 		let orderBy: Prisma.AccommodationOrderByWithRelationInput = { createdAt: "desc" };
 		if (sortBy === "name_asc") orderBy = { name: "asc" };
-		if (sortBy === "name_desc") orderBy = { name: "desc" };
+		else if (sortBy === "name_desc") orderBy = { name: "desc" };
 
 		// Execute query
 		const [data, total] = await Promise.all([

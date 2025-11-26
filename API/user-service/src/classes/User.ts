@@ -1,5 +1,5 @@
 import FavouriteList from "./FavouriteList";
-import type { User as UserSchema } from "../../generated/prisma/index.js";
+import type { User as UserSchema } from "../../generated/prisma/client";
 import { EUserRole, type IUser, type UserWithFavourites } from "../types/User";
 
 class User {

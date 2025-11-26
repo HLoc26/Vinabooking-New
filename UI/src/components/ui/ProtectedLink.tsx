@@ -1,30 +1,29 @@
 import { useNavigate } from "react-router-dom";
-import React, { useState } from "react";
-import LoginModal from "../ui/LoginModal";
+import React from "react";
+import LoginModal from "../../features/auth/components/LoginModal";
 import useAuthContextProvider from "../../context/AuthContext/hook";
+import useModalContext from "../../context/ModalContext/hook";
 
 type ProtectedLinkProps = {
 	to: string;
 	children: React.ReactNode;
+	canNavigate?: () => boolean;
+	onFail?: () => void;
 };
 
-export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children }) => {
+export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children, canNavigate, onFail }) => {
 	const { getCurrentUser } = useAuthContextProvider();
 	const userInfo = getCurrentUser();
 	const navigate = useNavigate();
-	const [openLoginModal, setOpenLoginModal] = useState(false);
+
+	const { openModal, closeModal } = useModalContext();
 
 	const handleClick = () => {
 		if (userInfo) {
 			navigate(to); // đã login thì chuyển thẳng
 		} else {
-			setOpenLoginModal(true); // chưa login thì mở modal
+			openModal(<LoginModal onLoginSuccess={() => closeModal()} />); // chưa login thì mở modal
 		}
-	};
-
-	const handleLoginSuccess = () => {
-		setOpenLoginModal(false);
-		navigate(to);
 	};
 
 	return (
@@ -32,8 +31,6 @@ export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children }) =>
 			<div onClick={handleClick} style={{ cursor: "pointer" }}>
 				{children}
 			</div>
-
-			<LoginModal open={openLoginModal} onClose={() => setOpenLoginModal(false)} onLoginSuccess={handleLoginSuccess} />
 		</>
 	);
 };

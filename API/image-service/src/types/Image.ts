@@ -1,4 +1,4 @@
-import { EVariantType } from "../../generated/prisma/index.js";
+import { EVariantType } from "../../generated/prisma/client";
 
 export interface IImage {
 	id: string;
@@ -41,4 +41,5 @@ export interface ResponseImage {
 	url: string;
 	variant: EVariantType;
 	imageId: string; // original id
+	isPrimary: boolean;
 }

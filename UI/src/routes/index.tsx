@@ -1,17 +1,21 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
+import { Routes, Route } from "react-router-dom";
+import { HomePage } from "../features/common/pages/HomePage";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
-import { HomePage } from "../features/home/pages/Index";
+import SearchPage from "../features/accommodation/pages/SearchPage";
 import AcommodationTypePage from "../features/accommodation-type/pages/AccommodationTypePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
+
 import { TravelerLayout } from "../components/layout/TravelerLayout";
+import UserProfilePage from "../features/user/pages/UserProfilePage";
+import ManageBookingDetailPage from "../features/user/pages/ManageBookingDetailPage";
 
 export const AppRouter = () => (
-	<BrowserRouter>
+	<>
 		<Routes>
-			{/* Traveler pages wrapped in layout */}
+			{/* Traveler pages */}
 			<Route
 				path="/"
 				element={
@@ -20,19 +24,58 @@ export const AppRouter = () => (
 					</TravelerLayout>
 				}
 			/>
-			{/* Auth, OAuth, Booking remain separate */}
-			<Route path="/auth/*" element={<AuthRouter />} />
-			<Route path="/oauth/*" element={<OAuthRouter />} />
-			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
-			<Route path="/booking/*" element={<BookingRouter />} />
+
+			<Route
+				path="/search"
+				element={
+					<TravelerLayout>
+						<SearchPage />
+					</TravelerLayout>
+				}
+			/>
+
+			<Route
+				path="/accommodation/:accommodationId"
+				element={
+					<TravelerLayout>
+						<AccommodationDetailPage />
+					</TravelerLayout>
+				}
+			/>
+
+			{/* New: accommodation type */}
 			<Route
 				path="/:accommodationType"
 				element={
 					<TravelerLayout>
-						<AcommodationTypePage />{" "}
+						<AcommodationTypePage />
 					</TravelerLayout>
 				}
 			/>
+
+			{/* User pages */}
+			<Route
+				path="/user/me"
+				element={
+					<TravelerLayout>
+						<UserProfilePage />
+					</TravelerLayout>
+				}
+			/>
+
+			<Route
+				path="/user/manage-booking/:bookingId"
+				element={
+					<TravelerLayout>
+						<ManageBookingDetailPage />
+					</TravelerLayout>
+				}
+			/>
+
+			{/* Auth, OAuth, Booking */}
+			<Route path="/auth/*" element={<AuthRouter />} />
+			<Route path="/oauth/*" element={<OAuthRouter />} />
+			<Route path="/booking/*" element={<BookingRouter />} />
 		</Routes>
-	</BrowserRouter>
+	</>
 );
