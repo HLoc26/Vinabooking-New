@@ -5,6 +5,7 @@ import { type AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavour
 import type { AuthenticatedAddAccommodationRequest, AuthenticatedCreateFavouriteListRequest, AuthenticatedDeleteFavouriteListRequest, AuthenticatedRemoveAccommodationRequest } from "../types/Request";
 import type { ApiResponse, CreateFavouriteListResponse, DeleteFavouriteListResponse } from "../types/Response";
 import FavouriteRepository from "../repositories/FavouriteRepository";
+import BadRequestError from "../errors/BadRequestError";
 
 class FavouriteController {
 	private favouriteRepository = new FavouriteRepository();
@@ -27,7 +28,12 @@ class FavouriteController {
 		res: Response<ApiResponse<RemoveAccommodationFromFavouriteResponse>>
 	) {
 		const userId = req.user.id;
-		const { accommodationId, listId } = req.params;
+		console.log("Logged In: ", userId);
+		const { accommodationId, listId } = req.query;
+
+		if (!accommodationId || !listId) {
+			throw new BadRequestError("Missing accommodationId or listId");
+		}
 
 		await this.favouriteRepository.removeAccommodationFromFavouriteList(userId, listId, accommodationId);
 		ResponseHelper.success<RemoveAccommodationFromFavouriteResponse>(res, { success: true });
