@@ -1,5 +1,5 @@
 import { DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemButton, ListItemText, Typography, Stack } from "@mui/material";
-import { type Booking } from "../../features/user/types/Booking";
+import type { Booking, BookingDetail } from "../../features/user/types/Booking";
 import useModalContext from "../../context/ModalContext/hook";
 import useRoomInfo from "../../features/user/hooks/useRoomInfo";
 import { formatDate } from "../../utils/dateFormatter";
@@ -10,10 +10,17 @@ interface BookingSelectionModalProps {
 	onSelect: (booking: Booking) => void;
 }
 
+const RoomItem = ({ detail }: { detail: BookingDetail }) => {
+	const room = useRoomInfo(detail.itemId);
+	return (
+		<Typography variant="body2" color="text.secondary">
+			• {room?.name || "..."}
+		</Typography>
+	);
+};
+
 const BookingListItem = ({ booking, onSelect }: { booking: Booking; onSelect: (booking: Booking) => void }) => {
 	const { closeModal } = useModalContext();
-	const roomId = booking.details?.[0]?.itemId || null;
-	const room = useRoomInfo(roomId ?? "");
 
 	const handleSelect = () => {
 		onSelect(booking);
@@ -22,10 +29,10 @@ const BookingListItem = ({ booking, onSelect }: { booking: Booking; onSelect: (b
 
 	return (
 		<ListItem disablePadding>
-			<ListItemButton onClick={handleSelect}>
+			<ListItemButton onClick={handleSelect} sx={{ alignItems: "flex-start" }}>
 				<ListItemText
 					primary={
-						<Stack direction="row" spacing={2} alignItems="center">
+						<Stack direction="row" spacing={2} alignItems="center" mb={1}>
 							<CalendarMonthOutlined fontSize="small" />
 							<Typography variant="body1">
 								{formatDate(booking.startDate.toString())} - {formatDate(booking.endDate.toString())}
@@ -33,13 +40,16 @@ const BookingListItem = ({ booking, onSelect }: { booking: Booking; onSelect: (b
 						</Stack>
 					}
 					secondary={
-						<Stack direction="row" spacing={1} alignItems="center" mt={0.5}>
-							<KingBedOutlined fontSize="small" />
-							<Typography variant="body2" color="text.secondary">
-								{room?.name || "..."}
-							</Typography>
+						<Stack direction="row" spacing={1}>
+							<KingBedOutlined fontSize="small" sx={{ mt: 0.5 }} />
+							<Stack>
+								{booking.details.map((detail) => (
+									<RoomItem key={detail.id} detail={detail} />
+								))}
+							</Stack>
 						</Stack>
 					}
+					secondaryTypographyProps={{ component: "div" }}
 				/>
 			</ListItemButton>
 		</ListItem>
