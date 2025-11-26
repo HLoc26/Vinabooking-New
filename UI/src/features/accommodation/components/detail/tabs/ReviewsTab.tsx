@@ -1,13 +1,52 @@
 import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress } from "@mui/material";
 import { Star } from "@mui/icons-material";
 import { useAccommodationReview } from "../../../hooks/useAccommodationReview";
+import useUserBookings from "../../../../user/hooks/useUserBookings";
+import useAuthContextProvider from "../../../../../context/AuthContext/hook";
+import useModalContext from "../../../../../context/ModalContext/hook";
+import ReviewModal from "../../../../../components/ui/ReviewModal";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
+import { type AccommodationDetail } from "../../../types/accommodation.types";
 
 interface ReviewsTabProps {
-	accommodationId: string;
+	accommodation: AccommodationDetail;
 }
 
-export const ReviewsTab = ({ accommodationId }: ReviewsTabProps) => {
-	const { reviews, loading, error, refresh } = useAccommodationReview(accommodationId);
+export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
+	const { reviews, loading, error, refresh } = useAccommodationReview(accommodation.id);
+	const { getCurrentUser } = useAuthContextProvider();
+	const user = getCurrentUser();
+	const userBookings = useUserBookings();
+	const { openModal } = useModalContext();
+	const { pushNotification } = usePushNotificationContext();
+
+	const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
+	const accommodationRoomIds = new Set(accommodation.rooms.map((r) => r.id));
+
+	const unreviewedBookings = userBookings
+		.filter((booking) => booking.status === "COMPLETED")
+		.filter((booking) => booking.details.some((d) => accommodationRoomIds.has(d.itemId)))
+		.filter((booking) => !reviewedBookingIds.has(booking.id));
+
+	const canLeaveReview = user && unreviewedBookings.length > 0;
+
+	const handleOpenReview = () => {
+		if (!canLeaveReview) return;
+
+		// Open review for the oldest un-reviewed booking
+		const oldestUnreviewedBooking = unreviewedBookings.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
+
+		openModal(
+			<ReviewModal
+				accommodationId={accommodation.id}
+				bookingId={oldestUnreviewedBooking.id}
+				onSuccess={() => {
+					refresh();
+					pushNotification("Create review successfully", "success");
+				}}
+			/>
+		);
+	};
 
 	if (loading) {
 		return (
@@ -39,6 +78,11 @@ export const ReviewsTab = ({ accommodationId }: ReviewsTabProps) => {
 					Guest Reviews
 				</Typography>
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+					{canLeaveReview && (
+						<Button variant="contained" color="primary" size="small" onClick={handleOpenReview}>
+							Write a Review
+						</Button>
+					)}
 					<Star sx={{ color: "#ffa726" }} />
 					<Typography variant="h6" fontWeight="bold">
 						{averageRating.toFixed(1)}
@@ -82,12 +126,6 @@ export const ReviewsTab = ({ accommodationId }: ReviewsTabProps) => {
 					</Box>
 				))}
 			</Stack>
-
-			{totalReviews > 0 && (
-				<Button variant="outlined" fullWidth sx={{ mt: 3 }} onClick={refresh}>
-					Load More Reviews
-				</Button>
-			)}
 		</Paper>
 	);
 };
