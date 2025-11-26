@@ -1,11 +1,13 @@
 import { Routes, Route } from "react-router-dom";
-import { HomePage } from "../features/common/pages/HomePage";
+import { HomePage } from "../features/home/pages/Index";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import SearchPage from "../features/accommodation/pages/SearchPage";
+import AcommodationTypePage from "../features/accommodation-type/pages/AccommodationTypePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
+
 import { TravelerLayout } from "../components/layout/TravelerLayout";
 import UserProfilePage from "../features/user/pages/UserProfilePage";
 import ManageBookingDetailPage from "../features/user/pages/ManageBookingDetailPage";
@@ -13,7 +15,7 @@ import ManageBookingDetailPage from "../features/user/pages/ManageBookingDetailP
 export const AppRouter = () => (
 	<>
 		<Routes>
-			{/* Traveler pages wrapped in layout */}
+			{/* Traveler pages */}
 			<Route
 				path="/"
 				element={
@@ -23,12 +25,35 @@ export const AppRouter = () => (
 				}
 			/>
 
-			{/* Auth, OAuth, Booking remain separate */}
-			<Route path="/auth/*" element={<AuthRouter />} />
-			<Route path="/oauth/*" element={<OAuthRouter />} />
-			<Route path="/search" element={<SearchPage />} />
-			<Route path="/accommodation/:accommodationId" element={<AccommodationDetailPage />} />
-			<Route path="/booking/*" element={<BookingRouter />} />
+			<Route
+				path="/search"
+				element={
+					<TravelerLayout>
+						<SearchPage />
+					</TravelerLayout>
+				}
+			/>
+
+			<Route
+				path="/accommodation/:accommodationId"
+				element={
+					<TravelerLayout>
+						<AccommodationDetailPage />
+					</TravelerLayout>
+				}
+			/>
+
+			{/* New: accommodation type */}
+			<Route
+				path="/:accommodationType"
+				element={
+					<TravelerLayout>
+						<AcommodationTypePage />
+					</TravelerLayout>
+				}
+			/>
+
+			{/* User pages */}
 			<Route
 				path="/user/me"
 				element={
@@ -37,14 +62,20 @@ export const AppRouter = () => (
 					</TravelerLayout>
 				}
 			/>
+
 			<Route
 				path="/user/manage-booking/:bookingId"
 				element={
 					<TravelerLayout>
-						<ManageBookingDetailPage />{" "}
+						<ManageBookingDetailPage />
 					</TravelerLayout>
 				}
 			/>
+
+			{/* Auth, OAuth, Booking */}
+			<Route path="/auth/*" element={<AuthRouter />} />
+			<Route path="/oauth/*" element={<OAuthRouter />} />
+			<Route path="/booking/*" element={<BookingRouter />} />
 		</Routes>
 	</>
 );
