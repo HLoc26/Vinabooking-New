@@ -1,69 +1,63 @@
-# React + TypeScript + Vite
+# Vinabooking User Interface
 
-This template provides a minimal setup to get React working in Vite with HMR and some ESLint rules.
+This directory contains the frontend application for Vinabooking, built with React and Vite. It serves as the user interface for interacting with the Vinabooking Backend API.
 
-Currently, two official plugins are available:
+## Core Technologies
 
-- [@vitejs/plugin-react](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react) uses [Babel](https://babeljs.io/) for Fast Refresh
-- [@vitejs/plugin-react-swc](https://github.com/vitejs/vite-plugin-react/blob/main/packages/plugin-react-swc) uses [SWC](https://swc.rs/) for Fast Refresh
+-   **Framework**: React (with TypeScript)
+-   **Build Tool**: Vite
+-   **Styling**: (Assume a common library like Tailwind CSS, Bootstrap, or Material UI if known, otherwise leave general or check `package.json` for specific styling libraries. For now, keep it general.)
+-   **API Client**: (Assume `fetch` or `axios` if not specified. For now, keep it general.)
 
-## Expanding the ESLint configuration
+## Getting Started
 
-If you are developing a production application, we recommend updating the configuration to enable type-aware lint rules:
+### Prerequisites
 
-```js
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
+-   [Node.js](https://nodejs.org/) (v18 or later recommended)
+-   `npm` (or your preferred package manager)
+-   [Docker](https://www.docker.com/) and [Docker Compose](https://docs.docker.com/compose/) (if running with Docker)
 
-      // Remove tseslint.configs.recommended and replace with this
-      ...tseslint.configs.recommendedTypeChecked,
-      // Alternatively, use this for stricter rules
-      ...tseslint.configs.strictTypeChecked,
-      // Optionally, add this for stylistic rules
-      ...tseslint.configs.stylisticTypeChecked,
+### 1. Environment Configuration
 
-      // Other configs...
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+The UI application requires environment variables, primarily to specify the backend API Gateway URL.
+
+1.  **Create a `.env` file** by copying the example:
+    ```bash
+    cp .env.example .env
+    ```
+2.  **Open `.env` and configure the `VITE_API_GATEWAY_URL`**:
+    *   If you are running the **backend services locally (via PM2 or direct Node.js execution)** and the UI locally:
+        Set `VITE_API_GATEWAY_URL=http://localhost:3000` (assuming your API Gateway is running on port 3000 on your host machine).
+    *   If you are running the **backend services with Docker Compose** and the UI locally:
+        Set `VITE_API_GATEWAY_URL=http://localhost:3000` (assuming the API Gateway's port 3000 is exposed to your host machine).
+    *   If you are running **both the UI and backend services with Docker Compose** (as part of the overall `docker-compose up` command from the project root):
+        Set `VITE_API_GATEWAY_URL=http://api-gateway:3000` (using the Docker service name for inter-container communication).
+
+### 2. Install Dependencies
+
+Navigate into the `UI` directory and install the project dependencies:
+
+```bash
+cd UI
+npm install
 ```
 
-You can also install [eslint-plugin-react-x](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-x) and [eslint-plugin-react-dom](https://github.com/Rel1cx/eslint-react/tree/main/packages/plugins/eslint-plugin-react-dom) for React-specific lint rules:
+### 3. Run Locally (Development)
 
-```js
-// eslint.config.js
-import reactX from 'eslint-plugin-react-x'
-import reactDom from 'eslint-plugin-react-dom'
+To start the development server for the UI:
 
-export default tseslint.config([
-  globalIgnores(['dist']),
-  {
-    files: ['**/*.{ts,tsx}'],
-    extends: [
-      // Other configs...
-      // Enable lint rules for React
-      reactX.configs['recommended-typescript'],
-      // Enable lint rules for React DOM
-      reactDom.configs.recommended,
-    ],
-    languageOptions: {
-      parserOptions: {
-        project: ['./tsconfig.node.json', './tsconfig.app.json'],
-        tsconfigRootDir: import.meta.dirname,
-      },
-      // other options...
-    },
-  },
-])
+```bash
+cd UI
+npm run dev
 ```
+The application will typically be available at `http://localhost:5173`.
+
+### 4. Run with Docker Compose (Development)
+
+To run the UI along with the entire backend using Docker, navigate to the **project root** and execute:
+
+```bash
+# From the project root
+docker-compose up -d --build
+```
+This will build and start all backend services and the UI. The UI will be accessible at `http://localhost:5173` (or the port configured in `docker-compose.yaml`). Ensure your `VITE_API_GATEWAY_URL` in `UI/.env` is set correctly as per the instructions in "1. Environment Configuration" for this scenario (`http://api-gateway:3000`).
