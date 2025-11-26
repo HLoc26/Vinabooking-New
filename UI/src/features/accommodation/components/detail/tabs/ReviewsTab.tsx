@@ -56,12 +56,12 @@ export const ReviewsTab = ({ accommodationId }: ReviewsTabProps) => {
 				{reviews.map((review) => (
 					<Box key={review.id}>
 						<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
-							<Avatar sx={{ bgcolor: "primary.main" }}>{review.userName?.charAt(0).toUpperCase() || "U"}</Avatar>
+							<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
 							<Box sx={{ flex: 1 }}>
 								<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
 									<Box>
 										<Typography variant="subtitle2" fontWeight="bold">
-											{review.userName}
+											{review.user.name}
 										</Typography>
 										<Rating value={review.star} readOnly size="small" />
 									</Box>
