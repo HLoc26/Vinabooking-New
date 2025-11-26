@@ -1,11 +1,36 @@
 import { z } from "zod";
-import { Accommodation, Address, FacilityConfig, Facility } from "@prisma/client";
+import { Accommodation, Address, FacilityConfig, Facility, EAccommodationType, ERentalType } from "@prisma/client";
 
 // Interface cho entity (domain model) - extend Prisma types để add relations
 export interface AccommodationEntity extends Accommodation {
 	address?: Address | null;
 	facilities?: (FacilityConfig & { facility: Facility })[];
 }
+
+// Type for the data returned from the repository search
+export type AccommodationFromRepository = Accommodation & {
+	address: Address | null;
+	facilities: (FacilityConfig & {
+		facility: Facility;
+	})[];
+};
+
+// Type for the final item in the search result list
+export type AccommodationSearchResultItem = {
+	id: string;
+	name: string;
+	description: string | null;
+	type: EAccommodationType;
+	rentalType: ERentalType | null;
+	address: Address | null;
+	// Simplified fields
+	facilities: string[];
+	thumbnail: string | null;
+	minPrice: number;
+	// Timestamps
+	createdAt: Date;
+	updatedAt: Date;
+};
 
 // DTO cho response (aggregated) - full fields từ schema, với aggregated data
 export const AccommodationDetailDto = z.object({
