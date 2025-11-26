@@ -20,7 +20,8 @@ model Review {
   comment         String   @db.Text // optional
   createdAt       DateTime @default(now())
   updatedAt       DateTime @updatedAt
-  acoommodationId String
+  accommodationId String
+  bookingId       String?
   userId          String // user id của người đăng review
   // Self relation
   parentId        String?
