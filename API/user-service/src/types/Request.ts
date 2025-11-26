@@ -41,7 +41,7 @@ export interface AuthenticatedAddAccommodationRequest extends AddAccommodationTo
 	user: { id: string; username: string };
 }
 
-export type RemoveAccommodationFromFavouriteRequest = Request<{ accommodationId: string; listId: string }, ApiResponse<RemoveAccommodationFromFavouriteResponse>, unknown, unknown>;
+export type RemoveAccommodationFromFavouriteRequest = Request<unknown, ApiResponse<RemoveAccommodationFromFavouriteResponse>, unknown, { accommodationId: string; listId: string }>;
 export interface AuthenticatedRemoveAccommodationRequest extends RemoveAccommodationFromFavouriteRequest {
 	user: { id: string; username: string };
 }
