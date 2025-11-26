@@ -7,6 +7,8 @@ import useModalContext from "../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../components/ui/ReviewModal";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import { type AccommodationDetail } from "../../../types/accommodation.types";
+import { type Booking } from "../../../../user/types/Booking";
+import BookingSelectionModal from "../../../../../components/ui/BookingSelectionModal";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
@@ -31,23 +33,28 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 
 	const canLeaveReview = user && unreviewedBookings.length > 0;
 
-	const handleOpenReview = () => {
-		if (!canLeaveReview) return;
-
-		// Open review for the oldest un-reviewed booking
-		const oldestUnreviewedBooking = unreviewedBookings.sort((a, b) => new Date(a.startDate).getTime() - new Date(b.startDate).getTime())[0];
-
+	const openReviewModal = (booking: Booking) => {
 		openModal(
 			<ReviewModal
 				accommodationId={accommodation.id}
-				bookingId={oldestUnreviewedBooking.id}
-				booking={oldestUnreviewedBooking}
+				bookingId={booking.id}
+				booking={booking}
 				onSuccess={() => {
 					refresh();
 					pushNotification("Create review successfully", "success");
 				}}
 			/>
 		);
+	};
+
+	const handleOpenReview = () => {
+		if (!canLeaveReview) return;
+
+		if (unreviewedBookings.length === 1) {
+			openReviewModal(unreviewedBookings[0]);
+		} else {
+			openModal(<BookingSelectionModal bookings={unreviewedBookings} onSelect={openReviewModal} />);
+		}
 	};
 
 	if (loading) {
