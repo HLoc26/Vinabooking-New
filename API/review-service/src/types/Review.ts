@@ -1,5 +1,6 @@
 import { Review } from "../../generated/prisma/client";
 import { ReviewUncheckedCreateInput } from "../../generated/prisma/models";
+import { UserPayload } from "./User";
 
 type InputOmit = "createdAt" | "updatedAt" | "replies" | "id" | "userId";
 
@@ -9,5 +10,5 @@ export type CreateReviewInput = Omit<CreateReviewPayload, "parentId" | "bookingI
 
 export type CreateReplyInput = Omit<CreateReviewPayload, "parentId" | "bookingId"> & { parentId: string };
 
-export type AccommodationReview = Omit<Review, "parentId"> & { children: AccommodationReply[] };
+export type AccommodationReview = Omit<Review, "parentId"> & { children: AccommodationReply[] } & { user: UserPayload };
 export type AccommodationReply = Omit<Review, "star" | "bookingId">;
