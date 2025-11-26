@@ -1,3 +1,4 @@
+import { useMemo } from "react";
 import { useNavigate } from "react-router-dom";
 import { Container, Grid, Box, Snackbar, Alert } from "@mui/material";
 
@@ -35,6 +36,19 @@ export default function AccommodationSearchResults() {
 		navigate(`/accommodation/${id}`);
 	};
 
+	// Create dynamic facility options based on search results
+	const facilityOptions = useMemo(() => {
+		const availableFacilities = new Set<string>();
+		accommodations.forEach((acc) => {
+			acc.facilities?.forEach((facility) => {
+				availableFacilities.add(facility);
+			});
+		});
+
+		// Map the unique facility names back to the full option object
+		return availableFacilities;
+	}, [accommodations]);
+
 	return (
 		<Box sx={{ bgcolor: "#f5f7fa", minHeight: "100vh", py: 4 }}>
 			<Container maxWidth="xl">
@@ -69,6 +83,7 @@ export default function AccommodationSearchResults() {
 								}
 							}}
 							onChangePriceRange={(range) => setSearchState({ minPrice: range[0], maxPrice: range[1] })}
+							facilityOptions={Array.from(facilityOptions)} // Pass dynamic options
 							selectedFacilities={searchState.facilities}
 							onToggleFacility={handleFacilityChange}
 							onClearAllFilters={handleClearAllFilters}
@@ -81,6 +96,7 @@ export default function AccommodationSearchResults() {
 						{/* Active Filters Bar */}
 						<ActiveFiltersBar filters={activeFilters} onRemoveFilter={handleRemoveFilter} onClearAllFilters={handleClearAllFilters} />
 
+						{/* Results Header */}
 						<ResultsHeader
 							totalResults={totalResults}
 							loading={loading}
