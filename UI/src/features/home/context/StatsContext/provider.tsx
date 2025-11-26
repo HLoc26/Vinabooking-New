@@ -1,6 +1,7 @@
 import { useEffect, useState } from "react";
 import type { CityStat, StatsResponse, TypeStat } from "../../types/Stats";
 import StatsContext from "./context";
+import accommodationApi from "../../../../services/accommodationApi";
 
 const StatsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
 	const [loading, setLoading] = useState(true);
@@ -11,16 +12,10 @@ const StatsProvider: React.FC<{ children: React.ReactNode }> = ({ children }) =>
 	useEffect(() => {
 		const fetchStats = async () => {
 			try {
-				const res = await fetch("http://localhost:3000/accommodations/stats");
-				const json: StatsResponse = await res.json();
+				const res: StatsResponse = await accommodationApi.stats();
 
-				if (!json.success) {
-					setError("Failed to load stats");
-					return;
-				}
-
-				setCities(json.data.cities);
-				setTypes(json.data.types);
+				setCities(res.data.cities);
+				setTypes(res.data.types);
 			} catch (err: unknown) {
 				console.error(err);
 				setError("Network error");

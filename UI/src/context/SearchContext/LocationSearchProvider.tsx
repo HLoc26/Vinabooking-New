@@ -4,6 +4,7 @@ import axios from "axios";
 import { LocationSearchContext } from "./LocationSearchContext";
 import type { Query } from "../../types/Query";
 import type { Location } from "../../types/Location";
+import accommodationApi from "../../services/accommodationApi";
 
 const LocationSearchProvider: React.FC<{ children: ReactNode }> = ({ children }) => {
 	const [query, setQuery] = useState<Query>({
@@ -37,16 +38,16 @@ const LocationSearchProvider: React.FC<{ children: ReactNode }> = ({ children })
 
 			console.log("Searching with params:", params);
 
-			const { data } = await axios.get("http://localhost:3000/accommodations/search", {
-				params,
-			});
+			const res = await accommodationApi.search(params);
+
+			const data = res.data;
 
 			console.log("API response:", data);
 			// Inside searchLocations() after you get the data
-			const rawResults = data.data?.data || data.data || [];
+			const rawResults = data || [];
 
 			// Transform the API response into your Location format
-			const transformedResults: Location[] = rawResults.map((item: any) => ({
+			const transformedResults: Location[] = rawResults.map((item) => ({
 				id: item.id,
 				name: item.name,
 				type: item.type, // HOTEL, APARTMENT, etc.
