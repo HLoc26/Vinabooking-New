@@ -71,7 +71,9 @@ export function useAccommodationSearch() {
 	const getInitialSearchParams = useCallback(() => {
 		// Default: today & today + 2 days
 		const today = new Date();
-		const defaultCheckIn = formatDate(today);
+		const tomorrow = new Date(today);
+		tomorrow.setDate(tomorrow.getDate() + 1);
+		const defaultCheckIn = formatDate(tomorrow);
 
 		const after2Days = new Date(today);
 		after2Days.setDate(after2Days.getDate() + 2);
