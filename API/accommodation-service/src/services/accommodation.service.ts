@@ -192,8 +192,7 @@ export class AccommodationService {
 				const [images, rooms] = await Promise.all([imagesPromise, roomsPromise]);
 
 				// 2. Xử lý ảnh -> thumbnail
-				const firstImage = images.length > 0 ? (images[0] as any) : null;
-				const thumbnail = firstImage ? firstImage.url || firstImage.s3Key : null;
+				const thumbnail = images.filter((i) => i.variant === "OPTIMIZED")[0]?.url ?? null;
 
 				// 3. Xử lý giá -> minPrice
 				let minPrice = 0;
