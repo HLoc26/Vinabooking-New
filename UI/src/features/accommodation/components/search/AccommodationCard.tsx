@@ -19,6 +19,7 @@ const getTypeLabel = (type: string): string => {
 };
 
 export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isFavorite, onToggleFavorite, onClick, formatPrice }) => {
+	const image = accommodation.thumbnail ?? `/${accommodation.type}.png`;
 	if (variant === "list") {
 		return (
 			<Card
@@ -33,7 +34,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 					},
 				}}
 			>
-				<CardMedia component="img" sx={{ width: 280, objectFit: "cover" }} image={accommodation.thumbnail} alt={accommodation.name} />
+				<CardMedia component="img" sx={{ width: 280, objectFit: "cover" }} image={image} alt={accommodation.name} />
 				<Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
 					<CardContent sx={{ flex: 1, p: 3 }}>
 						<Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
@@ -117,7 +118,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 			}}
 		>
 			<Box sx={{ position: "relative" }}>
-				<CardMedia component="img" height="220" image={accommodation.thumbnail} alt={accommodation.name} sx={{ objectFit: "cover" }} />
+				<CardMedia component="img" height="220" image={image} alt={accommodation.name} sx={{ objectFit: "cover" }} />
 				<IconButton
 					onClick={(e) => onToggleFavorite(accommodation.id, e)}
 					sx={{
