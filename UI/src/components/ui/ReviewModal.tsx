@@ -1,7 +1,7 @@
 import { DialogTitle, DialogContent, DialogActions, Button, TextField, Rating, Typography, CircularProgress, Box, Stack } from "@mui/material";
 import { useReviewForm } from "../../hooks/useReviewForm";
 import useModalContext from "../../context/ModalContext/hook";
-import { type Booking } from "../../features/user/types/Booking";
+import { type Booking, type BookingDetail } from "../../features/user/types/Booking";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";
 import { formatDate } from "../../utils/dateFormatter";
 import useRoomInfo from "../../features/user/hooks/useRoomInfo";
@@ -14,10 +14,17 @@ interface ReviewModalProps {
 	booking?: Booking;
 }
 
-const BookingInfo = ({ booking }: { booking: Booking }) => {
-	const roomId = booking.details?.[0]?.itemId || null;
-	const room = useRoomInfo(roomId ?? "");
+const RoomItem = ({ detail }: { detail: BookingDetail }) => {
+	const room = useRoomInfo(detail.itemId);
+	return (
+		<Stack direction="row" spacing={1} alignItems="center">
+			<KingBedOutlined fontSize="small" />
+			<Typography variant="body2">{room?.name || "..."}</Typography>
+		</Stack>
+	);
+};
 
+const BookingInfo = ({ booking }: { booking: Booking }) => {
 	return (
 		<Box mb={2} p={2} border="1px solid" borderColor="grey.300" borderRadius={2}>
 			<Typography variant="subtitle2" fontWeight={600} mb={1}>
@@ -30,10 +37,9 @@ const BookingInfo = ({ booking }: { booking: Booking }) => {
 						{formatDate(booking.startDate.toString())} - {formatDate(booking.endDate.toString())}
 					</Typography>
 				</Stack>
-				<Stack direction="row" spacing={1} alignItems="center">
-					<KingBedOutlined fontSize="small" />
-					<Typography variant="body2">{room?.name || "..."}</Typography>
-				</Stack>
+				{booking.details.map((detail) => (
+					<RoomItem key={detail.id} detail={detail} />
+				))}
 			</Stack>
 		</Box>
 	);
