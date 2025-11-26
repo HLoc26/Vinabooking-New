@@ -1,6 +1,6 @@
 import { Response } from "express";
-import { CreateReviewRequest } from "../types/Request";
-import { ApiResponse, CreateReviewResponse } from "../types/Response";
+import { CreateReviewRequest, GetAccommodationReviewsRequest } from "../types/Request";
+import { ApiResponse, CreateReviewResponse, GetReviewsResponse } from "../types/Response";
 import { CreateReplyInput, CreateReviewInput } from "../types/Review";
 import ReviewService from "../services/ReviewService";
 import BookingService from "../services/BookingService";
@@ -41,6 +41,14 @@ class ReviewController {
 
 		const response = await this.reviewService.createReview(data as CreateReviewInput, userId);
 		return ResponseHelper.success<CreateReviewResponse>(res, response, 201);
+	}
+
+	async getAccommodationReviews(req: GetAccommodationReviewsRequest, res: Response<ApiResponse<GetReviewsResponse>>) {
+		const accommodationId = req.params.accommodationId;
+
+		const reviews: GetReviewsResponse = await this.reviewService.getAccommodationReviews(accommodationId);
+
+		return ResponseHelper.success<GetReviewsResponse>(res, reviews);
 	}
 }
 

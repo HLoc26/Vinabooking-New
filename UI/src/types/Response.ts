@@ -1,3 +1,4 @@
+import type { ReviewDto } from "./Review";
 import type { UserDto } from "./UserDto";
 
 export interface AuthResponse {
@@ -49,3 +50,5 @@ export interface AddAccommodationToFavouriteResponse {
 	listId: string;
 	accommodationId: string;
 }
+
+export type CreateReviewResponse = ReviewDto & { createdAt: Date | string };
