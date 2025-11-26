@@ -70,7 +70,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 	const accommodationName = accommodation?.name ?? "";
 	const fullAddress = accommodation?.address?.fullAddress ?? "";
 
-	const { reviews, loading: reviewsLoading } = useAccommodationReview(accommodation?.id || "");
+	const { reviews, loading: reviewsLoading, refresh: refreshReviews } = useAccommodationReview(accommodation?.id || "");
 	const { getCurrentUser } = useAuthContextProvider();
 	const user = getCurrentUser();
 
@@ -88,8 +88,10 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 			<ReviewModal //
 				accommodationId={accommodation?.id || ""}
 				bookingId={booking.id}
+				booking={booking}
 				onSuccess={() => {
 					pushNotification("Create review successfully", "success");
+					refreshReviews();
 				}}
 			/>
 		);
