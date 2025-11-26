@@ -8,7 +8,7 @@ import { CITIES } from "../constants/CityConst";
 import { Container, Box, Typography, Button, Paper } from "@mui/material";
 import { ACCOMMODATION_TYPES } from "../constants/AccommodationTypeConst";
 import { LocationSearchProvider } from "../../../context/SearchContext/Index";
-import { useStats } from "../context/StatsContext";
+import useStats from "../context/StatsContext/hook";
 
 export function HomePage() {
 	const { loading, cities } = useStats();
