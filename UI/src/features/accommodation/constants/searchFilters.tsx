@@ -21,10 +21,24 @@ export interface SortOptionItem {
 export const ACCOMMODATION_TYPE_OPTIONS: AccommodationTypeOption[] = [
 	{ value: "HOTEL", label: "Hotel" },
 	{ value: "APARTMENT", label: "Apartment" },
-	{ value: "RESORT", label: "Resort" },
 	{ value: "VILLA", label: "Villa" },
-	{ value: "HOMESTAY", label: "Homestay" },
+	{ value: "VACATION_HOME", label: "Vacation Home" },
+	{ value: "GUESTHOUSE", label: "Guesthouse" },
 	{ value: "HOSTEL", label: "Hostel" },
+	{ value: "BED_AND_BREAKFAST", label: "Bed & Breakfast" },
+	{ value: "HOMESTAY", label: "Homestay" },
+	{ value: "CAMPGROUND", label: "Campground" },
+	{ value: "COUNTRY_HOUSE", label: "Country House" },
+	{ value: "BOAT", label: "Boat" },
+	{ value: "LUXURY_TENT", label: "Luxury Tent" },
+	{ value: "CABIN", label: "Cabin" },
+	{ value: "MOTEL", label: "Motel" },
+	{ value: "RESORT", label: "Resort" },
+	{ value: "FARMSTAY", label: "Farmstay" },
+	{ value: "CAPSULE_HOTEL", label: "Capsule Hotel" },
+	{ value: "TREEHOUSE", label: "Treehouse" },
+	{ value: "TOWNHOUSE", label: "Townhouse" },
+	{ value: "OTHER", label: "Other" },
 ];
 
 export const FACILITY_FILTER_OPTIONS: FacilityFilterOption[] = [

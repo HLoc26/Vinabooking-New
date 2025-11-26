@@ -2,12 +2,13 @@ import React from "react";
 import { Box, Paper, Typography, Divider, TextField, MenuItem, Slider, FormGroup, FormControlLabel, Checkbox, InputAdornment } from "@mui/material";
 import { FilterList } from "@mui/icons-material";
 
-import { ACCOMMODATION_TYPE_OPTIONS, FACILITY_FILTER_OPTIONS, PRICE_FILTER_CONFIG } from "../../constants/searchFilters";
+import { ACCOMMODATION_TYPE_OPTIONS, PRICE_FILTER_CONFIG } from "../../constants/searchFilters";
 
 interface SearchFiltersSidebarProps {
 	loading: boolean;
 
 	selectedType: string;
+	facilityOptions: string[];
 	onChangeType: (value: string) => void;
 
 	priceRange: number[];
@@ -27,6 +28,7 @@ interface SearchFiltersSidebarProps {
 export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({
 	loading,
 	selectedType,
+	facilityOptions,
 	onChangeType,
 	priceRange,
 	minPriceInput,
@@ -45,20 +47,20 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({
 			sx={{
 				p: 3,
 				position: "sticky",
-				top: 20,
+				top: 100,
 				borderRadius: 2,
 				opacity: loading ? 0.7 : 1,
 				transition: "opacity 0.3s",
 			}}
 		>
-			<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+			<Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
 				<FilterList sx={{ mr: 1 }} />
 				<Typography variant="h6" fontWeight="bold">
 					Filters
 				</Typography>
 			</Box>
 
-			<Divider sx={{ mb: 3 }} />
+			<Divider sx={{ mb: 2 }} />
 
 			{/* Accommodation Type */}
 			<Box sx={{ mb: 4 }}>
@@ -76,7 +78,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({
 			</Box>
 
 			{/* Price Range */}
-			<Box sx={{ mb: 4 }}>
+			<Box sx={{ mb: 2 }}>
 				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
 					Price Range (per night)
 				</Typography>
@@ -132,7 +134,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({
 					valueLabelFormat={(value) => `$${value}`}
 					disabled={loading}
 					sx={{
-						mb: 1,
+						mb: 0,
 						"& .MuiSlider-thumb": {
 							width: 20,
 							height: 20,
@@ -157,24 +159,25 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({
 			</Box>
 
 			{/* Facilities */}
-			<Box sx={{ mb: 4 }}>
-				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+			<Box sx={{ mb: 1 }}>
+				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0 }}>
 					Facilities & Amenities
 				</Typography>
-				<FormGroup>
-					{FACILITY_FILTER_OPTIONS.map((facility) => (
-						<FormControlLabel
-							key={facility.value}
-							control={<Checkbox checked={selectedFacilities.includes(facility.value)} onChange={() => onToggleFacility(facility.value)} size="small" disabled={loading} />}
-							label={
-								<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
-									{facility.icon}
-									<Typography variant="body2">{facility.label}</Typography>
-								</Box>
-							}
-						/>
-					))}
-				</FormGroup>
+				<Box sx={{ maxHeight: 240, overflowY: "auto", pr: 2 }}>
+					<FormGroup>
+						{facilityOptions.map((facility) => (
+							<FormControlLabel
+								key={facility}
+								control={<Checkbox checked={selectedFacilities.includes(facility)} onChange={() => onToggleFacility(facility)} size="small" disabled={loading} />}
+								label={
+									<Box sx={{ display: "flex", alignItems: "center", gap: 1 }}>
+										<Typography variant="body2">{facility}</Typography>
+									</Box>
+								}
+							/>
+						))}
+					</FormGroup>
+				</Box>
 			</Box>
 
 			{/* Clear All Button */}
