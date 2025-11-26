@@ -1,19 +1,22 @@
-import { DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemButton, ListItemText, Typography, Stack } from "@mui/material";
+import { DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemButton, ListItemText, Typography, Stack, Pagination } from "@mui/material";
 import type { Booking, BookingDetail } from "../../features/user/types/Booking";
 import useModalContext from "../../context/ModalContext/hook";
 import useRoomInfo from "../../features/user/hooks/useRoomInfo";
 import { formatDate } from "../../utils/dateFormatter";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";
+import { useState } from "react";
 
 interface BookingSelectionModalProps {
 	bookings: Booking[];
 	onSelect: (booking: Booking) => void;
 }
 
+const BOOKINGS_PER_PAGE = 3;
+
 const RoomItem = ({ detail }: { detail: BookingDetail }) => {
 	const room = useRoomInfo(detail.itemId);
 	return (
-		<Typography variant="body2" color="text.secondary">
+		<Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
 			• {room?.name || "..."}
 		</Typography>
 	);
@@ -58,17 +61,27 @@ const BookingListItem = ({ booking, onSelect }: { booking: Booking; onSelect: (b
 
 const BookingSelectionModal = ({ bookings, onSelect }: BookingSelectionModalProps) => {
 	const { closeModal } = useModalContext();
+	const [page, setPage] = useState(1);
+
+	const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+		setPage(value);
+	};
+
+	const paginatedBookings = bookings.slice((page - 1) * BOOKINGS_PER_PAGE, page * BOOKINGS_PER_PAGE);
 
 	return (
 		<>
 			<DialogTitle>Choose a booking to review</DialogTitle>
-			<DialogContent dividers>
+			<DialogContent dividers sx={{ p: 0 }}>
 				<List>
-					{bookings.map((booking) => (
+					{paginatedBookings.map((booking) => (
 						<BookingListItem key={booking.id} booking={booking} onSelect={onSelect} />
 					))}
 				</List>
 			</DialogContent>
+			<DialogActions sx={{ justifyContent: "center" }}>
+				{bookings.length > BOOKINGS_PER_PAGE && <Pagination count={Math.ceil(bookings.length / BOOKINGS_PER_PAGE)} page={page} onChange={handlePageChange} />}
+			</DialogActions>
 			<DialogActions>
 				<Button onClick={closeModal}>Cancel</Button>
 			</DialogActions>
