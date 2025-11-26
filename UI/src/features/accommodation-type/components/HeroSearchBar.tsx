@@ -1,7 +1,7 @@
 // HeroSearchBar.tsx
 import React from "react";
 import { useNavigate } from "react-router-dom";
-import { Box, Paper, Button, TextField, Typography, useTheme } from "@mui/material";
+import { Box, Paper, Button, TextField, Typography } from "@mui/material";
 
 // 1. Replaced Lucide imports with MUI Icons
 import SearchIcon from "@mui/icons-material/SearchRounded";
@@ -156,14 +156,8 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 		}
 		setIsDateMenuOpen(false);
 	};
-
-	const theme = useTheme();
-	// Max width calculation for the fixed Paper (1200px - 2*paddingX).
-	// md padding (3 units = 24px). Fixed Max Width = 1200 - 48 = 1152px.
-	const fixedMaxWidth = theme.breakpoints.up("md") ? "1152px" : "calc(100% - 32px)";
-
 	return (
-		// 🐛 FIX: The outer Box now holds the searchRef and acts ONLY as the placeholder.
+		//FIX: The outer Box now holds the searchRef and acts ONLY as the placeholder.
 		// It must NOT be position: fixed. It must reserve the height.
 		<Box
 			ref={searchRef}
@@ -193,8 +187,8 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 					left: sticky ? "50%" : "auto",
 					transform: sticky ? "translateX(-50%)" : "none",
 
-					maxWidth: sticky ? fixedMaxWidth : "100%",
-					width: sticky ? fixedMaxWidth : "100%", // Explicitly set width when fixed
+					maxWidth: sticky ? { xs: "100%", sm: "100%", md: 1152 } : "100%",
+					width: "100%",
 
 					display: "grid",
 					gridTemplateColumns: {
@@ -203,9 +197,20 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						md: "2.2fr 1.7fr 1fr auto",
 					},
 					gridTemplateAreas: {
-						xs: `"destination" "dates-guests" "search"`,
-						sm: `"destination destination" "dates guests" "search search"`,
-						md: `"destination dates guests search"`,
+						xs: `
+        					"destination"
+        					"dates"
+        					"guests"
+        					"search"
+    					`,
+						sm: `
+        					"destination destination"
+        					"dates guests"
+        					"search search"
+    					`,
+						md: `
+        					"destination dates guests search"
+    					`,
 					},
 					gap: 0,
 					borderRadius: 4,
@@ -270,7 +275,7 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 				<Box
 					ref={dateRef}
 					sx={{
-						gridArea: { xs: "dates-guests", sm: "dates", md: "dates" },
+						gridArea: "dates",
 						borderRight: { md: "1px solid" },
 						borderRightColor: { md: "grey.300" },
 						borderTop: { xs: "1px solid", sm: "none" },
@@ -342,7 +347,7 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 				<Box
 					ref={guestRef}
 					sx={{
-						gridArea: { xs: "dates-guests", sm: "guests", md: "guests" },
+						gridArea: "guests",
 						borderRight: { md: "1px solid" },
 						borderRightColor: { md: "grey.300" },
 						borderTop: { xs: "1px solid", sm: "none" },

@@ -61,27 +61,44 @@ export default function AccommodationTypePage() {
 				<Hero currentType={accommodationType} onTypeChange={handleTypeChange} />
 			</LocationSearchProvider>
 			<Container maxWidth="lg">
-				{" "}
-				{currentCities.length > 0 ? (
-					<HorizontalList
-						title={`Cities with ${ACCOMMODATION_LABELS[accommodationType]}s`}
-						items={currentCities}
-						renderItem={(city) => <CityCard city={city} typeLabel={ACCOMMODATION_LABELS[accommodationType] ?? "Unknown"} />}
-					/>
-				) : (
-					<Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", mt: 8, p: 4, border: "2px dashed #ccc", borderRadius: 4, backgroundColor: "#f9f9f9" }}>
-						{" "}
-						<img src="https://cdn-icons-png.flaticon.com/512/616/616408.png" alt="Oops cartoon" style={{ width: 150, marginBottom: 24 }} />{" "}
-						<Typography variant="h6" fontWeight="bold" gutterBottom>
-							{" "}
-							Oops!{" "}
-						</Typography>{" "}
-						<Typography variant="body1" color="textSecondary" textAlign="center">
-							{" "}
-							There are no {ACCOMMODATION_LABELS[accommodationType] || "Place".toLowerCase()}s available in these cities yet.{" "}
-						</Typography>{" "}
-					</Box>
-				)}{" "}
+				<Box sx={{ display: "flex", flexDirection: "column", gap: 6, mt: 4 }}>
+					{currentCities.length > 0 ? (
+						<HorizontalList
+							title={`Cities with ${ACCOMMODATION_LABELS[accommodationType]}s`}
+							items={currentCities}
+							renderItem={(city) => (
+								<Box sx={{ px: 1 }}>
+									<CityCard city={city} typeLabel={ACCOMMODATION_LABELS[accommodationType] ?? "Unknown"} />
+								</Box>
+							)}
+						/>
+					) : (
+						<Box
+							sx={{
+								display: "flex",
+								flexDirection: "column",
+								alignItems: "center",
+								mt: 6,
+								p: 5,
+								borderRadius: 4,
+								backgroundColor: "#fafafa",
+								border: "1px solid #e0e0e0",
+								width: "100%",
+								gap: 2,
+							}}
+						>
+							<img src="https://cdn-icons-png.flaticon.com/512/6598/6598519.png" alt="No results cartoon" style={{ width: 160, marginBottom: 16 }} />
+
+							<Typography variant="h5" fontWeight={700}>
+								Oops!
+							</Typography>
+
+							<Typography variant="body1" color="text.secondary" textAlign="center" sx={{ maxWidth: 400 }}>
+								Looks like we don't have any {ACCOMMODATION_LABELS[accommodationType] ?? "place"}s available in these cities yet.
+							</Typography>
+						</Box>
+					)}
+				</Box>
 			</Container>
 		</Box>
 	);

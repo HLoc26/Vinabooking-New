@@ -104,7 +104,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 					sx={{
 						display: "flex",
 						overflowX: "auto",
-						gap: 3,
+						gap: 0,
 						px: 2,
 						pb: 2,
 						scrollBehavior: "smooth",
@@ -113,7 +113,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 					}}
 				>
 					{items.map((item, index) => (
-						<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "85%", sm: "45%", md: "30%", lg: "22%" } }}>
+						<Box key={index} sx={{ flex: "0 0 auto", minWidth: { xs: "85%", sm: "45%", md: "30%", lg: "22%" } }}>
 							{renderItem(item)}
 						</Box>
 					))}
