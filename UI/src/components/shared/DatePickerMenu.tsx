@@ -1,19 +1,12 @@
-// DatePickerMenu.tsx
-import React from "react";
+import React, { useState } from "react";
 import { Box, IconButton, Typography, Menu } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { CalendarMonth } from "./CalendarMonth";
-import type { DateRange } from "../../types/DateRange";
+import CalendarMonth from "./CalendarMonth";
 
 interface DatePickerMenuProps {
 	open: boolean;
 	anchorEl: HTMLElement | null;
-	tempDateRange: DateRange;
-	monthOffset: number;
-	onMonthPrev: () => void;
-	onMonthNext: () => void;
-	onDateClick: (date: Date) => void;
 	onClose: () => void;
 }
 
@@ -23,9 +16,19 @@ const getMinDate = () => {
 	return today;
 };
 
-export const DatePickerMenu: React.FC<DatePickerMenuProps> = ({ open, anchorEl, tempDateRange, monthOffset, onMonthPrev, onMonthNext, onDateClick, onClose }) => {
+export const DatePickerMenu: React.FC<DatePickerMenuProps> = ({ open, anchorEl, onClose }) => {
 	const today = new Date();
 	const minDate = getMinDate();
+
+	const [monthOffset, setMonthOffset] = useState(0);
+
+	const onMonthPrev = () => {
+		setMonthOffset(Math.max(0, monthOffset - 1));
+	};
+
+	const onMonthNext = () => {
+		setMonthOffset(monthOffset + 1);
+	};
 
 	// Calculate the current viewing month/year based on offset
 	const currentViewDate = new Date(today.getFullYear(), today.getMonth() + monthOffset);
@@ -34,7 +37,14 @@ export const DatePickerMenu: React.FC<DatePickerMenuProps> = ({ open, anchorEl, 
 	const visibleMonths = [currentViewDate, nextViewDate];
 
 	return (
-		<Menu open={open} onClose={onClose} anchorEl={anchorEl} anchorOrigin={{ vertical: "bottom", horizontal: "left" }} disableAutoFocusItem MenuListProps={{ onClick: (e) => e.stopPropagation() }}>
+		<Menu //
+			open={open}
+			onClose={onClose}
+			anchorEl={anchorEl}
+			anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
+			disableAutoFocusItem
+			slotProps={{ list: { onClick: (e: React.MouseEvent<HTMLUListElement, MouseEvent>) => e.stopPropagation() } }}
+		>
 			<Box display="flex" justifyContent="space-between" alignItems="center" px={2} py={1}>
 				<IconButton onClick={onMonthPrev} disabled={monthOffset === 0}>
 					<ChevronLeftIcon />
@@ -58,8 +68,6 @@ export const DatePickerMenu: React.FC<DatePickerMenuProps> = ({ open, anchorEl, 
 						year={date.getFullYear()}
 						month={date.getMonth()}
 						label={date.toLocaleString("default", { month: "long", year: "numeric" })}
-						tempDateRange={tempDateRange}
-						onDateClick={onDateClick}
 						minDate={minDate}
 					/>
 				))}
