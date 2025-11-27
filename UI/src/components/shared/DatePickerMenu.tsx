@@ -3,8 +3,8 @@ import React from "react";
 import { Box, IconButton, Typography, Menu } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
-import { CalendarMonth } from "../components/CalendarMonth";
-import type { DateRange } from "../../accommodation-type/types/DateRange";
+import { CalendarMonth } from "./CalendarMonth";
+import type { DateRange } from "../../types/DateRange";
 
 interface DatePickerMenuProps {
 	open: boolean;

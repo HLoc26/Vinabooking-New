@@ -10,13 +10,13 @@ import UserIcon from "@mui/icons-material/PersonRounded";
 import ChevronDownIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 
 import type { RefObject } from "react";
-import type { DateRange } from "../../accommodation-type/types/DateRange";
-import type { Guests } from "../../accommodation-type/types/Guest";
+import type { DateRange } from "../../types/DateRange";
+import type { Guests } from "../../types/Guest";
 
-import { DatePickerMenu } from "../../accommodation-type/components/DatePickerMenu";
+import { DatePickerMenu } from "./DatePickerMenu";
 import { GuestMenu } from "./GuestMenu";
-import { LocationTypeahead } from "./LocationTypeAhead";
-import { useLocationSearch } from "../../../context/SearchContext/Index";
+import { LocationTypeahead } from "./LocationTypeahead";
+import { useLocationSearch } from "../../context/SearchContext/Index";
 
 interface HeroSearchBarProps {
 	searchRef?: RefObject<HTMLDivElement>;

@@ -1,4 +1,3 @@
-// Counter.tsx
 import React from "react";
 import { Stack, Typography, IconButton } from "@mui/material";
 import RemoveIcon from "@mui/icons-material/Remove";
@@ -29,3 +28,4 @@ export const Counter: React.FC<CounterProps> = ({ label, value, onChange, min = 
 		</Stack>
 	</Stack>
 );
+
