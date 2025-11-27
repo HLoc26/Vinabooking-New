@@ -65,7 +65,6 @@ export function useAccommodationSearch() {
 
 	// UI State
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
-	const [favorites, setFavorites] = useState<Set<string>>(new Set());
 
 	// Memoized dependency strings for debouncing effect
 	const searchStateString = useMemo(() => {
@@ -193,16 +192,6 @@ export function useAccommodationSearch() {
 		});
 	};
 
-	const handleToggleFavorite = (id: string, e: React.MouseEvent) => {
-		e.stopPropagation();
-		setFavorites((prev) => {
-			const next = new Set(prev);
-			if (next.has(id)) next.delete(id);
-			else next.add(id);
-			return next;
-		});
-	};
-
 	// Derived State: Active Filters
 	const activeFilters: ActiveFilter[] = useMemo(() => {
 		const filters: ActiveFilter[] = [];
@@ -263,7 +252,6 @@ export function useAccommodationSearch() {
 		setError,
 		viewMode,
 		setViewMode,
-		favorites,
 
 		// Search & Filter State
 		searchState,
@@ -276,7 +264,6 @@ export function useAccommodationSearch() {
 
 		// Handlers
 		handleFacilityChange,
-		handleToggleFavorite,
 		handleClearAllFilters,
 		handleRemoveFilter,
 		formatPrice,

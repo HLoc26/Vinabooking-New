@@ -20,14 +20,12 @@ export default function AccommodationSearchResults() {
 		setError,
 		viewMode,
 		setViewMode,
-		favorites,
 		searchState,
 		setSearchState,
 		currentPage,
 		setCurrentPage,
 		activeFilters,
 		handleFacilityChange,
-		handleToggleFavorite,
 		handleClearAllFilters,
 		handleRemoveFilter,
 		formatPrice,
@@ -117,11 +115,9 @@ export default function AccommodationSearchResults() {
 							<Grid container spacing={3}>
 								{accommodations.map((accommodation) => (
 									<Grid key={accommodation.id} size={{ xs: 12, sm: 6, lg: 4 }}>
-										<AccommodationCard
+										<AccommodationCard //
 											accommodation={accommodation}
 											variant="grid"
-											isFavorite={favorites.has(accommodation.id)}
-											onToggleFavorite={handleToggleFavorite}
 											onClick={handleCardClick}
 											formatPrice={formatPrice}
 										/>
@@ -131,12 +127,10 @@ export default function AccommodationSearchResults() {
 						) : (
 							<Box>
 								{accommodations.map((accommodation) => (
-									<AccommodationCard
+									<AccommodationCard //
 										key={accommodation.id}
 										accommodation={accommodation}
 										variant="list"
-										isFavorite={favorites.has(accommodation.id)}
-										onToggleFavorite={handleToggleFavorite}
 										onClick={handleCardClick}
 										formatPrice={formatPrice}
 									/>
