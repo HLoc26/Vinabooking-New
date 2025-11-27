@@ -6,6 +6,7 @@ import { SearchFiltersSidebar, ActiveFiltersBar, ResultsHeader, AccommodationCar
 
 import { useAccommodationSearch } from "../hooks/useAccommodationSearch";
 import { PRICE_FILTER_CONFIG } from "../constants/searchFilters";
+import { useScrollToTopOnMount } from "../../../hooks/useScrollToTopMount";
 
 export default function AccommodationSearchResults() {
 	const navigate = useNavigate();
@@ -49,6 +50,8 @@ export default function AccommodationSearchResults() {
 	}, [accommodations]);
 
 	const isFetching = loading || isUpdating;
+
+	useScrollToTopOnMount();
 
 	return (
 		<Box sx={{ bgcolor: "#f5f7fa", minHeight: "100vh", py: 4 }}>
