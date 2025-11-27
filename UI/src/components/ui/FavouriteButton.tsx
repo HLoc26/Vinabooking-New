@@ -1,0 +1,33 @@
+import React from "react";
+import useUserFavouriteList from "../../hooks/useUserFavouriteList";
+import { IconButton } from "@mui/material";
+import { StarOutlineRounded, StarRounded } from "@mui/icons-material";
+import FavouritePickerModal from "../../features/user/components/FavouritePickerModal";
+import useModalContext from "../../context/ModalContext/hook";
+
+interface FavouriteButtonProps {
+	accommodationId: string;
+	className?: string;
+}
+
+const FavouriteButton: React.FC<FavouriteButtonProps> = ({ accommodationId, className }) => {
+	const { favouriteLists, handleAddToFavourite, handleRemoveFromFavourite } = useUserFavouriteList();
+
+	const isFavorite = favouriteLists?.some((list) => list.items.some((item) => item.accommodationId === accommodationId)) ?? false;
+
+	const { openModal } = useModalContext();
+
+	const toggle = (e: React.MouseEvent) => {
+		e.stopPropagation();
+
+		openModal(<FavouritePickerModal accommodationId={accommodationId} onAdd={handleAddToFavourite} onRemove={handleRemoveFromFavourite} />);
+	};
+
+	return (
+		<IconButton onClick={toggle} className={className} sx={{ background: "white", ":hover": { background: "white" } }}>
+			{isFavorite ? <StarRounded sx={{ color: "gold" }} /> : <StarOutlineRounded />}
+		</IconButton>
+	);
+};
+
+export default FavouriteButton;

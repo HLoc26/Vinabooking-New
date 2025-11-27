@@ -1,14 +1,13 @@
 import React from "react";
-import { Card, CardMedia, CardContent, Box, Chip, Typography, IconButton, Rating, Divider } from "@mui/material";
-import { FavoriteBorder, Favorite, LocationOn } from "@mui/icons-material";
+import { Card, CardMedia, CardContent, Box, Chip, Typography, Rating, Divider } from "@mui/material";
+import { LocationOn } from "@mui/icons-material";
 import type { AccommodationListItem } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
+import FavouriteButton from "../../../../components/ui/FavouriteButton";
 
 interface Props {
 	accommodation: AccommodationListItem;
 	variant: "grid" | "list";
-	isFavorite: boolean;
-	onToggleFavorite: (id: string, e: React.MouseEvent) => void;
 	onClick: (id: string) => void;
 	formatPrice: (price: number) => string;
 }
@@ -18,7 +17,7 @@ const getTypeLabel = (type: string): string => {
 	return found ? found.label : type;
 };
 
-export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isFavorite, onToggleFavorite, onClick, formatPrice }) => {
+export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick, formatPrice }) => {
 	const image = accommodation.thumbnail ?? `/${accommodation.type}.png`;
 	if (variant === "list") {
 		return (
@@ -78,9 +77,8 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 									justifyContent: "space-between",
 								}}
 							>
-								<IconButton onClick={(e) => onToggleFavorite(accommodation.id, e)} sx={{ color: isFavorite ? "error.main" : "text.secondary" }}>
-									{isFavorite ? <Favorite /> : <FavoriteBorder />}
-								</IconButton>
+								<FavouriteButton accommodationId={accommodation.id} />
+
 								<Box sx={{ textAlign: "right" }}>
 									<Typography variant="caption" color="text.secondary">
 										Starting from
@@ -119,19 +117,11 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 		>
 			<Box sx={{ position: "relative" }}>
 				<CardMedia component="img" height="220" image={image} alt={accommodation.name} sx={{ objectFit: "cover" }} />
-				<IconButton
-					onClick={(e) => onToggleFavorite(accommodation.id, e)}
-					sx={{
-						position: "absolute",
-						top: 8,
-						right: 8,
-						bgcolor: "white",
-						"&:hover": { bgcolor: "white" },
-						color: isFavorite ? "error.main" : "text.secondary",
-					}}
-				>
-					{isFavorite ? <Favorite /> : <FavoriteBorder />}
-				</IconButton>
+
+				<Box sx={{ position: "absolute", top: 8, right: 8 }}>
+					<FavouriteButton accommodationId={accommodation.id} />
+				</Box>
+
 				<Chip
 					label={getTypeLabel(accommodation.type)}
 					size="small"
