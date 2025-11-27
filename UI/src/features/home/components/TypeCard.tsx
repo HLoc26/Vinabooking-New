@@ -1,6 +1,6 @@
 import React from "react";
 import { Card, CardMedia, CardContent, Typography } from "@mui/material";
-import type { AccommodationTypeData } from "../services/types/AccommodationTypeData";
+import type { AccommodationTypeData } from "../types/AccommodationTypeData";
 
 interface TypeCardProps {
 	data: AccommodationTypeData;

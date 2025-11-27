@@ -4,12 +4,7 @@ import HelpOutlineIcon from "@mui/icons-material/HelpOutline";
 import ExpandMoreIcon from "@mui/icons-material/ExpandMore";
 import ExpandLessIcon from "@mui/icons-material/ExpandLess";
 import { FAQS } from "../constants/FAQConst";
-
-interface FAQProps {
-	items: Array<(typeof FAQS)[number]>;
-}
-
-const FAQ: React.FC<FAQProps> = ({ items }) => {
+const FAQ: React.FC = () => {
 	const [openId, setOpenId] = useState<string | null>(null);
 
 	const toggleFAQ = (id: string) => {
@@ -35,7 +30,7 @@ const FAQ: React.FC<FAQProps> = ({ items }) => {
 				</Box>
 
 				{/* Accordion List */}
-				{items.map((item) => {
+				{FAQS.map((item) => {
 					const isOpen = openId === item.id;
 
 					return (

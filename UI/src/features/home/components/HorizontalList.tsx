@@ -119,7 +119,7 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 					}}
 				>
 					{items.map((item, index) => (
-						<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "70%", sm: "40%", md: "30%", lg: "22%" } }}>
+						<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "70%", sm: "40%", md: "30%", lg: "25%" } }}>
 							{renderItem(item, () => handleItemClick(item))}
 						</Box>
 					))}
