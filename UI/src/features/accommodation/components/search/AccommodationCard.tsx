@@ -18,7 +18,7 @@ const getTypeLabel = (type: string): string => {
 };
 
 export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick, formatPrice }) => {
-	const image = accommodation.thumbnail ?? `/${accommodation.type}.png`;
+	const image = accommodation.thumbnail ?? `/images/${accommodation.type}.png`;
 	if (variant === "list") {
 		return (
 			<Card
