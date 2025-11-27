@@ -1,7 +1,7 @@
 import { Paper, Box, Typography, Rating, Chip, IconButton } from "@mui/material";
 import { LocationOn, Share } from "@mui/icons-material";
 import type { AccommodationDetail } from "../../types/accommodation.types";
-import FavouriteButton from "../../../../components/ui/FavouriteButton";
+import FavouriteButton from "../../../../components/shared/FavouriteButton";
 
 interface Props {
 	accommodation: AccommodationDetail;

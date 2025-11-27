@@ -5,7 +5,7 @@ import { Container, Grid, Box, CircularProgress, Typography } from "@mui/materia
 import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
 import useBookingContextProvider from "../../../context/BookingContext/hook";
-import ImageGallery from "../../../components/ui/ImageGallery";
+import ImageGallery from "../../../components/shared/ImageGallery";
 
 export default function DetailPage() {
 	const navigate = useNavigate();

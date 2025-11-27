@@ -1,5 +1,5 @@
 import ModalContext from "./context";
-import { ModalHost } from "../../components/ui/ModalHost";
+import { ModalHost } from "../../components/shared/ModalHost";
 import useModal from "../../hooks/useModal";
 
 const ModalProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {

@@ -1,5 +1,5 @@
 import { Paper, Typography, TextField, Button, Box, Divider, Stack } from "@mui/material";
-import { ProtectedLink } from "../../../../components/ui/ProtectedLink";
+import { ProtectedLink } from "../../../../components/shared/ProtectedLink";
 import { usePushNotificationContext } from "../../../../context/PushNotification/hook";
 import type { ItemInfo } from "../../../../types/BookingContextInfo";
 
