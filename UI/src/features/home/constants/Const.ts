@@ -1,5 +1,6 @@
 import { EAccommodationType } from "../../../types/Accommodation";
 export const ACCOMMODATION_LABELS: Partial<Record<EAccommodationType, string>> = {
+	[EAccommodationType.ALL]: "Accommodation",
 	[EAccommodationType.HOTEL]: "Hotel",
 	[EAccommodationType.APARTMENT]: "Apartment",
 	[EAccommodationType.VILLA]: "Villa",
@@ -19,10 +20,11 @@ export const ACCOMMODATION_LABELS: Partial<Record<EAccommodationType, string>> =
 	[EAccommodationType.CAPSULE_HOTEL]: "Capsule Hotel",
 	[EAccommodationType.TREEHOUSE]: "Treehouse",
 	[EAccommodationType.TOWNHOUSE]: "Townhouse",
-	[EAccommodationType.OTHER]: "Other ",
+	[EAccommodationType.OTHER]: "Other",
 };
 
 export const ACCOMMODATION_QUOTES: Partial<Record<EAccommodationType, string>> = {
+	[EAccommodationType.ALL]: "",
 	[EAccommodationType.HOTEL]: "Experience world-class service and comfort.",
 	[EAccommodationType.APARTMENT]: "Enjoy the freedom of your own space with city views.",
 	[EAccommodationType.VILLA]: "Indulge in luxury and privacy in your own villa paradise.",
@@ -46,6 +48,7 @@ export const ACCOMMODATION_QUOTES: Partial<Record<EAccommodationType, string>> =
 };
 
 export const ACCOMMODATION_HERO_IMAGES: Partial<Record<EAccommodationType, string>> = {
+	[EAccommodationType.ALL]: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1200&h=800&fit=crop",
 	[EAccommodationType.HOTEL]: "https://images.unsplash.com/photo-1566073771259-6a8506099945?w=1600&auto=format&fit=crop&q=80",
 	[EAccommodationType.APARTMENT]: "https://images.unsplash.com/photo-1502672260266-1c1ef2d93688?w=1600&auto=format&fit=crop&q=80",
 	[EAccommodationType.VILLA]: "https://images.unsplash.com/photo-1613490493576-7fde63acd811?w=1600&auto=format&fit=crop&q=80",
