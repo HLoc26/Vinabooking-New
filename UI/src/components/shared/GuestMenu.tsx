@@ -1,8 +1,8 @@
 // GuestMenu.tsx
 import React from "react";
 import { Box, Menu } from "@mui/material";
-import { Counter } from "../components/Counter";
-import type { Guests } from "../types/Guest";
+import { Counter } from "./Counter";
+import type { Guests } from "../../types/Guest";
 
 export interface GuestMenuProps {
 	open: boolean;

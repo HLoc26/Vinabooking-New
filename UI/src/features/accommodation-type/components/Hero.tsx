@@ -4,9 +4,9 @@ import { Box, Typography } from "@mui/material";
 import { EAccommodationType } from "../../../types/Accommodation";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
 import { useLocationSearch } from "../../../context/SearchContext/Index";
-import { HeroSearchBar } from "./HeroSearchBar";
-import type { DateRange } from "../types/DateRange";
-import type { Guests } from "../types/Guest";
+import { HeroSearchBar } from "../../../components/shared/HeroSearchBar";
+import type { DateRange } from "../../../types/DateRange";
+import type { Guests } from "../../../types/Guest";
 
 interface HeroProps {
 	currentType: EAccommodationType;

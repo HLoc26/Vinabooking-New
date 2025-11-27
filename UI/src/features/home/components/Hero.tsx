@@ -1,9 +1,9 @@
 import React, { useState, useRef, useEffect } from "react";
 import { Box, Typography } from "@mui/material";
-import { HeroSearchBar } from "./HeroSearchBar"; // Your original component with typeahead
+import { HeroSearchBar } from "../../../components/shared/HeroSearchBar"; // Your original component with typeahead
 import { useLocationSearch } from "../../../context/SearchContext/useLocationSearch";
-import type { DateRange } from "../../accommodation-type/types/DateRange";
-import type { Guests } from "../../accommodation-type/types/Guest";
+import type { DateRange } from "../../../types/DateRange";
+import type { Guests } from "../../../types/Guest";
 
 // Helper function to get default date range
 const getDefaultDateRange = (): DateRange => {

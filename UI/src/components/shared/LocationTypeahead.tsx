@@ -1,7 +1,7 @@
 // src/components/LocationTypeahead.tsx
 import React, { useEffect } from "react";
 import { Box, Paper, List, ListItemText, ListItemButton, CircularProgress } from "@mui/material";
-import { useLocationSearch } from "../../../context/SearchContext/Index";
+import { useLocationSearch } from "../../context/SearchContext/Index";
 
 interface Props {
 	open: boolean;
