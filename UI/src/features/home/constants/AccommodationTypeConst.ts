@@ -1,8 +1,13 @@
-import type { AccommodationTypeData } from "../services/types/AccommodationTypeData";
+import type { AccommodationTypeData } from "../types/AccommodationTypeData";
 import { EAccommodationType } from "../../../types/Accommodation";
-import { ACCOMMODATION_LABELS, ACCOMMODATION_HERO_IMAGES } from "../../accommodation-type/constants/Const";
+import { ACCOMMODATION_LABELS, ACCOMMODATION_HERO_IMAGES } from "./Const";
 
 export const ACCOMMODATION_TYPES: AccommodationTypeData[] = [
+	{
+		id: EAccommodationType.ALL,
+		name: ACCOMMODATION_LABELS[EAccommodationType.ALL]!,
+		imageUrl: ACCOMMODATION_HERO_IMAGES[EAccommodationType.ALL]!,
+	},
 	{
 		id: EAccommodationType.HOTEL,
 		name: ACCOMMODATION_LABELS[EAccommodationType.HOTEL]!,
