@@ -2,21 +2,20 @@ import React from "react";
 import { Card, Box, Typography, Chip } from "@mui/material";
 import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useNavigate } from "react-router-dom";
+import type { City } from "../types/City";
+import { ACCOMMODATION_LABELS } from "../constants/Const";
 
 interface CityCardProps {
-	data: {
-		city: string;
-		count: number;
-		imageUrl?: string; // allow optional override if needed
-	};
+	city: City;
+	typeLabel: string;
 }
 
-const CityCard: React.FC<CityCardProps> = ({ data }) => {
+const CityCard: React.FC<CityCardProps> = ({ city, typeLabel = ACCOMMODATION_LABELS["ALL"] }) => {
 	const navigate = useNavigate();
 
 	return (
 		<Card
-			onClick={() => navigate(`/search?keyword=${encodeURIComponent(data.city)}`)}
+			onClick={() => navigate(`/search?keyword=${encodeURIComponent(city.name)}`)}
 			sx={{
 				position: "relative",
 				borderRadius: 4,
@@ -33,8 +32,8 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 		>
 			<Box
 				component="img"
-				src={data.imageUrl ?? "/placeholder-city.jpg"}
-				alt={data.city}
+				src={city.imageUrl}
+				alt={city.name}
 				sx={{
 					width: "100%",
 					height: "100%",
@@ -66,11 +65,12 @@ const CityCard: React.FC<CityCardProps> = ({ data }) => {
 					}}
 				>
 					<LocationOnIcon sx={{ fontSize: 18, color: "#fb923c", mr: 0.8 }} />
-					{data.city}
+					{city.name}
 				</Typography>
 
-				<Typography variant="body2" sx={{ color: "rgba(255,255,255,0.8)" }}>
-					{data.count.toLocaleString()} accommodations
+				<Typography variant="body2" color="white">
+					{city.propertyCount} {typeLabel}
+					{city.propertyCount !== 1 ? "s" : ""}{" "}
 				</Typography>
 			</Box>
 
