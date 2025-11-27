@@ -15,8 +15,6 @@ type AccommodationTypeHomeContentProps = {
 const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> = ({ type }) => {
 	const { accommodations } = useFetchAccommodationCountByType(type);
 
-	console.log(accommodations);
-
 	// Group theo city
 	const currentCities: City[] = useMemo(() => {
 		const grouped = accommodations.reduce(
