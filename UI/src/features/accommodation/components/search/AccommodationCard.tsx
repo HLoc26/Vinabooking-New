@@ -3,7 +3,7 @@ import { Card, CardMedia, CardContent, Box, Chip, Typography, Rating, Divider } 
 import { LocationOn } from "@mui/icons-material";
 import type { AccommodationListItem } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
-import FavouriteButton from "../../../../components/ui/FavouriteButton";
+import FavouriteButton from "../../../../components/shared/FavouriteButton";
 
 interface Props {
 	accommodation: AccommodationListItem;
