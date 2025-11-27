@@ -1,3 +1,4 @@
+import type { Accommodation } from "./Accommodation";
 import type { ReviewDto } from "./Review";
 import type { UserDto } from "./UserDto";
 
@@ -52,3 +53,13 @@ export interface AddAccommodationToFavouriteResponse {
 }
 
 export type CreateReviewResponse = ReviewDto & { createdAt: Date | string };
+
+export type SearchResponse = {
+	data: Accommodation[];
+	meta: {
+		page: number;
+		limit: number;
+		total: number;
+		totalPages: number;
+	};
+};
