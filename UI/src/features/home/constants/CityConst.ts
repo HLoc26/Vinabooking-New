@@ -1,4 +1,4 @@
-import type { CityData } from "../services/types/CityData";
+import type { CityData } from "../types/CityData";
 
 export const CITIES: CityData[] = [
 	{
