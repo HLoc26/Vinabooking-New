@@ -4,7 +4,7 @@ import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import HomeContent from "../components/HomeContent";
 import { Box } from "@mui/material";
-import AccommodationTypeHomeContent from "../components/CustomHomeContent";
+import AccommodationTypeHomeContent from "../components/AccommodationTypeHomeContent";
 
 const parseAccommodationType = (param: string | undefined): EAccommodationType => {
 	if (!param) return EAccommodationType.ALL;
