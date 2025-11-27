@@ -2,7 +2,6 @@ import { Routes, Route } from "react-router-dom";
 import { HomePage } from "../features/home/pages/Index";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import SearchPage from "../features/accommodation/pages/SearchPage";
-import AcommodationTypePage from "../features/accommodation-type/pages/AccommodationTypePage";
 
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
@@ -48,7 +47,7 @@ export const AppRouter = () => (
 				path="/:accommodationType"
 				element={
 					<TravelerLayout>
-						<AcommodationTypePage />
+						<HomePage />
 					</TravelerLayout>
 				}
 			/>
