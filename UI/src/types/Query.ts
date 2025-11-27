@@ -7,13 +7,13 @@ export type Guests = {
 };
 
 export type Dates = {
-	checkIn?: string | Date;
-	checkOut?: string | Date;
+	checkIn: Date;
+	checkOut: Date | null;
 };
 
 export type Query = {
 	keyword: string;
-	dates?: Dates;
-	guests?: Guests;
+	dates: Dates;
+	guests: Guests;
 	type?: EAccommodationType;
 };

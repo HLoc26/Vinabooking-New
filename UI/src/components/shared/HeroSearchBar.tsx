@@ -1,161 +1,88 @@
-// HeroSearchBar.tsx
-import React from "react";
+import React, { useCallback, useRef, useState } from "react";
 import { Box, Paper, Button, TextField, Typography } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 
-// 1. Replaced Lucide imports with MUI Icons
 import SearchIcon from "@mui/icons-material/SearchRounded";
 import CalendarIcon from "@mui/icons-material/CalendarMonthRounded";
 import UserIcon from "@mui/icons-material/PersonRounded";
 import ChevronDownIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 
-import type { RefObject } from "react";
-import type { DateRange } from "../../types/DateRange";
 import type { Guests } from "../../types/Guest";
 
 import { DatePickerMenu } from "./DatePickerMenu";
 import { GuestMenu } from "./GuestMenu";
 import { LocationTypeahead } from "./LocationTypeahead";
-import { useLocationSearch } from "../../context/SearchContext/Index";
+import useSearchContext from "../../context/SearchContext/hook";
+import { useSticky } from "../../hooks/useSticky";
 
-interface HeroSearchBarProps {
-	searchRef?: RefObject<HTMLDivElement>;
-	locationRef?: RefObject<HTMLDivElement | null>;
-	dateRef?: RefObject<HTMLDivElement | null>;
-	guestRef?: RefObject<HTMLDivElement | null>;
-	sticky: boolean;
-	keyword: string;
-	setKeyword: (keyword: string) => void;
-	openLocation: boolean;
-	setOpenLocation: (open: boolean) => void;
-
-	dateRange: DateRange;
-	tempDateRange: DateRange;
-	setTempDateRange: (range: DateRange) => void;
-	setDateRange: (range: DateRange) => void;
-	isDateMenuOpen: boolean;
-	setIsDateMenuOpen: (open: boolean) => void;
-	monthOffset: number;
-	setMonthOffset: (offset: number) => void;
-
-	guests: Guests;
-	setGuests: (g: Guests) => void;
-	isGuestMenuOpen: boolean;
-	setIsGuestMenuOpen: (open: boolean) => void;
-}
-
-// Common styles for all interactive sections
-const sectionBoxStyles = {
-	display: "flex",
-	alignItems: "center",
-	height: "100%",
-	minHeight: 72,
-	py: 2,
-	px: 3,
-	cursor: "pointer",
-	"&:hover": { bgcolor: "action.hover" },
-};
-
-// Adjusted to use MUI prop sizing
-const iconStyles = { marginRight: 2, opacity: 0.7 }; // 2 units (16px) is equivalent to your previous inline style
-
-const labelStyles = {
-	variant: "caption" as const,
-	fontWeight: 700,
-	color: "text.secondary",
-	display: "block",
-	mb: 0.5,
-};
-
-// 🌟 FIX: Define the required fixed dimensions
+// Define the required fixed dimensions
 const PAPER_HEIGHT = 72; // The minimum height of the Paper (the sticky bar content)
 const FIXED_TOP_OFFSET = 16; // The 'top' value when fixed (16px)
 
 // Placeholder Height = PAPER_HEIGHT + FIXED_TOP_OFFSET
 const PLACEHOLDER_HEIGHT = PAPER_HEIGHT + FIXED_TOP_OFFSET;
 
-const formatLocalDate = (date: Date) => date.toLocaleDateString("en-CA"); // returns YYYY-MM-DD in local timezone
+interface SectionBoxIcon {
+	Icon: React.ElementType;
+	RightIcon?: React.ReactNode;
+	label: string;
+	children: React.ReactNode;
+	onClick: () => void;
+}
 
-export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
-	const {
-		searchRef,
-		locationRef,
-		dateRef,
-		guestRef,
-		sticky,
-		keyword,
-		setKeyword,
-		openLocation,
-		setOpenLocation,
-		dateRange,
-		tempDateRange,
-		setTempDateRange,
-		setDateRange,
-		isDateMenuOpen,
-		setIsDateMenuOpen,
-		monthOffset,
-		setMonthOffset,
-		guests,
-		setGuests,
-		isGuestMenuOpen,
-		setIsGuestMenuOpen,
-	} = props;
+const SectionBox: React.FC<SectionBoxIcon> = ({ Icon, RightIcon, label, children, onClick }) => (
+	<Box
+		onClick={onClick}
+		sx={{
+			display: "flex",
+			alignItems: "center",
+			height: "100%",
+			minHeight: 72,
+			py: 2,
+			px: 3,
+			cursor: "pointer",
+			"&:hover": { bgcolor: "action.hover" },
+		}}
+	>
+		<Icon sx={{ mr: 2, opacity: 0.7 }} /> {/* style icon ngay đây */}
+		<Box textAlign="left" sx={{ flexGrow: 1 }}>
+			<Typography variant={"caption"} fontWeight={700} color={"text.secondary"} display={"block"} mb={0.5}>
+				{label}
+			</Typography>
+			{children}
+		</Box>
+		{RightIcon && <Box sx={{ ml: 1, display: "flex", alignItems: "center" }}>{RightIcon}</Box>}
+	</Box>
+);
+
+export const HeroSearchBar: React.FC = () => {
+	const { ref: searchRef, sticky } = useSticky(175);
+	const { searchCriteria, handleUpdateSearchCriteria, tempDates, setTempDates } = useSearchContext();
+
+	// Ref for dropdowns
+	const refs = {
+		location: useRef<HTMLDivElement | null>(null),
+		date: useRef<HTMLDivElement | null>(null),
+		guest: useRef<HTMLDivElement | null>(null),
+	};
+	// Dropdown states
+	const [isDropDownOpen, setDropDownOpen] = useState({ location: false, date: false, guest: false });
+
+	const handleToggleDropdown = useCallback(<K extends keyof typeof isDropDownOpen>(key: K, open: (typeof isDropDownOpen)[K]) => {
+		setDropDownOpen((prev) => ({ ...prev, [key]: open }));
+	}, []);
+
 	const navigate = useNavigate();
 
-	// --- Logic functions remain unchanged ---
-	const handleDateClick = (date: Date) => {
-		if (!tempDateRange.checkIn || tempDateRange.checkOut) {
-			setTempDateRange({ checkIn: date, checkOut: null });
-		} else if (date < tempDateRange.checkIn!) {
-			setTempDateRange({ checkIn: date, checkOut: tempDateRange.checkIn });
-		} else {
-			setTempDateRange({ ...tempDateRange, checkOut: date });
-		}
-	};
-
-	const { query } = useLocationSearch();
-
 	const handleMainSearch = () => {
-		const params = new URLSearchParams();
-
-		// Add keyword if present
-		if (keyword.trim()) {
-			params.append("keyword", keyword.trim());
-		}
-
-		// Add type if present
-		if (query.type) {
-			params.append("type", query.type);
-		}
-
-		// Add dates if present
-		if (dateRange.checkIn) {
-			params.append("checkIn", formatLocalDate(dateRange.checkIn));
-		}
-		if (dateRange.checkOut) {
-			params.append("checkOut", formatLocalDate(dateRange.checkOut));
-		}
-
-		// Add guest info
-		if (guests.adults) {
-			params.append("adults", guests.adults.toString());
-		}
-		if (guests.children) {
-			params.append("children", guests.children.toString());
-		}
-		if (guests.rooms) {
-			params.append("rooms", guests.rooms.toString());
-		}
-
-		// Navigate to search page with query params
-		navigate(`/search?${params.toString()}`);
+		navigate("/search");
 	};
 
 	const handleDateClose = () => {
-		if (tempDateRange.checkIn && tempDateRange.checkOut) {
-			setDateRange(tempDateRange);
+		if (tempDates.checkIn && tempDates.checkOut) {
+			handleUpdateSearchCriteria("dates", tempDates);
 		}
-		setIsDateMenuOpen(false);
+		handleToggleDropdown("date", false);
 	};
 
 	return (
@@ -170,8 +97,6 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 				mx: "auto",
 				px: { xs: 2, md: 3 },
 				zIndex: sticky ? 1300 : 50,
-
-				// 🛠 Keep placeholder behavior
 				minHeight: sticky ? `${PLACEHOLDER_HEIGHT}px` : "auto",
 				transition: "all 0.25s ease",
 			}}
@@ -183,7 +108,7 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 					position: sticky ? "fixed" : "relative",
 					mt: sticky ? { xs: "56px", md: "64px" } : 0,
 
-					top: sticky ? 8 : "auto", // not 16px anymore!
+					top: sticky ? 8 : "auto",
 					// Use left: 50% and transform to center the element reliably
 					left: sticky ? "50%" : "auto",
 					transform: sticky ? "translateX(-50%)" : "none",
@@ -225,7 +150,7 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 			>
 				{/* DESTINATION */}
 				<Box
-					ref={locationRef}
+					ref={refs.location}
 					sx={{
 						gridArea: "destination",
 						position: "relative",
@@ -233,48 +158,45 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						borderRightColor: { md: "grey.300" },
 					}}
 				>
-					<Box onClick={() => setOpenLocation(true)} sx={sectionBoxStyles}>
-						{/* Replaced Lucide Search with MUI SearchIcon */}
-						<SearchIcon sx={iconStyles} fontSize="medium" />
-						<Box textAlign="left" sx={{ flexGrow: 1 }}>
-							<Typography {...labelStyles}>Where</Typography>
-							<TextField
-								placeholder="Search destinations"
-								variant="standard"
-								value={keyword}
-								onChange={(e) => setKeyword(e.target.value)}
-								onFocus={(e) => {
-									e.stopPropagation();
-									setOpenLocation(true);
-								}}
-								onClick={(e) => e.stopPropagation()}
-								InputProps={{
+					<SectionBox Icon={SearchIcon} label="Where" onClick={() => handleToggleDropdown("location", true)}>
+						<TextField
+							placeholder="Search destinations"
+							variant="standard"
+							value={searchCriteria.keyword}
+							onChange={(e) => handleUpdateSearchCriteria("keyword", e.target.value)}
+							onFocus={(e) => {
+								e.stopPropagation();
+								handleToggleDropdown("location", true);
+							}}
+							onClick={(e) => e.stopPropagation()}
+							slotProps={{
+								input: {
 									disableUnderline: true,
 									sx: { fontSize: "1rem", fontWeight: 600, color: "text.primary" },
-								}}
-								sx={{
-									width: "100%",
-									"& input": {
-										cursor: "text",
-										pointerEvents: "auto",
-									},
-								}}
-							/>
-						</Box>
-					</Box>
+								},
+							}}
+							sx={{
+								width: "100%",
+								"& input": {
+									cursor: "text",
+									pointerEvents: "auto",
+								},
+							}}
+						/>
+					</SectionBox>
 
 					<LocationTypeahead
-						open={openLocation}
+						open={isDropDownOpen.location}
 						onSelect={(loc) => {
-							setKeyword(loc.name ?? "");
-							setOpenLocation(false);
+							handleUpdateSearchCriteria("keyword", loc.name ?? "");
+							handleToggleDropdown("location", false);
 						}}
 					/>
 				</Box>
 
 				{/* DATES */}
 				<Box
-					ref={dateRef}
+					ref={refs.date}
 					sx={{
 						gridArea: "dates",
 						borderRight: { md: "1px solid" },
@@ -283,70 +205,47 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						borderTopColor: { xs: "grey.300" },
 					}}
 				>
-					<Box
+					<SectionBox
+						Icon={CalendarIcon}
+						label="Check in — Check out"
 						onClick={() => {
-							setTempDateRange(dateRange);
-							setIsDateMenuOpen(true);
+							setTempDates(searchCriteria.dates);
+							handleToggleDropdown("date", true);
 						}}
-						sx={sectionBoxStyles}
 					>
-						{/* Replaced Lucide Calendar with MUI CalendarIcon */}
-						<CalendarIcon sx={iconStyles} fontSize="medium" />
-						<Box textAlign="left" sx={{ flexGrow: 1 }}>
-							<Typography {...labelStyles}>Check in — Check out</Typography>
-							{!dateRange.checkIn ? (
-								<Typography variant="body1" fontWeight={600}>
-									Add dates
+						<Box display="flex" gap={1.5} alignItems="center">
+							{/* Check In */}
+							<Box>
+								{/* Do not use utils.dateFormatter to keep custom date format */}
+								<Typography variant="body2" fontWeight={700} lineHeight={1.2}>
+									{searchCriteria.dates.checkIn.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
 								</Typography>
-							) : (
-								<Box display="flex" gap={1.5} alignItems="center">
-									{/* Check In */}
-									<Box>
-										<Typography variant="body2" fontWeight={700} lineHeight={1.2}>
-											{dateRange.checkIn.getDate()} {dateRange.checkIn.toLocaleDateString("en-US", { month: "short" })} {dateRange.checkIn.getFullYear()}
-										</Typography>
-										<Typography variant="caption" color="text.secondary" fontSize="0.7rem">
-											{dateRange.checkIn.toLocaleDateString("en-US", { weekday: "short" })}
-										</Typography>
-									</Box>
+								<Typography variant="caption" color="text.secondary" fontSize="0.7rem">
+									{searchCriteria.dates.checkIn.toLocaleDateString("en-US", { weekday: "short" })}
+								</Typography>
+							</Box>
 
-									{dateRange.checkOut && (
-										<>
-											<Typography variant="body2" color="text.secondary">
-												—
-											</Typography>
-											{/* Check Out */}
-											<Box>
-												<Typography variant="body2" fontWeight={700} lineHeight={1.2}>
-													{dateRange.checkOut.getDate()} {dateRange.checkOut.toLocaleDateString("en-US", { month: "short" })} {dateRange.checkOut.getFullYear()}
-												</Typography>
-												<Typography variant="caption" color="text.secondary" fontSize="0.7rem">
-													{dateRange.checkOut.toLocaleDateString("en-US", { weekday: "short" })}
-												</Typography>
-											</Box>
-										</>
-									)}
-								</Box>
-							)}
+							<Typography variant="body2" color="text.secondary">
+								—
+							</Typography>
+							{/* Check Out */}
+							<Box>
+								<Typography variant="body2" fontWeight={700} lineHeight={1.2}>
+									{searchCriteria.dates.checkOut && searchCriteria.dates.checkOut.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+								</Typography>
+								<Typography variant="caption" color="text.secondary" fontSize="0.7rem">
+									{searchCriteria.dates.checkOut && searchCriteria.dates.checkOut.toLocaleDateString("en-US", { weekday: "short" })}
+								</Typography>
+							</Box>
 						</Box>
-					</Box>
+					</SectionBox>
 
-					<DatePickerMenu
-						key={`dates-${sticky}`}
-						open={isDateMenuOpen}
-						anchorEl={dateRef?.current ?? null}
-						tempDateRange={tempDateRange}
-						monthOffset={monthOffset}
-						onMonthPrev={() => setMonthOffset(Math.max(0, monthOffset - 1))}
-						onMonthNext={() => setMonthOffset(monthOffset + 1)}
-						onDateClick={handleDateClick}
-						onClose={handleDateClose}
-					/>
+					<DatePickerMenu key={`dates-${sticky}`} open={isDropDownOpen.date} anchorEl={refs.date?.current ?? null} onClose={handleDateClose} />
 				</Box>
 
 				{/* GUESTS */}
 				<Box
-					ref={guestRef}
+					ref={refs.guest}
 					sx={{
 						gridArea: "guests",
 						borderRight: { md: "1px solid" },
@@ -355,27 +254,21 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						borderTopColor: { xs: "grey.300" },
 					}}
 				>
-					<Box onClick={() => setIsGuestMenuOpen(!isGuestMenuOpen)} sx={sectionBoxStyles}>
-						<UserIcon sx={iconStyles} fontSize="medium" />
-						<Box textAlign="left" sx={{ flexGrow: 1 }}>
-							<Typography {...labelStyles}>Who</Typography>
-							<Typography variant="body1" fontWeight={600}>
-								{/* Removed redundant Markdown bolding from inside JSX */}
-								{guests.adults + guests.children} guest
-								{guests.adults + guests.children !== 1 && "s"}
-								{guests.rooms > 1 && ` · ${guests.rooms} rooms`}
-							</Typography>
-						</Box>
-						<ChevronDownIcon sx={{ opacity: 0.5 }} fontSize="small" />
-					</Box>
+					<SectionBox Icon={UserIcon} RightIcon={<ChevronDownIcon sx={{ opacity: 0.5 }} fontSize="small" />} label="Who" onClick={() => handleToggleDropdown("guest", true)}>
+						<Typography variant="body1" fontWeight={600}>
+							{searchCriteria.guests.adults + searchCriteria.guests.children} guest
+							{searchCriteria.guests.adults + searchCriteria.guests.children !== 1 && "s"}
+							{searchCriteria.guests.rooms > 1 && ` · ${searchCriteria.guests.rooms} rooms`}
+						</Typography>
+					</SectionBox>
 
 					<GuestMenu
 						key={`guests-${sticky}`}
-						open={isGuestMenuOpen}
-						anchorEl={guestRef?.current ?? null}
-						guests={guests}
-						onGuestsChange={setGuests}
-						onClose={() => setIsGuestMenuOpen(false)}
+						open={isDropDownOpen.guest}
+						anchorEl={refs.guest?.current ?? null}
+						guests={searchCriteria.guests}
+						onGuestsChange={(guest: Guests) => handleUpdateSearchCriteria("guests", guest)}
+						onClose={() => handleToggleDropdown("guest", false)}
 					/>
 				</Box>
 
@@ -386,7 +279,6 @@ export const HeroSearchBar: React.FC<HeroSearchBarProps> = (props) => {
 						variant="contained"
 						color="warning"
 						size="large"
-						// Replaced Lucide Search with MUI SearchIcon
 						startIcon={<SearchIcon />}
 						onClick={handleMainSearch}
 						sx={{

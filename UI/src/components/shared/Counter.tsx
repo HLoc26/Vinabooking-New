@@ -28,4 +28,3 @@ export const Counter: React.FC<CounterProps> = ({ label, value, onChange, min = 
 		</Stack>
 	</Stack>
 );
-

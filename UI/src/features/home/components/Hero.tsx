@@ -1,86 +1,15 @@
-// Hero.tsx
-import React, { useState, useRef, useEffect } from "react";
+import React from "react";
 import { Box, Typography } from "@mui/material";
 import { EAccommodationType } from "../../../types/Accommodation";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
-import { useLocationSearch } from "../../../context/SearchContext/Index";
 import { HeroSearchBar } from "../../../components/shared/HeroSearchBar";
-import type { DateRange } from "../../../types/DateRange";
-import type { Guests } from "../../../types/Guest";
 
 interface HeroProps {
 	currentType: EAccommodationType;
 	onTypeChange: (type: EAccommodationType) => void;
 }
-const getDefaultDateRange = (): DateRange => {
-	const today = new Date();
-	today.setHours(0, 0, 0, 0);
 
-	const checkOut = new Date(today);
-	checkOut.setDate(today.getDate() + 2);
-
-	return {
-		checkIn: today,
-		checkOut: checkOut,
-	};
-};
 export const Hero: React.FC<HeroProps> = ({ currentType }) => {
-	const { query, updateQuery } = useLocationSearch();
-
-	// Local state for UI
-	const [guests, setGuests] = useState<Guests>({ adults: 2, children: 0, rooms: 1 });
-	const [dateRange, setDateRange] = useState<DateRange>(() => getDefaultDateRange());
-	const [tempDateRange, setTempDateRange] = useState<DateRange>(() => getDefaultDateRange());
-	const [isDateMenuOpen, setIsDateMenuOpen] = useState(false);
-	const [isGuestMenuOpen, setIsGuestMenuOpen] = useState(false);
-	const [monthOffset, setMonthOffset] = useState(0);
-	const [openLocation, setOpenLocation] = useState(false);
-
-	const locationRef = useRef<HTMLDivElement>(null!);
-	const dateRef = useRef<HTMLDivElement>(null!);
-	const guestRef = useRef<HTMLDivElement>(null!);
-	const searchRef = useRef<HTMLDivElement>(null!);
-
-	const [sticky, setSticky] = useState(false);
-
-	// Sync local state to context when changed
-	useEffect(() => {
-		updateQuery({
-			adults: guests.adults,
-			children: guests.children,
-			rooms: guests.rooms,
-		});
-	}, [guests, updateQuery]);
-
-	useEffect(() => {
-		updateQuery({
-			checkIn: dateRange.checkIn || undefined,
-			checkOut: dateRange.checkOut || undefined,
-		});
-	}, [dateRange, updateQuery]);
-
-	useEffect(() => {
-		updateQuery({ type: currentType });
-	}, [currentType, updateQuery]);
-
-	// Sticky scroll logic
-	useEffect(() => {
-		if (!searchRef.current) return;
-
-		const observer = new IntersectionObserver(
-			([entry]) => {
-				setSticky(!entry.isIntersecting && entry.boundingClientRect.top < 0);
-			},
-			{
-				threshold: 0,
-				rootMargin: "-80px 0px 0px 0px",
-			}
-		);
-
-		observer.observe(searchRef.current);
-		return () => observer.disconnect();
-	}, []);
-
 	return (
 		<Box position="relative" sx={{ minHeight: { xs: 650, lg: 750 }, display: "flex", flexDirection: "column" }}>
 			{/* Backgrounds */}
@@ -129,29 +58,7 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 				</Typography>
 			</Box>
 
-			<HeroSearchBar
-				searchRef={searchRef}
-				sticky={sticky}
-				keyword={query.keyword}
-				setKeyword={(keyword) => updateQuery({ keyword })}
-				openLocation={openLocation}
-				setOpenLocation={setOpenLocation}
-				locationRef={locationRef}
-				dateRef={dateRef}
-				guestRef={guestRef}
-				dateRange={dateRange}
-				tempDateRange={tempDateRange}
-				setTempDateRange={setTempDateRange}
-				setDateRange={setDateRange}
-				isDateMenuOpen={isDateMenuOpen}
-				setIsDateMenuOpen={setIsDateMenuOpen}
-				monthOffset={monthOffset}
-				setMonthOffset={setMonthOffset}
-				guests={guests}
-				setGuests={setGuests}
-				isGuestMenuOpen={isGuestMenuOpen}
-				setIsGuestMenuOpen={setIsGuestMenuOpen}
-			/>
+			<HeroSearchBar />
 		</Box>
 	);
 };
