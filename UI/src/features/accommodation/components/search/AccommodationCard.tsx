@@ -4,12 +4,12 @@ import { LocationOn } from "@mui/icons-material";
 import type { AccommodationListItem } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
+import { standardize } from "../../../../utils/moneyConverter";
 
 interface Props {
 	accommodation: AccommodationListItem;
 	variant: "grid" | "list";
 	onClick: (id: string) => void;
-	formatPrice: (price: number) => string;
 }
 
 const getTypeLabel = (type: string): string => {
@@ -17,7 +17,7 @@ const getTypeLabel = (type: string): string => {
 	return found ? found.label : type;
 };
 
-export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick, formatPrice }) => {
+export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick }) => {
 	const image = accommodation.thumbnail ?? `/images/${accommodation.type}.png`;
 	if (variant === "list") {
 		return (
@@ -84,7 +84,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 										Starting from
 									</Typography>
 									<Typography variant="h5" color="primary" fontWeight="bold">
-										{formatPrice(accommodation.minPrice || 100)}
+										{standardize(accommodation.minPrice || 100)}
 									</Typography>
 									<Typography variant="caption" color="text.secondary">
 										per night
@@ -198,7 +198,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 							Starting from
 						</Typography>
 						<Typography variant="h6" color="primary" fontWeight="bold">
-							{formatPrice(accommodation.minPrice || 100)}
+							{standardize(accommodation.minPrice || 100)}
 						</Typography>
 						<Typography variant="caption" color="text.secondary">
 							per night

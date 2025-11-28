@@ -39,7 +39,7 @@ const SectionBox: React.FC<SectionBoxIcon> = ({ Icon, RightIcon, label, children
 			alignItems: "center",
 			height: "100%",
 			minHeight: 72,
-			py: 2,
+			py: 0.75,
 			px: 3,
 			cursor: "pointer",
 			"&:hover": { bgcolor: "action.hover" },
@@ -105,7 +105,7 @@ export const HeroSearchBar: React.FC = () => {
 		>
 			<Paper
 				// The Paper is the component that becomes fixed.
-				elevation={sticky ? 12 : 8}
+				elevation={sticky ? 3 : 1}
 				sx={{
 					position: sticky ? "fixed" : "relative",
 					mt: sticky ? { xs: "56px", md: "64px" } : 0,
@@ -115,7 +115,7 @@ export const HeroSearchBar: React.FC = () => {
 					left: sticky ? "50%" : "auto",
 					transform: sticky ? "translateX(-50%)" : "none",
 
-					maxWidth: sticky ? { xs: "100%", sm: "100%", md: 1152 } : "100%",
+					maxWidth: sticky ? { xs: "100%", sm: "100%", md: "90%" } : "100%",
 					width: "100%",
 
 					display: "grid",
@@ -144,10 +144,6 @@ export const HeroSearchBar: React.FC = () => {
 					borderRadius: 4,
 					overflow: "visible",
 					minHeight: PAPER_HEIGHT,
-
-					boxShadow: sticky
-						? "0px 7px 8px -4px rgba(0,0,0,0.2),0px 12px 17px 2px rgba(0,0,0,0.14),0px 5px 22px 4px rgba(0,0,0,0.12)"
-						: "0px 5px 5px -3px rgba(0,0,0,0.2),0px 8px 10px 1px rgba(0,0,0,0.14),0px 3px 14px 2px rgba(0,0,0,0.12)",
 				}}
 			>
 				{/* DESTINATION */}
