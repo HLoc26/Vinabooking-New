@@ -1,25 +1,35 @@
-import { useCallback, useState } from "react";
+import { useCallback, useMemo, useState } from "react";
 import type { Dates, Query } from "../../types/Query";
 
 import SearchContext, { type SearchContextType } from "./context";
 import { EAccommodationType } from "../../types/Accommodation";
 
+const initialCheckIn = (() => {
+	const d = new Date();
+	d.setDate(d.getDate() + 1);
+	d.setHours(0, 0, 0, 0);
+	return d;
+})();
+const initialCheckOut = (() => {
+	const d = new Date();
+	d.setDate(d.getDate() + 2);
+	d.setHours(0, 0, 0, 0);
+	return d;
+})();
+
 const useSearchCriteria = (): SearchContextType => {
-	const defaultCheckIn = new Date();
-	defaultCheckIn.setDate(defaultCheckIn.getDate() + 1);
-	const defaultCheckOut = new Date();
-	defaultCheckOut.setDate(defaultCheckOut.getDate() + 2);
+	console.log("useSearchCriteria");
 
 	const [tempDates, setTempDates] = useState<Dates>({
-		checkIn: defaultCheckIn,
-		checkOut: defaultCheckOut,
+		checkIn: initialCheckIn,
+		checkOut: initialCheckOut,
 	});
 
 	const [searchCriteria, setSearchCriteria] = useState<Query>({
 		keyword: "",
 		dates: {
-			checkIn: defaultCheckIn,
-			checkOut: defaultCheckOut,
+			checkIn: initialCheckIn,
+			checkOut: initialCheckOut,
 		},
 		guests: {
 			adults: 2,
@@ -40,23 +50,26 @@ const useSearchCriteria = (): SearchContextType => {
 	});
 
 	const handleUpdateSearchCriteria = useCallback(<K extends keyof Query>(key: K, value: Query[K]) => {
-		console.log("Updating", key, "to", value);
 		setSearchCriteria((prev) => ({
 			...prev,
 			[key]: value,
 		}));
 	}, []);
 
-	return {
-		searchCriteria,
-		handleUpdateSearchCriteria,
+	return useMemo(
+		() => ({
+			searchCriteria,
+			handleUpdateSearchCriteria,
 
-		tempDates,
-		setTempDates,
-	};
+			tempDates,
+			setTempDates,
+		}),
+		[tempDates]
+	);
 };
 
 const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
+	console.log("SearchProvider");
 	const searchCriteria = useSearchCriteria();
 
 	return <SearchContext.Provider value={searchCriteria}>{children}</SearchContext.Provider>;
