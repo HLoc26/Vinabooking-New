@@ -2,6 +2,7 @@ import { useCallback, useState } from "react";
 import type { Dates, Query } from "../../types/Query";
 
 import SearchContext, { type SearchContextType } from "./context";
+import { EAccommodationType } from "../../types/Accommodation";
 
 const useSearchCriteria = (): SearchContextType => {
 	const defaultCheckIn = new Date();
@@ -24,6 +25,17 @@ const useSearchCriteria = (): SearchContextType => {
 			adults: 2,
 			children: 0,
 			rooms: 1,
+		},
+		type: EAccommodationType.ALL,
+		price: {
+			min: 0,
+			max: 500,
+		},
+		facilities: [],
+		sortBy: "recommended",
+		pagination: {
+			page: 1,
+			limit: 18,
 		},
 	});
 
