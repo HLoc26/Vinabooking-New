@@ -11,9 +11,25 @@ export type Dates = {
 	checkOut: Date | null;
 };
 
+export type Price = {
+	min: number;
+	max: number;
+};
+
+export type SortOption = "price_asc" | "price_desc" | "newest" | "rating" | "recommended";
+
+export type Pagination = {
+	page: number;
+	limit: number;
+};
+
 export type Query = {
 	keyword: string;
 	dates: Dates;
 	guests: Guests;
-	type?: EAccommodationType;
+	type: EAccommodationType;
+	price: Price;
+	sortBy: SortOption;
+	facilities: string[];
+	pagination: Pagination;
 };

@@ -14,6 +14,7 @@ import { GuestMenu } from "./GuestMenu";
 import { LocationTypeahead } from "./LocationTypeahead";
 import useSearchContext from "../../context/SearchContext/hook";
 import { useSticky } from "../../hooks/useSticky";
+import { buildSearchParams } from "../../utils/search";
 
 // Define the required fixed dimensions
 const PAPER_HEIGHT = 72; // The minimum height of the Paper (the sticky bar content)
@@ -75,7 +76,8 @@ export const HeroSearchBar: React.FC = () => {
 	const navigate = useNavigate();
 
 	const handleMainSearch = () => {
-		navigate("/search");
+		const params = buildSearchParams(searchCriteria);
+		navigate(`/search?${params}`);
 	};
 
 	const handleDateClose = () => {
