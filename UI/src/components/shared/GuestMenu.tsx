@@ -12,13 +12,15 @@ export interface GuestMenuProps {
 }
 
 export const GuestMenu: React.FC<GuestMenuProps> = ({ open, anchorEl, guests, onGuestsChange, onClose }) => {
+	if (!open) return null;
+
 	return (
-		<Menu //
+		<Menu
 			open={open}
 			onClose={onClose}
 			anchorEl={anchorEl}
 			anchorOrigin={{ vertical: "bottom", horizontal: "left" }}
-			slotProps={{ list: { onClick: (e: React.MouseEvent<HTMLUListElement, MouseEvent>) => e.stopPropagation() } }}
+			slotProps={{ list: { onClick: (e: React.MouseEvent<HTMLDivElement, MouseEvent>) => e.stopPropagation() } }}
 			disableAutoFocusItem
 		>
 			<Box p={2} onClick={(e) => e.stopPropagation()}>

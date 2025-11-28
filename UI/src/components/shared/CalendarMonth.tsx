@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Button, Typography } from "@mui/material";
-import useSearchContext from "../../context/SearchContext/hook";
+import type { Dates } from "../../types/Query";
 
 const getDaysInMonth = (year: number, month: number) => new Date(year, month + 1, 0).getDate();
 const getFirstDayOfMonth = (year: number, month: number) => {
@@ -13,11 +13,11 @@ interface CalendarMonthProps {
 	month: number;
 	label: string;
 	minDate?: Date;
+	selectedDates: { checkIn: Date; checkOut: Date | null };
+	setSelectedDates: (dates: Dates) => void;
 }
 
-const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, minDate }) => {
-	const { tempDates, setTempDates } = useSearchContext();
-
+const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, minDate, selectedDates, setSelectedDates }) => {
 	const daysInMonth = getDaysInMonth(year, month);
 	const firstDay = getFirstDayOfMonth(year, month);
 	const days = Array.from({ length: daysInMonth }, (_, i) => i + 1);
@@ -25,19 +25,16 @@ const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, minDa
 
 	const isSelected = (day: number) => {
 		const date = new Date(year, month, day);
-		const { checkIn, checkOut } = tempDates;
-		if (!checkIn) return false;
-		return date.toDateString() === checkIn.toDateString() || (checkOut && date.toDateString() === checkOut.toDateString());
+		return date.toDateString() === selectedDates.checkIn.toDateString() || (selectedDates.checkOut && date.toDateString() === selectedDates.checkOut.toDateString());
 	};
 
 	const isInRange = (day: number) => {
 		const date = new Date(year, month, day);
-		const { checkIn, checkOut } = tempDates;
+		const { checkIn, checkOut } = selectedDates;
 		if (!checkIn || !checkOut) return false;
 		return date > checkIn && date < checkOut;
 	};
 
-	// Add this function to check if date is disabled
 	const isDisabled = (day: number) => {
 		if (!minDate) return false;
 		const date = new Date(year, month, day);
@@ -48,12 +45,14 @@ const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, minDa
 	};
 
 	const handleDateClick = (date: Date) => {
-		if (!tempDates.checkIn || tempDates.checkOut) {
-			setTempDates({ checkIn: date, checkOut: null }); // TODO: re validate
-		} else if (date < tempDates.checkIn!) {
-			setTempDates({ checkIn: date, checkOut: tempDates.checkIn });
+		const { checkIn, checkOut } = selectedDates;
+
+		if (!checkIn || checkOut) {
+			setSelectedDates({ checkIn: date, checkOut: null });
+		} else if (date < checkIn) {
+			setSelectedDates({ checkIn: date, checkOut: checkIn });
 		} else {
-			setTempDates({ ...tempDates, checkOut: date });
+			setSelectedDates({ checkIn, checkOut: date });
 		}
 	};
 
@@ -85,9 +84,7 @@ const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, minDa
 							disabled={disabled}
 							onClick={(e) => {
 								e.stopPropagation();
-								if (!disabled) {
-									handleDateClick(new Date(year, month, d));
-								}
+								if (!disabled) handleDateClick(new Date(year, month, d));
 							}}
 							sx={{
 								borderRadius: "50%",
@@ -101,10 +98,6 @@ const CalendarMonth: React.FC<CalendarMonthProps> = ({ year, month, label, minDa
 								cursor: disabled ? "not-allowed" : "pointer",
 								"&:hover": {
 									bgcolor: disabled ? "transparent" : selected ? "primary.dark" : "action.hover",
-								},
-								"&.Mui-disabled": {
-									color: "text.disabled",
-									opacity: 0.3,
 								},
 							}}
 						>
