@@ -1,7 +1,8 @@
 // src/components/LocationTypeahead.tsx
-import React, { useEffect } from "react";
+import React from "react";
 import { Box, Paper, List, ListItemText, ListItemButton, CircularProgress } from "@mui/material";
-import { useLocationSearch } from "../../context/SearchContext/Index";
+import useSearchContext from "../../context/SearchContext/hook";
+import useTypeahead from "../../hooks/useTypeahead";
 
 interface Props {
 	open: boolean;
@@ -9,16 +10,11 @@ interface Props {
 }
 
 export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
-	const { query, results, searchLocations, loading } = useLocationSearch();
-
-	useEffect(() => {
-		if (open && query.keyword.trim().length > 0) {
-			searchLocations();
-		}
-	}, [open, query.keyword, searchLocations]);
+	const { searchCriteria } = useSearchContext();
+	const { results, loading } = useTypeahead(searchCriteria.keyword);
 
 	if (!open) return null;
-	if (query.keyword.trim().length === 0) return null;
+	if (searchCriteria.keyword.trim().length === 0) return null;
 
 	return (
 		<Paper
@@ -45,7 +41,7 @@ export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
 								primary={loc.name}
 								secondary={
 									// Only show secondary if city or type exists
-									[loc.city, loc.type].filter(Boolean).join(" · ") || null
+									[loc.address.city, loc.type].filter(Boolean).join(" · ") || null
 								}
 							/>
 						</ListItemButton>
