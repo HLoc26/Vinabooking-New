@@ -1,6 +1,12 @@
 import { createContext } from "react";
-import useBookingInfo from "../../hooks/useBookingInfo";
+import type { BookingContextInfo } from "../../types/BookingContextInfo";
 
-const BookingContext = createContext<ReturnType<typeof useBookingInfo> | null>(null);
+export interface BookingContextType {
+	bookingInfo: BookingContextInfo;
+	updateBookingInfo: <K extends keyof BookingContextInfo>(key: K, value: BookingContextInfo[K]) => void;
+	updateRoomQuantity: (roomId: string, count: number) => void;
+}
+
+const BookingContext = createContext<BookingContextType | null>(null);
 
 export default BookingContext;
