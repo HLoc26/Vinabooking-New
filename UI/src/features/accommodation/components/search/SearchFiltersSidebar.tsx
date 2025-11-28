@@ -98,11 +98,11 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 					Filters
 				</Typography>
 			</Box>
-			<Divider sx={{ mb: 2 }} />
+			<Divider sx={{ mb: 1 }} />
 
 			{/* Accommodation Type */}
-			<Box sx={{ mb: 4 }}>
-				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+			<Box sx={{ mb: 1 }}>
+				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0 }}>
 					Accommodation Type
 				</Typography>
 				<TextField
@@ -127,10 +127,10 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 
 			{/* Price Range */}
 			<Box sx={{ mb: 2 }}>
-				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 2 }}>
+				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
 					Price Range (per night)
 				</Typography>
-				<Box sx={{ display: "flex", gap: 2, mb: 2 }}>
+				<Box sx={{ display: "flex", gap: 2, mb: 1, justifyContent: "space-between" }}>
 					<TextField
 						label="Min"
 						size="small"
@@ -139,8 +139,10 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 						onBlur={commitPrice}
 						disabled={loading}
 						type="number"
-						InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-						inputProps={{ min: PRICE_FILTER_CONFIG.MIN, max: locals.price.max - PRICE_FILTER_CONFIG.STEP, step: PRICE_FILTER_CONFIG.STEP }}
+						slotProps={{
+							input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
+							htmlInput: { min: PRICE_FILTER_CONFIG.MIN, max: locals.price.max - PRICE_FILTER_CONFIG.STEP, step: PRICE_FILTER_CONFIG.STEP },
+						}}
 					/>
 					<TextField
 						label="Max"
@@ -150,8 +152,10 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 						onBlur={commitPrice}
 						disabled={loading}
 						type="number"
-						InputProps={{ startAdornment: <InputAdornment position="start">$</InputAdornment> }}
-						inputProps={{ min: locals.price.min + PRICE_FILTER_CONFIG.STEP, max: PRICE_FILTER_CONFIG.MAX, step: PRICE_FILTER_CONFIG.STEP }}
+						slotProps={{
+							input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
+							htmlInput: { min: locals.price.min + PRICE_FILTER_CONFIG.STEP, max: PRICE_FILTER_CONFIG.MAX, step: PRICE_FILTER_CONFIG.STEP },
+						}}
 					/>
 				</Box>
 				<Slider
@@ -186,7 +190,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0 }}>
 					Facilities & Amenities
 				</Typography>
-				<Box sx={{ maxHeight: 240, overflowY: "auto", pr: 2 }}>
+				<Box sx={{ maxHeight: 200, overflowY: "auto", pr: 2 }}>
 					<FormGroup>
 						{facilityList.map((facility) => (
 							<FormControlLabel
