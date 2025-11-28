@@ -1,6 +1,7 @@
 import express from "express";
 import cors from "cors";
 import accommodationRoutes from "./routes/accommodation.routes";
+import facilityRoutes from "./routes/facility.routes";
 import { errorMiddleware } from "./middlewares/error.middleware";
 
 const app = express();
@@ -15,6 +16,7 @@ app.get("/health", (_, res) => {
 });
 
 // Routes
+app.use("/", facilityRoutes);
 app.use("/", accommodationRoutes);
 
 // Global error handling
