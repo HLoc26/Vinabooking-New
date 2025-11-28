@@ -33,7 +33,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 					},
 				}}
 			>
-				<CardMedia component="img" sx={{ width: 280, objectFit: "cover" }} image={image} alt={accommodation.name} />
+				<CardMedia component="img" sx={{ width: 280, maxHeight: 250, objectFit: "cover" }} image={image} alt={accommodation.name} />
 				<Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
 					<CardContent sx={{ flex: 1, p: 3 }}>
 						<Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
@@ -64,7 +64,18 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 										({accommodation.reviewCount || 0} reviews)
 									</Typography>
 								</Box>
-								<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+									sx={{
+										mb: 2,
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										display: "-webkit-box",
+										WebkitLineClamp: 3,
+										WebkitBoxOrient: "vertical",
+									}}
+								>
 									{accommodation.description}
 								</Typography>
 							</Box>
@@ -84,7 +95,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 										Starting from
 									</Typography>
 									<Typography variant="h5" color="primary" fontWeight="bold">
-										{standardize(accommodation.minPrice || 100)}
+										$ {standardize(accommodation.minPrice || 100)}
 									</Typography>
 									<Typography variant="caption" color="text.secondary">
 										per night
@@ -190,18 +201,18 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 					{accommodation.description}
 				</Typography>
 
-				<Divider sx={{ my: 2 }} />
+				<Divider sx={{ mb: 1 }} />
 
-				<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-					<Box>
-						<Typography variant="caption" color="text.secondary">
-							Starting from
-						</Typography>
+				<Box sx={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center" }}>
+					<Box sx={{ display: "flex", alignItems: "baseline" }}>
+						<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
+							From
+						</Typography>{" "}
 						<Typography variant="h6" color="primary" fontWeight="bold">
-							{standardize(accommodation.minPrice || 100)}
+							$ {standardize(accommodation.minPrice || 100)}
 						</Typography>
-						<Typography variant="caption" color="text.secondary">
-							per night
+						<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+							/ night
 						</Typography>
 					</Box>
 				</Box>
