@@ -1,3 +1,4 @@
+import { EAccommodationType } from "../types/Accommodation";
 import type { Query } from "../types/Query";
 
 export const buildSearchParams = (criteria: Query) => {
@@ -35,3 +36,14 @@ export const buildSearchParams = (criteria: Query) => {
 
 	return params.toString();
 };
+
+export function parseEAccommodationType(value: string | null): EAccommodationType {
+	if (!value) return EAccommodationType.ALL;
+
+	// check if value in Enum
+	if (Object.values(EAccommodationType).includes(value as EAccommodationType)) {
+		return value as EAccommodationType;
+	}
+
+	return EAccommodationType.ALL;
+}

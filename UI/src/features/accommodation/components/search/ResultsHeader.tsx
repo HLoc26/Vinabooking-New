@@ -3,17 +3,19 @@ import { Box, Typography, TextField, MenuItem, ToggleButtonGroup, ToggleButton, 
 import { GridView, ViewList } from "@mui/icons-material";
 import type { SortOption } from "../../types/accommodation.types";
 import { SORT_OPTIONS } from "../../constants/searchFilters";
+import useSearchFromParams from "../../hooks/useSearchFromParams";
+import useSearchContext from "../../../../context/SearchContext/hook";
 
 interface ResultsHeaderProps {
-	totalResults: number;
 	loading: boolean;
-	sortBy: SortOption;
-	onChangeSort: (value: SortOption) => void;
 	viewMode: "grid" | "list";
 	onChangeViewMode: (mode: "grid" | "list") => void;
 }
 
-export const ResultsHeader: React.FC<ResultsHeaderProps> = ({ totalResults, loading, sortBy, onChangeSort, viewMode, onChangeViewMode }) => {
+export const ResultsHeader: React.FC<ResultsHeaderProps> = ({ loading, viewMode, onChangeViewMode }) => {
+	const { criteria, total } = useSearchFromParams();
+	const { handleUpdateSearchCriteria } = useSearchContext();
+
 	return (
 		<Box
 			sx={{
@@ -26,11 +28,19 @@ export const ResultsHeader: React.FC<ResultsHeaderProps> = ({ totalResults, load
 			}}
 		>
 			<Typography variant="h5" fontWeight="bold">
-				{`${totalResults} accommodations found`}
+				{`${total} accommodations found`}
 			</Typography>
 
 			<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
-				<TextField select label="Sort by" value={sortBy} onChange={(e) => onChangeSort(e.target.value as SortOption)} size="small" sx={{ minWidth: 200 }} disabled={loading}>
+				<TextField
+					select
+					label="Sort by"
+					value={criteria.sortBy}
+					onChange={(e) => handleUpdateSearchCriteria("sortBy", e.target.value as SortOption)}
+					size="small"
+					sx={{ minWidth: 200 }}
+					disabled={loading}
+				>
 					{SORT_OPTIONS.map((option) => (
 						<MenuItem key={option.value} value={option.value}>
 							{option.label}

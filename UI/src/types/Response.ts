@@ -1,4 +1,4 @@
-import type { Accommodation } from "./Accommodation";
+import type { AccommodationAddress, EAccommodationType } from "./Accommodation";
 import type { ReviewDto } from "./Review";
 import type { UserDto } from "./UserDto";
 
@@ -54,12 +54,34 @@ export interface AddAccommodationToFavouriteResponse {
 
 export type CreateReviewResponse = ReviewDto & { createdAt: Date | string };
 
-export type SearchResponse = {
-	data: Accommodation[];
-	meta: {
-		page: number;
-		limit: number;
-		total: number;
-		totalPages: number;
-	};
-};
+export interface AccommodationListItem {
+	id: string;
+	name: string;
+	description: string;
+	type: EAccommodationType;
+	rentalType: string;
+	isActive: boolean;
+	ownerId?: string;
+	createdAt?: string;
+	updatedAt?: string;
+	addressId?: string;
+	address: AccommodationAddress;
+	facilities: string[];
+	thumbnail: string;
+	rating?: number;
+	reviewCount?: number;
+	distance?: number;
+	minPrice?: number;
+}
+
+export interface PaginationMeta {
+	page: number;
+	limit: number;
+	total: number;
+	totalPages: number;
+}
+
+export interface AccommodationSearchData {
+	data: AccommodationListItem[];
+	meta: PaginationMeta;
+}
