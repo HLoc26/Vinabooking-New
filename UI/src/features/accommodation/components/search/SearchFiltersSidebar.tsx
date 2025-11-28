@@ -33,7 +33,6 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 	useEffect(() => {
 		if (!pendingParams) return;
 		const handler = setTimeout(() => {
-			console.log("navigating", pendingParams);
 			navigate(`/search?${pendingParams.toString()}`, { replace: true });
 		}, 300); // 300ms debounce
 		return () => clearTimeout(handler);

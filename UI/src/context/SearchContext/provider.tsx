@@ -18,8 +18,6 @@ const initialCheckOut = (() => {
 })();
 
 const useSearchCriteria = (): SearchContextType => {
-	console.log("useSearchCriteria");
-
 	const [tempDates, setTempDates] = useState<Dates>({
 		checkIn: initialCheckIn,
 		checkOut: initialCheckOut,
@@ -69,7 +67,6 @@ const useSearchCriteria = (): SearchContextType => {
 };
 
 const SearchProvider: React.FC<{ children: React.ReactNode }> = ({ children }) => {
-	console.log("SearchProvider");
 	const searchCriteria = useSearchCriteria();
 
 	return <SearchContext.Provider value={searchCriteria}>{children}</SearchContext.Provider>;
