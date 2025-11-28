@@ -7,7 +7,7 @@ const useSearchCriteria = (): SearchContextType => {
 	const defaultCheckIn = new Date();
 	defaultCheckIn.setDate(defaultCheckIn.getDate() + 1);
 	const defaultCheckOut = new Date();
-	defaultCheckIn.setDate(defaultCheckOut.getDate() + 2);
+	defaultCheckOut.setDate(defaultCheckOut.getDate() + 2);
 
 	const [tempDates, setTempDates] = useState<Dates>({
 		checkIn: defaultCheckIn,
