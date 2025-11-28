@@ -1,20 +1,19 @@
 // src/components/LocationTypeahead.tsx
 import React from "react";
 import { Box, Paper, List, ListItemText, ListItemButton, CircularProgress } from "@mui/material";
-import useSearchContext from "../../context/SearchContext/hook";
 import useTypeahead from "../../hooks/useTypeahead";
 
 interface Props {
 	open: boolean;
 	onSelect: (location: { id: string; name: string }) => void;
+	keyword: string; // thêm
 }
 
-export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
-	const { searchCriteria } = useSearchContext();
-	const { results, loading } = useTypeahead(searchCriteria.keyword);
+export const LocationTypeahead: React.FC<Props> = ({ onSelect, open, keyword }) => {
+	const { results, loading } = useTypeahead(keyword); // dùng keyword từ props
 
 	if (!open) return null;
-	if (searchCriteria.keyword.trim().length === 0) return null;
+	if (keyword.trim().length === 0) return null;
 
 	return (
 		<Paper
@@ -37,13 +36,7 @@ export const LocationTypeahead: React.FC<Props> = ({ onSelect, open }) => {
 				<List sx={{ p: 0 }}>
 					{results.map((loc) => (
 						<ListItemButton key={loc.id} onClick={() => onSelect(loc)}>
-							<ListItemText
-								primary={loc.name}
-								secondary={
-									// Only show secondary if city or type exists
-									[loc.address.city, loc.type].filter(Boolean).join(" · ") || null
-								}
-							/>
+							<ListItemText primary={loc.name} secondary={[loc.address.city, loc.type].filter(Boolean).join(" · ") || null} />
 						</ListItemButton>
 					))}
 				</List>
