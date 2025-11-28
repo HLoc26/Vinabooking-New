@@ -95,7 +95,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 										Starting from
 									</Typography>
 									<Typography variant="h5" color="primary" fontWeight="bold">
-										$ {standardize(accommodation.minPrice || 100)}
+										${standardize(accommodation.minPrice || 100)}
 									</Typography>
 									<Typography variant="caption" color="text.secondary">
 										per night
@@ -209,7 +209,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 							From
 						</Typography>{" "}
 						<Typography variant="h6" color="primary" fontWeight="bold">
-							$ {standardize(accommodation.minPrice || 100)}
+							${standardize(accommodation.minPrice || 100)}
 						</Typography>
 						<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
 							/ night
