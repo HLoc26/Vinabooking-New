@@ -6,6 +6,7 @@ import type { RoomInfo } from "../types/RoomInfo";
 import type { AccommodationInfo } from "../types/Accommodation";
 import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
 import useBookingContextProvider from "../../../context/BookingContext/hook";
+import { formatDate } from "../../../utils/dateFormatter";
 
 interface Props {
 	accommInfo: AccommodationInfo;
@@ -178,14 +179,14 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 				<Box display="flex" alignItems="center" mb={2}>
 					<CalendarToday fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
 					<Typography variant="body2">
-						<strong>Check-in:</strong> {context.startDate.toDateString()}
+						<strong>Check-in:</strong> {formatDate(context.startDate.toString())}
 					</Typography>
 				</Box>
 
 				<Box display="flex" alignItems="center" mb={2}>
 					<CalendarToday fontSize="small" sx={{ mr: 0.5, verticalAlign: "middle" }} />
 					<Typography variant="body2">
-						<strong>Check-out:</strong> {context.endDate.toDateString()}
+						<strong>Check-out:</strong> {formatDate(context.endDate.toString())}
 					</Typography>
 				</Box>
 

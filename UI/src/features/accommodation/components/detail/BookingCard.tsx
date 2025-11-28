@@ -2,6 +2,7 @@ import { Paper, Typography, TextField, Button, Box, Divider, Stack } from "@mui/
 import { ProtectedLink } from "../../../../components/shared/ProtectedLink";
 import { usePushNotificationContext } from "../../../../context/PushNotification/hook";
 import type { ItemInfo } from "../../../../types/BookingContextInfo";
+import { toInputDate } from "../../../../utils/dateFormatter";
 
 interface Props {
 	rooms: ItemInfo[];
@@ -15,6 +16,7 @@ interface Props {
 
 export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onStartDateChange, onEndDateChange }: Props) => {
 	const { pushNotification } = usePushNotificationContext();
+
 	return (
 		<Paper sx={{ p: 3, position: "sticky", top: 16, boxShadow: 3 }}>
 			<Typography variant="h6" fontWeight="bold" gutterBottom>
@@ -35,7 +37,7 @@ export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onS
 					type="date"
 					fullWidth
 					slotProps={{ inputLabel: { shrink: true } }}
-					value={startDate.toISOString().split("T")[0]}
+					value={toInputDate(startDate)}
 					onChange={(e) => onStartDateChange(new Date(e.target.value))}
 				/>
 				<TextField
@@ -43,7 +45,7 @@ export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onS
 					type="date"
 					fullWidth
 					slotProps={{ inputLabel: { shrink: true } }}
-					value={endDate.toISOString().split("T")[0]}
+					value={toInputDate(endDate)}
 					onChange={(e) => onEndDateChange(new Date(e.target.value))}
 				/>
 				<ProtectedLink //
