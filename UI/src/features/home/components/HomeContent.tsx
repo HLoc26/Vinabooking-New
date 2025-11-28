@@ -19,7 +19,7 @@ const HomeContent: React.FC = () => {
 					items={cities}
 					renderItem={(cityStat) => {
 						const fallbackImage = CITIES.find((c) => c.name.toLowerCase() === cityStat.city.toLowerCase())?.imageUrl;
-						const imageUrl = fallbackImage || "/images/city/default.jpg";
+						const imageUrl = fallbackImage || "/images/default.jpg";
 						const city: City = {
 							id: cityStat.city.toLowerCase(),
 							name: cityStat.city,

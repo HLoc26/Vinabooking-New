@@ -32,7 +32,7 @@ const CityCard: React.FC<CityCardProps> = ({ city, typeLabel = ACCOMMODATION_LAB
 		>
 			<Box
 				component="img"
-				src={city.imageUrl}
+				src={city.imageUrl ?? "/images/default.png"}
 				alt={city.name}
 				sx={{
 					width: "100%",

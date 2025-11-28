@@ -13,6 +13,7 @@ import { LocationTypeahead } from "./LocationTypeahead";
 import useSearchContext from "../../context/SearchContext/hook";
 import { useSticky } from "../../hooks/useSticky";
 import { buildSearchParams } from "../../utils/search";
+import useBookingContextProvider from "../../context/BookingContext/hook";
 
 const PAPER_HEIGHT = 72;
 const FIXED_TOP_OFFSET = 16;
@@ -52,6 +53,7 @@ const SectionBox: React.FC<{
 export const HeroSearchBar: React.FC = () => {
 	const { ref: searchRef, sticky } = useSticky(175);
 	const { searchCriteria, handleUpdateSearchCriteria } = useSearchContext();
+	const { updateBookingInfo } = useBookingContextProvider();
 	const navigate = useNavigate();
 
 	// Local state
@@ -202,6 +204,11 @@ export const HeroSearchBar: React.FC = () => {
 						setSelectedDates={setDates}
 						onClose={() => {
 							handleUpdateSearchCriteria("dates", dates);
+							updateBookingInfo("startDate", dates.checkIn);
+							const d = new Date();
+							d.setDate(d.getDate() + 2);
+							d.setHours(0, 0, 0, 0);
+							updateBookingInfo("endDate", dates.checkOut ?? d);
 							handleToggleDropdown("date", false);
 						}}
 					/>
