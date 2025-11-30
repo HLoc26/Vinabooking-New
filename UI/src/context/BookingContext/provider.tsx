@@ -3,11 +3,11 @@ import BookingContext, { type BookingContextType } from "./context";
 import { useCallback, useEffect, useState } from "react";
 import type { BookingContextInfo, ItemInfo } from "../../types/BookingContextInfo";
 
-import useAuth from "../../hooks/useAuth";
 import type { UserDto } from "../../types/UserDto";
+import useAuthContextProvider from "../AuthContext/hook";
 
 const useBookingInfo = (): BookingContextType => {
-	const { getCurrentUser } = useAuth();
+	const { getCurrentUser } = useAuthContextProvider();
 	const [user, setUser] = useState<UserDto | null>(null);
 
 	useEffect(() => {
