@@ -34,7 +34,6 @@ const NavigationBar: React.FC = () => {
 
 	const { pushNotification } = usePushNotificationContext();
 
-	const navigate = useNavigate();
 	const { logout } = useAuthContextProvider();
 	const { userInfo: user, userAvatars } = useUserContextProvider();
 	const thumbnail = userAvatars.find((a) => a.variant === "THUMBNAIL");
@@ -46,7 +45,6 @@ const NavigationBar: React.FC = () => {
 				throw new Error("Failed to logout");
 			}
 			pushNotification("Logged out successfully!", "success");
-			navigate("/");
 		} catch (error) {
 			const err = error as Error;
 			pushNotification(err.message, "error");
