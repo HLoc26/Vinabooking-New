@@ -85,6 +85,7 @@ export default function AccommodationSearchResults() {
 	const handleClearAllFilters = () => {
 		const params = new URLSearchParams();
 
+		params.set("keyword", criteria.keyword);
 		params.set("type", "");
 		params.set("minPrice", PRICE_FILTER_CONFIG.MIN.toString());
 		params.set("maxPrice", PRICE_FILTER_CONFIG.MAX.toString());
