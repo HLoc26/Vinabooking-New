@@ -9,14 +9,14 @@ import useBatchAccommodationInfo from "../../../hooks/useBatchAccommodationInfo"
 type FavouriteDetailViewProps = {
 	favourite: FavouriteList;
 	onBack: () => void;
+	handleRemoveFromFavourite: (favouriteId: string, accommodationId: string) => void;
 };
 
-const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, onBack }) => {
+const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, onBack, handleRemoveFromFavourite }) => {
 	const [page, setPage] = useState(1);
 	const itemsPerPage = 8;
 
 	const accommodationIds = useMemo(() => favourite.items.map((i) => i.accommodationId), [favourite.items]);
-	console.log("Rerender");
 
 	const accommodation = useBatchAccommodationInfo(accommodationIds);
 
@@ -84,7 +84,7 @@ const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, on
 				<Grid container spacing={3}>
 					{slice.map((ac) => (
 						<Grid size={{ xs: 12, sm: 6, md: 4 }} key={ac.id}>
-							<AccommodationCard accommodation={ac} />
+							<AccommodationCard accommodation={ac} onRemove={(accommodationId: string) => handleRemoveFromFavourite(favourite.id, accommodationId)} />
 						</Grid>
 					))}
 				</Grid>
