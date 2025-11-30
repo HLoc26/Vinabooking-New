@@ -100,10 +100,7 @@ const useSearchFromParams = () => {
 			setError(null);
 
 			try {
-				console.log("criteria", criteria);
 				const apiParams = buildApiParams(criteria);
-
-				console.log("apiParams", apiParams);
 
 				const res = await accommodationApi.search(apiParams);
 
