@@ -54,7 +54,25 @@ export const AppRouter = () => (
 
 			{/* User pages */}
 			<Route
-				path="/user/me"
+				path="/user/me/profile"
+				element={
+					<TravelerLayout>
+						<UserProfilePage />
+					</TravelerLayout>
+				}
+			/>
+
+			<Route
+				path="/user/me/my-bookings"
+				element={
+					<TravelerLayout>
+						<UserProfilePage />
+					</TravelerLayout>
+				}
+			/>
+
+			<Route
+				path="/user/me/favorites"
 				element={
 					<TravelerLayout>
 						<UserProfilePage />

@@ -165,26 +165,25 @@ const NavigationBar: React.FC = () => {
 									open={Boolean(anchorElProfile)}
 									onClose={() => setAnchorElProfile(null)}
 								>
-									<MenuItem component={RouterLink} to="/user/me" onClick={() => setAnchorElProfile(null)}>
+									<MenuItem component={RouterLink} to="/user/me/profile" onClick={() => setAnchorElProfile(null)}>
 										<ListItemIcon>
 											<PersonOutlineOutlined />
 										</ListItemIcon>
 										<ListItemText>My Profile</ListItemText>
 									</MenuItem>
-									<MenuItem component={RouterLink} to="/favorites" onClick={() => setAnchorElProfile(null)}>
-										<ListItemIcon>
-											<StarOutlineRounded />
-										</ListItemIcon>
-										<ListItemText>Favorites</ListItemText>
-									</MenuItem>
-									<MenuItem component={RouterLink} to="/my-bookings" onClick={() => setAnchorElProfile(null)}>
+									<MenuItem component={RouterLink} to="/user/me/my-bookings" onClick={() => setAnchorElProfile(null)}>
 										<ListItemIcon>
 											<LuggageOutlined />
 										</ListItemIcon>
 										<ListItemText>My Bookings</ListItemText>
 									</MenuItem>
+									<MenuItem component={RouterLink} to="/user/me/favorites" onClick={() => setAnchorElProfile(null)}>
+										<ListItemIcon>
+											<StarOutlineRounded />
+										</ListItemIcon>
+										<ListItemText>Favorites</ListItemText>
+									</MenuItem>
 									<MenuItem onClick={handleLogout}>
-										{" "}
 										<ListItemIcon>
 											<ExitToAppOutlined />
 										</ListItemIcon>
