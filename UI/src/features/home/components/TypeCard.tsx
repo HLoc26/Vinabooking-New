@@ -26,7 +26,7 @@ const TypeCard: React.FC<TypeCardProps> = ({ data, onClick }) => {
 			{/* Image */}
 			<CardMedia
 				component="img"
-				image={data.imageUrl}
+				image={data.imageUrl ?? "/images/defaults.png"}
 				alt={data.name}
 				sx={{
 					height: 160,
