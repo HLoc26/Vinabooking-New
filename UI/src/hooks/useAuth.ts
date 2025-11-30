@@ -86,7 +86,12 @@ export const useAuth = () => {
 		return user;
 	}, [user]);
 
-	return { login, logout, getCurrentUser, loading, error } as const;
+	const updateUserInStorage = useCallback((updatedUser: UserDto) => {
+		localStorage.setItem(USER_KEY, JSON.stringify(updatedUser));
+		setUser(updatedUser);
+	}, []);
+
+	return { login, logout, getCurrentUser, updateUserInStorage, loading, error } as const;
 };
 
 export default useAuth;

@@ -7,7 +7,7 @@ import type { Image } from "../types/Image";
 const useUserProfileInfo = () => {
 	const [userInfo, setUserInfo] = useState<UserDto | null>(null);
 	const [userAvatars, setUserAvatars] = useState<Image[]>([]);
-	const { getCurrentUser } = useAuthContextProvider();
+	const { getCurrentUser, updateUserInStorage } = useAuthContextProvider();
 
 	useEffect(() => {
 		const user = getCurrentUser();
@@ -37,16 +37,19 @@ const useUserProfileInfo = () => {
 		})();
 	}, [getCurrentUser, userInfo?.id]);
 
-	const updateUserInfo = useCallback(<K extends keyof UserDto>(key: K, value: UserDto[K]) => {
-		setUserInfo((prev) => {
-			if (!prev) return prev;
+	const updateUserInfo = useCallback(
+		async (data: Partial<UserDto>) => {
+			if (!userInfo) return;
 
-			return {
-				...prev,
-				[key]: value,
-			};
-		});
-	}, []);
+			const updatedUser = await userApi.updateUser(userInfo.id, data);
+
+			if (updatedUser.data) {
+				setUserInfo(updatedUser.data);
+				updateUserInStorage(updatedUser.data);
+			}
+		},
+		[userInfo, updateUserInStorage]
+	);
 
 	return { userInfo, userAvatars, updateUserInfo, setUserAvatars };
 };
