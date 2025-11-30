@@ -7,6 +7,7 @@ import { ACCOMMODATION_TYPES } from "../constants/AccommodationTypeConst";
 import TypeCard from "./TypeCard";
 import FAQ from "./FAQ";
 import type { City } from "../types/City";
+import { EAccommodationType } from "../../../types/Accommodation";
 
 const HomeContent: React.FC = () => {
 	const { cities } = useStats(); // TODO: Add loading and skeleton
@@ -19,14 +20,14 @@ const HomeContent: React.FC = () => {
 					items={cities}
 					renderItem={(cityStat) => {
 						const fallbackImage = CITIES.find((c) => c.name.toLowerCase() === cityStat.city.toLowerCase())?.imageUrl;
-						const imageUrl = fallbackImage || "/images/city/default.jpg";
+						const imageUrl = fallbackImage || "/images/default.jpg";
 						const city: City = {
 							id: cityStat.city.toLowerCase(),
 							name: cityStat.city,
 							imageUrl: imageUrl,
 							propertyCount: cityStat.count,
 						};
-						return <CityCard city={city} typeLabel="Accommodation" />;
+						return <CityCard type={EAccommodationType.ALL} city={city} typeLabel="Accommodation" />;
 					}}
 				/>
 			</Container>

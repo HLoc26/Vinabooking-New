@@ -5,6 +5,7 @@ import type { RoomInfo } from "../types/RoomInfo";
 import type { AccommodationInfo } from "../types/Accommodation";
 import { Box, Typography, Button, Paper, List, ListItem, Divider } from "@mui/material";
 import useBookingContextProvider from "../../../context/BookingContext/hook";
+import { formatDate } from "../../../utils/dateFormatter";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
@@ -60,20 +61,10 @@ export default function CheckoutPage() {
 					<strong>Address:</strong> {accommodation.address.fullAddress}
 				</Typography>
 				<Typography>
-					<strong>Check-in:</strong>{" "}
-					{new Date(bookingInfo.startDate).toLocaleDateString("en-GB", {
-						day: "2-digit",
-						month: "short",
-						year: "numeric",
-					})}
+					<strong>Check-in:</strong> {formatDate(bookingInfo.startDate.toString())}
 				</Typography>
 				<Typography>
-					<strong>Check-out:</strong>{" "}
-					{new Date(bookingInfo.endDate).toLocaleDateString("en-GB", {
-						day: "2-digit",
-						month: "short",
-						year: "numeric",
-					})}
+					<strong>Check-out:</strong> {formatDate(bookingInfo.endDate.toString())}
 				</Typography>
 				<Typography>
 					<strong>Guests:</strong> {bookingInfo.guestCount}

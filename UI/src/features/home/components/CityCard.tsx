@@ -4,18 +4,20 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useNavigate } from "react-router-dom";
 import type { City } from "../types/City";
 import { ACCOMMODATION_LABELS } from "../constants/Const";
+import type { EAccommodationType } from "../../../types/Accommodation";
 
 interface CityCardProps {
 	city: City;
-	typeLabel: string;
+	type: EAccommodationType;
+	typeLabel?: string;
 }
 
-const CityCard: React.FC<CityCardProps> = ({ city, typeLabel = ACCOMMODATION_LABELS["ALL"] }) => {
+const CityCard: React.FC<CityCardProps> = ({ city, type, typeLabel = ACCOMMODATION_LABELS["ALL"] }) => {
 	const navigate = useNavigate();
 
 	return (
 		<Card
-			onClick={() => navigate(`/search?keyword=${encodeURIComponent(city.name)}`)}
+			onClick={() => navigate(`/search?keyword=${encodeURIComponent(city.name)}&type=${encodeURIComponent(type)}`)}
 			sx={{
 				position: "relative",
 				borderRadius: 4,
@@ -32,7 +34,7 @@ const CityCard: React.FC<CityCardProps> = ({ city, typeLabel = ACCOMMODATION_LAB
 		>
 			<Box
 				component="img"
-				src={city.imageUrl}
+				src={city.imageUrl ?? "/images/default.png"}
 				alt={city.name}
 				sx={{
 					width: "100%",
