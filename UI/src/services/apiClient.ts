@@ -1,3 +1,4 @@
+import qs from "qs";
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
 
 interface QueueItem {
@@ -7,6 +8,9 @@ interface QueueItem {
 
 const apiClient = axios.create({
 	baseURL: import.meta.env.VITE_API_URL,
+	paramsSerializer: {
+		serialize: (params) => qs.stringify(params, { arrayFormat: "repeat" }), // <-- quan trọng
+	},
 	headers: {
 		"Content-Type": "application/json",
 	},
