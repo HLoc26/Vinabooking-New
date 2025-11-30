@@ -63,3 +63,13 @@ export type DeleteFavouriteListRequest = Request<
 export interface AuthenticatedDeleteFavouriteListRequest extends DeleteFavouriteListRequest {
 	user: { id: string; username: string };
 }
+
+export interface UpdateUserPayload {
+	name?: string;
+	phone?: string;
+}
+
+export type UpdateUserRequest = Request<{ id: string }, ApiResponse<UserResponse>, UpdateUserPayload, unknown>;
+export interface AuthenticatedUpdateUserRequest extends UpdateUserRequest {
+	user: { id: string; username: string };
+}

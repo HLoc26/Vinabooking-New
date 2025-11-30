@@ -63,6 +63,16 @@ class UserRepository {
 			return user;
 		});
 	}
+
+	public async updateUser(id: string, data: Partial<SaveUserInfo>) {
+		return await this.prismaClient.user.update({
+			where: { id },
+			data: {
+				name: data.name,
+				phone: data.phone,
+			},
+		});
+	}
 }
 
 export default UserRepository;
