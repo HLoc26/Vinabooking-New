@@ -23,8 +23,8 @@ function parseSortOption(value: string | null): SortOption {
 	return "recommended"; // fallback
 }
 
-function buildApiParams(criteria: Query): Record<string, string | number> {
-	const params: Record<string, string | number> = {
+function buildApiParams(criteria: Query): Record<string, string | string[] | number> {
+	const params: Record<string, string | string[] | number> = {
 		keyword: criteria.keyword,
 		type: isEqual(criteria.type, EAccommodationType.ALL) ? "" : criteria.type,
 		sortBy: criteria.sortBy,
@@ -35,12 +35,11 @@ function buildApiParams(criteria: Query): Record<string, string | number> {
 		rooms: criteria.guests.rooms,
 		minPrice: criteria.price.min,
 		maxPrice: criteria.price.max,
+		facilities: criteria.facilities,
 	};
 
 	if (criteria.dates.checkIn) params.checkIn = criteria.dates.checkIn.toISOString().split("T")[0];
 	if (criteria.dates.checkOut) params.checkOut = criteria.dates.checkOut.toISOString().split("T")[0];
-
-	if (criteria.facilities.length > 0) params.facilities = criteria.facilities.join(",");
 
 	return params;
 }
@@ -101,7 +100,10 @@ const useSearchFromParams = () => {
 			setError(null);
 
 			try {
+				console.log("criteria", criteria);
 				const apiParams = buildApiParams(criteria);
+
+				console.log("apiParams", apiParams);
 
 				const res = await accommodationApi.search(apiParams);
 
