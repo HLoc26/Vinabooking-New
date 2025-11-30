@@ -34,7 +34,14 @@ const FavouritesTabSkeleton = (
 const FavouritesTab: React.FC = () => {
 	const [selected, setSelected] = useState<FavouriteList | null>(null);
 
-	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList, handleRemoveFromFavourite } = useUserFavouriteList();
+	const {
+		favouriteLists,
+		loading: favListLoading,
+		handleCreateFavouriteList,
+		handleDeleteFavouriteList,
+		handleRemoveFromFavourite,
+		handleUpdateFavouriteList,
+	} = useUserFavouriteList();
 
 	const { openModal } = useModalContext();
 
@@ -54,7 +61,14 @@ const FavouritesTab: React.FC = () => {
 	}
 
 	if (selected) {
-		return <FavouriteDetailView favourite={selected} onBack={() => setSelected(null)} handleRemoveFromFavourite={handleRemoveFromFavourite} />;
+		return (
+			<FavouriteDetailView
+				favourite={selected}
+				onBack={() => setSelected(null)}
+				handleRemoveFromFavourite={handleRemoveFromFavourite}
+				handleUpdateFavourite={handleUpdateFavouriteList}
+			/>
+		);
 	}
 
 	return (
