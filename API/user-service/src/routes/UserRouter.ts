@@ -6,6 +6,7 @@ import type {
 	AuthenticatedCreateFavouriteListRequest,
 	AuthenticatedDeleteFavouriteListRequest,
 	AuthenticatedRemoveAccommodationRequest,
+	AuthenticatedUpdateUserRequest,
 	FindUserByIdRequest,
 	FindUserRequest,
 	SaveUserDirectRequest,
@@ -49,6 +50,10 @@ class UserRouter {
 		// Get user by Id
 		this.router.get("/:id", (req: FindUserByIdRequest, res: Response) => {
 			return this.userController.getUserById(req, res);
+		});
+
+		this.router.patch("/:id", authMiddleware, (req: Request, res: Response) => {
+			return this.userController.updateUser(req as AuthenticatedUpdateUserRequest, res);
 		});
 
 		this.router.post("/cache", (req: Request, res: Response) => {
