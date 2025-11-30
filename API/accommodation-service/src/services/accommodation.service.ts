@@ -1,16 +1,10 @@
 import { accommodationRepository } from "../repositories/accommodation.repository";
 import { NotFoundError } from "../errors";
-//import { UserClient, RoomClient, ImageClient, ReviewClient } from "../clients";
 import { roomClient } from "../clients/room.client";
 import { imageClient } from "../clients/image.client";
 import { EAccommodationType } from "@prisma/client";
 import type { SearchQuery } from "../types/Search";
-
-// Interface nội bộ
-interface AccommodationEntity {
-	id: string;
-	[key: string]: any;
-}
+import type { AccommodationFromRepository, AccommodationSearchResultItem } from "../types/accommodation";
 
 export class AccommodationService {
 	async getAccommodationById(id: string, startDate?: string, endDate?: string) {
@@ -125,7 +119,7 @@ export class AccommodationService {
 		}
 
 		// --- BƯỚC 2: Loop Search & Check Availability ---
-		const finalResults: AccommodationEntity[] = [];
+		const finalResults: AccommodationFromRepository[] = [];
 		let currentOffset = (pageNum - 1) * limitNum;
 		let hasMoreToCheck = true;
 		let loopCount = 0;
@@ -148,14 +142,8 @@ export class AccommodationService {
 				sortBy
 			);
 
-			let candidates: AccommodationEntity[] = [];
-			if (Array.isArray(searchResult)) {
-				candidates = [];
-				totalMatchesInDB = 0;
-			} else {
-				candidates = searchResult.data as unknown as AccommodationEntity[];
-				totalMatchesInDB = searchResult.total;
-			}
+			const candidates: AccommodationFromRepository[] = searchResult.data as AccommodationFromRepository[];
+			totalMatchesInDB = searchResult.total;
 
 			if (candidates.length === 0) {
 				hasMoreToCheck = false;
@@ -163,7 +151,7 @@ export class AccommodationService {
 			}
 
 			if (needsAvailabilityCheck) {
-				const checkPromises = candidates.map(async (acc: AccommodationEntity) => {
+				const checkPromises = candidates.map(async (acc) => {
 					try {
 						const roomList = await roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut);
 
@@ -181,7 +169,7 @@ export class AccommodationService {
 				});
 
 				const results = await Promise.all(checkPromises);
-				const validResults = results.filter((r): r is AccommodationEntity => r !== null);
+				const validResults = results.filter((r): r is AccommodationFromRepository => r !== null);
 
 				finalResults.push(...validResults);
 			} else {
@@ -189,36 +177,39 @@ export class AccommodationService {
 			}
 
 			currentOffset += candidates.length;
-			// Nếu lấy về ít hơn yêu cầu -> Đã hết DB
 			if (candidates.length < batchLimit) hasMoreToCheck = false;
 		}
 
 		// --- BƯỚC 3: Format & Lấy ảnh ---
 		const slicedResults = finalResults.slice(0, limitNum);
 
-		const dataWithImagesAndPrice = await Promise.all(
-			slicedResults.map(async (acc: AccommodationEntity) => {
-				// 1. Lấy ảnh
+		const formattedData: AccommodationSearchResultItem[] = await Promise.all(
+			slicedResults.map(async (acc) => {
+				// 1. Lấy ảnh và phòng song song
 				const imagesPromise = imageClient.getImagesForEntity(acc.id);
-
-				// 2. Lấy phòng (Để tính giá)
 				const roomsPromise = roomClient.getRoomsByAccommodationId(acc.id);
 
 				const [images, rooms] = await Promise.all([imagesPromise, roomsPromise]);
 
-				// Xử lý ảnh
-				const firstImage = images.length > 0 ? (images[0] as any) : null;
-				const thumbnail = firstImage ? firstImage.url || firstImage.s3Key : null;
+				// 2. Xử lý ảnh -> thumbnail
+				const thumbnail = images.filter((i) => i.variant === "OPTIMIZED")[0]?.url ?? null;
 
-				// Xử lý giá (Tính minPrice)
+				// 3. Xử lý giá -> minPrice
 				let minPrice = 0;
 				if (rooms && rooms.length > 0) {
 					const prices = rooms.map((r: any) => Number(r.price));
 					minPrice = Math.min(...prices);
 				}
 
+				// 4. Xử lý facilities -> string[]
+				const facilityNames = acc.facilities ? acc.facilities.map((f) => f.facility.name) : [];
+
+				// 5. Loại bỏ các trường không cần thiết khỏi object cuối
+				const { facilities, ownerId, isActive, ...restOfAcc } = acc;
+
 				return {
-					...acc,
+					...restOfAcc,
+					facilities: facilityNames,
 					thumbnail,
 					minPrice,
 				};
@@ -227,13 +218,13 @@ export class AccommodationService {
 
 		// --- BƯỚC 4: Sắp xếp lại kết quả cuối cùng (Client-side Sort) ---
 		if (sortBy === "price_asc" || sortBy === "recommended") {
-			dataWithImagesAndPrice.sort((a, b) => (a.minPrice || 0) - (b.minPrice || 0));
+			formattedData.sort((a, b) => a.minPrice - b.minPrice);
 		} else if (sortBy === "price_desc") {
-			dataWithImagesAndPrice.sort((a, b) => (b.minPrice || 0) - (a.minPrice || 0));
+			formattedData.sort((a, b) => b.minPrice - a.minPrice);
 		}
 
 		return {
-			data: dataWithImagesAndPrice,
+			data: formattedData,
 			meta: {
 				page: pageNum,
 				limit: limitNum,

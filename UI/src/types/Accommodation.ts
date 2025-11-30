@@ -1,6 +1,7 @@
 import type { Image } from "./Image";
 
 export const EAccommodationType = {
+	ALL: "ALL",
 	HOTEL: "HOTEL",
 	APARTMENT: "APARTMENT",
 	VILLA: "VILLA",

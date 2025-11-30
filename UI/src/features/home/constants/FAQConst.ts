@@ -1,4 +1,4 @@
-import type { FAQItem } from "../services/types/FAQItem";
+import type { FAQItem } from "../types/FAQItem";
 export const FAQS: FAQItem[] = [
 	{
 		id: "1",

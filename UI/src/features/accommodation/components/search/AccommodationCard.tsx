@@ -1,16 +1,15 @@
 import React from "react";
-import { Card, CardMedia, CardContent, Box, Chip, Typography, IconButton, Rating, Divider } from "@mui/material";
-import { FavoriteBorder, Favorite, LocationOn } from "@mui/icons-material";
+import { Card, CardMedia, CardContent, Box, Chip, Typography, Rating, Divider } from "@mui/material";
+import { LocationOn } from "@mui/icons-material";
 import type { AccommodationListItem } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
+import FavouriteButton from "../../../../components/shared/FavouriteButton";
+import { standardize } from "../../../../utils/moneyConverter";
 
 interface Props {
 	accommodation: AccommodationListItem;
 	variant: "grid" | "list";
-	isFavorite: boolean;
-	onToggleFavorite: (id: string, e: React.MouseEvent) => void;
 	onClick: (id: string) => void;
-	formatPrice: (price: number) => string;
 }
 
 const getTypeLabel = (type: string): string => {
@@ -18,7 +17,8 @@ const getTypeLabel = (type: string): string => {
 	return found ? found.label : type;
 };
 
-export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isFavorite, onToggleFavorite, onClick, formatPrice }) => {
+export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick }) => {
+	const image = accommodation.thumbnail ?? `/images/${accommodation.type}.png`;
 	if (variant === "list") {
 		return (
 			<Card
@@ -33,7 +33,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 					},
 				}}
 			>
-				<CardMedia component="img" sx={{ width: 280, objectFit: "cover" }} image={accommodation.thumbnail} alt={accommodation.name} />
+				<CardMedia component="img" sx={{ width: 280, maxHeight: 250, objectFit: "cover" }} image={image} alt={accommodation.name} />
 				<Box sx={{ display: "flex", flexDirection: "column", flex: 1 }}>
 					<CardContent sx={{ flex: 1, p: 3 }}>
 						<Box sx={{ display: "flex", justifyContent: "space-between", mb: 1 }}>
@@ -64,7 +64,18 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 										({accommodation.reviewCount || 0} reviews)
 									</Typography>
 								</Box>
-								<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+								<Typography
+									variant="body2"
+									color="text.secondary"
+									sx={{
+										mb: 2,
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										display: "-webkit-box",
+										WebkitLineClamp: 3,
+										WebkitBoxOrient: "vertical",
+									}}
+								>
 									{accommodation.description}
 								</Typography>
 							</Box>
@@ -77,15 +88,14 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 									justifyContent: "space-between",
 								}}
 							>
-								<IconButton onClick={(e) => onToggleFavorite(accommodation.id, e)} sx={{ color: isFavorite ? "error.main" : "text.secondary" }}>
-									{isFavorite ? <Favorite /> : <FavoriteBorder />}
-								</IconButton>
+								<FavouriteButton accommodationId={accommodation.id} />
+
 								<Box sx={{ textAlign: "right" }}>
 									<Typography variant="caption" color="text.secondary">
 										Starting from
 									</Typography>
 									<Typography variant="h5" color="primary" fontWeight="bold">
-										{formatPrice(accommodation.minPrice || 100)}
+										${standardize(accommodation.minPrice || 100)}
 									</Typography>
 									<Typography variant="caption" color="text.secondary">
 										per night
@@ -117,20 +127,12 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 			}}
 		>
 			<Box sx={{ position: "relative" }}>
-				<CardMedia component="img" height="220" image={accommodation.thumbnail} alt={accommodation.name} sx={{ objectFit: "cover" }} />
-				<IconButton
-					onClick={(e) => onToggleFavorite(accommodation.id, e)}
-					sx={{
-						position: "absolute",
-						top: 8,
-						right: 8,
-						bgcolor: "white",
-						"&:hover": { bgcolor: "white" },
-						color: isFavorite ? "error.main" : "text.secondary",
-					}}
-				>
-					{isFavorite ? <Favorite /> : <FavoriteBorder />}
-				</IconButton>
+				<CardMedia component="img" height="220" image={image} alt={accommodation.name} sx={{ objectFit: "cover" }} />
+
+				<Box sx={{ position: "absolute", top: 8, right: 8 }}>
+					<FavouriteButton accommodationId={accommodation.id} />
+				</Box>
+
 				<Chip
 					label={getTypeLabel(accommodation.type)}
 					size="small"
@@ -199,18 +201,18 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, isF
 					{accommodation.description}
 				</Typography>
 
-				<Divider sx={{ my: 2 }} />
+				<Divider sx={{ mb: 1 }} />
 
-				<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center" }}>
-					<Box>
-						<Typography variant="caption" color="text.secondary">
-							Starting from
-						</Typography>
+				<Box sx={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center" }}>
+					<Box sx={{ display: "flex", alignItems: "baseline" }}>
+						<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
+							From
+						</Typography>{" "}
 						<Typography variant="h6" color="primary" fontWeight="bold">
-							{formatPrice(accommodation.minPrice || 100)}
+							${standardize(accommodation.minPrice || 100)}
 						</Typography>
-						<Typography variant="caption" color="text.secondary">
-							per night
+						<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+							/ night
 						</Typography>
 					</Box>
 				</Box>

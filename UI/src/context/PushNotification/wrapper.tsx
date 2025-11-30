@@ -1,4 +1,4 @@
-import { PushNotification } from "../../components/ui/PushNotification";
+import { PushNotification } from "../../components/shared/PushNotification";
 import { usePushNotificationContext } from "./hook";
 
 const PushNotificationWrapper = () => {
