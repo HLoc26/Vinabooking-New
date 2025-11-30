@@ -1,9 +1,9 @@
 import { useEffect, useState } from "react";
-import type { Accommodation } from "../types/Accommodation";
 import accommodationApi from "../services/accommodationApi";
+import type { AccommodationListItem } from "../types/Response";
 
 const useTypeahead = (keyword: string) => {
-	const [results, setResults] = useState<Accommodation[]>([]);
+	const [results, setResults] = useState<AccommodationListItem[]>([]);
 
 	const [loading, setLoading] = useState<boolean>(false);
 
