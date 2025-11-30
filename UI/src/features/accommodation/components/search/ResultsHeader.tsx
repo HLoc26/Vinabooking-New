@@ -5,6 +5,7 @@ import type { SortOption } from "../../types/accommodation.types";
 import { SORT_OPTIONS } from "../../constants/searchFilters";
 import useSearchFromParams from "../../hooks/useSearchFromParams";
 import useSearchContext from "../../../../context/SearchContext/hook";
+import { useNavigate } from "react-router-dom";
 
 interface ResultsHeaderProps {
 	loading: boolean;
@@ -13,8 +14,16 @@ interface ResultsHeaderProps {
 }
 
 export const ResultsHeader: React.FC<ResultsHeaderProps> = ({ loading, viewMode, onChangeViewMode }) => {
+	const navigate = useNavigate();
 	const { criteria, total } = useSearchFromParams();
 	const { handleUpdateSearchCriteria } = useSearchContext();
+	const handleUpdateSort = (sortMethod: SortOption) => {
+		handleUpdateSearchCriteria("sortBy", sortMethod);
+		const params = new URLSearchParams(window.location.search);
+		params.set("sortMethod", sortMethod);
+		window.scrollTo(0, 0);
+		navigate(`/search?${params.toString()}`);
+	};
 
 	return (
 		<Box
@@ -33,10 +42,10 @@ export const ResultsHeader: React.FC<ResultsHeaderProps> = ({ loading, viewMode,
 
 			<Box sx={{ display: "flex", gap: 2, alignItems: "center" }}>
 				<TextField
-					select
+					select //
 					label="Sort by"
 					value={criteria.sortBy}
-					onChange={(e) => handleUpdateSearchCriteria("sortBy", e.target.value as SortOption)}
+					onChange={(e) => handleUpdateSort(e.target.value as SortOption)}
 					size="small"
 					sx={{ minWidth: 200 }}
 					disabled={loading}
