@@ -32,3 +32,11 @@ export type CreateFavouriteListResponse = FavouriteListWithItems;
 export interface DeleteFavouriteListResponse {
 	success: boolean;
 }
+
+export interface UpdateFavouriteListResponse {
+	name: string;
+	id: string;
+	ownerId: string;
+	createdAt: Date;
+	updatedAt: Date;
+}

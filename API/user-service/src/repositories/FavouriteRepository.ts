@@ -106,6 +106,26 @@ class FavouriteRepository {
 
 		return deletedList;
 	}
+
+	public async updateFavouriteList(userId: string, listId: string, name: string) {
+		const list = await this.prismaClient.favouriteList.findUnique({
+			where: { id: listId },
+		});
+
+		if (!list) {
+			throw new Error("Favourite list not found");
+		}
+		if (list.ownerId !== userId) {
+			throw new Error("User does not own this list");
+		}
+
+		const updatedList = await this.prismaClient.favouriteList.update({
+			where: { id: listId },
+			data: { name },
+		});
+
+		return updatedList;
+	}
 }
 
 export default FavouriteRepository;

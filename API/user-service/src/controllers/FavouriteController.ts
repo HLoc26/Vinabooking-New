@@ -2,8 +2,14 @@ import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
 import { type AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavouriteResponse } from "../types/Response";
-import type { AuthenticatedAddAccommodationRequest, AuthenticatedCreateFavouriteListRequest, AuthenticatedDeleteFavouriteListRequest, AuthenticatedRemoveAccommodationRequest } from "../types/Request";
-import type { ApiResponse, CreateFavouriteListResponse, DeleteFavouriteListResponse } from "../types/Response";
+import type {
+	AuthenticatedAddAccommodationRequest,
+	AuthenticatedCreateFavouriteListRequest,
+	AuthenticatedDeleteFavouriteListRequest,
+	AuthenticatedRemoveAccommodationRequest,
+	AuthenticatedUpdateFavouriteListRequest,
+} from "../types/Request";
+import type { ApiResponse, CreateFavouriteListResponse, DeleteFavouriteListResponse, UpdateFavouriteListResponse } from "../types/Response";
 import FavouriteRepository from "../repositories/FavouriteRepository";
 import BadRequestError from "../errors/BadRequestError";
 
@@ -51,7 +57,17 @@ class FavouriteController {
 		const userId = req.user.id;
 		const { listId } = req.query;
 		await this.favouriteRepository.deleteFavouriteList(userId, listId);
+
 		ResponseHelper.success(res, { success: true });
+	}
+
+	public async updateFavouriteList(req: AuthenticatedUpdateFavouriteListRequest, res: Response<ApiResponse<UpdateFavouriteListResponse>>) {
+		const userId = req.user.id;
+		const { listId } = req.params;
+		const { name } = req.body;
+
+		const updatedList = await this.favouriteRepository.updateFavouriteList(userId, listId, name);
+		ResponseHelper.success<UpdateFavouriteListResponse>(res, updatedList);
 	}
 }
 
