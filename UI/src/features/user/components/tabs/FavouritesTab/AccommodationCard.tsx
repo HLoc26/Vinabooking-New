@@ -37,7 +37,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 				}}
 			>
 				<Box sx={{ position: "relative" }}>
-					<CardMedia component="img" height="160" image={image.url} alt={accommodation.name} sx={{ objectFit: "cover" }} />
+					<CardMedia component="img" height="160" image={image?.url ?? "/images/default.jpg"} alt={accommodation.name} sx={{ objectFit: "cover" }} />
 
 					<IconButton
 						sx={{
