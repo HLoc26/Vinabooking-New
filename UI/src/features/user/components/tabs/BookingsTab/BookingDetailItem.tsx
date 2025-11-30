@@ -7,7 +7,7 @@ import useRoomInfo from "../../../hooks/useRoomInfo";
 import { formatDate } from "../../../../../utils/dateFormatter";
 import { Link as RouterLink } from "react-router-dom";
 import useModalContext from "../../../../../context/ModalContext/hook";
-import ReviewModal from "../../../../../components/ui/ReviewModal";
+import ReviewModal from "../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
 import useAuthContextProvider from "../../../../../context/AuthContext/hook";

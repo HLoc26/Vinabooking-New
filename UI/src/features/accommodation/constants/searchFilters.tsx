@@ -1,9 +1,10 @@
 import { Wifi, Pool, LocalParking, Restaurant, FitnessCenter, Spa } from "@mui/icons-material";
 import type { SortOption } from "../types/accommodation.types";
 import type { ReactElement } from "react";
+import { EAccommodationType } from "../../../types/Accommodation";
 
 export interface AccommodationTypeOption {
-	value: string;
+	value: EAccommodationType;
 	label: string;
 }
 
@@ -19,12 +20,90 @@ export interface SortOptionItem {
 }
 
 export const ACCOMMODATION_TYPE_OPTIONS: AccommodationTypeOption[] = [
-	{ value: "HOTEL", label: "Hotel" },
-	{ value: "APARTMENT", label: "Apartment" },
-	{ value: "RESORT", label: "Resort" },
-	{ value: "VILLA", label: "Villa" },
-	{ value: "HOMESTAY", label: "Homestay" },
-	{ value: "HOSTEL", label: "Hostel" },
+	{
+		value: EAccommodationType.ALL,
+		label: "All Types",
+	},
+	{
+		value: EAccommodationType.HOTEL,
+		label: "Hotel",
+	},
+	{
+		value: EAccommodationType.APARTMENT,
+		label: "Apartment",
+	},
+	{
+		value: EAccommodationType.VILLA,
+		label: "Villa",
+	},
+	{
+		value: EAccommodationType.VACATION_HOME,
+		label: "Vacation Home",
+	},
+	{
+		value: EAccommodationType.GUESTHOUSE,
+		label: "Guesthouse",
+	},
+	{
+		value: EAccommodationType.HOSTEL,
+		label: "Hostel",
+	},
+	{
+		value: EAccommodationType.BED_AND_BREAKFAST,
+		label: "Bed & Breakfast",
+	},
+	{
+		value: EAccommodationType.HOMESTAY,
+		label: "Homestay",
+	},
+	{
+		value: EAccommodationType.CAMPGROUND,
+		label: "Campground",
+	},
+	{
+		value: EAccommodationType.COUNTRY_HOUSE,
+		label: "Country House",
+	},
+	{
+		value: EAccommodationType.BOAT,
+		label: "Boat",
+	},
+	{
+		value: EAccommodationType.LUXURY_TENT,
+		label: "Luxury Tent",
+	},
+	{
+		value: EAccommodationType.CABIN,
+		label: "Cabin",
+	},
+	{
+		value: EAccommodationType.MOTEL,
+		label: "Motel",
+	},
+	{
+		value: EAccommodationType.RESORT,
+		label: "Resort",
+	},
+	{
+		value: EAccommodationType.FARMSTAY,
+		label: "Farmstay",
+	},
+	{
+		value: EAccommodationType.CAPSULE_HOTEL,
+		label: "Capsule Hotel",
+	},
+	{
+		value: EAccommodationType.TREEHOUSE,
+		label: "Treehouse",
+	},
+	{
+		value: EAccommodationType.TOWNHOUSE,
+		label: "Townhouse",
+	},
+	{
+		value: EAccommodationType.OTHER,
+		label: "Other",
+	},
 ];
 
 export const FACILITY_FILTER_OPTIONS: FacilityFilterOption[] = [
@@ -38,7 +117,7 @@ export const FACILITY_FILTER_OPTIONS: FacilityFilterOption[] = [
 
 export const PRICE_FILTER_CONFIG = {
 	MIN: 0,
-	MAX: 500,
+	MAX: 2000,
 	STEP: 10,
 };
 

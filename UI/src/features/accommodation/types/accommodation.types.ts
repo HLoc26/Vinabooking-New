@@ -113,6 +113,7 @@ export interface AccommodationListItem {
 	updatedAt?: string;
 	addressId?: string;
 	address: Address;
+	facilities: string[];
 	thumbnail: string;
 	rating?: number;
 	reviewCount?: number;

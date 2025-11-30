@@ -106,11 +106,15 @@ export class AccommodationRepository {
 
 		// 4. Facilities
 		if (filters.facilities && filters.facilities.length > 0) {
-			where.facilities = {
-				some: {
-					facility: { name: { in: filters.facilities } },
+			where.AND = filters.facilities.map((facilityName) => ({
+				facilities: {
+					some: {
+						facility: {
+							name: facilityName,
+						},
+					},
 				},
-			};
+			}));
 		}
 
 		// 5. Sort
@@ -122,7 +126,7 @@ export class AccommodationRepository {
 		const [data, total] = await Promise.all([
 			prisma.accommodation.findMany({
 				where,
-				include: { address: true },
+				include: { address: true, facilities: { include: { facility: true } } },
 				skip: offset,
 				take: limit,
 				orderBy,

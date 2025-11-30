@@ -5,7 +5,7 @@ import { usePushNotificationContext } from "../../../context/PushNotification/ho
 import { useNavigate } from "react-router-dom";
 import { GoogleAuthButton } from "../../auth/components/GoogleAuthButton";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
-import { ProtectedLink } from "../../../components/ui/ProtectedLink";
+import { ProtectedLink } from "../../../components/shared/ProtectedLink";
 
 export const HomePage = () => {
 	const navigate = useNavigate();
