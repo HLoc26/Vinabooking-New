@@ -4,6 +4,8 @@ import { IconButton } from "@mui/material";
 import { StarOutlineRounded, StarRounded } from "@mui/icons-material";
 import FavouritePickerModal from "../../features/user/components/FavouritePickerModal";
 import useModalContext from "../../context/ModalContext/hook";
+import LoginModal from "../../features/auth/components/LoginModal";
+import useUserContextProvider from "../../context/UserContext/hook";
 
 interface FavouriteButtonProps {
 	accommodationId: string;
@@ -11,16 +13,21 @@ interface FavouriteButtonProps {
 }
 
 const FavouriteButton: React.FC<FavouriteButtonProps> = ({ accommodationId, className }) => {
+	const { userInfo } = useUserContextProvider();
+
 	const { favouriteLists, handleAddToFavourite, handleRemoveFromFavourite } = useUserFavouriteList();
 
 	const isFavorite = favouriteLists?.some((list) => list.items.some((item) => item.accommodationId === accommodationId)) ?? false;
 
-	const { openModal } = useModalContext();
+	const { openModal, closeModal } = useModalContext();
 
 	const toggle = (e: React.MouseEvent) => {
 		e.stopPropagation();
-
-		openModal(<FavouritePickerModal accommodationId={accommodationId} onAdd={handleAddToFavourite} onRemove={handleRemoveFromFavourite} />);
+		if (userInfo) {
+			openModal(<FavouritePickerModal accommodationId={accommodationId} onAdd={handleAddToFavourite} onRemove={handleRemoveFromFavourite} />);
+		} else {
+			openModal(<LoginModal onLoginSuccess={closeModal} />);
+		}
 	};
 
 	return (

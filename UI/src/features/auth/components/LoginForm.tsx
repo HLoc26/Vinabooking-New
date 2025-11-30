@@ -2,7 +2,6 @@ import React, { useState } from "react";
 import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import UserSwitcher from "./UserSwitcher";
 import type { EUserType } from "../../../types/UserDto";
-import { useNavigate } from "react-router-dom";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { GoogleAuthButton } from "./GoogleAuthButton";
 import useAuthContextProvider from "../../../context/AuthContext/hook";
@@ -12,7 +11,6 @@ type LoginFormProps = {
 };
 
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
-	const navigate = useNavigate();
 	const [values, setValues] = useState({
 		email: "",
 		password: "",
@@ -41,7 +39,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 			if (onSuccess) {
 				onSuccess();
 			}
-			navigate("/");
 		} catch (err) {
 			const error = err as Error;
 			pushNotification(error.message, "error");
