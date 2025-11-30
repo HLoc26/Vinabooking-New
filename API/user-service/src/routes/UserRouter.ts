@@ -6,6 +6,7 @@ import type {
 	AuthenticatedCreateFavouriteListRequest,
 	AuthenticatedDeleteFavouriteListRequest,
 	AuthenticatedRemoveAccommodationRequest,
+	AuthenticatedUpdateFavouriteListRequest,
 	AuthenticatedUpdateUserRequest,
 	FindUserByIdRequest,
 	FindUserRequest,
@@ -80,6 +81,10 @@ class UserRouter {
 
 		this.router.delete("/favourites", authMiddleware, (req, res) => {
 			return this.favouriteController.deleteFavouriteList(req as AuthenticatedDeleteFavouriteListRequest, res);
+		});
+
+		this.router.patch("/favourites/:listId", authMiddleware, (req, res) => {
+			return this.favouriteController.updateFavouriteList(req as AuthenticatedUpdateFavouriteListRequest, res);
 		});
 	}
 }
