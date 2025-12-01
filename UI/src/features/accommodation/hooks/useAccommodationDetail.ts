@@ -23,13 +23,6 @@ export const useAccommodationDetail = (accommodationId: string | undefined, star
 				const checkInStr = formatDate(startDate);
 				const checkOutStr = formatDate(endDate);
 
-				console.log("🔍 DEBUG DATE SENDING:", {
-					originalStart: startDate,
-					formattedStart: checkInStr, // Xem nó là 01/12 hay 30/11?
-					originalEnd: endDate,
-					formattedEnd: checkOutStr,
-				});
-
 				const res = await accommodationApi.getAccommodationById(accommodationId, checkInStr, checkOutStr);
 
 				if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}`);
