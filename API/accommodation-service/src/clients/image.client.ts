@@ -31,7 +31,7 @@ class ImageClient {
 	 * GET /images?entityType=ACCOMMODATION&entityId=:id
 	 */
 	async getImagesForEntity(entityId: string): Promise<ImageDto[]> {
-		const entityType = "accommodation";
+		const entityType = "ACCOMMODATION";
 
 		const url = `/${entityType}/${entityId}`;
 
