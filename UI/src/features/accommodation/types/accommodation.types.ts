@@ -20,6 +20,9 @@ export type Address = {
 	fullAddress: string;
 	latitude: string;
 	longitude: string;
+	countryCode?: string;
+	postalCode?: string;
+	placeId?: string;
 };
 
 export type FacilityConfig = {
@@ -80,22 +83,6 @@ export type FacilityIconMap = Record<string, ReactNode>;
  * SEARCH
  * ========================================================================= */
 
-export interface Address {
-	id?: string;
-	street: string;
-	ward?: string;
-	district?: string;
-	city: string;
-	country?: string;
-	countryCode?: string;
-	postalCode?: string;
-	latitude?: string;
-	longitude?: string;
-	fullAddress: string;
-	placeId?: string;
-	createdAt?: string;
-	updatedAt?: string;
-}
 
 export type AccommodationType = "HOTEL" | "APARTMENT" | "RESORT" | "VILLA" | "HOMESTAY" | "HOSTEL" | string;
 
