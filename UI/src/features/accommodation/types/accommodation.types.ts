@@ -53,6 +53,7 @@ export type Room = {
 	beds: Bed[];
 	amenities: AmenityConfig[];
 	remainingQuantity: number;
+	images: AccommodationImage[];
 };
 
 export type Bed = { id: string; name: string; bedType: string };
