@@ -1,5 +1,6 @@
 import { EAccommodationType } from "../types/Accommodation";
 import type { Query } from "../types/Query";
+import { toInputDate } from "./dateFormatter";
 
 export const buildSearchParams = (criteria: Query) => {
 	const params = new URLSearchParams();
@@ -24,9 +25,9 @@ export const buildSearchParams = (criteria: Query) => {
 	});
 
 	// dates
-	params.set("checkIn", criteria.dates.checkIn.toISOString().split("T")[0]);
+	params.set("checkIn", toInputDate(criteria.dates.checkIn));
 	if (criteria.dates.checkOut) {
-		params.set("checkOut", criteria.dates.checkOut.toISOString().split("T")[0] ?? "");
+		params.set("checkOut", toInputDate(criteria.dates.checkOut ?? ""));
 	}
 
 	// facilities (array)
