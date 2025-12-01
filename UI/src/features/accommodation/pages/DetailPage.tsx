@@ -5,14 +5,19 @@ import { Container, Grid, Box, CircularProgress, Typography } from "@mui/materia
 import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
 import useBookingContextProvider from "../../../context/BookingContext/hook";
+import useSearchContext from "../../../context/SearchContext/hook";
 import ImageGallery from "../../../components/shared/ImageGallery";
+
+// Helper format date YYYY-MM-DD
+const formatDateParam = (date: Date) => date.toLocaleDateString("sv-SE");
 
 export default function DetailPage() {
 	const navigate = useNavigate();
 	const { accommodationId } = useParams<{ accommodationId: string }>();
-	const [searchParams] = useSearchParams();
+	const [searchParams, setSearchParams] = useSearchParams();
 
 	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
+	const { searchCriteria } = useSearchContext();
 
 	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
 
@@ -21,7 +26,8 @@ export default function DetailPage() {
 	const [currentIndex, setCurrentIndex] = useState(0);
 
 	useEffect(() => {
-		console.log("[DetailPage] effect triggered");
+		console.log("[DetailPage] Syncing URL params to Context");
+
 		if (!accommodationId) {
 			navigate("/");
 			return;
@@ -29,18 +35,48 @@ export default function DetailPage() {
 
 		updateBookingInfo("accommodationId", accommodationId);
 
-		const checkInParam = searchParams.get("checkIn");
-		const checkOutParam = searchParams.get("checkOut");
+		const urlCheckIn = searchParams.get("checkIn");
+		const urlCheckOut = searchParams.get("checkOut");
 
-		if (checkInParam) {
-			updateBookingInfo("startDate", new Date(checkInParam));
+		let finalCheckIn: Date;
+		let finalCheckOut: Date;
+		let shouldUpdateUrl = false;
+
+		if (urlCheckIn && urlCheckOut) {
+
+			finalCheckIn = new Date(urlCheckIn);
+			finalCheckOut = new Date(urlCheckOut);
+
+		} else {
+			
+			const tomorrow = new Date();
+			tomorrow.setDate(tomorrow.getDate() + 1);
+
+			const dayAfter = new Date();
+			dayAfter.setDate(dayAfter.getDate() + 2);
+
+			finalCheckIn = searchCriteria.dates.checkIn || tomorrow;
+			finalCheckOut = searchCriteria.dates.checkOut || dayAfter;
+
+			shouldUpdateUrl = true;
 		}
-		if (checkOutParam) {
-			updateBookingInfo("endDate", new Date(checkOutParam));
+
+		if (finalCheckIn.getTime() !== bookingInfo.startDate.getTime()) {
+			updateBookingInfo("startDate", finalCheckIn);
+		}
+		if (finalCheckOut.getTime() !== bookingInfo.endDate.getTime()) {
+			updateBookingInfo("endDate", finalCheckOut);
+		}
+
+		if (shouldUpdateUrl) {
+			const newParams = new URLSearchParams(searchParams);
+			newParams.set("checkIn", formatDateParam(finalCheckIn));
+			newParams.set("checkOut", formatDateParam(finalCheckOut));
+			setSearchParams(newParams, { replace: true });
 		}
 
 		// eslint-disable-next-line react-hooks/exhaustive-deps
-	}, [accommodationId, navigate]);
+	}, [accommodationId, navigate, searchCriteria]);
 
 	const openImageGallery = (index: number) => {
 		const safeIndex = Math.min(Math.max(0, index), displayImages.length);
@@ -60,10 +96,16 @@ export default function DetailPage() {
 
 	const handleUpdateStartDate = (newDate: Date) => {
 		updateBookingInfo("startDate", newDate);
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set("checkIn", formatDateParam(newDate));
+		setSearchParams(newParams);
 	};
 
 	const handleUpdateEndDate = (newDate: Date) => {
 		updateBookingInfo("endDate", newDate);
+		const newParams = new URLSearchParams(searchParams);
+		newParams.set("checkOut", formatDateParam(newDate));
+		setSearchParams(newParams);
 	};
 
 	// Tính số đêm
