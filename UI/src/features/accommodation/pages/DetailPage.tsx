@@ -1,5 +1,5 @@
 import { useState, useMemo, useEffect } from "react";
-import { useNavigate, useParams } from "react-router-dom";
+import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
@@ -10,11 +10,15 @@ import ImageGallery from "../../../components/shared/ImageGallery";
 export default function DetailPage() {
 	const navigate = useNavigate();
 	const { accommodationId } = useParams<{ accommodationId: string }>();
-	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId);
-
-	const [tabValue, setTabValue] = useState(0);
+	const [searchParams] = useSearchParams();
 
 	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
+
+	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
+
+	const [tabValue, setTabValue] = useState(0);
+	const [openGallery, setOpenGallery] = useState(false);
+	const [currentIndex, setCurrentIndex] = useState(0);
 
 	useEffect(() => {
 		console.log("[DetailPage] effect triggered");
@@ -24,10 +28,19 @@ export default function DetailPage() {
 		}
 
 		updateBookingInfo("accommodationId", accommodationId);
-	}, [accommodationId, updateBookingInfo, navigate]);
 
-	const [openGallery, setOpenGallery] = useState(false);
-	const [currentIndex, setCurrentIndex] = useState(0);
+		const checkInParam = searchParams.get("checkIn");
+		const checkOutParam = searchParams.get("checkOut");
+
+		if (checkInParam) {
+			updateBookingInfo("startDate", new Date(checkInParam));
+		}
+		if (checkOutParam) {
+			updateBookingInfo("endDate", new Date(checkOutParam));
+		}
+
+		// eslint-disable-next-line react-hooks/exhaustive-deps
+	}, [accommodationId, navigate]);
 
 	const openImageGallery = (index: number) => {
 		const safeIndex = Math.min(Math.max(0, index), displayImages.length);
@@ -100,11 +113,7 @@ export default function DetailPage() {
 					<Grid size={{ xs: 12, md: 8 }}>
 						<PropertyHeader accommodation={accommodation} />
 
-						<DetailTabs //
-							tabValue={tabValue}
-							onChange={setTabValue}
-							accommodation={accommodation}
-						/>
+						<DetailTabs tabValue={tabValue} onChange={setTabValue} accommodation={accommodation} />
 					</Grid>
 
 					{/* Cột phải – booking card sticky */}
@@ -123,7 +132,7 @@ export default function DetailPage() {
 			</Container>
 
 			{/* Gallery modal */}
-			<ImageGallery //
+			<ImageGallery
 				galleryImages={displayImages}
 				openGallery={openGallery}
 				currentIndex={currentIndex}
