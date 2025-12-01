@@ -15,10 +15,6 @@ export const RoomsTab = ({ accommodation }: Props) => {
 			{accommodation.rooms.map((room) => {
 				const selectedRoom = bookingInfo.items.find((r) => r.id === room.id);
 				const selectedQuantity = selectedRoom ? selectedRoom.count : 0;
-				console.log(`DEBUG Room ${room.id}:`, {
-					name: room.name,
-					remaining: room.remainingQuantity,
-				});
 				const availableRooms = room.remainingQuantity ?? 0;
 
 				return (
