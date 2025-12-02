@@ -7,6 +7,7 @@ import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../compone
 import useBookingContextProvider from "../../../context/BookingContext/hook";
 import useSearchContext from "../../../context/SearchContext/hook";
 import ImageGallery from "../../../components/shared/ImageGallery";
+import { useAccommodationReview } from "../hooks/useAccommodationReview";
 
 // Helper format date YYYY-MM-DD
 const formatDateParam = (date: Date) => date.toLocaleDateString("sv-SE");
@@ -20,6 +21,9 @@ export default function DetailPage() {
 	const { searchCriteria } = useSearchContext();
 
 	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
+	const { reviews } = useAccommodationReview(accommodation?.id ?? "");
+
+	const avgStar = reviews.reduce((sum, a) => sum + (a.star ?? 0), 0) / (reviews.filter((r) => typeof r.star === "number").length || 1);
 
 	const [tabValue, setTabValue] = useState(0);
 	const [openGallery, setOpenGallery] = useState(false);
@@ -43,12 +47,9 @@ export default function DetailPage() {
 		let shouldUpdateUrl = false;
 
 		if (urlCheckIn && urlCheckOut) {
-
 			finalCheckIn = new Date(urlCheckIn);
 			finalCheckOut = new Date(urlCheckOut);
-
 		} else {
-			
 			const tomorrow = new Date();
 			tomorrow.setDate(tomorrow.getDate() + 1);
 
@@ -153,7 +154,7 @@ export default function DetailPage() {
 				<Grid container spacing={4} sx={{ mt: 3 }}>
 					{/* Cột trái – thông tin chính */}
 					<Grid size={{ xs: 12, md: 8 }}>
-						<PropertyHeader accommodation={accommodation} />
+						<PropertyHeader accommodation={accommodation} averageRating={avgStar} reviewCount={reviews.length} />
 
 						<DetailTabs tabValue={tabValue} onChange={setTabValue} accommodation={accommodation} />
 					</Grid>
