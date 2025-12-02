@@ -138,11 +138,7 @@ export const HeroSearchBar: React.FC = () => {
 				}}
 			>
 				{/* DESTINATION */}
-				<Box
-					onBlur={() => handleToggleDropdown("location", false)}
-					ref={refs.location}
-					sx={{ gridArea: "destination", position: "relative", borderRight: { md: "1px solid" }, borderRightColor: { md: "grey.300" } }}
-				>
+				<Box ref={refs.location} sx={{ gridArea: "destination", position: "relative", borderRight: { md: "1px solid" }, borderRightColor: { md: "grey.300" } }}>
 					<SectionBox Icon={SearchIcon} label="Where" onClick={() => handleToggleDropdown("location", true)}>
 						<TextField
 							placeholder="Search destinations"
@@ -169,6 +165,7 @@ export const HeroSearchBar: React.FC = () => {
 						keyword={keyword}
 						onSelect={(loc) => {
 							setKeyword(loc.name ?? "");
+							console.log("Clicked");
 							handleToggleDropdown("location", false);
 						}}
 					/>
