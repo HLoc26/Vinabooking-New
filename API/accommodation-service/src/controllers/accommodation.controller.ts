@@ -5,15 +5,15 @@ import { BadRequestError } from "../errors";
 
 export class AccommodationController {
 	/**
-	 * GET /accommodations/:id
+	 * GET /accommodations/:id?checkIn=...&checkOut=...
 	 * Returns accommodation detail by ID.
 	 */
 	async getById(req: Request, res: Response, next: NextFunction) {
 		try {
 			const { id } = req.params;
-			const { startDate, endDate } = req.query;
+			const { checkIn, checkOut } = req.query;
 
-			const data = await accommodationService.getAccommodationById(id, startDate as string | undefined, endDate as string | undefined);
+			const data = await accommodationService.getAccommodationById(id, checkIn as string | undefined, checkOut as string | undefined);
 			sendSuccess(res, data);
 		} catch (error) {
 			next(error);

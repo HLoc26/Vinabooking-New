@@ -13,9 +13,9 @@ export const RoomsTab = ({ accommodation }: Props) => {
 	return (
 		<Box>
 			{accommodation.rooms.map((room) => {
-				const selectedRoom = bookingInfo.items.filter((r) => r.id == room.id)[0];
+				const selectedRoom = bookingInfo.items.find((r) => r.id === room.id);
 				const selectedQuantity = selectedRoom ? selectedRoom.count : 0;
-				const availableRooms = 10; // TODO: replace with real data
+				const availableRooms = room.remainingQuantity ?? 0;
 
 				return (
 					<RoomCard
@@ -23,7 +23,11 @@ export const RoomsTab = ({ accommodation }: Props) => {
 						room={room}
 						quantity={selectedQuantity}
 						availableRooms={availableRooms}
-						onIncrease={() => updateRoomQuantity(room.id, selectedQuantity + 1)}
+						onIncrease={() => {
+							if (selectedQuantity < availableRooms) {
+								updateRoomQuantity(room.id, selectedQuantity + 1);
+							}
+						}}
 						onDecrease={() => updateRoomQuantity(room.id, selectedQuantity - 1)}
 					/>
 				);
