@@ -121,6 +121,27 @@ const useUserFavouriteList = () => {
 		}
 	};
 
+	const handleUpdateFavouriteList = async (listId: string, name: string) => {
+		if (!favouriteLists) return;
+
+		const originalLists = favouriteLists;
+		const updatedLists = favouriteLists.map((list) => (list.id === listId ? { ...list, name } : list));
+		setFavouriteList(updatedLists);
+
+		try {
+			await favouriteApi.updateFavouriteList(listId, name);
+			pushNotification("Favourite list updated successfully", "success");
+		} catch (err) {
+			console.error("Failed to update favourite list:", err);
+			setFavouriteList(originalLists); // Rollback on error
+			if (err instanceof AxiosError) {
+				pushNotification((err.response as AxiosResponse<ApiResponse<FavouriteList>>)?.data.error ?? "Error while updating favourite list", "error");
+			} else {
+				pushNotification("Error while updating favourite list", "error");
+			}
+		}
+	};
+
 	return {
 		favouriteLists,
 		loading,
@@ -128,6 +149,7 @@ const useUserFavouriteList = () => {
 		handleRemoveFromFavourite,
 		handleCreateFavouriteList,
 		handleDeleteFavouriteList,
+		handleUpdateFavouriteList,
 	};
 };
 

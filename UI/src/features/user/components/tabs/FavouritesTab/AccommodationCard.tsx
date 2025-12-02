@@ -3,6 +3,7 @@ import { Place, StarRounded } from "@mui/icons-material";
 import { Box, Card, CardContent, CardMedia, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack } from "@mui/material";
 import type { Accommodation } from "../../../types/Accommodation";
 import { standardize } from "../../../../../utils/moneyConverter";
+import { useNavigate } from "react-router-dom";
 
 type AccommodationCardProps = {
 	accommodation: Accommodation;
@@ -10,6 +11,7 @@ type AccommodationCardProps = {
 };
 
 const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, onRemove }) => {
+	const navigate = useNavigate();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const thumbnails = accommodation.images.filter((i) => i.variant === "THUMBNAIL");
@@ -29,15 +31,22 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 	return (
 		<>
 			<Card
+				onClick={() => navigate(`/accommodation/${accommodation.id}`)}
 				sx={{
 					borderRadius: 3,
 					height: 300,
 					display: "flex",
 					flexDirection: "column",
+					cursor: "pointer",
+					transition: "transform 0.2s, box-shadow 0.2s",
+					"&:hover": {
+						transform: "translateY(-4px)",
+						boxShadow: "0 4px 20px 0 rgba(0,0,0,0.12)",
+					},
 				}}
 			>
 				<Box sx={{ position: "relative" }}>
-					<CardMedia component="img" height="160" image={image.url} alt={accommodation.name} sx={{ objectFit: "cover" }} />
+					<CardMedia component="img" height="160" image={image?.url ?? "/images/default.jpg"} alt={accommodation.name} sx={{ objectFit: "cover" }} />
 
 					<IconButton
 						sx={{

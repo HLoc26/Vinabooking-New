@@ -6,6 +6,8 @@ import type {
 	AuthenticatedCreateFavouriteListRequest,
 	AuthenticatedDeleteFavouriteListRequest,
 	AuthenticatedRemoveAccommodationRequest,
+	AuthenticatedUpdateFavouriteListRequest,
+	AuthenticatedUpdateUserRequest,
 	FindUserByIdRequest,
 	FindUserRequest,
 	SaveUserDirectRequest,
@@ -51,6 +53,10 @@ class UserRouter {
 			return this.userController.getUserById(req, res);
 		});
 
+		this.router.patch("/:id", authMiddleware, (req: Request, res: Response) => {
+			return this.userController.updateUser(req as AuthenticatedUpdateUserRequest, res);
+		});
+
 		this.router.post("/cache", (req: Request, res: Response) => {
 			return this.userController.cacheUser(req, res);
 		});
@@ -75,6 +81,10 @@ class UserRouter {
 
 		this.router.delete("/favourites", authMiddleware, (req, res) => {
 			return this.favouriteController.deleteFavouriteList(req as AuthenticatedDeleteFavouriteListRequest, res);
+		});
+
+		this.router.patch("/favourites/:listId", authMiddleware, (req, res) => {
+			return this.favouriteController.updateFavouriteList(req as AuthenticatedUpdateFavouriteListRequest, res);
 		});
 	}
 }

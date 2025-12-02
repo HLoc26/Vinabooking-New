@@ -14,6 +14,7 @@ import useSearchContext from "../../context/SearchContext/hook";
 import { useSticky } from "../../hooks/useSticky";
 import { buildSearchParams } from "../../utils/search";
 import useBookingContextProvider from "../../context/BookingContext/hook";
+import useSearchFromParams from "../../features/accommodation/hooks/useSearchFromParams";
 
 const PAPER_HEIGHT = 72;
 const FIXED_TOP_OFFSET = 16;
@@ -53,6 +54,7 @@ const SectionBox: React.FC<{
 export const HeroSearchBar: React.FC = () => {
 	const { ref: searchRef, sticky } = useSticky(175);
 	const { searchCriteria, handleUpdateSearchCriteria } = useSearchContext();
+	const { criteria } = useSearchFromParams();
 	const { updateBookingInfo } = useBookingContextProvider();
 	const navigate = useNavigate();
 
@@ -87,10 +89,10 @@ export const HeroSearchBar: React.FC = () => {
 
 	// Keep local state in sync if context changes externally
 	useEffect(() => {
-		setKeyword(searchCriteria.keyword);
-		setDates(searchCriteria.dates);
-		setGuests(searchCriteria.guests);
-	}, [searchCriteria.keyword, searchCriteria.dates, searchCriteria.guests]);
+		setKeyword(criteria.keyword);
+		setDates(criteria.dates);
+		setGuests(criteria.guests);
+	}, [criteria.keyword, criteria.dates, criteria.guests]);
 
 	return (
 		<Box
@@ -136,7 +138,11 @@ export const HeroSearchBar: React.FC = () => {
 				}}
 			>
 				{/* DESTINATION */}
-				<Box ref={refs.location} sx={{ gridArea: "destination", position: "relative", borderRight: { md: "1px solid" }, borderRightColor: { md: "grey.300" } }}>
+				<Box
+					onBlur={() => handleToggleDropdown("location", false)}
+					ref={refs.location}
+					sx={{ gridArea: "destination", position: "relative", borderRight: { md: "1px solid" }, borderRightColor: { md: "grey.300" } }}
+				>
 					<SectionBox Icon={SearchIcon} label="Where" onClick={() => handleToggleDropdown("location", true)}>
 						<TextField
 							placeholder="Search destinations"

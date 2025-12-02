@@ -1,16 +1,41 @@
 import { Container, Grid, Paper } from "@mui/material";
 import SideBar from "../components/SideBar";
 import ProfileTab from "../components/tabs/ProfileTab/ProfileTab";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import type { TabLabel } from "../types/tabs";
 import BookingTab from "../components/tabs/BookingsTab/BookingsTab";
 import FavouritesTab from "../components/tabs/FavouritesTab/FavouritesTab";
+import { useLocation, useNavigate } from "react-router-dom";
 
 const UserProfilePage: React.FC = () => {
 	const [selectedTab, setSelectedTab] = useState<TabLabel>("Profile");
+	const location = useLocation();
+	const navigate = useNavigate();
+
+	useEffect(() => {
+		const path = location.pathname;
+		if (path.includes("/user/me/profile")) {
+			setSelectedTab("Profile");
+		} else if (path.includes("/user/me/my-bookings")) {
+			setSelectedTab("Bookings");
+		} else if (path.includes("/user/me/favorites")) {
+			setSelectedTab("Favourite List");
+		}
+	}, [location.pathname]);
 
 	const handleSelectTab = (label: TabLabel) => {
 		setSelectedTab(label);
+		switch (label) {
+			case "Profile":
+				navigate("/user/me/profile");
+				break;
+			case "Bookings":
+				navigate("/user/me/my-bookings");
+				break;
+			case "Favourite List":
+				navigate("/user/me/favorites");
+				break;
+		}
 	};
 
 	const tab = (function () {

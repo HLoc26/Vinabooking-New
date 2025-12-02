@@ -16,12 +16,10 @@ const ProfileUpdateForm: React.FC = () => {
 		if (!editing) setDraft(userInfo || null);
 	}, [editing, userInfo]);
 
-	const handleSave = () => {
+	const handleSave = async () => {
 		if (!draft) return;
 
-		updateUserInfo("name", draft.name);
-		updateUserInfo("phone", draft.phone);
-
+		await updateUserInfo({ name: draft.name, phone: draft.phone });
 		setEditing(false);
 	};
 
