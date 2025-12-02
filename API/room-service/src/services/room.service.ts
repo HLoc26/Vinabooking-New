@@ -2,6 +2,7 @@ import { roomRepository } from "../repositories/room.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { Prisma } from "@prisma/client";
 import { bookingClient } from "../clients/booking.client";
+import { imageClient } from "../clients/image.client";
 
 export class RoomService {
 	/**
@@ -22,38 +23,63 @@ export class RoomService {
 	async getRoomsByAccommodationId(accommodationId: string, startDate?: string, endDate?: string) {
 		const rooms = await roomRepository.findAllByAccommodationId(accommodationId);
 
-		if (!startDate || !endDate || rooms.length === 0) {
-			return rooms.map((room) => ({
-				...room,
-				remainingQuantity: room.quantity,
-			}));
-		}
+		if (rooms.length === 0) return [];
+
 		const roomIds = rooms.map((r) => r.id);
-		try {
-			const bookedCounts = await bookingClient.getBookedCounts(roomIds, startDate, endDate);
-			const bookedMap = new Map<string, number>();
-			bookedCounts.forEach((item) => {
-				bookedMap.set(item.roomId, item.bookedCount);
-			});
-			return rooms.map((room) => {
-				const totalQuantity = room.quantity;
-				const bookedCount = bookedMap.get(room.id) || 0;
 
-				const remainingQuantity = Math.max(0, totalQuantity - bookedCount);
+		// Task 1: Lấy thông tin Booking (nếu có ngày)
+		const bookingTask = (async () => {
+			if (startDate && endDate) {
+				try {
+					return await bookingClient.getBookedCounts(roomIds, startDate, endDate);
+				} catch (error) {
+					console.error("[RoomService] Booking check failed:", error);
+					return [];
+				}
+			}
+			return [];
+		})();
 
-				return {
-					...room,
-					remainingQuantity,
-				};
-			});
-		} catch (error) {
-			console.error("[RoomService] Error fetching booked counts from Booking Service:", error);
+		// Task 2: Lấy hình ảnh cho từng phòng
+		const imagesTask = Promise.all(
+			rooms.map(async (room) => {
+				try {
+					const images = await imageClient.getImagesForRoom(room.id);
+					return { roomId: room.id, images };
+				} catch (error) {
+					return { roomId: room.id, images: [] };
+				}
+			})
+		);
 
-			return rooms.map((room) => ({
-				...rooms,
-				remainingQuantity: room.quantity,
-			}));
-		}
+		console.log(`[RoomService] Fetching extra data (Booking & Images) for ${rooms.length} rooms...`);
+
+		const [bookedCounts, imagesMapList] = await Promise.all([bookingTask, imagesTask]);
+
+		const bookedMap = new Map<string, number>();
+		bookedCounts.forEach((item) => bookedMap.set(item.roomId, item.bookedCount));
+
+		const imagesMap = new Map<string, any[]>();
+		imagesMapList.forEach((item) => imagesMap.set(item.roomId, item.images));
+
+		const result = rooms.map((room) => {
+			const totalQuantity = room.quantity;
+			const bookedCount = bookedMap.get(room.id) || 0;
+			const remainingQuantity = startDate && endDate ? Math.max(0, totalQuantity - bookedCount) : totalQuantity;
+
+			// Lấy ảnh tương ứng
+			const images = imagesMap.get(room.id) || [];
+
+			return {
+				...room,
+				remainingQuantity,
+				images,
+			};
+		});
+
+		console.log(`[RoomService] Returning ${result.length} rooms. Sample remaining: ${result[0]?.remainingQuantity}`);
+
+		return result;
 	}
 
 	/**

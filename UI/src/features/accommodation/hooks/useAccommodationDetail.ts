@@ -3,7 +3,13 @@ import type { AccommodationDetail } from "../types/accommodation.types";
 import accommodationApi from "../service/accommodationApi";
 import type { ImageType } from "../../../types/Image";
 
-export const useAccommodationDetail = (accommodationId: string | undefined) => {
+// Helper format date YYYY-MM-DD
+const formatDate = (date: Date | null | undefined): string | undefined => {
+	if (!date) return undefined;
+	return date.toLocaleDateString("sv-SE");
+};
+
+export const useAccommodationDetail = (accommodationId: string | undefined, startDate?: Date | null, endDate?: Date | null) => {
 	const [accommodation, setAccommodation] = useState<AccommodationDetail | null>(null);
 	const [loading, setLoading] = useState(true);
 	const [error, setError] = useState<string | null>(null);
@@ -14,7 +20,11 @@ export const useAccommodationDetail = (accommodationId: string | undefined) => {
 		const fetchData = async () => {
 			setLoading(true);
 			try {
-				const res = await accommodationApi.getAccommodationById(accommodationId);
+				const checkInStr = formatDate(startDate);
+				const checkOutStr = formatDate(endDate);
+
+				const res = await accommodationApi.getAccommodationById(accommodationId, checkInStr, checkOutStr);
+
 				if (res.status < 200 || res.status >= 300) throw new Error(`HTTP ${res.status}`);
 				const json = res.data;
 
@@ -23,15 +33,16 @@ export const useAccommodationDetail = (accommodationId: string | undefined) => {
 				} else {
 					setError(json.error || "Failed to load");
 				}
-			} catch {
+			} catch (err) {
 				setError("Could not connect to server");
+				console.error(err);
 			} finally {
 				setLoading(false);
 			}
 		};
 
 		fetchData();
-	}, [accommodationId]);
+	}, [accommodationId, startDate, endDate]);
 
 	const getThumbnails = (): ImageType[] => {
 		if (!accommodation?.images) return [];
