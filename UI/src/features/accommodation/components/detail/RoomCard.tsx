@@ -18,7 +18,7 @@ interface Props {
 
 export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecrease }: Props) => {
 	const isLowStock = availableRooms <= 3;
-	const price = Math.floor(parseFloat(room.price));
+	const price = parseFloat(room.price);
 
 	const { openModal } = useModalContext();
 

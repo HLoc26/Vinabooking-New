@@ -22,7 +22,7 @@ export const PropertyHeader = ({ accommodation, averageRating = 4.5, reviewCount
 						<Box sx={{ display: "flex", alignItems: "center", gap: 0.5 }}>
 							<Rating value={averageRating} precision={0.1} readOnly size="small" />
 							<Typography variant="body2" fontWeight="bold">
-								{averageRating}
+								{averageRating.toFixed(2)}
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
 								({reviewCount} reviews)
