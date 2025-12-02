@@ -104,7 +104,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 					)}
 					<Star sx={{ color: "#ffa726" }} />
 					<Typography variant="h6" fontWeight="bold">
-						{averageRating.toFixed(1)}
+						{averageRating.toFixed(2)}
 					</Typography>
 					<Typography variant="body2" color="text.secondary">
 						({totalReviews} reviews)
