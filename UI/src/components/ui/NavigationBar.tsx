@@ -8,7 +8,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MenuIcon from "@mui/icons-material/Menu";
 import Button from "@mui/material/Button";
-import { Link as RouterLink, useNavigate } from "react-router-dom";
+import { Link as RouterLink } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
 
@@ -165,26 +165,25 @@ const NavigationBar: React.FC = () => {
 									open={Boolean(anchorElProfile)}
 									onClose={() => setAnchorElProfile(null)}
 								>
-									<MenuItem component={RouterLink} to="/user/me" onClick={() => setAnchorElProfile(null)}>
+									<MenuItem component={RouterLink} to="/user/me/profile" onClick={() => setAnchorElProfile(null)}>
 										<ListItemIcon>
 											<PersonOutlineOutlined />
 										</ListItemIcon>
 										<ListItemText>My Profile</ListItemText>
 									</MenuItem>
-									<MenuItem component={RouterLink} to="/favorites" onClick={() => setAnchorElProfile(null)}>
-										<ListItemIcon>
-											<StarOutlineRounded />
-										</ListItemIcon>
-										<ListItemText>Favorites</ListItemText>
-									</MenuItem>
-									<MenuItem component={RouterLink} to="/my-bookings" onClick={() => setAnchorElProfile(null)}>
+									<MenuItem component={RouterLink} to="/user/me/my-bookings" onClick={() => setAnchorElProfile(null)}>
 										<ListItemIcon>
 											<LuggageOutlined />
 										</ListItemIcon>
 										<ListItemText>My Bookings</ListItemText>
 									</MenuItem>
+									<MenuItem component={RouterLink} to="/user/me/favorites" onClick={() => setAnchorElProfile(null)}>
+										<ListItemIcon>
+											<StarOutlineRounded />
+										</ListItemIcon>
+										<ListItemText>Favorites</ListItemText>
+									</MenuItem>
 									<MenuItem onClick={handleLogout}>
-										{" "}
 										<ListItemIcon>
 											<ExitToAppOutlined />
 										</ListItemIcon>

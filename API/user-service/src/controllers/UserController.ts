@@ -6,18 +6,9 @@ import NotFoundError from "../errors/NotFoundError";
 import ResponseHelper from "../utils/ResponseHelper";
 
 import { type Response } from "express";
-import type User from "../classes/User";
-import { type SaveUserResponse, type CacheUserResponse, type UserResponse, type AddAccommodationToFavouriteResponse, RemoveAccommodationFromFavouriteResponse } from "../types/Response";
-import type {
-	CacheInfo,
-	CacheUserRequest,
-	FindUserRequest,
-	FindUserByIdRequest,
-	SaveUserDirectRequest,
-	SaveUserRequest,
-	AuthenticatedAddAccommodationRequest,
-	AuthenticatedRemoveAccommodationRequest,
-} from "../types/Request";
+import User from "../classes/User";
+import { type SaveUserResponse, type CacheUserResponse, type UserResponse } from "../types/Response";
+import type { CacheInfo, CacheUserRequest, FindUserRequest, FindUserByIdRequest, SaveUserDirectRequest, SaveUserRequest, AuthenticatedUpdateUserRequest } from "../types/Request";
 import type { ApiResponse } from "../types/Response";
 import RedisClientError from "../errors/RedisClientError";
 import DatabaseError from "../errors/DatabaseError";
@@ -88,6 +79,16 @@ class UserController {
 			throw new DatabaseError("Failed to save user to database");
 		}
 		return ResponseHelper.success<SaveUserResponse>(res, { success: true });
+	}
+
+	public async updateUser(req: AuthenticatedUpdateUserRequest, res: Response<ApiResponse<UserResponse>>) {
+		const id = req.params.id;
+		const data = req.body;
+
+		const updatedUserSchema = await this.userService.updateUser(id, data);
+		const updatedUser = User.fromSchema(updatedUserSchema);
+
+		return ResponseHelper.success<UserResponse>(res, updatedUser.toJson());
 	}
 }
 

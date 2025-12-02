@@ -42,6 +42,12 @@ const favouriteApi = {
 				params: { listId: id },
 			})
 			.then((r) => r.data.data),
+	updateFavouriteList: (id: string, name: string) =>
+		apiClient
+			.patch<ApiResponse<FavouriteList>>(`/users/favourites/${id}`, {
+				name,
+			})
+			.then((r) => r.data.data),
 };
 
 export default favouriteApi;

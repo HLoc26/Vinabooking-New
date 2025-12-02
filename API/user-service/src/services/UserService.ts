@@ -107,6 +107,16 @@ class UserService {
 
 		return result;
 	}
+
+	public async updateUser(id: string, data: Partial<SaveUserInfo>) {
+		const result = await this.userRepository.updateUser(id, data);
+
+		if (!result) {
+			throw new DatabaseError(`Failed to update user ${id}`);
+		}
+
+		return result;
+	}
 }
 
 export default UserService;

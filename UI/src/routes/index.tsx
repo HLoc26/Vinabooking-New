@@ -6,10 +6,9 @@ import SearchPage from "../features/accommodation/pages/AccommodationSearchResul
 import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
+import { UserRouter } from "./user";
 
 import { TravelerLayout } from "../components/layout/TravelerLayout";
-import UserProfilePage from "../features/user/pages/UserProfilePage";
-import ManageBookingDetailPage from "../features/user/pages/ManageBookingDetailPage";
 
 export const AppRouter = () => (
 	<>
@@ -52,26 +51,8 @@ export const AppRouter = () => (
 				}
 			/>
 
-			{/* User pages */}
-			<Route
-				path="/user/me"
-				element={
-					<TravelerLayout>
-						<UserProfilePage />
-					</TravelerLayout>
-				}
-			/>
-
-			<Route
-				path="/user/manage-booking/:bookingId"
-				element={
-					<TravelerLayout>
-						<ManageBookingDetailPage />
-					</TravelerLayout>
-				}
-			/>
-
-			{/* Auth, OAuth, Booking */}
+			{/* User, Auth, OAuth, Booking */}
+			<Route path="/user/*" element={<UserRouter />} />
 			<Route path="/auth/*" element={<AuthRouter />} />
 			<Route path="/oauth/*" element={<OAuthRouter />} />
 			<Route path="/booking/*" element={<BookingRouter />} />

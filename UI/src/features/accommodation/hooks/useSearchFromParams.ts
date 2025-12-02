@@ -7,6 +7,7 @@ import useSearchContext from "../../../context/SearchContext/hook";
 import { parseEAccommodationType } from "../../../utils/search";
 import type { AccommodationListItem } from "../../../types/Response";
 import isEqual from "lodash.isequal";
+import { formatDate } from "../../../utils/dateFormatter";
 
 function parseDate(value: string | null): Date | null {
 	if (!value) return null;
@@ -38,11 +39,24 @@ function buildApiParams(criteria: Query): Record<string, string | string[] | num
 		facilities: criteria.facilities,
 	};
 
-	if (criteria.dates.checkIn) params.checkIn = criteria.dates.checkIn.toISOString().split("T")[0];
-	if (criteria.dates.checkOut) params.checkOut = criteria.dates.checkOut.toISOString().split("T")[0];
+	if (criteria.dates.checkIn) params.checkIn = formatDate(criteria.dates.checkIn.toLocaleString());
+	if (criteria.dates.checkOut) params.checkOut = formatDate(criteria.dates.checkOut.toLocaleString());
 
 	return params;
 }
+
+const initialCheckIn = (() => {
+	const d = new Date();
+	d.setDate(d.getDate() + 1);
+	d.setHours(0, 0, 0, 0);
+	return d;
+})();
+const initialCheckOut = (() => {
+	const d = new Date();
+	d.setDate(d.getDate() + 2);
+	d.setHours(0, 0, 0, 0);
+	return d;
+})();
 
 const useSearchFromParams = () => {
 	const { searchCriteria: contextCriteria, handleUpdateSearchCriteria } = useSearchContext();
@@ -58,8 +72,8 @@ const useSearchFromParams = () => {
 			type: parseEAccommodationType(params.get("type")),
 
 			dates: {
-				checkIn: checkIn ?? new Date(),
-				checkOut: checkOut,
+				checkIn: checkIn ?? initialCheckIn,
+				checkOut: checkOut ?? initialCheckOut,
 			},
 
 			guests: {
@@ -100,10 +114,7 @@ const useSearchFromParams = () => {
 			setError(null);
 
 			try {
-				console.log("criteria", criteria);
 				const apiParams = buildApiParams(criteria);
-
-				console.log("apiParams", apiParams);
 
 				const res = await accommodationApi.search(apiParams);
 

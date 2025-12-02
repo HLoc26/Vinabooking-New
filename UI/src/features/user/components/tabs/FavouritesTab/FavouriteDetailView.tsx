@@ -1,7 +1,7 @@
-import { ArrowBack, CalendarMonth, StarRounded } from "@mui/icons-material";
-import { Box, Grid, Pagination, Paper, Skeleton, Typography } from "@mui/material";
+import { ArrowBack, CalendarMonth, Edit, StarRounded } from "@mui/icons-material";
+import { Box, Grid, IconButton, Input, Pagination, Paper, Skeleton, Typography } from "@mui/material";
 import AccommodationCard from "./AccommodationCard";
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "../../../../../utils/dateFormatter";
 import type { FavouriteList } from "../../../../../types/FavouriteList";
 import useBatchAccommodationInfo from "../../../hooks/useBatchAccommodationInfo";
@@ -9,16 +9,33 @@ import useBatchAccommodationInfo from "../../../hooks/useBatchAccommodationInfo"
 type FavouriteDetailViewProps = {
 	favourite: FavouriteList;
 	onBack: () => void;
+	handleRemoveFromFavourite: (favouriteId: string, accommodationId: string) => void;
+	handleUpdateFavourite: (favouriteId: string, name: string) => void;
 };
 
-const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, onBack }) => {
+const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, onBack, handleRemoveFromFavourite, handleUpdateFavourite }) => {
 	const [page, setPage] = useState(1);
 	const itemsPerPage = 8;
+	const [isEditing, setIsEditing] = useState(false);
+	const [name, setName] = useState(favourite.name);
+
+	useEffect(() => {
+		setName(favourite.name);
+	}, [favourite.name]);
 
 	const accommodationIds = useMemo(() => favourite.items.map((i) => i.accommodationId), [favourite.items]);
-	console.log("Rerender");
 
 	const accommodation = useBatchAccommodationInfo(accommodationIds);
+
+	const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
+		setName(event.target.value);
+	};
+
+	const handleUpdate = () => {
+		setIsEditing(false);
+		if (name === favourite.name || name === "") return;
+		handleUpdateFavourite(favourite.id, name);
+	};
 
 	if (!accommodation) {
 		return (
@@ -43,7 +60,7 @@ const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, on
 
 					<Grid container spacing={3}>
 						{Array.from({ length: 3 }).map((_, idx) => (
-							<Grid size={{ xs: 12, sm: 6, md: 4 }} key={idx}>
+							<Grid key={idx}>
 								<Skeleton variant="rectangular" height={200} />
 							</Grid>
 						))}
@@ -65,9 +82,31 @@ const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, on
 				</Box>
 
 				<Paper sx={{ p: 4, borderRadius: 3, mb: 4 }}>
-					<Typography variant="h4" fontWeight={700} mb={1}>
-						{favourite.name}
-					</Typography>
+					<Box sx={{ display: "flex", alignItems: "center" }}>
+						{isEditing ? (
+							<Input
+								value={name}
+								onChange={handleNameChange}
+								onBlur={handleUpdate}
+								onKeyDown={(e) => e.key === "Enter" && handleUpdate()}
+								autoFocus
+								sx={{
+									typography: "h4",
+									fontWeight: 700,
+									mb: 1,
+								}}
+							/>
+						) : (
+							<>
+								<Typography variant="h4" fontWeight={700} mb={1}>
+									{favourite.name}
+								</Typography>
+								<IconButton onClick={() => setIsEditing(true)} sx={{ mb: 1, ml: 1 }}>
+									<Edit />
+								</IconButton>
+							</>
+						)}
+					</Box>
 
 					<Box sx={{ display: "flex", gap: 3, color: "text.secondary" }}>
 						<Box sx={{ display: "flex", alignItems: "center" }}>
@@ -83,8 +122,8 @@ const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, on
 
 				<Grid container spacing={3}>
 					{slice.map((ac) => (
-						<Grid size={{ xs: 12, sm: 6, md: 4 }} key={ac.id}>
-							<AccommodationCard accommodation={ac} />
+						<Grid key={ac.id}>
+							<AccommodationCard accommodation={ac} onRemove={(accommodationId: string) => handleRemoveFromFavourite(favourite.id, accommodationId)} />
 						</Grid>
 					))}
 				</Grid>
