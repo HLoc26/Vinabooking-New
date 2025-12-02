@@ -266,7 +266,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 					<Box
 						sx={{
 							display: "grid",
-							gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(auto-fit, minmax(140px, 1fr))" },
+							gridTemplateColumns: { xs: "repeat(2, 1fr)", sm: "repeat(auto-fit, minmax(120px, 1fr))" },
 							gap: 2,
 							mb: 3,
 						}}
