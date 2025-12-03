@@ -1,0 +1,149 @@
+datasource db {
+    provider = "mysql"
+    url      = env("DATABASE_URL")
+}
+
+generator client {
+    provider      = "prisma-client"
+    output        = "../generated/prisma"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+// ============= ENUMS =============
+
+enum EAccommodationType {
+    HOTEL
+    APARTMENT
+    VILLA
+    VACATION_HOME
+    GUESTHOUSE
+    HOSTEL
+    BED_AND_BREAKFAST
+    HOMESTAY
+    CAMPGROUND
+    COUNTRY_HOUSE
+    BOAT
+    LUXURY_TENT
+    CABIN
+    MOTEL
+    RESORT
+    FARMSTAY
+    CAPSULE_HOTEL
+    TREEHOUSE
+    TOWNHOUSE
+    OTHER
+}
+
+enum ERentalType {
+    ENTIRE_PLACE
+    PRIVATE_ROOM
+    SHARED_ROOM
+}
+
+enum EFacilityType {
+    GENERAL // Free WiFi, Heating, Elevator, Non-smoking property
+    FOOD_AND_DRINK // Breakfast included, Restaurant on-site, Bar, Vending machine (drinks)
+    PUBLIC_FACILITIES // Swimming pool, Shared lounge/TV area, Luggage storage, Picnic area
+    SERVICES // 24-hour front desk, Laundry service, Concierge, Shuttle service
+    SAFETY // Security alarm, First aid kit, CCTV in common areas, Key card access
+    ACCESSIBILITY // Wheelchair accessible, Braille signage, Elevator for upper floors, Emergency cord in common areas
+    ENTERTAINMENT // Board games, Library, Game room, Movie nights
+    OUTDOOR // Garden, Terrace, Outdoor furniture, BBQ facilities, Beachfront access
+    TRANSPORTATION // Free parking, Airport shuttle, Bicycle rental, Electric vehicle charging station, Valet parking
+    WELLNESS // Spa, Fitness center, Sauna, Hot tub
+    SPECIAL_AMENITIES // Children's playground, Babysitting service, Pet-friendly (pets allowed), Kids' club
+    SUSTAINABILITY // Solar panels, Recycling bins in common areas, Energy-efficient lighting, Water conservation measures
+    OTHER // Gift shop, Chapel/shrine, Ticket service, ATM on site
+}
+
+// ============= MODELS =============
+
+model Accommodation {
+    id          String             @id @default(uuid())
+    name        String             @db.VarChar(255)
+    description String?            @db.Text
+    type        EAccommodationType
+    rentalType  ERentalType?       @default(ENTIRE_PLACE)
+    isActive    Boolean            @default(true)
+    ownerId     String             @db.VarChar(36) // Reference to user-service
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    address   Address? @relation(fields: [addressId], references: [id])
+    addressId String?  @unique @db.VarChar(191)
+
+    facilities FacilityConfig[]
+
+    @@index([type])
+    @@index([rentalType])
+    @@index([ownerId])
+    @@map("accommodations")
+}
+
+model Address {
+    id          String  @id @default(uuid())
+    street      String  @db.VarChar(255)
+    ward        String? @db.VarChar(100) // Phường/Xã
+    district    String? @db.VarChar(100) // Quận/Huyện (có thể bỏ vì đã sáp nhập)
+    city        String  @db.VarChar(100) // Thành phố/Tỉnh
+    country     String  @db.VarChar(100)
+    countryCode String  @db.Char(2) // ISO 3166-1: "VN"
+    postalCode  String? @db.VarChar(20)
+
+    // Geolocation (High precision for GPS)
+    latitude  Decimal? @db.Decimal(10, 8)
+    longitude Decimal? @db.Decimal(11, 8)
+
+    // Display & Integration
+    fullAddress String  @db.VarChar(500) // Pre-computed (Địa chỉ đầy đủ, dùng để hiển thị)
+    placeId     String? @db.VarChar(255) // Google Place ID hoặc tương tự
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    accommodation Accommodation?
+
+    @@index([city, ward])
+    @@index([countryCode, city])
+    @@index([latitude, longitude])
+    @@index([postalCode])
+    @@map("addresses")
+}
+
+model Facility {
+    id          String        @id @default(uuid())
+    name        String        @db.VarChar(191)
+    type        EFacilityType @default(GENERAL)
+    description String?       @db.Text
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    configs FacilityConfig[]
+
+    @@unique([name])
+    @@index([type])
+    @@map("facilities")
+}
+
+model FacilityConfig {
+    id          String   @id @default(uuid())
+    fee         Decimal? @default(0) @db.Decimal(10, 2) // Fee for using the facility, if applicable
+    note        String?  @db.Text
+    isAvailable Boolean  @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+    accommodationId String        @db.VarChar(191)
+
+    facility   Facility @relation(fields: [facilityId], references: [id])
+    facilityId String   @db.VarChar(191)
+
+    @@unique([accommodationId, facilityId])
+    @@index([accommodationId])
+    @@index([facilityId])
+    @@map("facility_configs")
+}

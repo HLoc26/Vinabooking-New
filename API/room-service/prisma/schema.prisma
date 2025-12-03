@@ -1,0 +1,162 @@
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider      = "prisma-client"
+  output        = "../generated/prisma"
+  binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+// ============= ENUMS =============
+
+enum EAmenityType {
+  COMFORT
+  ENTERTAINMENT
+  BATHROOM
+  KITCHEN
+  SAFETY
+  ACCESSIBILITY
+  WORKSPACE
+  OUTDOOR
+  OTHER
+}
+
+enum EBedType {
+  SINGLE // ~90-100cm width
+  DOUBLE // ~135-150cm width
+  QUEEN // ~152cm width
+  KING // ~183-193cm width
+  SUPER_KING // ~200cm+ width
+  TWIN // 2 single beds
+  SOFA_BED
+  BUNK_BED
+  FUTON
+  MURPHY_BED
+  OTHER
+}
+
+enum EViewType {
+  SEA
+  OCEAN
+  RIVER
+  LAKE
+  CITY
+  GARDEN
+  MOUNTAIN
+  POOL
+  STREET
+  COURTYARD
+  LANDMARK
+  PARTIAL_SEA
+  PARTIAL_CITY
+  NONE
+  OTHER
+}
+
+enum EPricingType {
+  PER_NIGHT
+  PER_PERSON_PER_NIGHT
+  PER_HOUR
+  CUSTOM
+}
+
+// ============= MODELS =============
+
+model Room {
+  id              String  @id @default(uuid())
+  accommodationId String  @db.VarChar(191) // Reference to accommodation-service
+  name            String  @db.VarChar(191) // e.g., "Deluxe King Room"
+  description     String? @db.Text
+
+  quantity    Int @default(1) @db.UnsignedInt // số lượng phòng cùng loại
+  maxAdults   Int @default(2) @db.UnsignedInt
+  maxChildren Int @default(0) @db.UnsignedInt
+
+  size          Decimal? @db.Decimal(5, 2) // e.g., 30.5 m²
+  bedroomCount  Int      @default(1) @db.UnsignedInt // số phòng ngủ riêng bên trong (cho apartment/villa)
+  bathroomCount Int      @default(1) @db.UnsignedInt
+
+  viewType        EViewType @default(NONE)
+  viewDescription String?   @db.VarChar(191) // e.g., "Ocean view from the balcony", "Partial ocean view from balcony", "Facing golf course"
+
+  price       Decimal?     @db.Decimal(10, 2) // e.g., 150.00
+  pricingType EPricingType @default(PER_NIGHT)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  beds      Bed[]
+  amenities AmenityConfig[]
+
+  @@index([accommodationId, isActive])
+  @@index([maxAdults, maxChildren])
+  @@index([price])
+  @@index([viewType])
+  @@index([bathroomCount])
+  @@index([bedroomCount])
+  @@map("rooms")
+}
+
+model Bed {
+  id          String  @id @default(uuid())
+  name        String  @db.VarChar(191) // e.g., "Bunk A1", "Bunk A2"
+  description String? @db.Text
+
+  bedType EBedType
+  size    String?  @db.VarChar(50) // e.g., "200x200 cm"
+
+  price Decimal? @db.Decimal(10, 2) // Price per bed per night (for shared rooms)
+
+  isActive Boolean @default(true)
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  roomId String @db.VarChar(191)
+
+  @@unique([roomId, name])
+  @@index([roomId])
+  @@index([roomId, isActive])
+  @@index([price])
+  @@map("beds")
+}
+
+model Amenity {
+  id          String       @id @default(uuid())
+  name        String       @db.VarChar(191)
+  type        EAmenityType @default(OTHER)
+  description String?      @db.Text
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  rooms AmenityConfig[]
+
+  @@unique([name, type])
+  @@index([type])
+  @@map("amenities")
+}
+
+model AmenityConfig {
+  id   String  @id @default(uuid())
+  note String? @db.VarChar(255) // Additional info
+
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+  roomId String @db.VarChar(191)
+
+  amenity   Amenity @relation(fields: [amenityId], references: [id])
+  amenityId String  @db.VarChar(191)
+
+  @@unique([roomId, amenityId])
+  @@index([roomId])
+  @@index([amenityId])
+  @@map("amenity_configs")
+}

@@ -1,6 +1,8 @@
 *.env
 *test.*
 
+**/generated/*
+
 # Logs
 logs
 *.log

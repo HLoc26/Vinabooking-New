@@ -1,20 +1,31 @@
 {
-  "name": "accommodation-service",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --legacy-watch ./src/_index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "description": "",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "nodemon": "^3.1.10"
-  }
+	"name": "accommodation-service",
+	"version": "1.0.0",
+	"main": "dist/index.js",
+	"scripts": {
+		"dev": "npx nodemon --legacy-watch --exec \"npx ts-node -r tsconfig-paths/register ./src/index.ts\"",
+		"build": "npx tsc",
+		"start": "node -r tsconfig-paths/register dist/src/index.js",
+		"prisma:generate": "npx prisma generate",
+		"prisma:migrate": "npx prisma migrate dev"
+	},
+	"type": "commonjs",
+	"dependencies": {
+		"@prisma/client": "^6.17.1",
+		"axios": "^1.12.2",
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.2",
+		"express": "^5.1.0",
+		"zod": "^4.1.12"
+	},
+	"devDependencies": {
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.3",
+		"@types/node": "^22.7.5",
+		"nodemon": "^3.1.10",
+		"prisma": "^6.17.1",
+		"ts-node": "^10.9.2",
+		"tsconfig-paths": "^4.2.0",
+		"typescript": "^5.6.3"
+	}
 }

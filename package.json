@@ -1,21 +1,54 @@
 {
-  "devDependencies": {
-    "@eslint/js": "^9.33.0",
-    "@types/react": "^19.1.10",
-    "@types/react-dom": "^19.1.7",
-    "@vitejs/plugin-react": "^5.0.0",
-    "eslint": "^9.33.0",
-    "eslint-plugin-react-hooks": "^5.2.0",
-    "eslint-plugin-react-refresh": "^0.4.20",
-    "globals": "^16.3.0",
-    "husky": "^8.0.3",
-    "lint-staged": "^16.1.5",
-    "prettier": "^3.6.2",
-    "typescript": "~5.8.3",
-    "typescript-eslint": "^8.39.1"
-  },
-  "lint-staged": {
-    "API/**/*.js": "npx eslint --fix",
-    "UI/src/**/*.{js,jsx,ts,tsx}": "npx eslint --fix"
-  }
+	"devDependencies": {
+		"@eslint/js": "^9.33.0",
+		"@grpc/grpc-js": "^1.14.0",
+		"@types/react": "^19.1.10",
+		"@types/react-dom": "^19.1.7",
+		"@vitejs/plugin-react": "^5.0.0",
+		"eslint": "^9.33.0",
+		"eslint-plugin-react-hooks": "^5.2.0",
+		"eslint-plugin-react-refresh": "^0.4.20",
+		"globals": "^16.3.0",
+		"google-protobuf": "^4.0.0",
+		"husky": "^8.0.3",
+		"lint-staged": "^16.1.5",
+		"prettier": "^3.6.2",
+		"ts-proto": "^2.7.7",
+		"typescript": "~5.8.3",
+		"typescript-eslint": "^8.39.1"
+	},
+	"lint-staged": {
+		"API/**/*.js": "npx eslint --fix",
+		"UI/src/**/*.{js,jsx,ts,tsx}": "npx eslint --fix"
+	},
+	"scripts": {
+		"migrate:accom": "cd API/accommodation-service && npx prisma migrate dev",
+		"migrate:auth": "cd API/auth-service && npx prisma migrate dev",
+		"migrate:booking": "cd API/booking-service && npx prisma migrate dev",
+		"migrate:review": "cd API/review-service && npx prisma migrate dev",
+		"migrate:room": "cd API/room-service && npx prisma migrate dev",
+		"migrate:user": "cd API/user-service && npx prisma migrate dev",
+		"migrate:image": "cd API/image-service && npx prisma migrate dev",
+		"migrate:all": "npm run migrate:accom && npm run migrate:auth && npm run migrate:booking && npm run migrate:review && npm run migrate:room && npm run migrate:user && npm run migrate:image",
+		"push:accom": "cd API/accommodation-service && npx prisma db push",
+		"push:auth": "cd API/auth-service && npx prisma db push",
+		"push:booking": "cd API/booking-service && npx prisma db push",
+		"push:review": "cd API/review-service && npx prisma db push",
+		"push:room": "cd API/room-service && npx prisma db push",
+		"push:user": "cd API/user-service && npx prisma db push",
+		"push:image": "cd API/image-service && npx prisma db push",
+		"push:all": "npm run push:accom && npm run push:auth && npm run push:booking && npm run push:review && npm run push:room && npm run push:user && npm run push:image",
+		"gen:grpc:image-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/image-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/image-service.proto",
+		"gen:grpc:user-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/user-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/user-service.proto",
+		"gen:grpc:booking-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/booking-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/booking-service.proto",
+		"gen:grpc:auth-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/auth-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/auth-service.proto",
+		"gen:grpc:room-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/room-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/room-service.proto",
+		"gen:grpc:review-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/review-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/review-service.proto",
+		"gen:grpc:accommodation-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/accommodation-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/accommodation-service.proto",
+		"gen:grpc:email-service": "npx protoc --plugin=./node_modules/.bin/protoc-gen-ts_proto.cmd --ts_proto_out=generated/grpc/email-service --ts_proto_opt=outputServices=grpc-js,esModuleInterop=true --proto_path=contracts contracts/email-service.proto",
+		"gen:grpc:all": "npm run gen:grpc:image-service && npm run gen:grpc:user-service && npm run gen:grpc:booking-service && npm run gen:grpc:auth-service && npm run gen:grpc:room-service && npm run gen:grpc:review-service && npm run gen:grpc:accommodation-service"
+	},
+	"dependencies": {
+		"qrcode": "^1.5.4"
+	}
 }
