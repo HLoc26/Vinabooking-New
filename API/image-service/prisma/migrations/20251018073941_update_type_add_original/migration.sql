@@ -1,0 +1,2 @@
+-- AlterTable
+ALTER TABLE `ImageVariant` MODIFY `type` ENUM('ORIGINAL', 'THUMBNAIL', 'WEBP', 'OPTIMIZED') NOT NULL;

@@ -1,0 +1,44 @@
+{
+	"name": "image-service",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "npx nodemon --legacy-watch --exec npx ts-node ./src/index.ts",
+		"build": "npx tsc",
+		"start": "node dist/src/index.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"description": "",
+	"dependencies": {
+		"@aws-sdk/client-s3": "^3.884.0",
+		"@prisma/client": "^6.17.1",
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.2",
+		"express": "^5.1.0",
+		"multer": "^2.0.2",
+		"sharp": "^0.26.2",
+		"swagger-ui-express": "^5.0.1",
+		"uuid": "^13.0.0",
+		"yamljs": "^0.3.0"
+	},
+	"devDependencies": {
+		"@bufbuild/buf": "^1.58.0",
+		"@bufbuild/protoc-gen-es": "^2.9.0",
+		"@grpc/grpc-js": "^1.14.0",
+		"@types/express": "^5.0.3",
+		"@types/multer": "^2.0.0",
+		"@types/node": "^24.3.1",
+		"@types/sharp": "^0.31.1",
+		"@types/swagger-jsdoc": "^6.0.4",
+		"@types/swagger-ui-express": "^4.1.8",
+		"@types/yamljs": "^0.2.34",
+		"nodemon": "^3.1.10",
+		"prisma": "^6.17.1",
+		"ts-node": "^10.9.2",
+		"typescript": "^5.9.2"
+	}
+}

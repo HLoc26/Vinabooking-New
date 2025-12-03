@@ -1,20 +1,30 @@
 {
-  "name": "user-service",
-  "version": "1.0.0",
-  "main": "index.js",
-  "scripts": {
-    "test": "echo \"Error: no test specified\" && exit 1",
-    "dev": "nodemon --legacy-watch ./src/_index.js"
-  },
-  "keywords": [],
-  "author": "",
-  "license": "ISC",
-  "type": "module",
-  "description": "",
-  "dependencies": {
-    "cors": "^2.8.5",
-    "dotenv": "^17.2.1",
-    "express": "^5.1.0",
-    "nodemon": "^3.1.10"
-  }
+	"name": "booking-service",
+	"version": "1.0.0",
+	"main": "index.js",
+	"scripts": {
+		"test": "echo \"Error: no test specified\" && exit 1",
+		"dev": "npx nodemon --legacy-watch --exec npx ts-node ./src/index.ts",
+		"build": "npx tsc",
+		"start": "node dist/src/index.js"
+	},
+	"keywords": [],
+	"author": "",
+	"license": "ISC",
+	"type": "commonjs",
+	"description": "This is the Booking Service",
+	"dependencies": {
+		"@prisma/client": "^6.19.0",
+		"axios": "1.12.2",
+		"cors": "^2.8.5",
+		"dotenv": "^17.2.1",
+		"express": "^5.1.0",
+		"nodemon": "^3.1.10"
+	},
+	"devDependencies": {
+		"@types/cors": "^2.8.19",
+		"@types/express": "^5.0.3",
+		"@types/node": "^24.8.1",
+		"prisma": "^6.19.0"
+	}
 }

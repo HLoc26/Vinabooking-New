@@ -7,7 +7,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/accommodation-service/.env
+            - ./API/accommodation-service/docker.env
         ports:
             - "3001:3001"
         volumes:
@@ -19,12 +19,16 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/auth-service/.env
+            - ./API/auth-service/docker.env
         ports:
             - "3002:3002"
+            - "50052:50052"
         volumes:
             - ./API/auth-service:/app
             - /app/node_modules
+        sysctls:
+            - net.ipv6.conf.all.disable_ipv6=1
+            - net.ipv6.conf.default.disable_ipv6=1
 
     booking-service:
         build:
@@ -32,7 +36,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/booking-service/.env
+            - ./API/booking-service/docker.env
         ports:
             - "3003:3003"
         volumes:
@@ -45,7 +49,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/review-service/.env
+            - ./API/review-service/docker.env
         ports:
             - "3004:3004"
         volumes:
@@ -58,7 +62,7 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/room-service/.env
+            - ./API/room-service/docker.env
         ports:
             - "3005:3005"
         volumes:
@@ -71,11 +75,39 @@ services:
             dockerfile: "Dockerfile"
         env_file:
             - ./API/common.env
-            - ./API/user-service/.env
+            - ./API/user-service/docker.env
         ports:
             - "3006:3006"
         volumes:
             - ./API/user-service:/app
+            - /app/node_modules
+
+    image-service:
+        build:
+            context: "./"
+            dockerfile: "./API/image-service/Dockerfile"
+        env_file:
+            - ./API/common.env
+            - ./API/image-service/docker.env
+        ports:
+            - "3007:3007"
+            - "50057:50057"
+        volumes:
+            - ./API/image-service:/app
+            - /app/node_modules
+
+    email-service:
+        build:
+            context: "./"
+            dockerfile: "./API/email-service/Dockerfile"
+        env_file:
+            - ./API/common.env
+            - ./API/email-service/docker.env
+        ports:
+            - "3008:3008"
+            - "50058:50058"
+        volumes:
+            - ./API/email-service:/app
             - /app/node_modules
 
     api-gateway:
@@ -118,6 +150,13 @@ services:
             - "3306:3306"
         volumes:
             - mysql-data:/var/lib/mysql
+    redis:
+        image: redis:8.2.1-alpine
+        ports:
+            - "6379:6379"
+        volumes:
+            - redis-data:/data
 
 volumes:
     mysql-data:
+    redis-data:

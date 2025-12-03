@@ -8,19 +8,23 @@ import { globalIgnores } from "eslint/config";
 export default tseslint.config([
     // API config
     {
-        files: ["API/**/*.js"],
+        files: ["API/**/*.{js,ts}"],
         extends: [js.configs.recommended, tseslint.configs.recommended],
         languageOptions: {
             ecmaVersion: 2020,
             globals: globals.browser,
+            parserOptions: {
+                tsconfigRootDir: new URL(".", import.meta.url).pathname,
+            },
         },
         rules: {
             semi: ["error", "always"], // semi: true
             quotes: ["error", "double"], // double quotes
             "comma-dangle": ["error", "only-multiline"], // trailingComma: es5
-            indent: ["error", "spaces", "tabs"], // useTabs: true
+            indent: ["error", "tab", { SwitchCase: 1 }], // use 4 spaces for tabs
             "max-len": ["error", { code: 200 }], // printWidth: 200
             "linebreak-style": ["error", "windows"], // endOfLine: crlf
+            "@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
         },
     },
     // UI config
@@ -31,6 +35,9 @@ export default tseslint.config([
         languageOptions: {
             ecmaVersion: 2020,
             globals: globals.browser,
+            parserOptions: {
+                tsconfigRootDir: new URL(".", import.meta.url).pathname,
+            },
         },
         rules: {
             semi: ["error", "always"], // semi: true
