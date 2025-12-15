@@ -1,6 +1,6 @@
 import axios, { AxiosInstance } from "axios";
 import config from "../config";
-import type { ImageDto } from "../types/ImageDto";
+import type { ServiceImageDto } from "../types/accommodation.types";
 
 interface ApiResponse<T> {
 	success: boolean;
@@ -9,7 +9,7 @@ interface ApiResponse<T> {
 }
 
 interface ImageServiceData {
-	images: ImageDto[];
+	images: ServiceImageDto[];
 }
 
 class ImageClient {
@@ -30,7 +30,7 @@ class ImageClient {
 	 * YÊU CẦU: image-service phải có endpoint:
 	 * GET /images?entityType=ACCOMMODATION&entityId=:id
 	 */
-	async getImagesForEntity(entityId: string): Promise<ImageDto[]> {
+	async getImagesForEntity(entityId: string): Promise<ServiceImageDto[]> {
 		const entityType = "ACCOMMODATION";
 
 		const url = `/${entityType}/${entityId}`;
