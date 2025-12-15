@@ -94,6 +94,17 @@ export const HeroSearchBar: React.FC = () => {
 		setGuests(criteria.guests);
 	}, [criteria.keyword, criteria.dates, criteria.guests]);
 
+	useEffect(() => {
+		function handleClickOutside(e: MouseEvent) {
+			if (refs.location.current && !refs.location.current.contains(e.target as Node)) {
+				handleToggleDropdown("location", false);
+			}
+		}
+
+		document.addEventListener("mousedown", handleClickOutside);
+		return () => document.removeEventListener("mousedown", handleClickOutside);
+	}, []);
+
 	return (
 		<Box
 			ref={searchRef}
@@ -138,8 +149,7 @@ export const HeroSearchBar: React.FC = () => {
 				}}
 			>
 				{/* DESTINATION */}
-				<Box
-					onBlur={() => handleToggleDropdown("location", false)}
+				<Box //
 					ref={refs.location}
 					sx={{ gridArea: "destination", position: "relative", borderRight: { md: "1px solid" }, borderRightColor: { md: "grey.300" } }}
 				>
