@@ -3,17 +3,19 @@ import { NotFoundError } from "../errors";
 import { roomClient } from "../clients/room.client";
 import { imageClient } from "../clients/image.client";
 import { EAccommodationType } from "@prisma/client";
-import type { SearchQuery } from "../types/Search";
-import type { AccommodationFromRepository, AccommodationSearchResultItem } from "../types/accommodation";
+import { AccommodationEntity, SearchQuery, ServiceImageDto, ServiceRoomDto, SortByOption, SearchResultItem } from "../types/accommodation.types";
+
+const MAX_SEARCH_LOOPS = 3; // Max loops to find enough available accommodations
+const AVAILABILITY_CHECK_BATCH_OVERHEAD = 10; // Fetch extra items to account for unavailable ones
 
 export class AccommodationService {
-	async getAccommodationById(id: string, startDate?: string, endDate?: string) {
+	async getAccommodationById(id: string, startDate?: string, endDate?: string): Promise<AccommodationEntity> {
 		console.log(`[AccommodationService] Fetching details for accomm ID: ${id}`);
 
 		// 1. Create 3 Promises to run in parallel
 		const accommodationPromise = accommodationRepository.findById(id);
-		const roomsPromise = roomClient.getRoomsByAccommodationId(id, startDate, endDate);
-		const imagesPromise = imageClient.getImagesForEntity(id);
+		const roomsPromise = roomClient.getRoomsByAccommodationId(id, startDate, endDate) as Promise<ServiceRoomDto[]>;
+		const imagesPromise = imageClient.getImagesForEntity(id) as Promise<ServiceImageDto[]>;
 
 		// 2. Await all Promises
 		const [accommodation, rooms, images] = await Promise.all([accommodationPromise, roomsPromise, imagesPromise]);
@@ -34,21 +36,15 @@ export class AccommodationService {
 	/**
 	 * Gets Accommodation details by a Room ID.
 	 */
-	async getAccommodationByRoomId(roomId: string) {
+	async getAccommodationByRoomId(roomId: string): Promise<AccommodationEntity> {
 		console.log(`[AccommodationService] Finding accommodation for room ID: ${roomId}`);
-		// 1. Call Room Service Client to get the Accommodation ID
+
 		const accommodationId = await roomClient.getAccommodationIdByRoomId(roomId);
 		console.log(`[AccommodationService] Found accommodation ID: ${accommodationId} for room ID: ${roomId}`);
 
-		// 2. Use the existing getAccommodationById to fetch details (which includes fetching rooms again)
-		const accommodationDetails = await this.getAccommodationById(accommodationId);
-
-		return accommodationDetails;
+		return this.getAccommodationById(accommodationId);
 	}
 
-	/**
-	 * Gets homepage statistics: popular accommodation types and cities.
-	 */
 	async getHomepageStats() {
 		console.log("[AccommodationService] Fetching homepage stats...");
 
@@ -70,9 +66,6 @@ export class AccommodationService {
 		};
 	}
 
-	/**
-	 * Counts accommodations based on optional city and type filters.
-	 */
 	async getCount(city?: string, type?: string) {
 		const count = await accommodationRepository.count({
 			city: city,
@@ -90,141 +83,32 @@ export class AccommodationService {
 	 * SEARCH API (Full Flow)
 	 */
 	async searchAccommodations(query: SearchQuery) {
-		const { keyword, type, checkIn, checkOut, adults, children, rooms, minPrice, maxPrice, facilities, page = "1", limit = "20", sortBy } = query;
+		const pageNum = Number(query.page || "1");
+		const limitNum = Number(query.limit || "20");
 
-		const limitNum = Number(limit);
-		const pageNum = Number(page);
-		const requiredRooms = rooms ? Number(rooms) : 1;
+		// Step 1: Get initial list of candidate IDs from Room service if needed.
+		const filteredIds = await this._getInitialFilteredIds(query);
 
-		// --- BƯỚC 1: Lọc ID theo Giá & Người ---
-		let filteredIds: string[] | undefined = undefined;
-		const needsRoomSort = sortBy === "price_asc" || sortBy === "price_desc" || sortBy === "recommended";
-		if (minPrice || maxPrice || adults || children || needsRoomSort) {
-			const result = await roomClient.getFilteredAccommodationIds(
-				minPrice ? Number(minPrice) : undefined,
-				maxPrice ? Number(maxPrice) : undefined,
-				adults ? Number(adults) : undefined,
-				children ? Number(children) : undefined,
-				sortBy
-			);
-
-			// Nếu lọc mà không tìm thấy ID nào -> Trả về rỗng ngay
-			if (!result || result.length === 0) {
-				return {
-					data: [],
-					meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 },
-				};
-			}
-			filteredIds = result;
+		// If filtering by room properties returns no candidates, we can stop early.
+		if (filteredIds?.length === 0) {
+			return {
+				data: [],
+				meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 },
+			};
 		}
 
-		// --- BƯỚC 2: Loop Search & Check Availability ---
-		const finalResults: AccommodationFromRepository[] = [];
-		let currentOffset = (pageNum - 1) * limitNum;
-		let hasMoreToCheck = true;
-		let loopCount = 0;
-		const needsAvailabilityCheck = checkIn && checkOut;
-		let totalMatchesInDB = 0;
+		// Step 2: Find accommodations matching the criteria and check availability.
+		const { availableAccommodations, totalMatchesInDB } = await this._findAndCheckAvailability(query, filteredIds, pageNum, limitNum);
 
-		while (finalResults.length < limitNum && hasMoreToCheck && loopCount < 3) {
-			loopCount++;
-			const batchLimit = limitNum + 10; // Lấy dư để bù
+		// Step 3: Enrich the results with images and final pricing.
+		const enrichedResults = await this._enrichAccommodationsWithDetails(availableAccommodations, query.checkIn, query.checkOut);
 
-			const searchResult = await accommodationRepository.search(
-				{
-					keyword: keyword,
-					type: type as EAccommodationType,
-					ids: filteredIds,
-					facilities: facilities ? (Array.isArray(facilities) ? facilities : [facilities]) : undefined,
-				},
-				currentOffset,
-				batchLimit,
-				sortBy
-			);
+		// Step 4: Sort the final list.
+		const sortedResults = this._sortResults(enrichedResults, query.sortBy);
 
-			const candidates: AccommodationFromRepository[] = searchResult.data as AccommodationFromRepository[];
-			totalMatchesInDB = searchResult.total;
-
-			if (candidates.length === 0) {
-				hasMoreToCheck = false;
-				break;
-			}
-
-			if (needsAvailabilityCheck) {
-				const checkPromises = candidates.map(async (acc) => {
-					try {
-						const roomList = await roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut);
-
-						// Check xem có loại phòng nào còn đủ số lượng (requiredRooms) không
-						const isAvailable = roomList.some((r: any) => {
-							const remaining = r.remainingQuantity || 0;
-							return remaining >= requiredRooms;
-						});
-
-						if (isAvailable) return acc;
-						return null;
-					} catch (e) {
-						return null;
-					}
-				});
-
-				const results = await Promise.all(checkPromises);
-				const validResults = results.filter((r): r is AccommodationFromRepository => r !== null);
-
-				finalResults.push(...validResults);
-			} else {
-				finalResults.push(...candidates);
-			}
-
-			currentOffset += candidates.length;
-			if (candidates.length < batchLimit) hasMoreToCheck = false;
-		}
-
-		// --- BƯỚC 3: Format & Lấy ảnh ---
-		const slicedResults = finalResults.slice(0, limitNum);
-
-		const formattedData: AccommodationSearchResultItem[] = await Promise.all(
-			slicedResults.map(async (acc) => {
-				// 1. Lấy ảnh và phòng song song
-				const imagesPromise = imageClient.getImagesForEntity(acc.id);
-				const roomsPromise = roomClient.getRoomsByAccommodationId(acc.id);
-
-				const [images, rooms] = await Promise.all([imagesPromise, roomsPromise]);
-
-				// 2. Xử lý ảnh -> thumbnail
-				const thumbnail = images.filter((i) => i.variant === "OPTIMIZED")[0]?.url ?? null;
-
-				// 3. Xử lý giá -> minPrice
-				let minPrice = 0;
-				if (rooms && rooms.length > 0) {
-					const prices = rooms.map((r: any) => Number(r.price));
-					minPrice = Math.min(...prices);
-				}
-
-				// 4. Xử lý facilities -> string[]
-				const facilityNames = acc.facilities ? acc.facilities.map((f) => f.facility.name) : [];
-
-				// 5. Loại bỏ các trường không cần thiết khỏi object cuối
-				const { facilities, ownerId, isActive, ...restOfAcc } = acc;
-
-				return {
-					...restOfAcc,
-					facilities: facilityNames,
-					thumbnail,
-					minPrice,
-				};
-			})
-		);
-
-		// --- BƯỚC 4: Sắp xếp lại kết quả cuối cùng (Client-side Sort) ---
-		if (sortBy === "price_asc" || sortBy === "recommended") {
-			formattedData.sort((a, b) => a.minPrice - b.minPrice);
-		} else if (sortBy === "price_desc") {
-			formattedData.sort((a, b) => b.minPrice - a.minPrice);
-		}
-
+		// Step 5: Return the paginated response.
 		return {
-			data: formattedData,
+			data: sortedResults,
 			meta: {
 				page: pageNum,
 				limit: limitNum,
@@ -232,6 +116,167 @@ export class AccommodationService {
 				totalPages: Math.ceil(totalMatchesInDB / limitNum) || 1,
 			},
 		};
+	}
+
+	// =================================================================
+	// PRIVATE HELPER METHODS FOR SEARCH
+	// =================================================================
+
+	/**
+	 * Step 1: If room-related filters are present, call Room service to get a pre-filtered list of accommodation IDs.
+	 */
+	private async _getInitialFilteredIds(query: SearchQuery): Promise<string[] | undefined> {
+		const { minPrice, maxPrice, adults, children, sortBy, rooms } = query;
+		const needsRoomSort = sortBy === SortByOption.PRICE_ASC || sortBy === SortByOption.PRICE_DESC || sortBy === SortByOption.RECOMMENDED;
+
+		if (!minPrice && !maxPrice && !adults && !children && !needsRoomSort) {
+			return undefined; // No room-related filters, no need to call Room service yet.
+		}
+
+		const requiredRooms = rooms ? Number(rooms) : 1;
+		const totalAdults = adults ? Number(adults) : 0;
+		const totalChildren = children ? Number(children) : 0;
+
+		const adultsPerRoom = totalAdults > 0 ? Math.ceil(totalAdults / requiredRooms) : undefined;
+		const childrenPerRoom = totalChildren > 0 ? Math.ceil(totalChildren / requiredRooms) : undefined;
+
+		console.log("[AccommodationService] Getting pre-filtered IDs from RoomService...");
+		const result = await roomClient.getFilteredAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
+		return result || undefined;
+	}
+
+	/**
+	 * Step 2: Loop through batched search results from the repository and check for availability if dates are provided.
+	 */
+	private async _findAndCheckAvailability(query: SearchQuery, filteredIds: string[] | undefined, pageNum: number, limitNum: number) {
+		const { keyword, type, facilities, checkIn, checkOut, rooms, sortBy } = query;
+		let totalMatchesInDB = 0;
+
+		if (checkIn && checkOut) {
+			// --- Path with Availability Check (more complex) ---
+			const finalResults: AccommodationEntity[] = [];
+			let currentOffset = (pageNum - 1) * limitNum;
+			let hasMoreToCheck = true;
+			let loopCount = 0;
+
+			while (finalResults.length < limitNum && hasMoreToCheck && loopCount < MAX_SEARCH_LOOPS) {
+				loopCount++;
+				const batchLimit = limitNum - finalResults.length + AVAILABILITY_CHECK_BATCH_OVERHEAD;
+
+				const searchResult = await accommodationRepository.search(
+					{ keyword, type, ids: filteredIds, facilities: facilities ? (Array.isArray(facilities) ? facilities : [facilities]) : undefined },
+					currentOffset,
+					batchLimit
+				);
+
+				const candidates: AccommodationEntity[] = searchResult.data as AccommodationEntity[];
+				totalMatchesInDB = searchResult.total;
+
+				if (candidates.length === 0) {
+					hasMoreToCheck = false;
+					break;
+				}
+
+				const requiredRooms = rooms ? Number(rooms) : 1;
+				const availableCandidates = await this._filterForAvailability(candidates, checkIn, checkOut, requiredRooms);
+
+				finalResults.push(...availableCandidates);
+				currentOffset += candidates.length;
+
+				if (currentOffset >= totalMatchesInDB) {
+					hasMoreToCheck = false;
+				}
+			}
+			return { availableAccommodations: finalResults.slice(0, limitNum), totalMatchesInDB };
+		} else {
+			// --- Path without Availability Check (simpler) ---
+			const offset = (pageNum - 1) * limitNum;
+			const searchResult = await accommodationRepository.search(
+				{ keyword, type, ids: filteredIds, facilities: facilities ? (Array.isArray(facilities) ? facilities : [facilities]) : undefined },
+				offset,
+				limitNum,
+				sortBy
+			);
+			totalMatchesInDB = searchResult.total;
+			const availableAccommodations = searchResult.data as AccommodationEntity[];
+			return { availableAccommodations, totalMatchesInDB };
+		}
+	}
+
+	/**
+	 * Helper for Step 2: Filters a batch of accommodations for room availability.
+	 */
+	private async _filterForAvailability(accommodations: AccommodationEntity[], checkIn: string, checkOut: string, requiredRooms: number): Promise<AccommodationEntity[]> {
+		const availabilityPromises = accommodations.map(async (acc) => {
+			try {
+				const roomList = (await roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut)) as ServiceRoomDto[];
+				const isAvailable = roomList.some((r) => (r.remainingQuantity || 0) >= requiredRooms);
+
+				if (isAvailable) {
+					acc.rooms = roomList; // Attach rooms data to avoid re-fetching
+					return acc;
+				}
+				return null;
+			} catch (error) {
+				console.error(`[AccommodationService] Failed to check availability for accomm ID ${acc.id}. Error:`, error);
+				return null;
+			}
+		});
+
+		const results = await Promise.all(availabilityPromises);
+		return results.filter((r): r is AccommodationEntity => r !== null);
+	}
+
+	/**
+	 * Step 3: Fetches images and calculates minimum price for a list of accommodations.
+	 */
+	private async _enrichAccommodationsWithDetails(accommodations: AccommodationEntity[], checkIn?: string, checkOut?: string): Promise<SearchResultItem[]> {
+		const enrichedPromises = accommodations.map(async (acc) => {
+			// Fetch images
+			const imagesPromise = imageClient.getImagesForEntity(acc.id) as Promise<ServiceImageDto[]>;
+
+			// Fetch rooms ONLY if they weren't fetched during availability check
+			const roomsPromise = acc.rooms ? Promise.resolve(acc.rooms) : (roomClient.getRoomsByAccommodationId(acc.id, checkIn, checkOut) as Promise<ServiceRoomDto[]>);
+
+			const [images, roomsData] = await Promise.all([imagesPromise, roomsPromise]);
+
+			// Calculate thumbnail
+			const thumbnail = images.length > 0 ? images[0].url : null;
+
+			// Calculate minPrice
+			let minPrice: number | null = null;
+			if (roomsData && roomsData.length > 0) {
+				const prices = roomsData.map((r) => Number(r.price)).filter((p) => p > 0);
+				if (prices.length > 0) {
+					minPrice = Math.min(...prices);
+				}
+			}
+
+			// eslint-disable-next-line @typescript-eslint/no-unused-vars
+			const { rooms, ...rest } = acc; // Remove rooms from final object to keep payload light
+
+			return {
+				...rest,
+				thumbnail,
+				minPrice,
+			};
+		});
+
+		return Promise.all(enrichedPromises);
+	}
+
+	/**
+	 * Step 4: Sorts the final results based on the sortBy query parameter.
+	 */
+	private _sortResults(accommodations: SearchResultItem[], sortBy?: SortByOption): SearchResultItem[] {
+		if (sortBy === SortByOption.PRICE_ASC || sortBy === SortByOption.RECOMMENDED) {
+			// Using slice() to avoid mutating the original array
+			return accommodations.slice().sort((a, b) => (a.minPrice || Infinity) - (b.minPrice || Infinity));
+		}
+		if (sortBy === SortByOption.PRICE_DESC) {
+			return accommodations.slice().sort((a, b) => (b.minPrice || -Infinity) - (a.minPrice || -Infinity));
+		}
+		return accommodations;
 	}
 }
 
