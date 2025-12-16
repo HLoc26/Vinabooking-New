@@ -42,13 +42,13 @@ module.exports = {
 			args: "run start",
 			watch: true,
 		},
-		// {
-		// 	name: "review-service",
-		// 	cwd: "./API/review-service",
-		// 	script: "npm",
-		// 	args: "run start",
-		// 	watch: true,
-		// },
+		{
+			name: "review-service",
+			cwd: "./API/review-service",
+			script: "npm",
+			args: "run start",
+			watch: true,
+		},
 		{
 			name: "room-service",
 			cwd: "./API/room-service",
