@@ -3,7 +3,7 @@ import express from "express";
 import proxy from "express-http-proxy";
 import cors from "cors";
 dotenv.config({ path: [".env"] });
-const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net/"];
+const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
 const proxyHeaderOptions = {
 	proxyReqOptDecorator: (proxyReqOpts, srcReq) => {
@@ -70,4 +70,3 @@ app.use(
 app.use("/email", proxy(process.env.EMAIL_ENDPOINT, proxyHeaderOptions));
 
 app.listen(3000, () => console.log("API Gateway running on port 3000"));
-
