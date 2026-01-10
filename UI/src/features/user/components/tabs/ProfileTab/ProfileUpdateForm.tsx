@@ -4,10 +4,12 @@ import { useEffect, useState } from "react";
 import useUserContextProvider from "../../../../../context/UserContext/hook";
 import { MuiTelInput } from "mui-tel-input";
 import type { UserDto } from "../../../../../types/UserDto";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 
 const ProfileUpdateForm: React.FC = () => {
 	const [editing, setEditing] = useState(false);
 	const { userInfo, updateUserInfo } = useUserContextProvider();
+	const { pushNotification } = usePushNotificationContext();
 
 	const [draft, setDraft] = useState<UserDto | null>(null);
 
@@ -19,8 +21,14 @@ const ProfileUpdateForm: React.FC = () => {
 	const handleSave = async () => {
 		if (!draft) return;
 
-		await updateUserInfo({ name: draft.name, phone: draft.phone });
-		setEditing(false);
+		try {
+			await updateUserInfo({ name: draft.name, phone: draft.phone });
+			pushNotification("Profile updated successfully", "success");
+			setEditing(false);
+		} catch (error) {
+			const err = error as Error;
+			pushNotification(err.message || "Failed to update profile", "error");
+		}
 	};
 
 	const handleCancel = () => {

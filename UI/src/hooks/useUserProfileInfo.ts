@@ -39,13 +39,15 @@ const useUserProfileInfo = () => {
 
 	const updateUserInfo = useCallback(
 		async (data: Partial<UserDto>) => {
-			if (!userInfo) return;
+			if (!userInfo || !userInfo.id) return;
 
 			const updatedUser = await userApi.updateUser(userInfo.id, data);
 
 			if (updatedUser.data) {
 				setUserInfo(updatedUser.data);
 				updateUserInStorage(updatedUser.data);
+			} else {
+				throw new Error(updatedUser.error || "Failed to update profile");
 			}
 		},
 		[userInfo, updateUserInStorage]
