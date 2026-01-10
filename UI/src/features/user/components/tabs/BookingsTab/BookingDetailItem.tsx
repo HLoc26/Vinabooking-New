@@ -115,7 +115,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: "auto" }}>
 				{accommodation ? (
 					<>
-						<CardMedia component="img" image={thumbnails?.[0].url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
+						<CardMedia component="img" image={thumbnails?.[0]?.url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
 						<StatusBadge status={status} />
 					</>
 				) : (
