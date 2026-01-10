@@ -8,7 +8,7 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MenuIcon from "@mui/icons-material/Menu";
 import Button from "@mui/material/Button";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useLocation, useNavigate } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
 
@@ -26,6 +26,8 @@ const pages = [
 	{ label: "About Us", path: "/about" },
 ];
 const NavigationBar: React.FC = () => {
+	const navigate = useNavigate();
+	const location = useLocation();
 	const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 	const [anchorElAccommodation, setAnchorElAccommodation] = useState<null | HTMLElement>(null);
 	const [anchorElProfile, setAnchorElProfile] = useState<null | HTMLElement>(null);
@@ -43,6 +45,9 @@ const NavigationBar: React.FC = () => {
 			const success = await logout();
 			if (!success) {
 				throw new Error("Failed to logout");
+			}
+			if (location.pathname.startsWith("/user")) {
+				navigate("/");
 			}
 			pushNotification("Logged out successfully!", "success");
 		} catch (error) {
