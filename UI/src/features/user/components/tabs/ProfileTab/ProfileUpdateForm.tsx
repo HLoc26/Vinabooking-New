@@ -21,6 +21,17 @@ const ProfileUpdateForm: React.FC = () => {
 	const handleSave = async () => {
 		if (!draft) return;
 
+		if ((draft.name || "").length > 50) {
+			pushNotification("Name is too long", "error");
+			return;
+		}
+
+		const invalidNameRegex = /[/!@#,\p{Extended_Pictographic}]/u;
+		if (invalidNameRegex.test(draft.name || "")) {
+			pushNotification("Name contains invalid characters", "error");
+			return;
+		}
+
 		try {
 			await updateUserInfo({ name: draft.name, phone: draft.phone });
 			pushNotification("Profile updated successfully", "success");
