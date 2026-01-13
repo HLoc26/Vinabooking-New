@@ -49,6 +49,14 @@ export default function DetailPage() {
 		if (urlCheckIn && urlCheckOut) {
 			finalCheckIn = new Date(urlCheckIn);
 			finalCheckOut = new Date(urlCheckOut);
+			if (finalCheckOut <= finalCheckIn) {
+				// Tự động set Check-out = Check-in + 1 ngày
+				const correctedCheckOut = new Date(finalCheckIn);
+				correctedCheckOut.setDate(correctedCheckOut.getDate() + 1);
+
+				finalCheckOut = correctedCheckOut;
+				shouldUpdateUrl = true; // Cờ này bật lên để trigger cập nhật URL ở đoạn code dưới
+			}
 		} else {
 			const tomorrow = new Date();
 			tomorrow.setDate(tomorrow.getDate() + 1);
