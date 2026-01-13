@@ -87,6 +87,12 @@ export const HeroSearchBar: React.FC = () => {
 		navigate(`/search?${params}`);
 	};
 
+	// Sanitize keyword input
+	const sanitizeKeyword = (value: string) => {
+		// keeps letters, numbers, spaces (Unicode-safe)
+		return value.replace(/[^\p{L}\p{N} ]/gu, "");
+	};
+
 	// Keep local state in sync if context changes externally
 	useEffect(() => {
 		setKeyword(criteria.keyword);
@@ -155,7 +161,11 @@ export const HeroSearchBar: React.FC = () => {
 							placeholder="Search destinations"
 							variant="standard"
 							value={keyword}
-							onChange={(e) => setKeyword(e.target.value)}
+							onChange={(e) =>{
+								const initialValue = e.target.value;
+								const sanitizedValue = sanitizeKeyword(initialValue);
+								setKeyword(sanitizedValue);
+							}}
 							onFocus={(e) => {
 								e.stopPropagation();
 								handleToggleDropdown("location", true);

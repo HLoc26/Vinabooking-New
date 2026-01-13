@@ -1,4 +1,4 @@
-version: "3.9"
+# version: "3.9"
 
 services:
     accommodation-service:
@@ -6,7 +6,7 @@ services:
             context: "./API/accommodation-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/accommodation-service/docker.env
         ports:
             - "3001:3001"
@@ -18,7 +18,7 @@ services:
             context: "./API/auth-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/auth-service/docker.env
         ports:
             - "3002:3002"
@@ -35,7 +35,7 @@ services:
             context: "./API/booking-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/booking-service/docker.env
         ports:
             - "3003:3003"
@@ -48,7 +48,7 @@ services:
             context: "./API/review-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/review-service/docker.env
         ports:
             - "3004:3004"
@@ -61,7 +61,7 @@ services:
             context: "./API/room-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/room-service/docker.env
         ports:
             - "3005:3005"
@@ -74,7 +74,7 @@ services:
             context: "./API/user-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/user-service/docker.env
         ports:
             - "3006:3006"
@@ -87,7 +87,7 @@ services:
             context: "./"
             dockerfile: "./API/image-service/Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/image-service/docker.env
         ports:
             - "3007:3007"
@@ -101,7 +101,7 @@ services:
             context: "./"
             dockerfile: "./API/email-service/Dockerfile"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/email-service/docker.env
         ports:
             - "3008:3008"
@@ -117,7 +117,7 @@ services:
         ports:
             - "3000:3000"
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
             - ./API/api-gateway/.env
         depends_on:
             - accommodation-service
@@ -145,7 +145,7 @@ services:
     db:
         image: mysql:8.4
         env_file:
-            - ./API/common.env
+            - ./API/.env.example.env
         ports:
             - "3306:3306"
         volumes:
