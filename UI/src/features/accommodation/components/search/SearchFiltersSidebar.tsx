@@ -29,6 +29,17 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityL
 		facilities: criteria.facilities,
 	});
 
+	useEffect(() => {
+		setLocals({
+			type: criteria.type,
+			price: {
+			min: criteria.price.min,
+			max: criteria.price.max,
+			},
+			facilities: criteria.facilities,
+		});
+	}, [criteria.type, criteria.price.min, criteria.price.max, criteria.facilities]);
+
 	// Debounced navigate
 	useEffect(() => {
 		if (!pendingParams) return;

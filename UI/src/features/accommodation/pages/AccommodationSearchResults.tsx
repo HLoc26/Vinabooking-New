@@ -83,6 +83,13 @@ export default function AccommodationSearchResults() {
 	};
 
 	const handleClearAllFilters = () => {
+		handleUpdateSearchCriteria("type", EAccommodationType.ALL);
+		handleUpdateSearchCriteria("price", {
+			min: PRICE_FILTER_CONFIG.MIN,
+			max: PRICE_FILTER_CONFIG.MAX,
+		});
+		handleUpdateSearchCriteria("facilities", []);
+		handleUpdateSearchCriteria("pagination", { ...criteria.pagination, page: 1 });
 		const params = new URLSearchParams();
 
 		params.set("keyword", criteria.keyword);
