@@ -1,0 +1,18 @@
+{
+	"compilerOptions": {
+		"target": "ES2022",
+		"module": "CommonJS",
+		"rootDir": "./",
+		"outDir": "dist",
+		"esModuleInterop": true,
+		"forceConsistentCasingInFileNames": true,
+		"strict": true,
+		"skipLibCheck": true,
+		"paths": {
+			"@src/*": ["./src/*"],
+			"@routes/*": ["./src/routes/*"]
+		}
+	},
+	"include": ["src", "generated/grpc"],
+	"exclude": ["node_modules"]
+}
