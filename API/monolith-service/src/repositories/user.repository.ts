@@ -1,6 +1,8 @@
-import { ERole, User } from "@generated/browser";
+import { User } from "@generated/browser";
 import { PrismaClient } from "@generated/client";
-import CreateUserDto from "../types/dtos/create-user.dto";
+import { UserCreateWithoutFavouritesInput } from "@generated/models";
+import { UserUpdateInput } from "../types/dtos/update-user.dto";
+import { UserWithFavourites } from "../types/dtos/get-user.dto";
 
 class UserRepository {
 	readonly #prismaClient: PrismaClient;
@@ -9,7 +11,7 @@ class UserRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	public async getByEmail(email: string, withFavourites: boolean = false): User {
+	public async getByEmail(email: string, withFavourites: boolean = false): Promise<User | null> {
 		const queryOptions = {
 			where: { email },
 			include: {},
@@ -25,10 +27,10 @@ class UserRepository {
 			};
 		}
 
-		return this.#prismaClient.user.findUnique(queryOptions);
+		return await this.#prismaClient.user.findUnique(queryOptions);
 	}
 
-	public async getUserById(id: string, withFavourites: boolean = false): User {
+	public async getUserById(id: string, withFavourites: boolean = false): Promise<User | null> {
 		const queryOptions = {
 			where: { id },
 			include: {},
@@ -47,14 +49,10 @@ class UserRepository {
 		return await this.#prismaClient.user.findUnique(queryOptions);
 	}
 
-	public async createUser(id: string, name: string, email: string, phone: string, role: ERole) {
+	public async createUser(input: UserCreateWithoutFavouritesInput): Promise<UserWithFavourites> {
 		const user = await this.#prismaClient.user.create({
 			data: {
-				id: id,
-				name: name,
-				email: email,
-				phone: phone,
-				role: role,
+				...input,
 				favourites: {
 					create: {
 						name: "My Favourite List",
@@ -69,14 +67,15 @@ class UserRepository {
 		return user;
 	}
 
-	public async updateUser(id: string, data: CreateUserDto) {
-		return await this.#prismaClient.user.update({
+	public async updateUser(id: string, data: UserUpdateInput): Promise<User> {
+		const user = await this.#prismaClient.user.update({
 			where: { id },
 			data: {
 				name: data.name,
 				phone: data.phone,
 			},
 		});
+		return user;
 	}
 }
 
