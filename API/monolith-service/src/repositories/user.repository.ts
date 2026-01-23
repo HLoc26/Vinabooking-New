@@ -11,7 +11,11 @@ class UserRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	public async getByEmail(email: string, withFavourites: boolean = false): Promise<User | null> {
+	// Overloading cases
+	public async getByEmail(email: string): Promise<User | null>;
+	public async getByEmail(email: string, withFavourites: true): Promise<UserWithFavourites | null>;
+	public async getByEmail(email: string, withFavourites: false): Promise<User | null>;
+	public async getByEmail(email: string, withFavourites: boolean = false): Promise<User | UserWithFavourites | null> {
 		const queryOptions = {
 			where: { email },
 			include: {},
@@ -30,7 +34,11 @@ class UserRepository {
 		return await this.#prismaClient.user.findUnique(queryOptions);
 	}
 
-	public async getUserById(id: string, withFavourites: boolean = false): Promise<User | null> {
+	// Overloading cases
+	public async getUserById(id: string): Promise<User | null>;
+	public async getUserById(id: string, withFavourites: true): Promise<UserWithFavourites | null>;
+	public async getUserById(id: string, withFavourites: false): Promise<User | null>;
+	public async getUserById(id: string, withFavourites: boolean = false): Promise<User | UserWithFavourites | null> {
 		const queryOptions = {
 			where: { id },
 			include: {},
