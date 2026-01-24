@@ -57,7 +57,7 @@ class UserRepository {
 				},
 			},
 			include: {
-				favourites: true,
+				favourites: { include: { items: true } }, // include items though it will be empty
 			},
 		});
 
