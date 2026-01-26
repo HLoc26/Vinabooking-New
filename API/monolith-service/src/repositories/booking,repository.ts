@@ -1,5 +1,4 @@
-import { PrismaClient } from "@generated/client";
-import type { Booking } from "@generated/browser";
+import { PrismaClient, type Booking } from "@generated/client";
 import type { CreateBookingInput } from "../types/Bookings";
 import type { BookingWithDetails } from "../types/dtos/get-booking.dto";
 
