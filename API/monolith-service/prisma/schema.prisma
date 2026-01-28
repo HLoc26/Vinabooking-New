@@ -52,8 +52,72 @@ model User {
 
     favourites FavouriteList[]
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt         DateTime           @default(now())
+    updatedAt         DateTime           @updatedAt
+    userAuthProviders UserAuthProvider[]
+}
+
+// Auth
+enum EProvider {
+    Credentials
+    Google
+}
+
+model UserAuthProvider {
+    email    String
+    userId   String
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    provider EProvider @default(Credentials)
+
+    @@id([userId, provider])
+    @@index([email])
+}
+
+//Booking
+model Booking {
+    id          String         @id @default(uuid())
+    startDate   DateTime
+    endDate     DateTime
+    guestCount  Int            @default(1)
+    leaderName  String?
+    leaderEmail String?
+    totalPrice  Decimal?       @db.Decimal(10, 2)
+    phone       String?
+    referenceNo Int            @unique
+    status      EBookingStatus @default(BOOKED)
+
+    // Relations
+    details   BookingDetail[]
+    userId    String // who made the booking (traveler)   
+    createdAt DateTime        @default(now())
+    updatedAt DateTime        @updatedAt
+}
+
+model BookingDetail {
+    id    String  @id @default(uuid())
+    count Int     @default(1)
+    note  String?
+
+    // Relations
+    bookingId String
+    Booking   Booking   @relation(fields: [bookingId], references: [id])
+    itemId    String // itemType
+    itemType  EItemType
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+}
+
+enum EBookingStatus {
+    DRAFT
+    PENDING // waiting for payment, confirmation from accommodation owner
+    CANCELLED
+    BOOKED // successfully paid and confirmed
+    COMPLETED // stay completed, review can be left
+}
+
+enum EItemType {
+    ROOM
+    BED
 }
 
 // Accommodation
@@ -347,4 +411,19 @@ model AmenityConfig {
     @@index([roomId])
     @@index([amenityId])
     @@map("amenity_configs")
+//Review
+
+model Review {
+    id              String   @id @default(uuid()) // id của review đó
+    star            Int?
+    comment         String   @db.Text // optional
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    accommodationId String
+    bookingId       String?
+    userId          String // user id của người đăng review
+    // Self relation
+    parentId        String?
+    parent          Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
+    replies         Review[] @relation("ReviewToReplies")
 }

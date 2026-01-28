@@ -1,4 +1,4 @@
-import { PrismaClient } from "@generated/client";
+import { PrismaClient, Facility } from "@generated/client";
 
 class FacilityRepository {
 	readonly #prismaClient: PrismaClient;
@@ -7,7 +7,7 @@ class FacilityRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	public async findAll() {
+	public async findAll(): Promise<Facility[]> {
 		return await this.#prismaClient.facility.findMany();
 	}
 }
