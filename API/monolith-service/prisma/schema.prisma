@@ -257,3 +257,20 @@ model FacilityConfig {
     @@index([facilityId])
     @@map("facility_configs")
 }
+
+//Review
+
+model Review {
+    id              String   @id @default(uuid()) // id của review đó
+    star            Int?
+    comment         String   @db.Text // optional
+    createdAt       DateTime @default(now())
+    updatedAt       DateTime @updatedAt
+    accommodationId String
+    bookingId       String?
+    userId          String // user id của người đăng review
+    // Self relation
+    parentId        String?
+    parent          Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
+    replies         Review[] @relation("ReviewToReplies")
+}
