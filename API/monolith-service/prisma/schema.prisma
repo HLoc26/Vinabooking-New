@@ -52,6 +52,23 @@ model User {
 
     favourites FavouriteList[]
 
-    createdAt DateTime @default(now())
-    updatedAt DateTime @updatedAt
+    createdAt         DateTime           @default(now())
+    updatedAt         DateTime           @updatedAt
+    userAuthProviders UserAuthProvider[]
+}
+
+// Auth
+enum EProvider {
+    Credentials
+    Google
+}
+
+model UserAuthProvider {
+    email    String
+    userId   String
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    provider EProvider @default(Credentials)
+
+    @@id([userId, provider])
+    @@index([email])
 }
