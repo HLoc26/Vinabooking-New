@@ -15,7 +15,7 @@ class UserRepository {
 		email: string,
 		withFavourites: T // generic boolean
 	) {
-		this.#findOne({ email }, withFavourites);
+		return this.#findOne({ email }, withFavourites);
 	}
 
 	// Overloading cases
