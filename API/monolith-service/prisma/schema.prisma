@@ -411,6 +411,8 @@ model AmenityConfig {
     @@index([roomId])
     @@index([amenityId])
     @@map("amenity_configs")
+}
+
 //Review
 
 model Review {
