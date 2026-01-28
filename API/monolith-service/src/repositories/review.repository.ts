@@ -1,28 +1,37 @@
-import { CreateReviewPayload } from "../types/Review";
-import { PrismaClient } from "../../src/generated/client";
+import { PrismaClient, Prisma } from "../../src/generated/client";
 
 class ReviewRepository {
-	constructor(private prisma: PrismaClient) {}
+	constructor(private readonly prisma: PrismaClient) {}
 
-	public async create(reviewData: CreateReviewPayload, userId: string) {
-		return this.prisma.review.create({
-			data: {
-				...reviewData,
-				userId,
+	// ---------- create ----------
+	public async create(data: Prisma.ReviewUncheckedCreateInput) {
+		return this.prisma.review.create({ data });
+	}
+
+	public async findParentById(id: string) {
+		return this.prisma.review.findFirst({
+			where: {
+				id,
+				parentId: null,
 			},
 		});
 	}
 
-	public async findParentById(id: string) {
-		return this.prisma.review.findUnique({ where: { id, parent: null } });
-	}
-
+	// ---------- find by accommodation ----------
 	public async findByAccommodationId(accommodationId: string) {
-		return this.prisma.review.findMany({ where: { accommodationId } });
+		return this.prisma.review.findMany({
+			where: { accommodationId },
+			orderBy: { createdAt: "desc" },
+		});
 	}
 
+	// ---------- find by user ----------
 	public async findByUserId(userId: string) {
-		return this.prisma.review.findMany({ where: { userId } });
+		return this.prisma.review.findMany({
+			where: { userId },
+			orderBy: { createdAt: "desc" },
+		});
 	}
 }
+
 export default ReviewRepository;

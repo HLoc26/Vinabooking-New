@@ -1,4 +1,0 @@
-export type UserPayload = {
-	id: string;
-	name: string;
-};
