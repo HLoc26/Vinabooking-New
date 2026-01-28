@@ -1,5 +1,5 @@
 import { PrismaClient, type Prisma, type EAccommodationType } from "@generated/client";
-import type { SearchFilters } from "../types/accommodation.types";
+import type { SearchFilters, AccommodationWithDetails, AccommodationSearchResult } from "../types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -8,7 +8,7 @@ class AccommodationRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	public async findById(id: string) {
+	public async findById(id: string): Promise<AccommodationWithDetails | null> {
 		return await this.#prismaClient.accommodation.findUnique({
 			where: { id },
 			include: {
@@ -18,26 +18,30 @@ class AccommodationRepository {
 		});
 	}
 
-	public async countByType() {
-		return await this.#prismaClient.accommodation.groupBy({
-			by: ["type"],
+	public async countByType(): Promise<{ type: EAccommodationType; _count: { id: number } }[]> {
+		const result = await this.#prismaClient.accommodation.groupBy({
+			by: ["type"] as const,
 			where: { isActive: true },
 			_count: { id: true },
 			orderBy: { _count: { id: "desc" } },
 		});
+
+		return result;
 	}
 
-	public async countByCity() {
-		return await this.#prismaClient.address.groupBy({
-			by: ["city"],
+	public async countByCity(): Promise<{ city: string; _count: { id: number } }[]> {
+		const result = await this.#prismaClient.address.groupBy({
+			by: ["city"] as const,
 			where: { accommodation: { isActive: true } },
 			_count: { id: true },
 			orderBy: { _count: { id: "desc" } },
 			take: 20,
 		});
+
+		return result as unknown as { city: string; _count: { id: number } }[];
 	}
 
-	public async count(filters: { city?: string; type?: EAccommodationType }) {
+	public async count(filters: { city?: string; type?: EAccommodationType }): Promise<number> {
 		const where: Prisma.AccommodationWhereInput = { isActive: true };
 		if (filters.type) where.type = filters.type;
 		if (filters.city) where.address = { city: { contains: filters.city } };
@@ -45,7 +49,7 @@ class AccommodationRepository {
 		return await this.#prismaClient.accommodation.count({ where });
 	}
 
-	public async search(filters: SearchFilters, offset: number, limit: number, sortBy: string = "newest") {
+	public async search(filters: SearchFilters, offset: number, limit: number, sortBy: string = "newest"): Promise<AccommodationSearchResult> {
 		const where: Prisma.AccommodationWhereInput = {
 			isActive: true,
 		};
