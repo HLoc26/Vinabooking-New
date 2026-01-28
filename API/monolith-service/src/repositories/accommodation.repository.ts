@@ -1,5 +1,5 @@
-import { PrismaClient, type Prisma, type EAccommodationType } from "@generated/client";
-import type { SearchFilters, AccommodationWithDetails, AccommodationSearchResult } from "../types/accommodation.types";
+import { PrismaClient, Prisma, type EAccommodationType } from "@generated/client";
+import { SearchFilters, AccommodationWithDetails, AccommodationSearchResult, ESortOption } from "../types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -23,7 +23,7 @@ class AccommodationRepository {
 			by: ["type"] as const,
 			where: { isActive: true },
 			_count: { id: true },
-			orderBy: { _count: { id: "desc" } },
+			orderBy: { _count: { id: Prisma.SortOrder.desc } },
 		});
 
 		return result;
@@ -34,7 +34,7 @@ class AccommodationRepository {
 			by: ["city"] as const,
 			where: { accommodation: { isActive: true } },
 			_count: { id: true },
-			orderBy: { _count: { id: "desc" } },
+			orderBy: { _count: { id: Prisma.SortOrder.desc } },
 			take: 20,
 		});
 
@@ -49,7 +49,7 @@ class AccommodationRepository {
 		return await this.#prismaClient.accommodation.count({ where });
 	}
 
-	public async search(filters: SearchFilters, offset: number, limit: number, sortBy: string = "newest"): Promise<AccommodationSearchResult> {
+	public async search(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST): Promise<AccommodationSearchResult> {
 		const where: Prisma.AccommodationWhereInput = {
 			isActive: true,
 		};
@@ -86,9 +86,16 @@ class AccommodationRepository {
 		}
 
 		// 5. Sort
-		let orderBy: Prisma.AccommodationOrderByWithRelationInput = { createdAt: "desc" };
-		if (sortBy === "name_asc") orderBy = { name: "asc" };
-		else if (sortBy === "name_desc") orderBy = { name: "desc" };
+		let orderBy: Prisma.AccommodationOrderByWithRelationInput = { createdAt: Prisma.SortOrder.desc };
+
+		switch (sortBy) {
+			case ESortOption.NAME_ASC:
+				orderBy = { name: Prisma.SortOrder.asc };
+				break;
+			case ESortOption.NAME_DESC:
+				orderBy = { name: Prisma.SortOrder.desc };
+				break;
+		}
 
 		const [data, total] = await Promise.all([
 			this.#prismaClient.accommodation.findMany({
