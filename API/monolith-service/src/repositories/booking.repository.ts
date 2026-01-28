@@ -1,0 +1,89 @@
+import { PrismaClient, Prisma, Booking, BookingDetail } from "@generated/client";
+
+export type BookingWithDetails = Booking & {
+	details: BookingDetail[];
+};
+
+class BookingRepository {
+	readonly #prismaClient: PrismaClient;
+
+	constructor(prismaClient: PrismaClient) {
+		this.#prismaClient = prismaClient;
+	}
+
+	// ---------- findById ----------
+	public async findById<T extends boolean = false>(id: string, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
+		return this.#findOne({ id }, withDetails);
+	}
+
+	// ---------- findByUser ----------
+	public async findByUserId<T extends boolean = false>(userId: string, withDetails?: T): Promise<T extends true ? BookingWithDetails[] : Booking[]> {
+		const bookings = await this.#prismaClient.booking.findMany({
+			where: { userId },
+			include: withDetails ? { details: true } : undefined,
+		});
+
+		return bookings as T extends true ? BookingWithDetails[] : Booking[];
+	}
+
+	// ---------- internal shared finder ----------
+	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
+		const booking = await this.#prismaClient.booking.findUnique({
+			where,
+			include: withDetails ? { details: true } : undefined,
+		});
+
+		return booking as (T extends true ? BookingWithDetails : Booking) | null;
+	}
+
+	// ---------- create ----------
+	public async create(data: Prisma.BookingCreateInput): Promise<BookingWithDetails> {
+		return this.#prismaClient.booking.create({
+			data,
+			include: {
+				details: true,
+			},
+		});
+	}
+
+	// ---------- status updates ----------
+	public async confirm(id: string): Promise<Booking> {
+		return this.#prismaClient.booking.update({
+			where: { id },
+			data: { status: "BOOKED" },
+		});
+	}
+
+	public async cancel(id: string): Promise<Booking> {
+		return this.#prismaClient.booking.update({
+			where: { id },
+			data: { status: "CANCELLED" },
+		});
+	}
+
+	// ---------- room availability ----------
+	public async countBookedRooms(roomIds: string[], startDate: Date, endDate: Date): Promise<Record<string, number>> {
+		const counts: Record<string, number> = {};
+
+		for (const roomId of roomIds) {
+			const details = await this.#prismaClient.bookingDetail.findMany({
+				where: {
+					itemId: roomId,
+					itemType: "ROOM",
+					Booking: {
+						status: "BOOKED",
+						startDate: { lte: endDate },
+						endDate: { gte: startDate },
+					},
+				},
+				select: { count: true },
+			});
+
+			counts[roomId] = details.reduce((sum, d) => sum + d.count, 0);
+		}
+
+		return counts;
+	}
+}
+
+export default BookingRepository;
