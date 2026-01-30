@@ -1,4 +1,4 @@
-import { PrismaClient, type EProvider, UserAuthProvider } from "@generated/client";
+import { PrismaClient, type EProvider, UserAuthProvider } from "@/generated/client";
 
 class AuthRepository {
 	readonly #prismaClient: PrismaClient;

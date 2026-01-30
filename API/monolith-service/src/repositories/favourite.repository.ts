@@ -1,6 +1,5 @@
-import { FavouriteItem, FavouriteList } from "@generated/browser";
-import { PrismaClient } from "@generated/client";
-import { PrismaClientKnownRequestError } from "@generated/internal/prismaNamespace";
+import { FavouriteItem, FavouriteList, PrismaClient } from "@/generated/client";
+import { PrismaClientKnownRequestError } from "@/generated/internal/prismaNamespace";
 
 class FavouriteRepository {
 	readonly #prismaClient: PrismaClient;

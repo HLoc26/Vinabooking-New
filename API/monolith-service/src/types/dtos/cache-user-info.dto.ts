@@ -1,4 +1,4 @@
-import { ERole } from "@generated/enums";
+import { ERole } from "@/generated/enums";
 
 export interface UserCacheInfo {
 	email: string; // key
