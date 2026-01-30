@@ -1,5 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { UserDto } from "../../types/UserDto";
+import { authStorage } from "./utils/authStorage";
 
 interface AuthState {
 	user: UserDto | null;
@@ -8,9 +9,9 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-	token: localStorage.getItem("accessToken"),
-	isAuthenticated: !!localStorage.getItem("accessToken"),
-	user: null,
+	token: (await authStorage.getAccessToken()) ?? null,
+	user: authStorage.getUserSync<UserDto>(),
+	isAuthenticated: !!authStorage.getAccessToken(),
 };
 
 export const authSlice = createSlice({
@@ -21,14 +22,19 @@ export const authSlice = createSlice({
 			state.token = action.payload.token;
 			state.user = action.payload.user;
 			state.isAuthenticated = true;
-			localStorage.setItem("accessToken", action.payload.token);
 		},
+
+		logoutSuccess: (state) => {
+			state.token = null;
+			state.user = null;
+			state.isAuthenticated = false;
+		},
+
 		updateUserSync: (state, action: PayloadAction<UserDto>) => {
 			state.user = action.payload;
 		},
 	},
 });
 
-export const { loginSuccess, updateUserSync } = authSlice.actions;
-
+export const { loginSuccess, logoutSuccess, updateUserSync } = authSlice.actions;
 export default authSlice.reducer;
