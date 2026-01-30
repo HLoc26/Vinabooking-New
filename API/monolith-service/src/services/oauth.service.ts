@@ -1,12 +1,13 @@
 import { GoogleOAuthResponse } from "../types/responses/google-oauth.response";
 import JwtService from "../utils/jwt";
-import CognitoClient from "@clients/cognito.client";
 
 class OAuthService {
+	readonly #googleClientId: string;
 	readonly #clientSecret: string;
 	readonly #redirectUri: string;
 
-	constructor(clientSecret: string, redirectUri: string) {
+	constructor(googleClientId: string, clientSecret: string, redirectUri: string) {
+		this.#googleClientId = googleClientId;
 		this.#clientSecret = clientSecret;
 		this.#redirectUri = redirectUri;
 	}
@@ -20,7 +21,7 @@ class OAuthService {
 			},
 			body: JSON.stringify({
 				code,
-				client_id: CognitoClient.appClientId,
+				client_id: this.#googleClientId,
 				client_secret: this.#clientSecret,
 				redirect_uri: this.#redirectUri,
 				grant_type: "authorization_code",
