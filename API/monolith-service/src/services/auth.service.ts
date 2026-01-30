@@ -14,8 +14,8 @@ import {
 	ConfirmForgotPasswordCommand,
 	AuthenticationResultType,
 } from "@aws-sdk/client-cognito-identity-provider";
-import CognitoClient from "@clients/cognito.client";
-import { AuthTokens } from "../types/auth/auth-token";
+import CognitoClient from "@/clients/cognito.client";
+import { AuthTokens } from "@/types/auth/auth-token";
 
 export interface AuthServiceConfig {
 	cognitoClient: CognitoIdentityProviderClient;

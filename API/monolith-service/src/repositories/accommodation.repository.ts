@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma, type EAccommodationType } from "@generated/client";
-import { SearchFilters, AccommodationWithDetails, AccommodationSearchResult, ESortOption } from "../types/accommodation.types";
+import { PrismaClient, Prisma, type EAccommodationType } from "@/generated/client";
+import { SearchFilters, AccommodationWithDetails, AccommodationSearchResult, ESortOption } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;

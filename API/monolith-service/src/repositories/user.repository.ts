@@ -1,7 +1,7 @@
-import { PrismaClient, Prisma, User } from "@generated/client";
-import { UserCreateWithoutFavouritesInput } from "@generated/models";
-import { UserUpdateInput } from "../types/dtos/update-user.dto";
-import { UserWithFavourites } from "../types/dtos/get-user.dto";
+import { PrismaClient, Prisma, User } from "@/generated/client";
+import { UserCreateWithoutFavouritesInput } from "@/generated/models";
+import { UserUpdateInput } from "@/types/dtos/update-user.dto";
+import { UserWithFavourites } from "@/types/dtos/get-user.dto";
 
 class UserRepository {
 	readonly #prismaClient: PrismaClient;

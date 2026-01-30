@@ -1,5 +1,5 @@
-import { GoogleOAuthResponse } from "../types/responses/google-oauth.response";
-import JwtService from "../utils/jwt";
+import { GoogleOAuthResponse } from "@/types/responses/google-oauth.response";
+import JwtService from "@/utils/jwt";
 
 class OAuthService {
 	readonly #googleClientId: string;

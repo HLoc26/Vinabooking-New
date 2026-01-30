@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma, Room, Bed } from "@generated/client";
-import type { RoomFilterOptions, RoomWithDetails, AmenityConfigWithDetails } from "../types/room.types";
+import { PrismaClient, Prisma, Room, Bed } from "@/generated/client";
+import type { RoomFilterOptions, RoomWithDetails, AmenityConfigWithDetails } from "@/types/room.types";
 
 class RoomRepository {
 	readonly #prismaClient: PrismaClient;

@@ -1,5 +1,5 @@
 import { CognitoJwtVerifier } from "aws-jwt-verify";
-import CognitoClient from "@clients/cognito.client";
+import CognitoClient from "@/clients/cognito.client";
 import { SimpleJwksCache } from "aws-jwt-verify/jwk";
 import { Fetcher } from "aws-jwt-verify/https";
 
