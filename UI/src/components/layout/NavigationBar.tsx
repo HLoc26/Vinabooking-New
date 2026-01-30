@@ -14,11 +14,12 @@ import { accommodationTypes } from "../../constants/accommodation.tsx";
 
 import LoginModal from "../shared/LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
-import useAuthContextProvider from "../../context/AuthContext/hook.tsx";
-import useUserContextProvider from "../../context/UserContext/hook.ts";
 import { Avatar, ListItemIcon, ListItemText, Stack } from "@mui/material";
 import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineRounded } from "@mui/icons-material";
 import useModalContext from "../../context/ModalContext/hook.ts";
+
+import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
+import useUserProfileInfo from "../../hooks/useUserProfileInfo";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -34,21 +35,21 @@ const NavigationBar: React.FC = () => {
 
 	const { pushNotification } = usePushNotificationContext();
 
-	const { logout } = useAuthContextProvider();
-	const { userInfo: user, userAvatars } = useUserContextProvider();
+	const { userInfo: user, userAvatars } = useUserProfileInfo();
 	const thumbnail = userAvatars.find((a) => a.variant === "THUMBNAIL");
 
-	const handleLogout = async () => {
-		try {
-			const success = await logout();
-			if (!success) {
-				throw new Error("Failed to logout");
-			}
-			pushNotification("Logged out successfully!", "success");
-		} catch (error) {
-			const err = error as Error;
-			pushNotification(err.message, "error");
-		}
+	const logoutMutation = useLogoutMutation();
+
+	const handleLogout = () => {
+		logoutMutation.mutate(undefined, {
+			onSuccess: () => {
+				pushNotification("Logged out successfully!", "success");
+				setAnchorElProfile(null);
+			},
+			onError: (error) => {
+				pushNotification(error.message || "Failed to logout", "error");
+			},
+		});
 	};
 
 	return (
@@ -187,7 +188,7 @@ const NavigationBar: React.FC = () => {
 										<ListItemIcon>
 											<ExitToAppOutlined />
 										</ListItemIcon>
-										<ListItemText>Logout</ListItemText>
+										<ListItemText>{logoutMutation.isPending ? "Logging out..." : "Logout"}</ListItemText>
 									</MenuItem>
 								</Menu>
 							</>
