@@ -4,7 +4,7 @@ import { useLocation, useNavigate } from "react-router-dom";
 import { useForgotPassword } from "../hooks/useForgotPassword";
 import PasswordToolbox from "../../../components/shared/PasswordToolbox";
 import { getPasswordChecklist } from "../utils/validatePassword";
-import OtpInput from "./OtpInput";
+import OtpInput from "../../../components/shared/OtpInput";
 
 const ForgotPasswordVerifyPage: React.FC = () => {
 	const navigate = useNavigate();
