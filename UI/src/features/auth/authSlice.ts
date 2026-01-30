@@ -9,7 +9,7 @@ interface AuthState {
 }
 
 const initialState: AuthState = {
-	token: (await authStorage.getAccessToken()) ?? null,
+	token: authStorage.getAccessToken() ?? null,
 	user: authStorage.getUserSync<UserDto>(),
 	isAuthenticated: !!authStorage.getAccessToken(),
 };
