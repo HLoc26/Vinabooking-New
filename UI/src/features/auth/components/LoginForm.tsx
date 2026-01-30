@@ -1,85 +1,63 @@
-import React, { useState } from "react";
+import React from "react";
+import { useForm, Controller } from "react-hook-form";
 import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
-import UserSwitcher from "./UserSwitcher";
-import type { EUserType } from "../../../types/UserDto";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { GoogleAuthButton } from "./GoogleAuthButton";
-import useAuthContextProvider from "../../../context/AuthContext/hook";
+import { useLogin } from "../hooks/useLogin"; // Using your TanStack hook
 
 type LoginFormProps = {
 	onSuccess?: () => void;
 };
 
+// Define the shape of your form for TypeScript
+interface ILoginFormInputs {
+	email: "";
+	password: "";
+}
+
 const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
-	const [values, setValues] = useState({
-		email: "",
-		password: "",
-		userType: "TRAVELLER" as EUserType,
-	});
-	const { login, loading } = useAuthContextProvider();
-
 	const { pushNotification } = usePushNotificationContext();
+	const { mutate: login, isPending } = useLogin();
 
-	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		return setValues((s) => ({ ...s, [e.target.name]: e.target.value }));
-	};
+	const { control, handleSubmit } = useForm<ILoginFormInputs>({
+		defaultValues: {
+			email: "",
+			password: "",
+		},
+	});
 
-	const handleUserType = (v: EUserType) => setValues((s) => ({ ...s, userType: v }));
-
-	const handleSubmit = async (e: React.FormEvent) => {
-		e.preventDefault();
-		if (!values.email) return pushNotification("You can't have an empty email, can you?");
-		if (!values.password) return pushNotification("You need to enter your password");
-
-		try {
-			const success = await login(values.email, values.password);
-			if (success) {
+	const onSubmit = (data: ILoginFormInputs) => {
+		// Validation is handled by RHF/TanStack, but you can add Zod later
+		login(data, {
+			onSuccess: () => {
 				pushNotification("Login success", "success");
-			}
-			if (onSuccess) {
-				onSuccess();
-			}
-		} catch (err) {
-			const error = err as Error;
-			pushNotification(error.message, "error");
-		}
+				onSuccess?.();
+			},
+			onError: (err: unknown) => {
+				const e = err as Error;
+				pushNotification(e.message || "Login failed", "error");
+			},
+		});
 	};
 
 	return (
-		<Box component="form" onSubmit={handleSubmit}>
-			<Box display="flex" justifyContent="center" mb={2}>
-				<UserSwitcher value={values.userType} onChange={handleUserType} />
-			</Box>
-
-			<TextField //
-				fullWidth
-				margin="normal"
-				label="Email"
+		<Box component="form" onSubmit={handleSubmit(onSubmit)} noValidate>
+			<Controller
 				name="email"
-				type="email"
-				value={values.email}
-				onChange={handleChange}
+				control={control}
+				rules={{ required: "You can't have an empty email, can you?" }}
+				render={({ field, fieldState: { error } }) => <TextField {...field} fullWidth margin="normal" label="Email" type="email" error={!!error} helperText={error?.message} />}
 			/>
 
-			<TextField //
-				fullWidth
-				margin="normal"
-				label="Password"
+			<Controller
 				name="password"
-				type="password"
-				value={values.password}
-				onChange={handleChange}
+				control={control}
+				rules={{ required: "You need to enter your password" }}
+				render={({ field, fieldState: { error } }) => <TextField {...field} fullWidth margin="normal" label="Password" type="password" error={!!error} helperText={error?.message} />}
 			/>
 
-			<Button //
-				fullWidth
-				variant="contained"
-				color="primary"
-				type="submit"
-				sx={{ mt: 2, py: 1.2 }}
-				disabled={loading}
-			>
-				{loading ? "Processing..." : "Log in"}
+			<Button fullWidth variant="contained" color="primary" type="submit" sx={{ mt: 2, py: 1.2 }} disabled={isPending}>
+				{isPending ? "Processing..." : "Log in"}
 			</Button>
 
 			<Typography textAlign="center" variant="body2" mt={1}>
@@ -94,6 +72,7 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					Register now
 				</Link>
 			</Typography>
+
 			<Box display="flex" flexDirection="column" alignItems="center" width="100%">
 				<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
 					<Divider sx={{ flexGrow: 1 }} />
@@ -102,7 +81,6 @@ const LoginForm: React.FC<LoginFormProps> = ({ onSuccess }) => {
 					</Typography>
 					<Divider sx={{ flexGrow: 1 }} />
 				</Box>
-
 				<GoogleAuthButton />
 			</Box>
 		</Box>
