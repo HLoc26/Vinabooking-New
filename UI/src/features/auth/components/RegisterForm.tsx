@@ -8,7 +8,7 @@ import useRegister from "../hooks/useRegister";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 import UserSwitcher from "../../../components/shared/UserSwitcher";
-import PasswordToolbox from "./PasswordToolbox";
+import PasswordToolbox from "../../../components/shared/PasswordToolbox";
 import type { EUserType } from "../../../types/UserDto";
 
 import { validatePassword, getPasswordChecklist } from "../utils/validatePassword";
