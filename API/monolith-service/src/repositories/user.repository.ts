@@ -1,5 +1,4 @@
-import { User } from "@generated/browser";
-import { PrismaClient } from "@generated/client";
+import { PrismaClient, Prisma, User } from "@generated/client";
 import { UserCreateWithoutFavouritesInput } from "@generated/models";
 import { UserUpdateInput } from "../types/dtos/update-user.dto";
 import { UserWithFavourites } from "../types/dtos/get-user.dto";
@@ -12,35 +11,24 @@ class UserRepository {
 	}
 
 	// Overloading cases
-	public async getByEmail(email: string): Promise<User | null>;
-	public async getByEmail(email: string, withFavourites: true): Promise<UserWithFavourites | null>;
-	public async getByEmail(email: string, withFavourites: false): Promise<User | null>;
-	public async getByEmail(email: string, withFavourites: boolean = false): Promise<User | UserWithFavourites | null> {
-		const queryOptions = {
-			where: { email },
-			include: {},
-		};
-
-		if (withFavourites) {
-			queryOptions.include = {
-				favourites: {
-					include: {
-						items: true,
-					},
-				},
-			};
-		}
-
-		return await this.#prismaClient.user.findUnique(queryOptions);
+	public async getByEmail<T extends boolean = false>(
+		email: string,
+		withFavourites: T // generic boolean
+	) {
+		return this.#findOne({ email }, withFavourites);
 	}
 
 	// Overloading cases
-	public async getUserById(id: string): Promise<User | null>;
-	public async getUserById(id: string, withFavourites: true): Promise<UserWithFavourites | null>;
-	public async getUserById(id: string, withFavourites: false): Promise<User | null>;
-	public async getUserById(id: string, withFavourites: boolean = false): Promise<User | UserWithFavourites | null> {
+	public async getUserById<T extends boolean = false>(
+		id: string,
+		withFavourites: T // generic boolean
+	) {
+		return this.#findOne({ id }, withFavourites);
+	}
+
+	async #findOne<T extends boolean>(where: Prisma.UserWhereUniqueInput, withFavourites?: T): Promise<(T extends true ? UserWithFavourites : User) | null> {
 		const queryOptions = {
-			where: { id },
+			where,
 			include: {},
 		};
 
@@ -54,7 +42,8 @@ class UserRepository {
 			};
 		}
 
-		return await this.#prismaClient.user.findUnique(queryOptions);
+		const user = await this.#prismaClient.user.findUnique(queryOptions);
+		return user as (T extends true ? UserWithFavourites : User) | null;
 	}
 
 	public async createUser(input: UserCreateWithoutFavouritesInput): Promise<UserWithFavourites> {
@@ -68,7 +57,7 @@ class UserRepository {
 				},
 			},
 			include: {
-				favourites: true,
+				favourites: { include: { items: true } }, // include items though it will be empty
 			},
 		});
 
