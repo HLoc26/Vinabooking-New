@@ -1,7 +1,7 @@
 import React, { type ReactNode } from "react";
 import CssBaseline from "@mui/material/CssBaseline";
-import NavigationBar from "../ui/NavigationBar";
-import Footer from "../ui/Footer";
+import NavigationBar from "./NavigationBar";
+import Footer from "./Footer";
 
 type TravelerLayoutProps = {
 	children: ReactNode;
