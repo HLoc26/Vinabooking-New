@@ -3,7 +3,7 @@ import { Box, Button, Typography, Link } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { OtpLocationState } from "../types/LocationState";
 import useRegister from "../hooks/useRegister";
-import OtpInput from "../components/OtpInput";
+import OtpInput from "../../../components/shared/OtpInput";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 const ConfirmOTPPage: React.FC = () => {
