@@ -12,7 +12,7 @@ import { Link as RouterLink } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
 
-import LoginModal from "../../features/auth/components/LoginModal.tsx";
+import LoginModal from "../shared/LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
 import useAuthContextProvider from "../../context/AuthContext/hook.tsx";
 import useUserContextProvider from "../../context/UserContext/hook.ts";
