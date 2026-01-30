@@ -4,7 +4,7 @@ import { IconButton } from "@mui/material";
 import { StarOutlineRounded, StarRounded } from "@mui/icons-material";
 import FavouritePickerModal from "../../features/user/components/FavouritePickerModal";
 import useModalContext from "../../context/ModalContext/hook";
-import LoginModal from "../../features/auth/components/LoginModal";
+import LoginModal from "./LoginModal";
 import useUserContextProvider from "../../context/UserContext/hook";
 
 interface FavouriteButtonProps {
