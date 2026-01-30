@@ -1,5 +1,5 @@
 import { Box, Paper, Typography, CircularProgress } from "@mui/material";
-import { useOAuthCallback } from "../hooks/useOAuthCallback";
+import { useOAuthCallback } from "../features/auth/hooks/useOAuthCallback";
 
 export const OAuthSuccessPage = () => {
 	const { loading } = useOAuthCallback();
