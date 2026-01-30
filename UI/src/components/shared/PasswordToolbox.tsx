@@ -2,7 +2,7 @@ import React from "react";
 import { Box, Typography, Popper, Paper, Stack, Fade } from "@mui/material";
 import DoneIcon from "@mui/icons-material/Done";
 import CloseIcon from "@mui/icons-material/Close";
-import type { PasswordChecklist } from "../utils/validatePassword";
+import type { PasswordChecklist } from "../../features/auth/utils/validatePassword";
 
 interface PasswordToolboxProps {
 	anchorEl: HTMLElement | null;

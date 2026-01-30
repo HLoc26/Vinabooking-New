@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Button, Divider, Link, TextField, Typography } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import { useForgotPassword } from "../hooks/useForgotPassword";
-import PasswordToolbox from "./PasswordToolbox";
+import PasswordToolbox from "../../../components/shared/PasswordToolbox";
 import { getPasswordChecklist } from "../utils/validatePassword";
 import OtpInput from "./OtpInput";
 
