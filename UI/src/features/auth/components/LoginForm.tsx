@@ -2,7 +2,7 @@ import React from "react";
 import { useForm, Controller } from "react-hook-form";
 import { Box, Button, TextField, Typography, Link, Divider } from "@mui/material";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-import { GoogleAuthButton } from "./GoogleAuthButton";
+import { GoogleAuthButton } from "../../../components/shared/GoogleAuthButton";
 import { useLogin } from "../hooks/useLogin"; // Using your TanStack hook
 
 type LoginFormProps = {
