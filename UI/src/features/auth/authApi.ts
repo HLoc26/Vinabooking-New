@@ -9,3 +9,7 @@ export const login = async (payload: {
 	if (response.data?.accessToken && response.data?.user) return response;
 	throw new Error("Invalid login response");
 };
+
+export const signOut = async () => {
+	return await AxiosInstance.post<ApiResponse<{ success: boolean }>>("/auth/sign-out").then((r) => r.data);
+};
