@@ -53,154 +53,152 @@ const NavigationBar: React.FC = () => {
 	};
 
 	return (
-		<>
-			<AppBar position="sticky" color="inherit" elevation={1}>
-				<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-					{/* Left */}
-					<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-						<Typography //
-							variant="h6"
-							component={RouterLink}
-							to="/"
-							sx={{ textDecoration: "none", color: "inherit", fontWeight: 600 }}
-						>
-							VinaBooking
-						</Typography>
+		<AppBar position="sticky" color="inherit" elevation={1}>
+			<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
+				{/* Left */}
+				<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
+					<Typography //
+						variant="h6"
+						component={RouterLink}
+						to="/"
+						sx={{ textDecoration: "none", color: "inherit", fontWeight: 600 }}
+					>
+						VinaBooking
+					</Typography>
 
-						{/* Desktop Menu */}
-						<Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
-							{/* pages */}
-							{pages.map((p) => (
-								<Button //
-									key={p.path}
-									component={RouterLink}
-									to={p.path}
-									sx={{ color: "text.primary" }}
-								>
-									{p.label}
-								</Button>
-							))}
-
-							{/* accommodation dropdown */}
+					{/* Desktop Menu */}
+					<Box sx={{ display: { xs: "none", md: "flex" }, gap: 1 }}>
+						{/* pages */}
+						{pages.map((p) => (
 							<Button //
-								startIcon={<ArrowDropDownIcon />}
-								onClick={(e) => setAnchorElAccommodation(e.currentTarget)}
+								key={p.path}
+								component={RouterLink}
+								to={p.path}
 								sx={{ color: "text.primary" }}
 							>
-								Accommodation Types
+								{p.label}
 							</Button>
+						))}
 
-							<Menu
-								anchorEl={anchorElAccommodation}
-								open={Boolean(anchorElAccommodation)}
-								onClose={() => setAnchorElAccommodation(null)}
-								slotProps={{ paper: { sx: { p: 2, minWidth: 400 } } }}
-							>
-								<Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
-									{accommodationTypes.map((item) => (
-										<MenuItem //
-											key={item.type}
-											component={RouterLink}
-											to={`/${item.type}`}
-											onClick={() => setAnchorElAccommodation(null)}
-											sx={{ gap: 1 }}
-										>
-											{item.icon}
-											{item.label}
-										</MenuItem>
-									))}
-								</Box>
-							</Menu>
-						</Box>
+						{/* accommodation dropdown */}
+						<Button //
+							startIcon={<ArrowDropDownIcon />}
+							onClick={(e) => setAnchorElAccommodation(e.currentTarget)}
+							sx={{ color: "text.primary" }}
+						>
+							Accommodation Types
+						</Button>
 
-						{/* Mobile menu */}
-						<Box sx={{ display: { xs: "flex", md: "none" } }}>
-							<IconButton onClick={(e) => setAnchorElNav(e.currentTarget)}>
-								<MenuIcon />
-							</IconButton>
-
-							<Menu anchorEl={anchorElNav} open={Boolean(anchorElNav)} onClose={() => setAnchorElNav(null)}>
-								{pages.map((p) => (
-									<MenuItem key={p.path} component={RouterLink} to={p.path} onClick={() => setAnchorElNav(null)}>
-										{p.label}
-									</MenuItem>
-								))}
-								<MenuItem disabled>Accommodation Types</MenuItem>
-
+						<Menu
+							anchorEl={anchorElAccommodation}
+							open={Boolean(anchorElAccommodation)}
+							onClose={() => setAnchorElAccommodation(null)}
+							slotProps={{ paper: { sx: { p: 2, minWidth: 400 } } }}
+						>
+							<Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
 								{accommodationTypes.map((item) => (
 									<MenuItem //
 										key={item.type}
 										component={RouterLink}
-										to={`/accommodation/${item.type}`}
-										onClick={() => setAnchorElNav(null)}
-										sx={{ pl: 4 }}
+										to={`/${item.type}`}
+										onClick={() => setAnchorElAccommodation(null)}
+										sx={{ gap: 1 }}
 									>
+										{item.icon}
 										{item.label}
 									</MenuItem>
 								))}
-							</Menu>
-						</Box>
+							</Box>
+						</Menu>
 					</Box>
 
-					{/* Right side */}
-					<Box mr={7}>
-						{user ? (
-							<>
-								<Button endIcon={<ArrowDropDownIcon />} onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
-									<Stack direction={"row"} alignItems={"center"} gap={2}>
-										<Avatar alt={user.name} src={thumbnail?.url} />
-										<Typography variant="subtitle2">{user.name || "Profile"}</Typography>
-									</Stack>
-								</Button>
+					{/* Mobile menu */}
+					<Box sx={{ display: { xs: "flex", md: "none" } }}>
+						<IconButton onClick={(e) => setAnchorElNav(e.currentTarget)}>
+							<MenuIcon />
+						</IconButton>
 
-								<Menu
-									anchorOrigin={{
-										vertical: "bottom",
-										horizontal: "right",
-									}}
-									transformOrigin={{
-										vertical: "top",
-										horizontal: "right",
-									}}
-									anchorEl={anchorElProfile}
-									open={Boolean(anchorElProfile)}
-									onClose={() => setAnchorElProfile(null)}
+						<Menu anchorEl={anchorElNav} open={Boolean(anchorElNav)} onClose={() => setAnchorElNav(null)}>
+							{pages.map((p) => (
+								<MenuItem key={p.path} component={RouterLink} to={p.path} onClick={() => setAnchorElNav(null)}>
+									{p.label}
+								</MenuItem>
+							))}
+							<MenuItem disabled>Accommodation Types</MenuItem>
+
+							{accommodationTypes.map((item) => (
+								<MenuItem //
+									key={item.type}
+									component={RouterLink}
+									to={`/accommodation/${item.type}`}
+									onClick={() => setAnchorElNav(null)}
+									sx={{ pl: 4 }}
 								>
-									<MenuItem component={RouterLink} to="/user/me/profile" onClick={() => setAnchorElProfile(null)}>
-										<ListItemIcon>
-											<PersonOutlineOutlined />
-										</ListItemIcon>
-										<ListItemText>My Profile</ListItemText>
-									</MenuItem>
-									<MenuItem component={RouterLink} to="/user/me/my-bookings" onClick={() => setAnchorElProfile(null)}>
-										<ListItemIcon>
-											<LuggageOutlined />
-										</ListItemIcon>
-										<ListItemText>My Bookings</ListItemText>
-									</MenuItem>
-									<MenuItem component={RouterLink} to="/user/me/favorites" onClick={() => setAnchorElProfile(null)}>
-										<ListItemIcon>
-											<StarOutlineRounded />
-										</ListItemIcon>
-										<ListItemText>Favorites</ListItemText>
-									</MenuItem>
-									<MenuItem onClick={handleLogout}>
-										<ListItemIcon>
-											<ExitToAppOutlined />
-										</ListItemIcon>
-										<ListItemText>{logoutMutation.isPending ? "Logging out..." : "Logout"}</ListItemText>
-									</MenuItem>
-								</Menu>
-							</>
-						) : (
-							<Button variant="outlined" onClick={() => openModal(<LoginModal onLoginSuccess={() => closeModal()} />)}>
-								Login
-							</Button>
-						)}
+									{item.label}
+								</MenuItem>
+							))}
+						</Menu>
 					</Box>
-				</Toolbar>
-			</AppBar>
-		</>
+				</Box>
+
+				{/* Right side */}
+				<Box mr={7}>
+					{user ? (
+						<>
+							<Button endIcon={<ArrowDropDownIcon />} onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
+								<Stack direction={"row"} alignItems={"center"} gap={2}>
+									<Avatar alt={user.name} src={thumbnail?.url} />
+									<Typography variant="subtitle2">{user.name || "Profile"}</Typography>
+								</Stack>
+							</Button>
+
+							<Menu
+								anchorOrigin={{
+									vertical: "bottom",
+									horizontal: "right",
+								}}
+								transformOrigin={{
+									vertical: "top",
+									horizontal: "right",
+								}}
+								anchorEl={anchorElProfile}
+								open={Boolean(anchorElProfile)}
+								onClose={() => setAnchorElProfile(null)}
+							>
+								<MenuItem component={RouterLink} to="/user/me/profile" onClick={() => setAnchorElProfile(null)}>
+									<ListItemIcon>
+										<PersonOutlineOutlined />
+									</ListItemIcon>
+									<ListItemText>My Profile</ListItemText>
+								</MenuItem>
+								<MenuItem component={RouterLink} to="/user/me/my-bookings" onClick={() => setAnchorElProfile(null)}>
+									<ListItemIcon>
+										<LuggageOutlined />
+									</ListItemIcon>
+									<ListItemText>My Bookings</ListItemText>
+								</MenuItem>
+								<MenuItem component={RouterLink} to="/user/me/favorites" onClick={() => setAnchorElProfile(null)}>
+									<ListItemIcon>
+										<StarOutlineRounded />
+									</ListItemIcon>
+									<ListItemText>Favorites</ListItemText>
+								</MenuItem>
+								<MenuItem onClick={handleLogout}>
+									<ListItemIcon>
+										<ExitToAppOutlined />
+									</ListItemIcon>
+									<ListItemText>{logoutMutation.isPending ? "Logging out..." : "Logout"}</ListItemText>
+								</MenuItem>
+							</Menu>
+						</>
+					) : (
+						<Button variant="outlined" onClick={() => openModal(<LoginModal onLoginSuccess={() => closeModal()} />)}>
+							Login
+						</Button>
+					)}
+				</Box>
+			</Toolbar>
+		</AppBar>
 	);
 };
 
