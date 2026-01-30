@@ -12,7 +12,7 @@ import PasswordToolbox from "./PasswordToolbox";
 import type { EUserType } from "../../../types/UserDto";
 
 import { validatePassword, getPasswordChecklist } from "../utils/validatePassword";
-import { GoogleAuthButton } from "./GoogleAuthButton";
+import { GoogleAuthButton } from "../../../components/shared/GoogleAuthButton";
 
 const RegisterForm: React.FC = () => {
 	const [values, setValues] = useState({
