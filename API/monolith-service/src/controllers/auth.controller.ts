@@ -75,6 +75,9 @@ class AuthController {
 		const savedUser = await this.#userService.saveUserFromCache(email);
 		if (!savedUser) throw new Error("Failed to save user to DB");
 
+		// Step 3: Create Provider Record
+		await this.#authRepository.createUserProvider(id, email, EProvider.Credentials);
+
 		return ResponseHelper.success<ConfirmUserResponse>(res, { success: true });
 	}
 
