@@ -1,4 +1,4 @@
-import { Prisma } from "@generated/browser";
+import { Prisma } from "@/generated/browser";
 
 export type UserWithFavourites = Prisma.UserGetPayload<{
 	include: {

@@ -1,9 +1,9 @@
-import { User } from "@generated/client";
-import UserRepository from "../repositories/user.repository";
-import { UserWithFavourites } from "../types/dtos/get-user.dto";
-import { UserCacheInfo } from "../types/dtos/cache-user-info.dto";
+import { User } from "@/generated/client";
+import UserRepository from "@/repositories/user.repository";
+import { UserWithFavourites } from "@/types/dtos/get-user.dto";
+import { UserCacheInfo } from "@/types/dtos/cache-user-info.dto";
 import redisClient from "../clients/redis.client";
-import { UserCreateWithoutFavouritesInput, UserUpdateInput } from "@generated/models";
+import { UserCreateWithoutFavouritesInput, UserUpdateInput } from "@/generated/models";
 
 class UserService {
 	readonly #userRepository: UserRepository;

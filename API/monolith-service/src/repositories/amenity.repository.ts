@@ -1,4 +1,4 @@
-import { PrismaClient, Amenity, EAmenityType } from "@generated/client";
+import { PrismaClient, Amenity, EAmenityType } from "@/generated/client";
 
 class AmenityRepository {
 	readonly #prismaClient: PrismaClient;

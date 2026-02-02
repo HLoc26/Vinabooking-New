@@ -1,4 +1,4 @@
-import { Prisma, type EAccommodationType } from "@generated/client";
+import { Prisma, type EAccommodationType } from "@/generated/client";
 
 export enum ESortOption {
 	NEWEST = "newest",

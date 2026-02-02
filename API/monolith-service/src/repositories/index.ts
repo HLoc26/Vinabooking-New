@@ -1,0 +1,9 @@
+export { default as AccommodationRepository } from "./accommodation.repository";
+export { default as AmenityRepository } from "./amenity.repository";
+export { default as AuthRepository } from "./auth.repository";
+export { default as BookingRepository } from "./booking.repository";
+export { default as FacilityRepository } from "./facility.repository";
+export { default as FavouriteRepository } from "./favourite.repository";
+export { default as ReviewRepository } from "./review.repository";
+export { default as RoomRepository } from "./room.repository";
+export { default as UserRepository } from "./user.repository";

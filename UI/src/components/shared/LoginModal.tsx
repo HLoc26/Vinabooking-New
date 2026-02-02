@@ -1,8 +1,8 @@
 import React from "react";
 import { DialogContent, DialogTitle, IconButton, Box } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
-import LoginForm from "./LoginForm";
-import useModalContext from "../../../context/ModalContext/hook";
+import LoginForm from "../../features/auth/components/LoginForm";
+import useModalContext from "../../context/ModalContext/hook";
 
 type LoginModalProps = {
 	onLoginSuccess: () => void;
