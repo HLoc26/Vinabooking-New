@@ -54,7 +54,8 @@ class AuthController {
 		} catch (error) {
 			// Rollback nếu cache lỗi
 			await this.#authService.deleteAccount(email);
-			throw new Error("Failed to cache user");
+			const e = error as Error;
+			ResponseHelper.error(res, e.message, 500);
 		}
 
 		return ResponseHelper.success<SignUpResponse>(res, cognitoResp);
