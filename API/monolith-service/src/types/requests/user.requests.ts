@@ -1,4 +1,3 @@
-import { User } from "@/generated/client";
 import { UserUpdateInput } from "@/generated/models";
 import { Request } from "express";
 
