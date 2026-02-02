@@ -1,6 +1,6 @@
 import { useNavigate } from "react-router-dom";
 import React from "react";
-import LoginModal from "../../features/auth/components/LoginModal";
+import LoginModal from "./LoginModal";
 import useAuthContextProvider from "../../context/AuthContext/hook";
 import useModalContext from "../../context/ModalContext/hook";
 

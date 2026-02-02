@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Card, CardContent, Typography } from "@mui/material";
-import RegisterForm from "../components/RegisterForm";
+import LoginForm from "../features/auth/components/LoginForm";
 
-const RegisterPage: React.FC = () => {
+const LoginPage: React.FC = () => {
 	return (
 		<Box //
 			display="flex"
@@ -11,7 +11,7 @@ const RegisterPage: React.FC = () => {
 			minHeight="100vh"
 			bgcolor="background.default"
 		>
-			<Card sx={{ width: 450, p: 3, boxShadow: 3 }}>
+			<Card sx={{ width: 400, p: 2, boxShadow: 3 }}>
 				<CardContent>
 					<Typography //
 						variant="h5"
@@ -19,10 +19,10 @@ const RegisterPage: React.FC = () => {
 						textAlign="center"
 						color="text.primary"
 					>
-						Register
+						Log In
 					</Typography>
 					<Box mt={3}>
-						<RegisterForm />
+						<LoginForm />
 					</Box>
 				</CardContent>
 			</Card>
@@ -30,4 +30,4 @@ const RegisterPage: React.FC = () => {
 	);
 };
 
-export default RegisterPage;
+export default LoginPage;

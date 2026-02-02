@@ -1,4 +1,4 @@
-import { Prisma } from "@generated/browser";
+import { Prisma } from "@/generated/browser";
 
 export type BookingWithDetails = Prisma.BookingGetPayload<{
 	include: {

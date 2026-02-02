@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, Booking, BookingDetail } from "@generated/client";
+import { PrismaClient, Prisma, Booking, BookingDetail } from "@/generated/client";
 
 export type BookingWithDetails = Booking & {
 	details: BookingDetail[];
