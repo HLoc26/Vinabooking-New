@@ -1,5 +1,6 @@
 import qs from "qs";
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
+import Cookies from "js-cookie";
 
 interface QueueItem {
 	resolve: (token: string | null) => void;
@@ -29,9 +30,9 @@ const processQueue = (error: unknown, token: string | null = null) => {
 };
 
 apiClient.interceptors.request.use(async (config) => {
-	const accessToken = await cookieStore.get(import.meta.env.VITE_ACCESS_TOKEN_KEY);
-	if (accessToken?.value && config.headers) {
-		config.headers.Authorization = `Bearer ${accessToken.value}`;
+	const accessToken = Cookies.get(import.meta.env.VITE_ACCESS_TOKEN_KEY);
+	if (accessToken && config.headers) {
+		config.headers.Authorization = `Bearer ${accessToken}`;
 	}
 	return config;
 });
