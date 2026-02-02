@@ -12,6 +12,7 @@ import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
 import cors from "cors";
+import cookieParser from "cookie-parser";
 import UserController from "./controllers/user.controller";
 import UserRouter from "./routes/user.routes";
 
@@ -65,6 +66,7 @@ app.use(
 	})
 );
 
+app.use(cookieParser());
 app.use(express.json());
 
 app.use((req, res, next) => {
