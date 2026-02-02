@@ -45,7 +45,7 @@ class AuthController {
 			await this.#userService.cacheUser({
 				email,
 				info: {
-					cognitoSub: cognitoResp.userSub,
+					id: cognitoResp.userSub,
 					name,
 					phone,
 					userType,
@@ -68,10 +68,7 @@ class AuthController {
 		const isConfirmed = await this.#authService.confirmSignUp(email, confirmCode);
 		if (!isConfirmed) throw new Error("Invalid OTP Code");
 
-		// Step 2: Create Provider Record
-		await this.#authRepository.createUserProvider(id, email, EProvider.Credentials);
-
-		// Step 3: Save to DB from Cache
+		// Step 2: Save to DB from Cache
 		const savedUser = await this.#userService.saveUserFromCache(email);
 		if (!savedUser) throw new Error("Failed to save user to DB");
 
