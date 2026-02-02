@@ -15,8 +15,10 @@ import cors from "cors";
 import cookieParser from "cookie-parser";
 import UserController from "./controllers/user.controller";
 import UserRouter from "./routes/user.routes";
+import { connectRedis } from "./clients/redis.client";
 
 const app: Express = express();
+connectRedis();
 
 // Clients
 const cognitoClient = CognitoClient.getInstance();
