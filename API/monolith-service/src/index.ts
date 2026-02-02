@@ -12,6 +12,8 @@ import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
 import cors from "cors";
+import UserController from "./controllers/user.controller";
+import UserRouter from "./routes/user.routes";
 
 const app: Express = express();
 
@@ -42,10 +44,12 @@ const oauthService = new OAuthService(
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
+const userController = new UserController(userService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
-const appRouter = new AppRouter(authRouter);
+const userRouter = new UserRouter(express.Router(), userController);
+const appRouter = new AppRouter(authRouter, userRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
