@@ -1,11 +1,6 @@
-import { ERole } from "@/generated/enums";
+import { UserCreateInput } from "@/generated/models";
 
 export interface UserCacheInfo {
 	email: string; // key
-	info: {
-		id: string; // cognito sub
-		name: string;
-		phone: string | null;
-		userType: ERole;
-	};
+	info: UserCreateInput;
 }

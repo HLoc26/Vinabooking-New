@@ -46,9 +46,10 @@ class AuthController {
 				email,
 				info: {
 					id: cognitoResp.userSub,
+					email,
 					name,
 					phone,
-					userType,
+					role: userType,
 				},
 			});
 		} catch (error) {
