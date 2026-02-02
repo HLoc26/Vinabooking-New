@@ -16,12 +16,14 @@
 		"@prisma/adapter-mariadb": "^7.3.0",
 		"@prisma/client": "^7.3.0",
 		"aws-jwt-verify": "^5.1.1",
+		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.6",
 		"dotenv": "^17.2.3",
 		"express": "^5.2.1",
 		"redis": "^5.10.0"
 	},
 	"devDependencies": {
+		"@types/cookie-parser": "^1.4.10",
 		"@types/cors": "^2.8.19",
 		"@types/express": "^5.0.6",
 		"@types/node": "^25.0.10",
