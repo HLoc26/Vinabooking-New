@@ -2,6 +2,7 @@ import { CognitoJwtVerifier } from "aws-jwt-verify";
 import CognitoClient from "@/clients/cognito.client";
 import { SimpleJwksCache } from "aws-jwt-verify/jwk";
 import { Fetcher } from "aws-jwt-verify/https";
+import { CognitoJwtPayload } from "aws-jwt-verify/jwt-model";
 
 class JwtFetcher implements Fetcher {
 	async fetch(uri: string, requestOptions?: Record<string, unknown>, data?: ArrayBuffer) {
@@ -25,7 +26,7 @@ class JwtFetcher implements Fetcher {
 }
 
 class JwtService {
-	public static async verifyToken(token: string, type: "id" | "access") {
+	public static async verifyToken(token: string, type: "id" | "access"): Promise<CognitoJwtPayload> {
 		const verifier = CognitoJwtVerifier.create(
 			{
 				userPoolId: CognitoClient.userPoolId,
