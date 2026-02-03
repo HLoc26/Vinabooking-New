@@ -1,3 +1,5 @@
+import BadRequestError from "@/errors/BadRequestError";
+import NotFoundError from "@/errors/NotFoundError";
 import { FavouriteItem, FavouriteList, PrismaClient } from "@/generated/client";
 import { PrismaClientKnownRequestError } from "@/generated/internal/prismaNamespace";
 
@@ -76,7 +78,7 @@ class FavouriteRepository {
 		} catch (error) {
 			// P2002: Unique Constraint Violation
 			if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
-				throw new Error("Duplicated name");
+				throw new BadRequestError("Duplicated name");
 			}
 			throw error;
 		}
@@ -84,7 +86,7 @@ class FavouriteRepository {
 
 	public async deleteFavouriteList(userId: string, listId: string): Promise<FavouriteList> {
 		if (!(await this.isOwner(listId, userId))) {
-			throw new Error("List not found or permission denied");
+			throw new NotFoundError("List not found or permission denied");
 		}
 
 		return await this.#prismaClient.favouriteList.delete({
@@ -94,7 +96,7 @@ class FavouriteRepository {
 
 	public async updateFavouriteList(userId: string, listId: string, name: string): Promise<FavouriteList> {
 		if (!(await this.isOwner(listId, userId))) {
-			throw new Error("List not found or permission denied");
+			throw new NotFoundError("List not found or permission denied");
 		}
 
 		try {
@@ -106,7 +108,7 @@ class FavouriteRepository {
 		} catch (error) {
 			// P2002: Unique Constraint Violation
 			if (error instanceof PrismaClientKnownRequestError && error.code === "P2002") {
-				throw new Error("Duplicated name");
+				throw new BadRequestError("Duplicated name");
 			}
 			throw error;
 		}
