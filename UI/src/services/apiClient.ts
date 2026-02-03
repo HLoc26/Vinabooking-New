@@ -1,6 +1,8 @@
 import qs from "qs";
 import axios, { AxiosError, type AxiosRequestConfig } from "axios";
-import Cookies from "js-cookie";
+import { authStorage } from "../features/auth/utils/authStorage";
+import { store } from "../app/store";
+import { loginSuccess, logoutSuccess } from "../features/auth/authSlice";
 
 interface QueueItem {
 	resolve: (token: string | null) => void;
@@ -29,18 +31,26 @@ const processQueue = (error: unknown, token: string | null = null) => {
 	failedQueue = [];
 };
 
-apiClient.interceptors.request.use(async (config) => {
-	const accessToken = Cookies.get(import.meta.env.VITE_ACCESS_TOKEN_KEY);
-	if (accessToken && config.headers) {
-		config.headers.Authorization = `Bearer ${accessToken}`;
-	}
-	return config;
-});
+// --- Request Interceptor ---
+apiClient.interceptors.request.use(
+	(config) => {
+		const accessToken = authStorage.getAccessToken();
+		if (accessToken && config.headers) {
+			config.headers.Authorization = `Bearer ${accessToken}`;
+		}
+		return config;
+	},
+	(error) => Promise.reject(error)
+);
 
+// --- Response Interceptor ---
 apiClient.interceptors.response.use(
 	(res) => res,
 	async (error: AxiosError) => {
 		const originalRequest = error.config as AxiosRequestConfig & { _retry?: boolean };
+		if (originalRequest.url?.includes("/auth/refresh")) {
+			throw error;
+		}
 
 		if (error.response?.status !== 401 || originalRequest._retry) {
 			throw error;
@@ -65,20 +75,38 @@ apiClient.interceptors.response.use(
 			const res = await apiClient.get("/auth/refresh");
 			const newAccessToken = res.data.data.accessToken as string;
 
-			if (!newAccessToken) throw new Error("Refresh token failed");
+			if (!newAccessToken) {
+				throw new Error("Refresh token success but no access token returned");
+			}
 
-			await cookieStore.set(import.meta.env.VITE_ACCESS_TOKEN_KEY, newAccessToken);
+			// 1. Lưu Storage
+			authStorage.setAccessToken(newAccessToken);
 
+			// 2. Đồng bộ Redux
+			const state = store.getState();
+			const currentUser = state.auth.user;
+			if (currentUser) {
+				store.dispatch(loginSuccess({ token: newAccessToken, user: currentUser }));
+			}
+
+			// 3. Xử lý hàng chờ
 			processQueue(null, newAccessToken);
 
+			// 4. Retry request gốc
 			if (originalRequest.headers) {
 				originalRequest.headers.Authorization = `Bearer ${newAccessToken}`;
 			}
 
 			return apiClient(originalRequest);
-		} catch (refreshErr) {
-			processQueue(refreshErr, null);
-			throw refreshErr;
+		} catch (error) {
+			processQueue(error, null);
+
+			// Cleanup
+			authStorage.clearAccessToken();
+			authStorage.clearUser();
+			store.dispatch(logoutSuccess());
+
+			throw error;
 		} finally {
 			isRefreshing = false;
 		}
