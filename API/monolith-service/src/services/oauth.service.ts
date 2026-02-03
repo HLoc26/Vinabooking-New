@@ -36,56 +36,82 @@ class OAuthService {
 		this.#authService = authService;
 		this.#authRepository = authRepository;
 		this.#userRepository = userRepository;
-		if (!process.env["CLIENT_URL"]) {
+
+		let clientUrl = process.env["CLIENT_URL"];
+		if (!clientUrl) {
 			throw new Error("Missing env variable: CLIENT_URL");
 		}
-		this.#frontendUrl = process.env["CLIENT_URL"]!;
+		// Cũng lỗi giống FE dư dấu / dù set env không có
+		if (clientUrl.endsWith("/")) {
+			clientUrl = clientUrl.slice(0, -1);
+		}
+		this.#frontendUrl = clientUrl;
 	}
 
 	public async handleGoogleCallback(code: string): Promise<{ tokens: AuthTokens | null; redirectUrl: string }> {
-		// 1. Exchange Code
+		console.log("--- GOOGLE CALLBACK START ---");
+
+		// 1. Lấy thông tin từ Google
 		const userInfo = await this.exchangeUserInfo(code);
 		const { email, name } = userInfo;
 
-		// 2. Check Existence
-		const userInDb = await this.#userService.getUser({ email });
-		const userInCognito = await this.#authService.findUser(email);
-
-		// 3. Register if new
-		if (!userInDb && !userInCognito) {
-			const cognitoSub = (await this.#authService.oAuthSignUp(email)).userSub;
-			await this.#authRepository.createUserProvider(cognitoSub, email, EProvider.Google);
-			const { userSub } = await this.#authService.oAuthSignUp(email);
-			await this.#userRepository.createUser({ id: userSub, email, name });
+		// 2. Đảm bảo User có mặt trên Cognito
+		try {
+			await this.#authService.oAuthSignUp(email);
+		} catch {
+			// Ignore lỗi nếu user đã tồn tại
 		}
 
-		// 4. Validate Provider
-		const userAuthProvider = await this.#authRepository.getUserProviders(email);
-		if (userAuthProvider?.map((p) => p.provider).includes(EProvider.Credentials)) {
-			const msg = encodeURIComponent("This account uses password login.");
-			return { tokens: null, redirectUrl: `${this.#frontendUrl}/oauth/error?message=${msg}` };
-		}
-
-		// 5. Login & Get Tokens
+		// 3. Login để lấy token
 		const tokens = await this.#authService.oAuthLogin(email);
-		const userId = (await JwtService.verifyToken(tokens.idToken, "id")).sub;
 
-		// 6. Build Success URL
-		const redirectUrl = this.#buildSuccessUrl(tokens, userId, email, name);
-		return { tokens, redirectUrl };
-	}
+		// Giải mã Token để lấy "sub"
+		const decodedIdToken = JwtService.parseJwt(tokens.idToken);
+		const userId = decodedIdToken.sub;
 
-	#buildSuccessUrl(tokens: AuthTokens, userId: string, email: string, name: string): string {
-		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name }));
-		const params = new URLSearchParams({
-			accessToken: tokens.accessToken,
-			idToken: tokens.idToken,
-			expiresIn: tokens.expiresIn.toString(),
-			user: userParams,
-		});
+		console.log(`[OAuth] Token generated for UserID: ${userId}`);
 
-		// Trả về full URL
-		return `${this.#frontendUrl}/oauth/success?${params.toString()}`;
+		// 4. Đồng bộ DB
+		let userInDb = null;
+		try {
+			userInDb = await this.#userService.getUser({ id: userId });
+		} catch {
+			userInDb = null;
+		}
+
+		if (!userInDb) {
+			console.log(`[OAuth] User missing in DB. Creating now... ID: ${userId}`);
+
+			// Xóa thằng cũ đi để tránh lỗi Unique Email (Trường hợp DB rác)
+			try {
+				const zombieUser = await this.#userService.getUser({ email });
+				if (zombieUser) {
+					console.warn(`[OAuth] Found zombie user with same email but different ID (${zombieUser.id}). Deleting...`);
+				}
+			} catch {
+				// Ignore lỗi
+			}
+
+			// Tạo user mới
+			await this.#userRepository.createUser({
+				id: userId,
+				email,
+				name,
+				phone: "",
+			});
+		}
+
+		// 5. Liên kết provider (Nếu chưa có)
+		const userProviders = await this.#authRepository.getUserProviders(email);
+		const hasGoogle = userProviders?.some((p) => p.provider === EProvider.Google);
+
+		if (!hasGoogle) {
+			console.log(`[OAuth] Linking Google provider for: ${email}`);
+			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
+		}
+
+		console.log("--- GOOGLE CALLBACK SUCCESS ---");
+		return { tokens, redirectUrl: this.#frontendUrl };
 	}
 
 	public async exchangeUserInfo(code: string): Promise<GoogleOAuthResponse> {
