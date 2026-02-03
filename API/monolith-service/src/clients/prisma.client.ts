@@ -31,6 +31,9 @@ const adapter = new PrismaMariaDb({
 
 	database: process.env["DB_NAME"],
 	connectionLimit: 5,
+
+	allowPublicKeyRetrieval: true,
+	ssl: false,
 });
 
 const prismaClient = new PrismaClient({ adapter });
