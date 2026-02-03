@@ -3,7 +3,6 @@ import { HomePage } from "../features/home/pages/Index";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
 import SearchPage from "../features/accommodation/pages/AccommodationSearchResults";
 
-import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
 import { UserRouter } from "./user";
@@ -54,7 +53,6 @@ export const AppRouter = () => (
 			{/* User, Auth, OAuth, Booking */}
 			<Route path="/user/*" element={<UserRouter />} />
 			<Route path="/auth/*" element={<AuthRouter />} />
-			<Route path="/oauth/*" element={<OAuthRouter />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
 		</Routes>
 	</>
