@@ -179,11 +179,35 @@ class AuthController {
 	}
 
 	public async googleCallback(req: GoogleCallbackRequest, res: Response) {
-		const { code } = req.query;
-		if (!code || typeof code !== "string") throw new Error("Missing code");
-		const { tokens, redirectUrl } = await this.#oauthService.handleGoogleCallback(code);
-		this.setRefreshTokenCookie(res, tokens?.refreshToken);
-		return res.redirect(redirectUrl);
+		try {
+			const { code } = req.query;
+			if (!code || typeof code !== "string") throw new Error("Missing code or invalid request");
+
+			const { tokens, redirectUrl } = await this.#oauthService.handleGoogleCallback(code);
+
+			if (redirectUrl.includes("/error")) {
+				let errorMessage = "Google Login Failed";
+				try {
+					const urlObj = new URL(redirectUrl);
+					const msgParam = urlObj.searchParams.get("message");
+					if (msgParam) errorMessage = msgParam;
+				} catch {
+					// Ignore invalid URL error, keep default message
+				}
+				throw new Error(errorMessage);
+			}
+
+			this.setRefreshTokenCookie(res, tokens?.refreshToken);
+			return res.redirect(redirectUrl);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "Unknown error";
+			console.error("Google Callback Error:", message);
+
+			let clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+			if (clientUrl.endsWith("/")) clientUrl = clientUrl.slice(0, -1);
+
+			return res.redirect(`${clientUrl}/auth/login?error=${encodeURIComponent(message)}`);
+		}
 	}
 
 	public async forgotPassword(req: ForgotPasswordRequest, res: Response<ApiResponse<ForgotPasswordResponse>>) {
