@@ -9,7 +9,7 @@ export const useRegisterLegacy = () => {
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState<string | null>(null);
 
-	const register = React.useCallback(async (name: string, email: string, password: string, phone: string, userType: string) => {
+	const registerLegacy = React.useCallback(async (name: string, email: string, password: string, phone: string, userType: string) => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -45,7 +45,7 @@ export const useRegisterLegacy = () => {
 		}
 	}, []);
 
-	const resendOtp = React.useCallback(async (email: string) => {
+	const resendOtpLegacy = React.useCallback(async (email: string) => {
 		try {
 			setLoading(true);
 			setError(null);
@@ -74,7 +74,7 @@ export const useRegisterLegacy = () => {
 		}
 	}, []);
 
-	const confirmOtp = React.useCallback(async (email: string, confirmCode: string) => {
+	const confirmOtpLegacy = React.useCallback(async (email: string, confirmCode: string) => {
 		try {
 			setLoading(true);
 			setError(null);
@@ -100,7 +100,7 @@ export const useRegisterLegacy = () => {
 		}
 	}, []);
 
-	return { register, resendOtp, confirmOtp, loading, error } as const;
+	return { registerLegacy, resendOtpLegacy, confirmOtpLegacy, loading, error } as const;
 };
 
 export const useRegister = () => {
