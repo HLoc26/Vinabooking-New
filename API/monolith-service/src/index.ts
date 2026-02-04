@@ -6,7 +6,8 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService } from "@/services";
+import { AuthService, OAuthService, UserService, EmailService } from "@/services";
+
 import { AuthRepository, UserRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
@@ -36,9 +37,11 @@ const userRepository = new UserRepository(prismaClient);
 const imageRepository = new ImageRepository(prismaClient);
 
 // Services
+const emailService = new EmailService();
 const authService = new AuthService({
 	cognitoClient: cognitoClient,
 	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+	emailService: emailService,
 });
 const userService = new UserService(userRepository);
 const oauthService = new OAuthService(
