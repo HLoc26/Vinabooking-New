@@ -22,17 +22,29 @@ import { ETokenType } from "@/types/auth/auth-token";
 import IdentityProviderError from "@/errors/IdentityProviderError";
 import BadRequestError from "@/errors/BadRequestError";
 import DatabaseError from "@/errors/DatabaseError";
+import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
 
 class AuthController {
 	readonly #authService: AuthService;
 	readonly #userService: UserService;
 	readonly #oauthService: OAuthService;
 	readonly #authRepository: AuthRepository;
+	readonly #frontendUrl: string;
 	constructor(authService: AuthService, userService: UserService, oauthService: OAuthService, authRepository: AuthRepository) {
 		this.#authService = authService;
 		this.#userService = userService;
 		this.#oauthService = oauthService;
 		this.#authRepository = authRepository;
+
+		let clientUrl = process.env["CLIENT_URL"];
+		if (!clientUrl) {
+			throw new EnvironmentNotSetError("Missing env variable: CLIENT_URL");
+		}
+		// Cũng lỗi giống FE dư dấu / dù set env không có
+		if (clientUrl.endsWith("/")) {
+			clientUrl = clientUrl.slice(0, -1);
+		}
+		this.#frontendUrl = clientUrl;
 	}
 
 	// 1. SignUp Flow (Gộp SignUp và Cache làm 1 flow xử lý)
@@ -164,7 +176,6 @@ class AuthController {
 
 	public async signOut(req: Request, res: Response<ApiResponse<SignOutResponse>>) {
 		const authHeader = req.headers.authorization;
-		console.log(req.headers);
 		if (!authHeader?.startsWith("Bearer ")) {
 			throw new BadRequestError("Access token missing");
 		}
@@ -194,18 +205,6 @@ class AuthController {
 
 			const { tokens, redirectUrl } = await this.#oauthService.handleGoogleCallback(code);
 
-			if (redirectUrl.includes("/error")) {
-				let errorMessage = "Google Login Failed";
-				try {
-					const urlObj = new URL(redirectUrl);
-					const msgParam = urlObj.searchParams.get("message");
-					if (msgParam) errorMessage = msgParam;
-				} catch {
-					// Ignore invalid URL error, keep default message
-				}
-				throw new Error(errorMessage);
-			}
-
 			this.setRefreshTokenCookie(res, tokens?.refreshToken);
 			return res.redirect(redirectUrl);
 		} catch (error) {
@@ -215,7 +214,7 @@ class AuthController {
 			let clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
 			if (clientUrl.endsWith("/")) clientUrl = clientUrl.slice(0, -1);
 
-			return res.redirect(`${clientUrl}/auth/login?error=${encodeURIComponent(message)}`);
+			return res.redirect(`${this.#frontendUrl}/oauth/error?message=${message}`);
 		}
 	}
 
