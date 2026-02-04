@@ -105,15 +105,34 @@ class OAuthService {
 
 		// 5. Liên kết provider (Nếu chưa có)
 		const userProviders = await this.#authRepository.getUserProviders(email);
-		const hasGoogle = userProviders?.some((p) => p.provider === EProvider.Google);
+		if (!userProviders) {
+			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
+		}
+		let hasGoogle = false;
+		let hasCredentials = false;
 
-		if (!hasGoogle) {
+		userProviders.forEach((p) => {
+			if (p.provider === EProvider.Credentials) {
+				hasCredentials = true;
+			} else if (p.provider === EProvider.Google) {
+				hasGoogle = true;
+			}
+		});
+
+		if (!hasCredentials && !hasGoogle) {
 			console.log(`[OAuth] Linking Google provider for: ${email}`);
 			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
 		}
 
 		console.log("--- GOOGLE CALLBACK SUCCESS ---");
-		return { tokens, redirectUrl: this.#frontendUrl };
+		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name }));
+		const params = new URLSearchParams({
+			accessToken: tokens.accessToken,
+			idToken: tokens.idToken,
+			expiresIn: tokens.expiresIn.toString(),
+			user: userParams,
+		});
+		return { tokens, redirectUrl: `${this.#frontendUrl}/oauth/success?${params.toString()}` };
 	}
 
 	public async exchangeUserInfo(code: string): Promise<GoogleOAuthResponse> {
