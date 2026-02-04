@@ -13,7 +13,7 @@ import { fetchUserProfileApi } from "../../user/userApi";
 export const useAuthCheck = () => {
 	const dispatch = useDispatch();
 	const { isAuthenticated } = useSelector((state: RootState) => state.auth);
-
+	const hasExistingSession = !!authStorage.getAccessToken();
 	// 1. Gọi Refresh Token
 	const {
 		data: refreshData,
@@ -24,7 +24,7 @@ export const useAuthCheck = () => {
 		queryFn: refreshToken,
 		retry: false,
 		staleTime: Infinity,
-		enabled: !isAuthenticated,
+		enabled: !isAuthenticated && hasExistingSession,
 	});
 
 	// 2. Gọi API Check User trong DB
@@ -65,6 +65,6 @@ export const useAuthCheck = () => {
 	}, [isRefreshSuccess, isRefreshError, isDbError, refreshData, dispatch]);
 
 	return {
-		isChecking: !isAuthenticated && !isRefreshError && !isRefreshSuccess,
+		isChecking: !isAuthenticated && hasExistingSession && !isRefreshError && !isRefreshSuccess,
 	};
 };
