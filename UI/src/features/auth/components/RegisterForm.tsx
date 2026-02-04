@@ -81,6 +81,7 @@ const RegisterForm: React.FC = () => {
 					destination: response.destination,
 					medium: response.medium,
 					email: values.email,
+					id: response.id,
 				},
 			});
 		} catch (e) {
