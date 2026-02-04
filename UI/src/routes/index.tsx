@@ -8,6 +8,7 @@ import { BookingRouter } from "./booking";
 import { UserRouter } from "./user";
 
 import { TravelerLayout } from "../components/layout/TravelerLayout";
+import { OAuthRouter } from "./oauth";
 
 export const AppRouter = () => (
 	<>
@@ -53,6 +54,7 @@ export const AppRouter = () => (
 			{/* User, Auth, OAuth, Booking */}
 			<Route path="/user/*" element={<UserRouter />} />
 			<Route path="/auth/*" element={<AuthRouter />} />
+			<Route path="/oauth/*" element={<OAuthRouter />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
 		</Routes>
 	</>
