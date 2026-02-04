@@ -4,10 +4,11 @@ import { useQuery } from "@tanstack/react-query";
 import { loginSuccess, logoutSuccess } from "../authSlice";
 import { refreshToken } from "../authApi";
 import { authStorage } from "../utils/authStorage";
-import { parseJwt, type CognitoIdToken } from "../../../utils/jwt";
+import { parseJwt } from "../../../utils/jwt";
 import type { UserDto } from "../../../types/UserDto";
 import type { RootState } from "../../../app/store";
-import userApi from "../../../services/userApi";
+import type { CognitoIdToken } from "../types/Auth";
+import { fetchUserProfileApi } from "../../user/userApi";
 
 export const useAuthCheck = () => {
 	const dispatch = useDispatch();
@@ -29,7 +30,7 @@ export const useAuthCheck = () => {
 	// 2. Gọi API Check User trong DB
 	const { isError: isDbError } = useQuery({
 		queryKey: ["user", "me", "validation"],
-		queryFn: userApi.getMe,
+		queryFn: fetchUserProfileApi,
 		retry: false,
 		enabled: isRefreshSuccess,
 	});
