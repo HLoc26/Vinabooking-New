@@ -16,6 +16,12 @@ import cookieParser from "cookie-parser";
 import UserController from "./controllers/user.controller";
 import UserRouter from "./routes/user.routes";
 import { connectRedis } from "./clients/redis.client";
+import ImageRouter from "./routes/image.routes";
+import ImageController from "./controllers/image.controller";
+import { UploadService } from "./services/upload.service";
+import S3Service from "./services/s3.service";
+import ImageRepository from "./repositories/image.repository";
+import UploadClient from "./clients/upload.client";
 import { ErrorHandler } from "./utils/response";
 
 const app: Express = express();
@@ -27,6 +33,7 @@ const cognitoClient = CognitoClient.getInstance();
 // Repositories
 const authRepository = new AuthRepository(prismaClient);
 const userRepository = new UserRepository(prismaClient);
+const imageRepository = new ImageRepository(prismaClient);
 
 // Services
 const authService = new AuthService({
@@ -45,15 +52,19 @@ const oauthService = new OAuthService(
 	authRepository,
 	userRepository
 );
+const s3Service = new S3Service();
+const uploadService = new UploadService(s3Service, imageRepository);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
 const userController = new UserController(userService);
+const imageController = new ImageController(uploadService, s3Service, imageRepository);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
 const userRouter = new UserRouter(express.Router(), userController);
-const appRouter = new AppRouter(authRouter, userRouter);
+const imageRouter = new ImageRouter(express.Router(), imageController, UploadClient.getInstance());
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
