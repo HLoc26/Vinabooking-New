@@ -29,8 +29,8 @@ export const useRegisterLegacy = () => {
 
 			setLoading(false);
 			return {
-				destination: data.CodeDeliveryDestination || "your email",
-				medium: data.CodeDeliveryMedium || "EMAIL",
+				destination: data.destination || "your email",
+				medium: data.deliveryMedium || "EMAIL",
 			};
 		} catch (e: unknown) {
 			setLoading(false);
@@ -111,10 +111,10 @@ export const useRegister = () => {
 			if (!response.data) {
 				throw new Error(response.error as string);
 			}
-
 			return {
-				destination: response.data.CodeDeliveryDestination || "your email",
-				medium: response.data.CodeDeliveryMedium || "EMAIL",
+				destination: response.data.destination || "your email",
+				medium: response.data.deliveryMedium || "EMAIL",
+				id: response.data.userSub,
 			};
 		},
 	});
@@ -136,8 +136,8 @@ export const useResendOtp = () => {
 
 export const useConfirmOtp = () => {
 	return useMutation({
-		mutationFn: async (payload: { email: string; confirmCode: string }) => {
-			const response = await confirmOtp({ username: payload.email, confirmCode: payload.confirmCode });
+		mutationFn: async (payload: { email: string; confirmCode: string; id: string }) => {
+			const response = await confirmOtp({ id: payload.id, email: payload.email, confirmCode: payload.confirmCode });
 			if (!response.data) {
 				throw new Error(response.error as string);
 			}
