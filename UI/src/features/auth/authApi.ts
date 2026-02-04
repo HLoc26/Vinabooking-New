@@ -26,6 +26,6 @@ export const resendOtp = async (
 	email: string //
 ) => AxiosInstance.get<ApiResponse<GetOTPResponse>>(`/auth/otp?email=${email}`).then((r) => r.data);
 
-export const confirmOtp = async (payload: { username: string; confirmCode: string }) =>
+export const confirmOtp = async (payload: { id: string; email: string; confirmCode: string }) =>
 	AxiosInstance.post<ApiResponse<ConfirmUserResponse>>("/auth/sign-up/confirm", payload) //
 		.then((r) => r.data);
