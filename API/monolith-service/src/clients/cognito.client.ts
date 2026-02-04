@@ -1,3 +1,4 @@
+import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
 import { CognitoIdentityProviderClient } from "@aws-sdk/client-cognito-identity-provider";
 import { NodeHttpHandler } from "@aws-sdk/node-http-handler";
 import { Agent as HttpAgent } from "http";
@@ -13,7 +14,7 @@ class CognitoClient {
 
 	public static getInstance() {
 		if (!CognitoClient.region) {
-			throw new Error("Missing .env COGNITO_REGION");
+			throw new EnvironmentNotSetError("Missing .env COGNITO_REGION");
 		}
 
 		if (!CognitoClient.#instance) {

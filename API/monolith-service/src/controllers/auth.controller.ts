@@ -19,6 +19,9 @@ import { EProvider } from "@/generated/client";
 import JwtService from "@/utils/jwt";
 import { AuthRepository } from "@/repositories";
 import { ETokenType } from "@/types/auth/auth-token";
+import IdentityProviderError from "@/errors/IdentityProviderError";
+import BadRequestError from "@/errors/BadRequestError";
+import DatabaseError from "@/errors/DatabaseError";
 
 class AuthController {
 	readonly #authService: AuthService;
@@ -38,7 +41,7 @@ class AuthController {
 
 		// Step 1: SignUp Cognito
 		const cognitoResp = await this.#authService.signUp(email, password);
-		if (!cognitoResp?.userSub) throw new Error("SignUp failed");
+		if (!cognitoResp?.userSub) throw new IdentityProviderError("SignUp failed");
 
 		// Step 2: Cache User
 		try {
@@ -67,11 +70,11 @@ class AuthController {
 
 		// Step 1: Verify OTP
 		const isConfirmed = await this.#authService.confirmSignUp(email, confirmCode);
-		if (!isConfirmed) throw new Error("Invalid OTP Code");
+		if (!isConfirmed) throw new BadRequestError("Invalid OTP Code");
 
 		// Step 2: Save to DB from Cache
 		const savedUser = await this.#userService.saveUserFromCache(email);
-		if (!savedUser) throw new Error("Failed to save user to DB");
+		if (!savedUser) throw new DatabaseError("Failed to save user to DB");
 
 		// Step 3: Create Provider Record
 		await this.#authRepository.createUserProvider(id, email, EProvider.Credentials);
@@ -85,7 +88,7 @@ class AuthController {
 		// Check Provider (Logic check provider nên đẩy xuống Service nếu có thể)
 		const userProviders = await this.#authRepository.getUserProviders(email);
 		if (userProviders?.map((p) => p.provider).includes(EProvider.Google)) {
-			throw new Error("Please login with Google");
+			throw new BadRequestError("Please login with Google");
 		}
 
 		// Login Cognito, returns DTO
@@ -124,12 +127,12 @@ class AuthController {
 
 		const payload = tokenType === ETokenType.ACCESS ? await JwtService.verifyToken(token, "access") : await JwtService.verifyToken(token, "id");
 
-		if (!payload) throw new Error("Invalid Token");
+		if (!payload) throw new BadRequestError("Invalid Token");
 		const username = tokenType === ETokenType.ACCESS ? payload.username : payload["cognito:username"];
 
 		// Check null/undefined
 		if (typeof payload.sub !== "string" || typeof username !== "string") {
-			throw new Error("Token payload missing required fields (sub or username)");
+			throw new BadRequestError("Token payload missing required fields (sub or username)");
 		}
 		return ResponseHelper.success<VerifyResponse>(res, {
 			user: {
@@ -141,7 +144,7 @@ class AuthController {
 
 	public async refreshToken(req: Request, res: Response<ApiResponse<RefreshResponse>>) {
 		const refreshToken = req.cookies.refresh_token;
-		if (!refreshToken) throw new Error("Missing refresh token");
+		if (!refreshToken) throw new BadRequestError("Missing refresh token");
 
 		const tokens = await this.#authService.refreshToken(refreshToken);
 		return ResponseHelper.success<RefreshResponse>(res, tokens);
@@ -163,7 +166,7 @@ class AuthController {
 		const authHeader = req.headers.authorization;
 		console.log(req.headers);
 		if (!authHeader?.startsWith("Bearer ")) {
-			throw new Error("Access token missing");
+			throw new BadRequestError("Access token missing");
 		}
 
 		const accessToken = authHeader.split(" ")[1];
@@ -172,7 +175,7 @@ class AuthController {
 		const statusCode = response.$metadata?.httpStatusCode;
 
 		if (statusCode !== 200) {
-			throw new Error(`Error while signing out with code ${statusCode}`);
+			throw new IdentityProviderError(`Error while signing out with code ${statusCode}`);
 		}
 
 		return ResponseHelper.success<SignOutResponse>(res, { success: true });
@@ -180,7 +183,7 @@ class AuthController {
 
 	public async googleCallback(req: GoogleCallbackRequest, res: Response) {
 		const { code } = req.query;
-		if (!code || typeof code !== "string") throw new Error("Missing code");
+		if (!code || typeof code !== "string") throw new BadRequestError("Missing code");
 		const { tokens, redirectUrl } = await this.#oauthService.handleGoogleCallback(code);
 		this.setRefreshTokenCookie(res, tokens?.refreshToken);
 		return res.redirect(redirectUrl);
@@ -189,13 +192,13 @@ class AuthController {
 	public async forgotPassword(req: ForgotPasswordRequest, res: Response<ApiResponse<ForgotPasswordResponse>>) {
 		const { email } = req.body;
 		if (!email) {
-			throw new Error("Missing email");
+			throw new BadRequestError("Missing email");
 		}
 
 		// Cognito send OTP to email
 		const result = await this.#authService.forgotPassword(email);
 		if (!result.CodeDeliveryDetails) {
-			throw new Error("Failed to send reset code");
+			throw new IdentityProviderError("Failed to send reset code");
 		}
 
 		const response = {
@@ -209,13 +212,13 @@ class AuthController {
 	public async confirmForgotPassword(req: ConfirmForgotPasswordRequest, res: Response<ApiResponse<ConfirmForgotPasswordResponse>>) {
 		const { email, code, newPassword } = req.body;
 		if (!email || !code || !newPassword) {
-			throw new Error("Missing required fields");
+			throw new BadRequestError("Missing required fields");
 		}
 
 		// Confirm OTP and update new password
 		const result = await this.#authService.confirmForgotPassword(email, code, newPassword);
 		if (!result) {
-			throw new Error("Invalid or expired reset code");
+			throw new BadRequestError("Invalid or expired reset code");
 		}
 
 		return ResponseHelper.success<ConfirmForgotPasswordResponse>(res, { success: true });
