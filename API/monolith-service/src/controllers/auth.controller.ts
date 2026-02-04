@@ -178,6 +178,12 @@ class AuthController {
 			throw new IdentityProviderError(`Error while signing out with code ${statusCode}`);
 		}
 
+		res.clearCookie("refresh_token", {
+			httpOnly: true,
+			secure: true,
+			sameSite: "none",
+		});
+
 		return ResponseHelper.success<SignOutResponse>(res, { success: true });
 	}
 
