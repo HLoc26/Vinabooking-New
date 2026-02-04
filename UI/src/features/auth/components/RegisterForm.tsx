@@ -4,7 +4,7 @@ import { MuiTelInput } from "mui-tel-input";
 
 import { useNavigate } from "react-router-dom";
 
-import useRegister from "../hooks/useRegister";
+import { useRegister } from "../../auth/hooks/useRegister";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 import UserSwitcher from "../../../components/shared/UserSwitcher";
@@ -28,7 +28,7 @@ const RegisterForm: React.FC = () => {
 	const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 	const [showToolbox, setShowToolbox] = useState(false);
 
-	const { register, loading } = useRegister();
+	const { mutateAsync: register, isPending: loading } = useRegister();
 	const navigate = useNavigate();
 	const { pushNotification } = usePushNotificationContext();
 
@@ -68,13 +68,20 @@ const RegisterForm: React.FC = () => {
 		if (values.password !== values.confirmPassword) return pushNotification("Woah, make sure the two passwords you just typed in are the same", "error");
 
 		try {
-			const response = await register(values.name, values.email, values.password, values.phone, values.userType);
+			const response = await register({
+				name: values.name,
+				email: values.email,
+				password: values.password,
+				phone: values.phone,
+				userType: values.userType,
+			});
 			if (!response) throw new Error("");
 			navigate("/auth/otp", {
 				state: {
 					destination: response.destination,
 					medium: response.medium,
 					email: values.email,
+					id: response.id,
 				},
 			});
 		} catch (e) {

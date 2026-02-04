@@ -16,6 +16,7 @@ import cookieParser from "cookie-parser";
 import UserController from "./controllers/user.controller";
 import UserRouter from "./routes/user.routes";
 import { connectRedis } from "./clients/redis.client";
+import { ErrorHandler } from "./utils/response";
 
 const app: Express = express();
 connectRedis();
@@ -77,6 +78,8 @@ app.use((req, res, next) => {
 });
 
 app.use(appRouter.router);
+
+app.use(ErrorHandler.handle);
 
 app.listen(8080, () => {
 	console.log("Listening on port 8080");
