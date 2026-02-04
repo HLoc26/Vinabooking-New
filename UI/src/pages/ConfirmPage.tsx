@@ -36,9 +36,8 @@ const ConfirmOTPPage: React.FC = () => {
 			pushNotification("Please enter your OTP code.", "warning");
 			return;
 		}
-
 		try {
-			const success = await confirmOtpMutation.mutateAsync({ email: state.email, confirmCode: otp });
+			const success = await confirmOtpMutation.mutateAsync({ email: state.email, confirmCode: otp, id: state.id });
 			if (success) {
 				pushNotification("Success! Please wait for the redirect.");
 				navigate("/auth/login");
@@ -52,7 +51,7 @@ const ConfirmOTPPage: React.FC = () => {
 
 	const handleResend = async () => {
 		try {
-			await resendOtpMutation.mutateAsync(state.email);
+			await resendOtpMutation.mutateAsync(state.id);
 		} catch (e) {
 			const error = e as Error;
 			pushNotification(error.message, "error");
