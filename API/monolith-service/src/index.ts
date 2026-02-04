@@ -7,7 +7,7 @@ import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
 import { AuthService, OAuthService, UserService } from "@/services";
-import { AuthRepository, UserRepository } from "@/repositories";
+import { AuthRepository, UserRepository, RoomRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -17,6 +17,9 @@ import UserController from "./controllers/user.controller";
 import UserRouter from "./routes/user.routes";
 import { connectRedis } from "./clients/redis.client";
 import { ErrorHandler } from "./utils/response";
+import RoomRouter from "./routes/room.routes";
+import RoomController from "./controllers/room.controller";
+import RoomService from "./services/room.service";
 
 const app: Express = express();
 connectRedis();
@@ -27,6 +30,7 @@ const cognitoClient = CognitoClient.getInstance();
 // Repositories
 const authRepository = new AuthRepository(prismaClient);
 const userRepository = new UserRepository(prismaClient);
+const roomRepository = new RoomRepository(prismaClient);
 
 // Services
 const authService = new AuthService({
@@ -45,15 +49,18 @@ const oauthService = new OAuthService(
 	authRepository,
 	userRepository
 );
+const roomService = new RoomService(roomRepository);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
 const userController = new UserController(userService);
+const roomController = new RoomController(roomService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
 const userRouter = new UserRouter(express.Router(), userController);
-const appRouter = new AppRouter(authRouter, userRouter);
+const roomRouter = new RoomRouter(express.Router(), roomController);
+const appRouter = new AppRouter(authRouter, userRouter, roomRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
