@@ -16,6 +16,8 @@ import {
 } from "@aws-sdk/client-cognito-identity-provider";
 import CognitoClient from "@/clients/cognito.client";
 import { AuthTokens } from "@/types/auth/auth-token";
+import BadRequestError from "@/errors/BadRequestError";
+import IdentityProviderError from "@/errors/IdentityProviderError";
 
 export interface AuthServiceConfig {
 	cognitoClient: CognitoIdentityProviderClient;
@@ -172,7 +174,7 @@ class AuthService {
 
 		// Get UserSub from response
 		const userSub = createRes.User?.Attributes?.find((a) => a.Name === "sub")?.Value || createRes.User?.Username;
-		if (!userSub) throw new Error("Failed to retrieve User Sub");
+		if (!userSub) throw new IdentityProviderError("Failed to retrieve User Sub");
 
 		// Set Permanent Password
 		await this.cognitoClient.send(
@@ -196,7 +198,7 @@ class AuthService {
 		});
 
 		const response = await this.cognitoClient.send(command);
-		if (!response.AuthenticationResult) throw new Error("Auth Failed");
+		if (!response.AuthenticationResult) throw new IdentityProviderError("Auth Failed");
 
 		return this.mapAuthResponse(response.AuthenticationResult);
 	}
