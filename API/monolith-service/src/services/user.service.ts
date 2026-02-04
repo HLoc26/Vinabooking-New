@@ -4,6 +4,10 @@ import { UserWithFavourites } from "@/types/dtos/get-user.dto";
 import { UserCacheInfo } from "@/types/dtos/cache-user-info.dto";
 import redisClient from "../clients/redis.client";
 import { UserCreateWithoutFavouritesInput, UserUpdateInput } from "@/generated/models";
+import BadRequestError from "@/errors/BadRequestError";
+import NotFoundError from "@/errors/NotFoundError";
+import DatabaseError from "@/errors/DatabaseError";
+import RedisClientError from "@/errors/RedisClientError";
 
 class UserService {
 	readonly #userRepository: UserRepository;
@@ -26,14 +30,14 @@ class UserService {
 
 			// Found User, but Email input != Email in DB -> Mismatch
 			if (userRaw && field.email && userRaw.email !== field.email) {
-				throw new Error("Mismatch info: ID and Email do not match");
+				throw new BadRequestError("Mismatch info: ID and Email do not match");
 			}
 		} else if (field.email) {
 			userRaw = await this.#userRepository.getByEmail(field.email, withFavourites);
 		}
 		if (!userRaw) {
 			const criteria = field.id ? `ID ${field.id}` : `email ${field.email}`;
-			throw new Error(`User with ${criteria} not found`);
+			throw new NotFoundError(`User with ${criteria} not found`);
 		}
 		return userRaw;
 	}
@@ -49,7 +53,7 @@ class UserService {
 			});
 			return result === "OK";
 		} catch (err) {
-			throw new Error(`Failed to save user to cache: ${err}`);
+			throw new DatabaseError(`Failed to save user to cache: ${err}`);
 		}
 	}
 
@@ -58,7 +62,7 @@ class UserService {
 			await redisClient.del(cognitoSub);
 			return true;
 		} catch (err) {
-			throw new Error(`Redis error: ${err}`);
+			throw new RedisClientError(`Redis error: ${err}`);
 		}
 	}
 
@@ -66,7 +70,7 @@ class UserService {
 		const infoString: string | null = await redisClient.get(email);
 
 		if (!infoString) {
-			throw new Error("User not found in cache");
+			throw new NotFoundError("User not found in cache");
 		}
 
 		const info: UserCreateWithoutFavouritesInput = JSON.parse(infoString);

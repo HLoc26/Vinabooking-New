@@ -17,8 +17,8 @@ datasource db {
 // User
 
 enum ERole {
-    Traveller
-    AccommodationOwner
+    TRAVELLER
+    ACCOMMODATION_OWNER
 }
 
 model FavouriteList {
@@ -48,7 +48,7 @@ model User {
     email String  @unique
     name  String
     phone String?
-    role  ERole   @default(Traveller)
+    role  ERole   @default(TRAVELLER)
 
     favourites FavouriteList[]
 
