@@ -19,13 +19,3 @@ export const parseJwt = <T>(token: string): T | null => {
 		return null;
 	}
 };
-
-export interface CognitoIdToken {
-	sub: string;
-	email: string;
-	name: string;
-	phone_number?: string;
-	"custom:userType"?: string;
-	exp: number;
-	iss: string;
-}
