@@ -5,6 +5,8 @@ import AuthService from "./auth.service";
 import { EProvider } from "@/generated/enums";
 import { AuthRepository, UserRepository } from "@/repositories";
 import { AuthTokens } from "@/types/auth/auth-token";
+import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
+import IdentityProviderError from "@/errors/IdentityProviderError";
 
 export interface OAuthConfig {
 	googleClientId: string;
@@ -39,7 +41,7 @@ class OAuthService {
 
 		let clientUrl = process.env["CLIENT_URL"];
 		if (!clientUrl) {
-			throw new Error("Missing env variable: CLIENT_URL");
+			throw new EnvironmentNotSetError("Missing env variable: CLIENT_URL");
 		}
 		// Cũng lỗi giống FE dư dấu / dù set env không có
 		if (clientUrl.endsWith("/")) {
@@ -136,14 +138,14 @@ class OAuthService {
 		if (!tokenRes.ok) {
 			// It is helpful to log the actual error message from Google for debugging
 			const errorMessage = data.error_description || data.error || "Unknown error";
-			throw new Error(`Invalid response from googleapis: ${errorMessage}`);
+			throw new IdentityProviderError(`Invalid response from googleapis: ${errorMessage}`);
 		}
 
 		// Extract the ID token
 		const { id_token } = data;
 
 		if (!id_token) {
-			throw new Error("Google response did not contain an id_token");
+			throw new IdentityProviderError("Google response did not contain an id_token");
 		}
 
 		// Decode the ID token to get user info

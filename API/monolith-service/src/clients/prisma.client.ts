@@ -1,24 +1,25 @@
 import { PrismaMariaDb } from "@prisma/adapter-mariadb";
 import { PrismaClient } from "@/generated/client";
+import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
 
 if (!process.env["DB_HOST"]) {
-	throw new Error("Missing env: DB_HOST");
+	throw new EnvironmentNotSetError("Missing env: DB_HOST");
 }
 
 if (!process.env["DB_PORT"]) {
-	throw new Error("Missing env: DB_PORT");
+	throw new EnvironmentNotSetError("Missing env: DB_PORT");
 }
 
 if (!process.env["DB_USER"]) {
-	throw new Error("Missing env: DB_USER");
+	throw new EnvironmentNotSetError("Missing env: DB_USER");
 }
 
 if (!process.env["DB_PWD"]) {
-	throw new Error("Missing env: DB_PWD");
+	throw new EnvironmentNotSetError("Missing env: DB_PWD");
 }
 
 if (!process.env["DB_NAME"]) {
-	throw new Error("Missing env: DB_NAME");
+	throw new EnvironmentNotSetError("Missing env: DB_NAME");
 }
 
 const adapter = new PrismaMariaDb({
