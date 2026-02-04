@@ -20,7 +20,7 @@ import useModalContext from "../../context/ModalContext/hook.ts";
 
 import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
 import useUserProfileInfo from "../../hooks/useUserProfileInfo";
-import { useUserProfile } from "../../features/user/hooks/useUserProfile.ts";
+import { authStorage } from "../../features/auth/utils/authStorage.ts";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -37,7 +37,8 @@ const NavigationBar: React.FC = () => {
 	const { pushNotification } = usePushNotificationContext();
 
 	const { userAvatars } = useUserProfileInfo();
-	const { data: user } = useUserProfile();
+
+	const user = authStorage.getUserSync();
 	const thumbnail = userAvatars.find((a) => a.variant === "THUMBNAIL");
 
 	const logoutMutation = useLogoutMutation();
