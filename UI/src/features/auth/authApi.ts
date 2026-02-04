@@ -1,5 +1,5 @@
 import AxiosInstance from "../../services/apiClient";
-import type { LogInResponse, ApiResponse, RefreshResponse } from "../../types/Response";
+import type { LogInResponse, ApiResponse, SignUpResponse, RefreshResponse, GetOTPResponse, ConfirmUserResponse } from "../../types/Response";
 
 export const login = async (payload: {
 	email: string; //
@@ -42,3 +42,18 @@ export const getGoogleAuthUrl = () => {
 export const refreshToken = async () => {
 	return await AxiosInstance.get<ApiResponse<RefreshResponse>>("/auth/refresh").then((r) => r.data);
 };
+export const register = async (payload: {
+	name: string; //
+	email: string;
+	password: string;
+	phone: string;
+	userType: string;
+}) => AxiosInstance.post<ApiResponse<SignUpResponse>>("/auth/sign-up", payload).then((r) => r.data);
+
+export const resendOtp = async (
+	email: string //
+) => AxiosInstance.get<ApiResponse<GetOTPResponse>>(`/auth/otp?email=${email}`).then((r) => r.data);
+
+export const confirmOtp = async (payload: { id: string; email: string; confirmCode: string }) =>
+	AxiosInstance.post<ApiResponse<ConfirmUserResponse>>("/auth/sign-up/confirm", payload) //
+		.then((r) => r.data);

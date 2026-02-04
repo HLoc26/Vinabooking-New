@@ -2,7 +2,7 @@ import React, { useState } from "react";
 import { Box, Button, Typography, Link } from "@mui/material";
 import { useLocation, useNavigate } from "react-router-dom";
 import type { OtpLocationState } from "../features/auth/types/LocationState";
-import useRegister from "../features/auth/hooks/useRegister";
+import { useResendOtp, useConfirmOtp } from "../features/auth/hooks/useRegister";
 import OtpInput from "../components/shared/OtpInput";
 import { usePushNotificationContext } from "../context/PushNotification/hook";
 
@@ -13,8 +13,9 @@ const ConfirmOTPPage: React.FC = () => {
 	const state = location.state as OtpLocationState | undefined;
 
 	const [otp, setOtp] = useState("");
-	const { resendOtp, confirmOtp, loading } = useRegister();
-
+	const resendOtpMutation = useResendOtp();
+	const confirmOtpMutation = useConfirmOtp();
+	const loading = resendOtpMutation.isPending || confirmOtpMutation.isPending;
 	React.useEffect(() => {
 		if (!state || !state.destination) {
 			navigate("/auth/register");
@@ -35,9 +36,8 @@ const ConfirmOTPPage: React.FC = () => {
 			pushNotification("Please enter your OTP code.", "warning");
 			return;
 		}
-
 		try {
-			const success = await confirmOtp(state.email, otp);
+			const success = await confirmOtpMutation.mutateAsync({ email: state.email, confirmCode: otp, id: state.id });
 			if (success) {
 				pushNotification("Success! Please wait for the redirect.");
 				navigate("/auth/login");
@@ -51,7 +51,7 @@ const ConfirmOTPPage: React.FC = () => {
 
 	const handleResend = async () => {
 		try {
-			await resendOtp(state.email);
+			await resendOtpMutation.mutateAsync(state.id);
 		} catch (e) {
 			const error = e as Error;
 			pushNotification(error.message, "error");

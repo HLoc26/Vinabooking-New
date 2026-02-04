@@ -5,6 +5,7 @@ import type { SaveUserRequest, UpdateUserRequest } from "../types/requests";
 import type { ApiResponse } from "../types/responses";
 import ResponseHelper from "../utils/response";
 import { User } from "@/generated/client";
+import DatabaseError from "@/errors/DatabaseError";
 
 class UserController {
 	readonly #userService: UserService;
@@ -27,7 +28,7 @@ class UserController {
 		const OK = await this.#userService.createUser({ id: cognitoSub, email, name });
 
 		if (!OK) {
-			throw new Error("Failed to save user to database");
+			throw new DatabaseError("Failed to save user to database");
 		}
 		return ResponseHelper.success<{ success: boolean }>(res, { success: true });
 	}

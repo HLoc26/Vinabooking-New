@@ -13,9 +13,9 @@ export interface AuthResponse {
 }
 
 export interface SignUpResponse {
-	UserSub: string | undefined;
-	CodeDeliveryDestination?: string | undefined;
-	CodeDeliveryMedium?: "EMAIL" | "SMS" | undefined;
+	userSub: string | undefined;
+	destination?: string | undefined;
+	deliveryMedium?: "EMAIL" | "SMS" | undefined;
 }
 
 export interface GetOTPResponse {
