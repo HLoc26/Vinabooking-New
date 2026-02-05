@@ -1,7 +1,6 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError } from "../errors";
-import { roomService } from "@/services/room.service"; //Double check path
-import { imageService } from "@/services/image.service"; //Double check path
+import { RoomService, ImageService } from "@/services"; //Double check path
 import { type EAccommodationType } from "@/generated/client";
 import { AccommodationEntity, SearchQuery, ServiceImageDto, ServiceRoomDto, SearchResultItem, ESortOption } from "@/types/accommodation.types";
 
@@ -10,16 +9,19 @@ const AVAILABILITY_CHECK_BATCH_OVERHEAD = 10; // Fetch extra items to account fo
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
-
-	constructor(accommodationRepository: AccommodationRepository) {
+	readonly #roomService: RoomService = new RoomService();
+	readonly #imageService: ImageService = new ImageService();
+	constructor(accommodationRepository: AccommodationRepository, roomService: RoomService, imageService: ImageService) {
 		this.#accommodationRepository = accommodationRepository;
+		this.#roomService = roomService;
+		this.#imageService = imageService;
 	}
 
 	async getAccommodationById(id: string, startDate?: string, endDate?: string): Promise<AccommodationEntity> {
 		// 1. Create 3 Promises to run in parallel
 		const accommodationPromise = this.#accommodationRepository.findById(id);
-		const roomsPromise = roomService.getRoomsByAccommodationId(id, startDate, endDate) as Promise<ServiceRoomDto[]>;
-		const imagesPromise = imageService.getImagesForEntity(id) as Promise<ServiceImageDto[]>;
+		const roomsPromise = this.#roomService.getRoomsByAccommodationId(id, startDate, endDate) as Promise<ServiceRoomDto[]>;
+		const imagesPromise = this.#imageService.getImagesForEntity(id) as Promise<ServiceImageDto[]>;
 
 		// 2. Await all Promises
 		const [accommodation, rooms, images] = await Promise.all([accommodationPromise, roomsPromise, imagesPromise]);
@@ -43,7 +45,7 @@ class AccommodationService {
 	async getAccommodationByRoomId(roomId: string): Promise<AccommodationEntity> {
 		console.log(`[AccommodationService] Finding accommodation for room ID: ${roomId}`);
 
-		const accommodationId = await roomService.getAccommodationIdByRoomId(roomId);
+		const accommodationId = await this.#roomService.getAccommodationIdByRoomId(roomId);
 		console.log(`[AccommodationService] Found accommodation ID: ${accommodationId} for room ID: ${roomId}`);
 
 		return this.getAccommodationById(accommodationId);
@@ -154,7 +156,7 @@ class AccommodationService {
 		const childrenPerRoom = totalChildren > 0 ? Math.ceil(totalChildren / requiredRooms) : undefined;
 
 		console.log("[AccommodationService] Getting pre-filtered IDs from RoomService...");
-		const result = await roomService.getFilteredAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
+		const result = await this.#roomService.getFilteredAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
 		return result || undefined;
 	}
 
@@ -222,7 +224,7 @@ class AccommodationService {
 	private async _filterForAvailability(accommodations: AccommodationEntity[], checkIn: string, checkOut: string, requiredRooms: number): Promise<AccommodationEntity[]> {
 		const availabilityPromises = accommodations.map(async (acc) => {
 			try {
-				const roomList = (await roomService.getRoomsByAccommodationId(acc.id, checkIn, checkOut)) as ServiceRoomDto[];
+				const roomList = (await this.#roomService.getRoomsByAccommodationId(acc.id, checkIn, checkOut)) as ServiceRoomDto[];
 				const isAvailable = roomList.some((r) => (r.remainingQuantity || 0) >= requiredRooms);
 
 				if (isAvailable) {
@@ -246,10 +248,10 @@ class AccommodationService {
 	private async _enrichAccommodationsWithDetails(accommodations: AccommodationEntity[], checkIn?: string, checkOut?: string): Promise<SearchResultItem[]> {
 		const enrichedPromises = accommodations.map(async (acc) => {
 			// Fetch images
-			const imagesPromise = imageService.getImagesForEntity(acc.id) as Promise<ServiceImageDto[]>;
+			const imagesPromise = this.#imageService.getImagesForEntity(acc.id) as Promise<ServiceImageDto[]>;
 
 			// Fetch rooms ONLY if they weren't fetched during availability check
-			const roomsPromise = acc.rooms ? Promise.resolve(acc.rooms) : (roomService.getRoomsByAccommodationId(acc.id, checkIn, checkOut) as Promise<ServiceRoomDto[]>);
+			const roomsPromise = acc.rooms ? Promise.resolve(acc.rooms) : (this.#roomService.getRoomsByAccommodationId(acc.id, checkIn, checkOut) as Promise<ServiceRoomDto[]>);
 
 			const [images, roomsData] = await Promise.all([imagesPromise, roomsPromise]);
 
