@@ -1,0 +1,37 @@
+import { Router, type Request, type Response } from "express";
+import ImageController from "@/controllers/image.controller";
+import type { GetImagesRequest, UploadRequest } from "../types/requests";
+import multer from "multer";
+
+// Base route: /images
+class ImageRouter {
+	readonly #imageController: ImageController;
+	readonly #uploadClient: multer.Multer;
+	constructor(
+		public router: Router,
+		imageController: ImageController,
+		uploadClient: multer.Multer
+	) {
+		this.#imageController = imageController;
+		this.#uploadClient = uploadClient;
+		this.registerRoutes();
+	}
+
+	private registerRoutes() {
+		this.router.post(
+			"/:type/:id", // type could be "profile" | "accommodation" | "room" | "review"
+			this.#uploadClient.array("files", 10),
+			(req: Request, res: Response) => {
+				const uploadRequest = req as unknown as UploadRequest;
+				return this.#imageController.upload(uploadRequest, res);
+			}
+		);
+
+		this.router.get("/:type/:id", (req: Request, res: Response) => {
+			const request = req as unknown as GetImagesRequest;
+			return this.#imageController.getImages(request, res);
+		});
+	}
+}
+
+export default ImageRouter;

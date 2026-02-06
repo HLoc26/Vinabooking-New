@@ -3,6 +3,7 @@ import type { Router, Request, Response } from "express";
 import AuthRouter from "./auth.routes";
 import UserRouter from "./user.routes";
 import RoomRouter from "./room.routes";
+import ImageRouter from "./image.routes";
 
 class AppRouter {
 	#router: Router;
@@ -10,6 +11,7 @@ class AppRouter {
 	constructor(
 		private authRouter: AuthRouter,
 		private userRouter: UserRouter,
+    private imageRouter: ImageRouter,
 		private roomRouter: RoomRouter
 	) {
 		this.#router = express.Router();
@@ -23,6 +25,7 @@ class AppRouter {
 		this.#router.use("/auth", this.authRouter.router);
 		this.#router.use("/user", this.userRouter.router);
 		this.#router.use("/rooms", this.roomRouter.router);
+		this.#router.use("/images", this.imageRouter.router);
 	}
 
 	public get router(): Router {
