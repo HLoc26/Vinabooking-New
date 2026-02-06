@@ -13,6 +13,12 @@ export default class BookingService {
 		return booking;
 	}
 
+	public async getBookingsByAccommodationId(accommId: string) {
+		const bookings = await this.#bookingRepository.findByAccommodationId(accommId);
+		if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${accommId}`);
+		return bookings;
+	}
+
 	public async getBookingsByUserId(userId: string) {
 		const bookings = await this.#bookingRepository.findByUserId(userId);
 		if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${userId}`);

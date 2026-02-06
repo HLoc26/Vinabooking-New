@@ -33,6 +33,56 @@ class BookingRepository {
 		});
 	}
 
+	public async findByAccommodationId(accommId: string): Promise<BookingWithDetails[]> {
+		// Find all rooms and their beds for the given accommodation
+		const rooms = await this.#prismaClient.room.findMany({
+			where: {
+				accommodationId: accommId,
+			},
+			select: {
+				id: true,
+				beds: {
+					select: {
+						id: true,
+					},
+				},
+			},
+		});
+
+		if (rooms.length === 0) {
+			return [];
+		}
+
+		const roomIds = rooms.map((room) => room.id);
+		const bedIds = rooms.flatMap((room) => room.beds.map((bed) => bed.id));
+
+		return this.#prismaClient.booking.findMany({
+			where: {
+				details: {
+					some: {
+						OR: [
+							{
+								itemType: "ROOM",
+								itemId: {
+									in: roomIds,
+								},
+							},
+							{
+								itemType: "BED",
+								itemId: {
+									in: bedIds,
+								},
+							},
+						],
+					},
+				},
+			},
+			include: {
+				details: true,
+			},
+		});
+	}
+
 	// ---------- internal shared finder ----------
 	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
 		const booking = await this.#prismaClient.booking.findUnique({
