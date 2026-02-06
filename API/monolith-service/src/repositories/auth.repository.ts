@@ -11,7 +11,7 @@ class AuthRepository {
 		return await this.#prismaClient.userAuthProvider.create({ data: { userId: userId, email: email, provider: provider } });
 	}
 
-	public async getUserProviders(email: string): Promise<UserAuthProvider[] | null> {
+	public async getUserProviders(email: string): Promise<UserAuthProvider[]> {
 		return await this.#prismaClient.userAuthProvider.findMany({ where: { email: email } });
 	}
 }
