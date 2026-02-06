@@ -23,6 +23,10 @@ import S3Service from "./services/s3.service";
 import ImageRepository from "./repositories/image.repository";
 import UploadClient from "./clients/upload.client";
 import { ErrorHandler } from "./utils/response";
+import AccommodationRouter from "./routes/accommodation.routes";
+import AccommodationController from "./controllers/accommodation.controller";
+import AccommodationRepository from "./repositories/accommodation.repository";
+import AccommodationService from "./services/accommodation.service";
 import RoomRouter from "./routes/room.routes";
 import RoomController from "./controllers/room.controller";
 import RoomService from "./services/room.service";
@@ -38,6 +42,7 @@ const authRepository = new AuthRepository(prismaClient);
 const userRepository = new UserRepository(prismaClient);
 const roomRepository = new RoomRepository(prismaClient);
 const imageRepository = new ImageRepository(prismaClient);
+const accommodationRepository = new AccommodationRepository(prismaClient);
 
 // Services
 const authService = new AuthService({
@@ -59,19 +64,22 @@ const oauthService = new OAuthService(
 const roomService = new RoomService(roomRepository);
 const s3Service = new S3Service();
 const uploadService = new UploadService(s3Service, imageRepository);
+const accommodationService = new AccommodationService(accommodationRepository);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
 const userController = new UserController(userService);
 const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, s3Service, imageRepository);
+const accommodationController = new AccommodationController(accommodationService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
 const userRouter = new UserRouter(express.Router(), userController);
 const imageRouter = new ImageRouter(express.Router(), imageController, UploadClient.getInstance());
 const roomRouter = new RoomRouter(express.Router(), roomController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter);
+const accommodationRouter = new AccommodationRouter(express.Router(), accommodationController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
