@@ -1,27 +1,12 @@
 import React from "react";
 import { Button } from "@mui/material";
 import GoogleIcon from "@mui/icons-material/Google";
-
-const GOOGLE_CLIENT_ID = import.meta.env.VITE_GOOGLE_CLIENT_ID;
-const API_URL = import.meta.env.VITE_API_URL;
+import { getGoogleAuthUrl } from "../../features/auth/authApi";
 
 export const GoogleAuthButton: React.FC = () => {
 	const handleLogin = () => {
-		const redirectUri = `${API_URL}/auth/google/callback`;
-
-		const scope = ["openid", "email", "profile"].join(" ");
-
-		const params = new URLSearchParams({
-			client_id: GOOGLE_CLIENT_ID!,
-			redirect_uri: redirectUri,
-			response_type: "code",
-			scope,
-			access_type: "offline",
-			prompt: "consent",
-		});
-
-		const googleAuthUrl = `https://accounts.google.com/o/oauth2/v2/auth?${params.toString()}`;
-		window.location.href = googleAuthUrl;
+		const googleAuthUrl = getGoogleAuthUrl();
+		globalThis.location.href = googleAuthUrl;
 	};
 
 	return (
@@ -35,6 +20,7 @@ export const GoogleAuthButton: React.FC = () => {
 				borderRadius: "10px",
 				backgroundColor: "#fff",
 				"&:hover": { backgroundColor: "#f5f5f5" },
+				width: "100%",
 			}}
 		>
 			Continue with Google

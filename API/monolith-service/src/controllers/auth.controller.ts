@@ -22,17 +22,29 @@ import { ETokenType } from "@/types/auth/auth-token";
 import IdentityProviderError from "@/errors/IdentityProviderError";
 import BadRequestError from "@/errors/BadRequestError";
 import DatabaseError from "@/errors/DatabaseError";
+import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
 
 class AuthController {
 	readonly #authService: AuthService;
 	readonly #userService: UserService;
 	readonly #oauthService: OAuthService;
 	readonly #authRepository: AuthRepository;
+	readonly #frontendUrl: string;
 	constructor(authService: AuthService, userService: UserService, oauthService: OAuthService, authRepository: AuthRepository) {
 		this.#authService = authService;
 		this.#userService = userService;
 		this.#oauthService = oauthService;
 		this.#authRepository = authRepository;
+
+		let clientUrl = process.env["CLIENT_URL"];
+		if (!clientUrl) {
+			throw new EnvironmentNotSetError("Missing env variable: CLIENT_URL");
+		}
+		// Cũng lỗi giống FE dư dấu / dù set env không có
+		if (clientUrl.endsWith("/")) {
+			clientUrl = clientUrl.slice(0, -1);
+		}
+		this.#frontendUrl = clientUrl;
 	}
 
 	// 1. SignUp Flow (Gộp SignUp và Cache làm 1 flow xử lý)
@@ -164,7 +176,6 @@ class AuthController {
 
 	public async signOut(req: Request, res: Response<ApiResponse<SignOutResponse>>) {
 		const authHeader = req.headers.authorization;
-		console.log(req.headers);
 		if (!authHeader?.startsWith("Bearer ")) {
 			throw new BadRequestError("Access token missing");
 		}
@@ -178,15 +189,33 @@ class AuthController {
 			throw new IdentityProviderError(`Error while signing out with code ${statusCode}`);
 		}
 
+		res.clearCookie("refresh_token", {
+			httpOnly: true,
+			secure: true,
+			sameSite: "none",
+		});
+
 		return ResponseHelper.success<SignOutResponse>(res, { success: true });
 	}
 
 	public async googleCallback(req: GoogleCallbackRequest, res: Response) {
-		const { code } = req.query;
-		if (!code || typeof code !== "string") throw new BadRequestError("Missing code");
-		const { tokens, redirectUrl } = await this.#oauthService.handleGoogleCallback(code);
-		this.setRefreshTokenCookie(res, tokens?.refreshToken);
-		return res.redirect(redirectUrl);
+		try {
+			const { code } = req.query;
+			if (!code || typeof code !== "string") throw new BadRequestError("Missing code or invalid request");
+
+			const { tokens, redirectUrl } = await this.#oauthService.handleGoogleCallback(code);
+
+			this.setRefreshTokenCookie(res, tokens?.refreshToken);
+			return res.redirect(redirectUrl);
+		} catch (error) {
+			const message = error instanceof Error ? error.message : "Unknown error";
+			console.error("Google Callback Error:", message);
+
+			let clientUrl = process.env.CLIENT_URL || "http://localhost:5173";
+			if (clientUrl.endsWith("/")) clientUrl = clientUrl.slice(0, -1);
+
+			return res.redirect(`${this.#frontendUrl}/oauth/error?message=${message}`);
+		}
 	}
 
 	public async forgotPassword(req: ForgotPasswordRequest, res: Response<ApiResponse<ForgotPasswordResponse>>) {

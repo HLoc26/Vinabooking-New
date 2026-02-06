@@ -35,6 +35,14 @@ export interface LogInResponse {
 	user: UserDto;
 }
 
+export interface RefreshResponse {
+	accessToken: string;
+	idToken: string;
+	refreshToken?: string;
+	expiresIn: number;
+	tokenType: string;
+}
+
 export interface ApiResponse<T> {
 	success: boolean;
 	data?: T;
