@@ -4,7 +4,7 @@ import { CreateOptimized, CreateThumbnail, CreateWEBP, ImageProcessingPipeline }
 import S3Service from "./s3.service";
 import { EEntityType, EVariantType } from "@/generated/enums";
 
-export class UploadService {
+class UploadService {
 	constructor(
 		private readonly s3Service: S3Service,
 		private readonly imageRepository: ImageRepository
@@ -46,3 +46,4 @@ export class UploadService {
 		return results.flat();
 	}
 }
+export default UploadService;
