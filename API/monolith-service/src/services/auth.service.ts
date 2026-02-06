@@ -13,10 +13,10 @@ import {
 	ForgotPasswordCommand,
 	ConfirmForgotPasswordCommand,
 	AuthenticationResultType,
+	AdminRespondToAuthChallengeCommand,
 } from "@aws-sdk/client-cognito-identity-provider";
 import CognitoClient from "@/clients/cognito.client";
 import { AuthTokens } from "@/types/auth/auth-token";
-import BadRequestError from "@/errors/BadRequestError";
 import IdentityProviderError from "@/errors/IdentityProviderError";
 import EmailService from "./email.service";
 
@@ -30,6 +30,8 @@ class AuthService {
 	private readonly cognitoClient: CognitoIdentityProviderClient;
 	private readonly googleClientSecret: string;
 	private readonly emailService: EmailService;
+
+	private readonly backendAuthSecret = process.env["BACKEND_SECRET_KEY"]!;
 
 	constructor(config: AuthServiceConfig) {
 		this.cognitoClient = config.cognitoClient;
@@ -90,8 +92,10 @@ class AuthService {
 	}
 
 	public async oAuthLogin(email: string): Promise<AuthTokens> {
-		return this.executeAuthFlow(email, this.googleClientSecret);
-	} // --- UTILS ---
+		return this.executeCustomAuthFlow(email);
+	}
+
+	// --- UTILS ---
 
 	public async findUser(email: string) {
 		try {
@@ -133,7 +137,9 @@ class AuthService {
 
 	public async signOut(accessToken: string) {
 		return await this.cognitoClient.send(new GlobalSignOutCommand({ AccessToken: accessToken }));
-	} // --- PASSWORD RESET ---
+	}
+
+	// --- PASSWORD RESET ---
 	public async forgotPassword(email: string) {
 		return await this.cognitoClient.send(
 			new ForgotPasswordCommand({
@@ -214,6 +220,45 @@ class AuthService {
 		if (!response.AuthenticationResult) throw new IdentityProviderError("Auth Failed");
 
 		return this.mapAuthResponse(response.AuthenticationResult);
+	}
+
+	private async executeCustomAuthFlow(username: string): Promise<AuthTokens> {
+		// Bước A: Khởi tạo Auth Flow -> Cognito sẽ trả về Challenge "BACKEND_BYPASS"
+		const initCommand = new AdminInitiateAuthCommand({
+			UserPoolId: CognitoClient.userPoolId,
+			ClientId: CognitoClient.appClientId,
+			AuthFlow: "CUSTOM_AUTH",
+			AuthParameters: {
+				USERNAME: username,
+			},
+		});
+
+		const initResponse = await this.cognitoClient.send(initCommand);
+
+		// Kiểm tra xem có đúng là Cognito đang hỏi Challenge "BACKEND_BYPASS" không
+		if (initResponse.ChallengeName === "CUSTOM_CHALLENGE") {
+			// Bước B: Trả lời Challenge bằng Secret Key
+			const challengeCommand = new AdminRespondToAuthChallengeCommand({
+				UserPoolId: CognitoClient.userPoolId,
+				ClientId: CognitoClient.appClientId,
+				ChallengeName: "CUSTOM_CHALLENGE",
+				Session: initResponse.Session, // Phải truyền Session từ bước trước
+				ChallengeResponses: {
+					USERNAME: username,
+					ANSWER: this.backendAuthSecret, // Gửi key bí mật lên
+				},
+			});
+
+			const challengeResponse = await this.cognitoClient.send(challengeCommand);
+
+			if (!challengeResponse.AuthenticationResult) {
+				throw new IdentityProviderError("Custom Auth Failed: No Tokens returned");
+			}
+
+			return this.mapAuthResponse(challengeResponse.AuthenticationResult);
+		} else {
+			throw new IdentityProviderError(`Unexpected Challenge: ${initResponse.ChallengeName}`);
+		}
 	}
 
 	private mapAuthResponse(auth: AuthenticationResultType): AuthTokens {
