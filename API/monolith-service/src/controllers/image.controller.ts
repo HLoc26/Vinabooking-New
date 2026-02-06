@@ -1,19 +1,18 @@
 import { GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/types/requests";
-import type { ApiResponse, GetImageResponse, UploadResponse } from "@/types/responses";
+import type { ApiResponse, UploadResponse } from "@/types/responses";
 import type { Response } from "express";
 import ResponseHelper from "@/utils/response";
-import type { FileType } from "@/types/image.types";
-import { UploadService } from "@/services/upload.service";
-import ImageRepository from "@/repositories/image.repository";
-import S3Service from "@/services/s3.service";
-import { EVariantType } from "@/generated/enums";
+import type { FileType, ImageFullInfo } from "@/types/image.types";
+import UploadService from "@/services/upload.service";
+import { ImageService } from "@/services";
 
 class ImageController {
-	constructor(
-		private readonly uploadService: UploadService,
-		private readonly s3Service: S3Service,
-		private readonly imageRepository: ImageRepository
-	) {}
+	readonly #uploadService: UploadService;
+	readonly #imageService: ImageService;
+	constructor(uploadService: UploadService, imageService: ImageService) {
+		this.#uploadService = uploadService;
+		this.#imageService = imageService;
+	}
 
 	public async upload(req: UploadRequest, res: Response<ApiResponse<UploadResponse>>) {
 		const type = req.params.type as ImageEntityType;
@@ -25,45 +24,19 @@ class ImageController {
 		const entityType = ImageUploadMapper[type];
 		if (!entityType) throw new Error(`Invalid upload type: ${type}`);
 
-		const images = await this.uploadService.handleUploadByEntity(entityType, id, files);
+		const images = await this.#uploadService.handleUploadByEntity(entityType, id, files);
 
 		return ResponseHelper.success<UploadResponse>(res, { success: true, images });
 	}
 
-	public async getImages(req: GetImagesRequest, res: Response<ApiResponse<GetImageResponse>>) {
+	public async getImages(req: GetImagesRequest, res: Response<ApiResponse<ImageFullInfo[]>>) {
 		const type = req.params.type as ImageEntityType;
 		const id = req.params.id;
 
 		const entityType = ImageUploadMapper[type];
 
-		const images = await this.imageRepository.getEntityImage(entityType, id);
-
-		/**
-         *  id: string;
-             url: string;
-             variant: EVariantType;
-         }
-         */
-		const response = images.flatMap((img) => {
-			const isPrimary = img.references[0].isPrimary;
-			const baseVariant = {
-				id: img.id,
-				url: this.s3Service.getS3Url(img.s3Key),
-				variant: EVariantType.ORIGINAL,
-				imageId: img.id,
-				isPrimary: isPrimary,
-			};
-			const variants = img.variants.map((img) => ({
-				id: img.id,
-				url: this.s3Service.getS3Url(img.s3Key),
-				variant: img.variant,
-				imageId: img.id,
-				isPrimary: isPrimary,
-			}));
-			return [baseVariant, ...variants];
-		});
-
-		return ResponseHelper.success<GetImageResponse>(res, { images: response });
+		const images = await this.#imageService.getImage(entityType, id);
+		return ResponseHelper.success(res, images);
 	}
 }
 
