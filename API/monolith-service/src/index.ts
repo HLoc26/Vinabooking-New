@@ -7,7 +7,7 @@ import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
 import { AuthService, OAuthService, UserService } from "@/services";
-import { AuthRepository, UserRepository } from "@/repositories";
+import { AuthRepository, UserRepository, RoomRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -23,6 +23,9 @@ import S3Service from "./services/s3.service";
 import ImageRepository from "./repositories/image.repository";
 import UploadClient from "./clients/upload.client";
 import { ErrorHandler } from "./utils/response";
+import RoomRouter from "./routes/room.routes";
+import RoomController from "./controllers/room.controller";
+import RoomService from "./services/room.service";
 
 const app: Express = express();
 connectRedis();
@@ -33,6 +36,7 @@ const cognitoClient = CognitoClient.getInstance();
 // Repositories
 const authRepository = new AuthRepository(prismaClient);
 const userRepository = new UserRepository(prismaClient);
+const roomRepository = new RoomRepository(prismaClient);
 const imageRepository = new ImageRepository(prismaClient);
 
 // Services
@@ -52,19 +56,22 @@ const oauthService = new OAuthService(
 	authRepository,
 	userRepository
 );
+const roomService = new RoomService(roomRepository);
 const s3Service = new S3Service();
 const uploadService = new UploadService(s3Service, imageRepository);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
 const userController = new UserController(userService);
+const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, s3Service, imageRepository);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
 const userRouter = new UserRouter(express.Router(), userController);
 const imageRouter = new ImageRouter(express.Router(), imageController, UploadClient.getInstance());
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter);
+const roomRouter = new RoomRouter(express.Router(), roomController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
