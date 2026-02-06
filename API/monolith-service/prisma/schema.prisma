@@ -429,3 +429,55 @@ model Review {
     parent          Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
     replies         Review[] @relation("ReviewToReplies")
 }
+
+// Original image
+model Image {
+    id          String           @id @default(uuid())
+    s3Key       String
+    filename    String
+    contentType String
+    size        BigInt // In bytes
+    createdAt   DateTime         @default(now())
+    references  ImageReference[]
+    variants    ImageVariant[]
+}
+
+enum EEntityType {
+    ACCOMMODATION
+    USER_PROFILE
+    ROOM
+    REVIEW
+}
+
+model ImageReference {
+    id String @id @default(uuid())
+
+    imageId String
+    image   Image  @relation(fields: [imageId], references: [id])
+
+    entityType EEntityType
+    entityId   String
+
+    isPrimary Boolean  @default(false)
+    createdAt DateTime @default(now())
+
+    @@index([entityType, entityId])
+}
+
+enum EVariantType {
+    ORIGINAL
+    THUMBNAIL // smaller image for thumbnail 
+    WEBP // use webp
+    OPTIMIZED // optimized for phone (idk if we need this)
+}
+
+model ImageVariant {
+    id      String       @id @default(uuid())
+    s3Key   String
+    variant EVariantType
+
+    imageId String
+    image   Image  @relation(fields: [imageId], references: [id])
+
+    @@index([variant, imageId])
+}
