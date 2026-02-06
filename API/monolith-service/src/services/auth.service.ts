@@ -18,21 +18,25 @@ import {
 import CognitoClient from "@/clients/cognito.client";
 import { AuthTokens } from "@/types/auth/auth-token";
 import IdentityProviderError from "@/errors/IdentityProviderError";
+import EmailService from "./email.service";
 
 export interface AuthServiceConfig {
 	cognitoClient: CognitoIdentityProviderClient;
 	googleClientSecret: string;
+	emailService: EmailService;
 }
 
 class AuthService {
 	private readonly cognitoClient: CognitoIdentityProviderClient;
 	private readonly googleClientSecret: string;
+	private readonly emailService: EmailService;
 
 	private readonly backendAuthSecret = process.env["BACKEND_SECRET_KEY"]!;
 
 	constructor(config: AuthServiceConfig) {
 		this.cognitoClient = config.cognitoClient;
 		this.googleClientSecret = config.googleClientSecret;
+		this.emailService = config.emailService;
 	}
 
 	public async signUp(email: string, password: string) {
@@ -64,6 +68,12 @@ class AuthService {
 				ConfirmationCode: code,
 			});
 			await this.cognitoClient.send(command);
+
+			// Gửi mail chào mừng sau khi xác thực thành công
+			this.emailService.sendWelcome(email, email.split("@")[0]).catch((err) => {
+				console.error(`[AuthService] Failed to send welcome email to ${email}`, err);
+			});
+
 			return true;
 		} catch (error) {
 			console.error("[AuthService] ConfirmSignUp Error:", error);
@@ -191,6 +201,9 @@ class AuthService {
 				Permanent: true,
 			})
 		);
+
+		// Gửi mail Welcome cho user Google lần đầu login
+		this.emailService.sendWelcome(email, email.split("@")[0]).catch(console.error);
 
 		return { userSub };
 	}
