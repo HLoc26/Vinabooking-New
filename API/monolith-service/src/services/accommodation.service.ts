@@ -152,7 +152,6 @@ class AccommodationService {
 		const adultsPerRoom = totalAdults > 0 ? Math.ceil(totalAdults / requiredRooms) : undefined;
 		const childrenPerRoom = totalChildren > 0 ? Math.ceil(totalChildren / requiredRooms) : undefined;
 
-		console.log("[AccommodationService] Getting pre-filtered IDs from RoomService...");
 		const result = await this.#roomService.filterAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
 		return result || undefined;
 	}
