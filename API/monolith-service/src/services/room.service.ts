@@ -4,7 +4,7 @@ import { EEntityType, Prisma } from "@/generated/client";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
 import { ImageFullInfo } from "@/types/image.types";
-import { RoomWithDetails } from "@/types/room.types";
+import { RoomFullDetail, RoomWithDetails } from "@/types/room.types";
 
 export class RoomService {
 	readonly #roomRepository: RoomRepository;
@@ -32,7 +32,7 @@ export class RoomService {
 	/**
 	 * (R) Lấy tất cả phòng thuộc một accommodation
 	 */
-	async getRoomsByAccommodationId(accommodationId: string, startDate?: Date, endDate?: Date): Promise<(RoomWithDetails & { remainingQuantity: number; images: ImageFullInfo[] })[]> {
+	async getRoomsByAccommodationId(accommodationId: string, startDate?: Date, endDate?: Date): Promise<RoomFullDetail[]> {
 		const rooms = await this.#roomRepository.findAllByAccommodationId(accommodationId);
 		if (rooms.length === 0) return [];
 		const roomIds = rooms.map((r) => r.id);
@@ -75,7 +75,13 @@ export class RoomService {
 				...room,
 				remainingQuantity,
 				images,
-			};
+				amenities: room.amenities.map((config) => ({
+					id: config.id, //  amenity id (NOT config.id)
+					name: config.amenity.name,
+					type: config.amenity.type,
+					description: config.amenity.description,
+				})),
+			} as unknown as RoomFullDetail;
 		});
 		return result;
 	}
