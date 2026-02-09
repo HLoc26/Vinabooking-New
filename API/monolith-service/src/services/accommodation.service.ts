@@ -1,27 +1,29 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError } from "../errors";
-import { RoomService, ImageService } from "@/services"; //Double check path
-import { type EAccommodationType } from "@/generated/client";
-import { AccommodationEntity, SearchQuery, ServiceImageDto, ServiceRoomDto, SearchResultItem, ESortOption } from "@/types/accommodation.types";
+import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
+import { EEntityType, type EAccommodationType } from "@/generated/client";
+import { SearchQuery, SearchResultItem, ESortOption, AccommodationFullInfo, AccommodationWithDetails } from "@/types/accommodation.types";
 
 const MAX_SEARCH_LOOPS = 3; // Max loops to find enough available accommodations
 const AVAILABILITY_CHECK_BATCH_OVERHEAD = 10; // Fetch extra items to account for unavailable ones
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
-	readonly #roomService: RoomService = new RoomService();
-	readonly #imageService: ImageService = new ImageService();
-	constructor(accommodationRepository: AccommodationRepository, roomService: RoomService, imageService: ImageService) {
+	readonly #roomService: RoomService;
+	readonly #imageService: ImageService;
+	readonly #s3Service: S3Service;
+	constructor(accommodationRepository: AccommodationRepository, roomService: RoomService, imageService: ImageService, s3Service: S3Service) {
 		this.#accommodationRepository = accommodationRepository;
 		this.#roomService = roomService;
 		this.#imageService = imageService;
+		this.#s3Service = s3Service;
 	}
 
-	async getAccommodationById(id: string, startDate?: string, endDate?: string): Promise<AccommodationEntity> {
+	async getAccommodationById(id: string, startDate?: Date, endDate?: Date): Promise<AccommodationFullInfo> {
 		// 1. Create 3 Promises to run in parallel
 		const accommodationPromise = this.#accommodationRepository.findById(id);
-		const roomsPromise = this.#roomService.getRoomsByAccommodationId(id, startDate, endDate) as Promise<ServiceRoomDto[]>;
-		const imagesPromise = this.#imageService.getImagesForEntity(id) as Promise<ServiceImageDto[]>;
+		const roomsPromise = this.#roomService.getRoomsByAccommodationId(id, startDate, endDate);
+		const imagesPromise = this.#imageService.getImage(EEntityType.ACCOMMODATION, id);
 
 		// 2. Await all Promises
 		const [accommodation, rooms, images] = await Promise.all([accommodationPromise, roomsPromise, imagesPromise]);
@@ -42,18 +44,13 @@ class AccommodationService {
 	/**
 	 * Gets Accommodation details by a Room ID.
 	 */
-	async getAccommodationByRoomId(roomId: string): Promise<AccommodationEntity> {
-		console.log(`[AccommodationService] Finding accommodation for room ID: ${roomId}`);
-
-		const accommodationId = await this.#roomService.getAccommodationIdByRoomId(roomId);
-		console.log(`[AccommodationService] Found accommodation ID: ${accommodationId} for room ID: ${roomId}`);
+	async getAccommodationByRoomId(roomId: string): Promise<AccommodationFullInfo> {
+		const accommodationId = (await this.#roomService.getRoomById(roomId)).accommodationId;
 
 		return this.getAccommodationById(accommodationId);
 	}
 
 	async getHomepageStats() {
-		console.log("[AccommodationService] Fetching homepage stats...");
-
 		const [byType, byCity] = await Promise.all([this.#accommodationRepository.countByType(), this.#accommodationRepository.countByCity()]);
 
 		const formattedTypes = byType.map((item) => ({
@@ -155,8 +152,7 @@ class AccommodationService {
 		const adultsPerRoom = totalAdults > 0 ? Math.ceil(totalAdults / requiredRooms) : undefined;
 		const childrenPerRoom = totalChildren > 0 ? Math.ceil(totalChildren / requiredRooms) : undefined;
 
-		console.log("[AccommodationService] Getting pre-filtered IDs from RoomService...");
-		const result = await this.#roomService.getFilteredAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
+		const result = await this.#roomService.filterAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
 		return result || undefined;
 	}
 
@@ -169,7 +165,7 @@ class AccommodationService {
 
 		if (checkIn && checkOut) {
 			// --- Path with Availability Check (more complex) ---
-			const finalResults: AccommodationEntity[] = [];
+			const finalResults: AccommodationWithDetails[] = [];
 			let currentOffset = (pageNum - 1) * limitNum;
 			let hasMoreToCheck = true;
 			let loopCount = 0;
@@ -184,7 +180,7 @@ class AccommodationService {
 					batchLimit
 				);
 
-				const candidates: AccommodationEntity[] = searchResult.data as AccommodationEntity[];
+				const candidates: AccommodationWithDetails[] = searchResult.data as AccommodationWithDetails[];
 				totalMatchesInDB = searchResult.total;
 
 				if (candidates.length === 0) {
@@ -213,7 +209,7 @@ class AccommodationService {
 				sortBy
 			);
 			totalMatchesInDB = searchResult.total;
-			const availableAccommodations = searchResult.data as AccommodationEntity[];
+			const availableAccommodations = searchResult.data as AccommodationWithDetails[];
 			return { availableAccommodations, totalMatchesInDB };
 		}
 	}
@@ -221,10 +217,12 @@ class AccommodationService {
 	/**
 	 * Helper for Step 2: Filters a batch of accommodations for room availability.
 	 */
-	private async _filterForAvailability(accommodations: AccommodationEntity[], checkIn: string, checkOut: string, requiredRooms: number): Promise<AccommodationEntity[]> {
+	private async _filterForAvailability(accommodations: AccommodationFullInfo[], checkIn: string, checkOut: string, requiredRooms: number): Promise<AccommodationFullInfo[]> {
 		const availabilityPromises = accommodations.map(async (acc) => {
 			try {
-				const roomList = (await this.#roomService.getRoomsByAccommodationId(acc.id, checkIn, checkOut)) as ServiceRoomDto[];
+				const startDate = new Date(checkIn as string);
+				const endDate = new Date(checkOut as string);
+				const roomList = await this.#roomService.getRoomsByAccommodationId(acc.id, startDate, endDate);
 				const isAvailable = roomList.some((r) => (r.remainingQuantity || 0) >= requiredRooms);
 
 				if (isAvailable) {
@@ -239,24 +237,28 @@ class AccommodationService {
 		});
 
 		const results = await Promise.all(availabilityPromises);
-		return results.filter((r): r is AccommodationEntity => r !== null);
+		return results.filter((r): r is AccommodationFullInfo => r !== null);
 	}
 
 	/**
 	 * Step 3: Fetches images and calculates minimum price for a list of accommodations.
 	 */
-	private async _enrichAccommodationsWithDetails(accommodations: AccommodationEntity[], checkIn?: string, checkOut?: string): Promise<SearchResultItem[]> {
+	private async _enrichAccommodationsWithDetails(accommodations: AccommodationFullInfo[], checkIn?: string, checkOut?: string): Promise<SearchResultItem[]> {
 		const enrichedPromises = accommodations.map(async (acc) => {
 			// Fetch images
-			const imagesPromise = this.#imageService.getImagesForEntity(acc.id) as Promise<ServiceImageDto[]>;
+			const imagesPromise = this.#imageService.getImage(EEntityType.ACCOMMODATION, acc.id);
 
 			// Fetch rooms ONLY if they weren't fetched during availability check
-			const roomsPromise = acc.rooms ? Promise.resolve(acc.rooms) : (this.#roomService.getRoomsByAccommodationId(acc.id, checkIn, checkOut) as Promise<ServiceRoomDto[]>);
+			const startDate = new Date(checkIn as string);
+			const endDate = new Date(checkOut as string);
+			const roomsPromise = acc.rooms //
+				? Promise.resolve(acc.rooms)
+				: this.#roomService.getRoomsByAccommodationId(acc.id, startDate, endDate);
 
 			const [images, roomsData] = await Promise.all([imagesPromise, roomsPromise]);
 
 			// Calculate thumbnail
-			const thumbnail = images.length > 0 ? images[0].url : null;
+			const thumbnail = images.length > 0 ? this.#s3Service.getS3Url(images[0].s3Key) : null;
 
 			// Calculate minPrice
 			let minPrice: number | null = null;
@@ -295,5 +297,4 @@ class AccommodationService {
 	}
 }
 
-// Singleton instance
 export default AccommodationService;

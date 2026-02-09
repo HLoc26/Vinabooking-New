@@ -1,4 +1,4 @@
-import { EVariantType } from "@/generated/client";
+import { EVariantType, Prisma } from "@/generated/client";
 
 export interface IImage {
 	id: string;
@@ -18,28 +18,24 @@ export type ImageProcessingResultKey = EVariantType;
 
 export type ImageProcessingResult = Map<ImageProcessingResultKey, Buffer>;
 
-export const ImageProcessingResultName: Record<ImageProcessingResultKey, EVariantType> = {
-	ORIGINAL: EVariantType.ORIGINAL,
-	THUMBNAIL: EVariantType.THUMBNAIL,
-	WEBP: EVariantType.WEBP,
-	OPTIMIZED: EVariantType.OPTIMIZED,
-};
-
-export interface ImageProcessingOptions {
-	thumbnail: boolean;
-	webp: boolean;
-	optimized: boolean;
-}
-
 // Image Upload
 export type UploadResultProperties = "id" | "s3Key";
 export type UploadResult = Map<ImageProcessingResultKey, Map<UploadResultProperties, string>>;
 
 // Image retrieval
-export interface ResponseImage {
-	id: string;
+type BaseImageInfo = Prisma.ImageGetPayload<{
+	include: {
+		variants: true;
+		references: {
+			select: {
+				isPrimary: true;
+			};
+		};
+	};
+}>;
+
+export type ImageFullInfo = Omit<BaseImageInfo, "size" | "variants"> & {
+	size: string;
 	url: string;
-	variant: EVariantType;
-	imageId: string; // original id
-	isPrimary: boolean;
-}
+	variants: (BaseImageInfo["variants"][number] & { url: string })[];
+};
