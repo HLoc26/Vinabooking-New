@@ -2,14 +2,14 @@ import { useState } from "react";
 import { Paper, Box, Typography, IconButton, Chip, Button } from "@mui/material";
 import { Person, Hotel, SquareFoot, Bathtub, Visibility, Remove, Add, ChevronLeft, ChevronRight, ExpandMore, ExpandLess } from "@mui/icons-material";
 
-import type { AccommodationDetail } from "../../../../../types/accommodation.types";
 import { getViewTypeLabel } from "../../../../../constants/viewTypes";
 
 import useModalContext from "../../../../../../../context/ModalContext/hook";
 import RoomDetailModal from "./RoomDetailModal";
+import type { Room } from "../../../../../types/room.types";
 
 interface RoomCardProps {
-	room: AccommodationDetail["rooms"][0];
+	room: Room;
 	quantity: number;
 	availableRooms: number;
 	onIncrease: () => void;
@@ -42,6 +42,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 	const handleRoomNameClick = () => {
 		openModal(<RoomDetailModal room={room} />);
 	};
+	console.log(room);
 
 	return (
 		<Paper
@@ -345,7 +346,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 								{room.amenities.slice(0, showAllAmenities ? undefined : visibleAmenitiesCount).map((a) => (
 									<Chip
 										key={a.id}
-										label={a.amenity.name}
+										label={a.name}
 										size="small"
 										variant="outlined"
 										sx={{
