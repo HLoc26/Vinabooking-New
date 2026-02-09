@@ -1,22 +1,22 @@
 import { Box } from "@mui/material";
 import { RoomCard } from "./components/RoomCard";
-import type { AccommodationDetail } from "../../../../types/accommodation.types";
 import useBookingContextProvider from "../../../../../../context/BookingContext/hook";
+import useRoom from "../../../../hooks/useRoom";
 
 interface Props {
-	accommodation: AccommodationDetail;
+	accommodationId: string;
 }
 
-export const RoomsTab = ({ accommodation }: Props) => {
+export const RoomsTab = ({ accommodationId }: Props) => {
 	const { bookingInfo, updateRoomQuantity } = useBookingContextProvider();
-
+	const { data: rooms } = useRoom(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
+	if (!rooms) return null;
 	return (
 		<Box>
-			{accommodation.rooms.map((room) => {
+			{rooms.map((room) => {
 				const selectedRoom = bookingInfo.items.find((r) => r.id === room.id);
 				const selectedQuantity = selectedRoom ? selectedRoom.count : 0;
 				const availableRooms = room.remainingQuantity ?? 0;
-
 				return (
 					<RoomCard
 						key={room.id}
