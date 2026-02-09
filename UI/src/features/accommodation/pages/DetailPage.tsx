@@ -8,6 +8,7 @@ import useBookingContextProvider from "../../../context/BookingContext/hook";
 import useSearchContext from "../../../context/SearchContext/hook";
 import ImageGallery from "../../../components/shared/ImageGallery";
 import { useAccommodationReview } from "../hooks/useAccommodationReview";
+import useAccommodation from "../hooks/useAccommodation";
 
 // Helper format date YYYY-MM-DD
 const formatDateParam = (date: Date) => date.toLocaleDateString("sv-SE");
@@ -20,7 +21,13 @@ export default function DetailPage() {
 	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
 	const { searchCriteria } = useSearchContext();
 
-	const { accommodation, loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
+	const { loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
+
+	// TODO: navigate to 404 error
+	if (!accommodationId) navigate("/");
+
+	const { data: accommodation } = useAccommodation(accommodationId ?? "");
+
 	const { reviews } = useAccommodationReview(accommodation?.id ?? "");
 
 	const avgStar = reviews.reduce((sum, a) => sum + (a.star ?? 0), 0) / (reviews.filter((r) => typeof r.star === "number").length || 1);
