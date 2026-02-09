@@ -29,16 +29,10 @@ export type FacilityConfig = {
 	id: string;
 	fee: string;
 	note: string | null;
-	facility: Facility;
-};
-
-export type Facility = {
-	id: string;
 	name: string;
 	type: string;
 	description: string;
 };
-
 export type Room = {
 	id: string;
 	name: string;
@@ -85,7 +79,6 @@ export type FacilityIconMap = Record<string, ReactNode>;
  * SEARCH
  * ========================================================================= */
 
-
 export type AccommodationType = "HOTEL" | "APARTMENT" | "RESORT" | "VILLA" | "HOMESTAY" | "HOSTEL" | string;
 
 export type SortOption = "price_asc" | "price_desc" | "newest" | "rating" | "recommended";
@@ -120,7 +113,7 @@ export interface PaginationMeta {
 export interface ApiResponse<T> {
 	success: boolean;
 	data: T;
-	error: any;
+	error: string | null;
 }
 
 export interface AccommodationSearchData {
