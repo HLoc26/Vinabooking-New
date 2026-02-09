@@ -42,7 +42,6 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 	const handleRoomNameClick = () => {
 		openModal(<RoomDetailModal room={room} />);
 	};
-	console.log(room);
 
 	return (
 		<Paper
