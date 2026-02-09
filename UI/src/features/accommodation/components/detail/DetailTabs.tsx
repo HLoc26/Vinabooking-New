@@ -22,7 +22,7 @@ export const DetailTabs = ({ tabValue, onChange, accommodation }: Props) => {
 			</Paper>
 
 			{tabValue === 0 && <OverviewTab accommodation={accommodation} />}
-			{tabValue === 1 && <RoomsTab accommodation={accommodation} />}
+			{tabValue === 1 && <RoomsTab accommodationId={accommodation.id} />}
 			{tabValue === 2 && <ReviewsTab accommodation={accommodation} />}
 		</>
 	);
