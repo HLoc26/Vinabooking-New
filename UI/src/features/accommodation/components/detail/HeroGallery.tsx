@@ -1,8 +1,8 @@
 import { Box, Button } from "@mui/material";
-import type { ImageType } from "../../../../types/Image";
+import type { Image } from "../../../../types/Image";
 
 interface Props {
-	images: ImageType[];
+	images: Image[];
 	onOpenGallery: (i: number) => void;
 }
 
