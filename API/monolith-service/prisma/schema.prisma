@@ -55,6 +55,7 @@ model User {
     createdAt         DateTime           @default(now())
     updatedAt         DateTime           @updatedAt
     userAuthProviders UserAuthProvider[]
+    reviews           Review[]
 }
 
 // Auth
@@ -91,6 +92,7 @@ model Booking {
     userId    String // who made the booking (traveler)   
     createdAt DateTime        @default(now())
     updatedAt DateTime        @updatedAt
+    reviews   Review[]
 }
 
 model BookingDetail {
@@ -186,6 +188,7 @@ model Accommodation {
 
     facilities FacilityConfig[]
     rooms      Room[]
+    reviews    Review[]
 
     @@index([type])
     @@index([rentalType])
@@ -416,18 +419,29 @@ model AmenityConfig {
 //Review
 
 model Review {
-    id              String   @id @default(uuid()) // id của review đó
-    star            Int?
-    comment         String   @db.Text // optional
-    createdAt       DateTime @default(now())
-    updatedAt       DateTime @updatedAt
+    id        String   @id @default(uuid())
+    star      Int?
+    comment   String   @db.Text
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+
     accommodationId String
-    bookingId       String?
-    userId          String // user id của người đăng review
-    // Self relation
-    parentId        String?
-    parent          Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
-    replies         Review[] @relation("ReviewToReplies")
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id])
+
+    bookingId String?
+    booking   Booking? @relation(fields: [bookingId], references: [id])
+
+    // Self relation (Replies)
+    parentId String?
+    parent   Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
+    replies  Review[] @relation("ReviewToReplies")
+
+    @@index([accommodationId])
+    @@index([userId])
 }
 
 // Original image
