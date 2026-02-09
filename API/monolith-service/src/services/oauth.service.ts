@@ -51,8 +51,6 @@ class OAuthService {
 	}
 
 	public async handleGoogleCallback(code: string): Promise<{ tokens: AuthTokens | null; redirectUrl: string }> {
-		console.log("--- GOOGLE CALLBACK START ---");
-
 		// 1. Lấy thông tin từ Google
 		const userInfo = await this.exchangeUserInfo(code);
 		const { email, name } = userInfo;
@@ -70,8 +68,6 @@ class OAuthService {
 		// Giải mã Token để lấy "sub"
 		const decodedIdToken = JwtService.parseJwt(tokens.idToken);
 		const userId = decodedIdToken.sub;
-
-		console.log(`[OAuth] Token generated for UserID: ${userId}`);
 
 		// 4. Đồng bộ DB
 		let userInDb = null;
@@ -124,7 +120,6 @@ class OAuthService {
 			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
 		}
 
-		console.log("--- GOOGLE CALLBACK SUCCESS ---");
 		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name }));
 		const params = new URLSearchParams({
 			accessToken: tokens.accessToken,

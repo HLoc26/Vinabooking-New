@@ -91,7 +91,6 @@ export default class BookingService {
 		}
 
 		const firstDetail = booking.details[0];
-		console.log(`[BookingService] Fetching accommodation data: ${firstDetail}`);
 
 		// Get accommodation
 		const accommodation = await this.#accommodationService.getAccommodationByRoomId(firstDetail.itemId);
