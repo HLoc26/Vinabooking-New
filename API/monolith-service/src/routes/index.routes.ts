@@ -6,6 +6,7 @@ import RoomRouter from "./room.routes";
 import ImageRouter from "./image.routes";
 import AccommodationRouter from "./accommodation.routes";
 import BookingRouter from "./booking.routes";
+import ReviewRouter from "./review.routes";
 
 class AppRouter {
 	#router: Router;
@@ -16,7 +17,8 @@ class AppRouter {
 		private imageRouter: ImageRouter,
 		private roomRouter: RoomRouter,
 		private accommodationRouter: AccommodationRouter,
-		private bookingRouter: BookingRouter
+		private bookingRouter: BookingRouter,
+		private reviewRouter: ReviewRouter
 	) {
 		this.#router = express.Router();
 		this.#registerRoutes();
@@ -32,6 +34,7 @@ class AppRouter {
 		this.#router.use("/images", this.imageRouter.router);
 		this.#router.use("/accommodations", this.accommodationRouter.router);
 		this.#router.use("/bookings", this.bookingRouter.router);
+		this.#router.use("/reviews", this.reviewRouter.router);
 	}
 
 	public get router(): Router {
