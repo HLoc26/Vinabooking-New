@@ -22,15 +22,6 @@ export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
 	};
 }>;
 
-export interface SimpleFacility {
-	id: string;
-	note?: string | null;
-	type: EFacilityType;
-	name: string;
-	description: string;
-	fee: string | number;
-}
-
 export type AccommodationFullInfo = AccommodationWithDetails & {
 	rooms?: RoomWithDetails[];
 	images?: ImageFullInfo[];
