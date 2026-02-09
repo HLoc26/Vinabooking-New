@@ -1,4 +1,4 @@
-import { Prisma, type EAccommodationType } from "@/generated/client";
+import { EFacilityType, Prisma, type EAccommodationType } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 
@@ -21,6 +21,15 @@ export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
 		};
 	};
 }>;
+
+export interface SimpleFacility {
+	id: string;
+	note?: string | null;
+	type: EFacilityType;
+	name: string;
+	description: string;
+	fee: string | number;
+}
 
 export type AccommodationFullInfo = AccommodationWithDetails & {
 	rooms?: RoomWithDetails[];
