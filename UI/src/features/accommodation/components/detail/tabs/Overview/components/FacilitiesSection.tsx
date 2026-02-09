@@ -1,6 +1,6 @@
 import { Paper, Typography, Grid, Box } from "@mui/material";
-import { facilityIcons } from "../../constants/facilityIcons";
-import type { AccommodationDetail } from "../../types/accommodation.types";
+import { facilityIcons } from "../../../../../constants/facilityIcons";
+import type { AccommodationDetail } from "../../../../../types/accommodation.types";
 
 interface Props {
 	accommodation: AccommodationDetail;
@@ -27,11 +27,11 @@ export const FacilitiesSection = ({ accommodation }: Props) => {
 								"&:hover": { bgcolor: "grey.100" },
 							}}
 						>
-							<Box sx={{ color: "primary.main", pt: 0.25 }}>{facilityIcons[f.facility.type] || facilityIcons.DEFAULT}</Box>
+							<Box sx={{ color: "primary.main", pt: 0.25 }}>{facilityIcons[f.type] || facilityIcons.DEFAULT}</Box>
 							<Box>
 								<Box sx={{ display: "flex", justifyContent: "space-between", gap: 1.5, mb: f.note ? 0.5 : 0 }}>
 									<Typography variant="body2" fontWeight="500">
-										{f.facility.name}
+										{f.name}
 									</Typography>
 									{parseFloat(f.fee) > 0 && (
 										<Typography variant="caption" fontWeight="700" color="primary.main">

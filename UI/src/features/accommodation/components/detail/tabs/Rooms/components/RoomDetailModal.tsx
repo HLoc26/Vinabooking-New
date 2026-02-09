@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Box, Chip, DialogActions, DialogContent, DialogTitle, IconButton, Typography, Button, Stack, Divider } from "@mui/material";
 import { Close, Person, Hotel, SquareFoot, Bathtub, Visibility, ChevronLeft, ChevronRight } from "@mui/icons-material";
 
-import type { AccommodationDetail } from "../../types/accommodation.types";
-import { getViewTypeLabel } from "../../constants/viewTypes";
-import useModalContext from "../../../../context/ModalContext/hook";
+import type { AccommodationDetail } from "../../../../../types/accommodation.types";
+import { getViewTypeLabel } from "../../../../../constants/viewTypes";
+import useModalContext from "../../../../../../../context/ModalContext/hook";
 
 interface RoomDetailModalProps {
 	room: AccommodationDetail["rooms"][0];

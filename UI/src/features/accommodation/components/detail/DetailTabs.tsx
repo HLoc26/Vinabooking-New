@@ -1,7 +1,7 @@
 import { Tabs, Tab, Paper } from "@mui/material";
-import { OverviewTab } from "./tabs/OverviewTab";
-import { RoomsTab } from "./tabs/RoomsTab";
-import { ReviewsTab } from "./tabs/ReviewsTab";
+import { OverviewTab } from "./tabs/Overview/OverviewTab";
+import { RoomsTab } from "./tabs/Rooms/RoomsTab";
+import { ReviewsTab } from "./tabs/Reviews/ReviewsTab";
 import type { AccommodationDetail } from "../../types/accommodation.types";
 
 interface Props {

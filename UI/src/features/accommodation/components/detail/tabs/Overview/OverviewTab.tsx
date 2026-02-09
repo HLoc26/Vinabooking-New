@@ -1,13 +1,13 @@
 import { Box, Paper, Typography } from "@mui/material";
-import { FacilitiesSection } from "../FacilitiesSection";
-import { LocationSection } from "../LocationSection";
-import type { AccommodationDetail } from "../../../types/accommodation.types";
+import { FacilitiesSection } from "./components/FacilitiesSection";
+import { LocationSection } from "./components/LocationSection";
+import type { AccommodationDetail } from "../../../../types/accommodation.types";
 
-interface Props {
+interface OverviewTabProps {
 	accommodation: AccommodationDetail;
 }
 
-export const OverviewTab = ({ accommodation }: Props) => (
+export const OverviewTab = ({ accommodation }: OverviewTabProps) => (
 	<Box>
 		<Paper sx={{ p: 3, mb: 3 }}>
 			<Typography variant="h6" fontWeight="bold" gutterBottom>

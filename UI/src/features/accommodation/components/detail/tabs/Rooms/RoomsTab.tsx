@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
-import { RoomCard } from "../RoomCard";
-import type { AccommodationDetail } from "../../../types/accommodation.types";
-import useBookingContextProvider from "../../../../../context/BookingContext/hook";
+import { RoomCard } from "./components/RoomCard";
+import type { AccommodationDetail } from "../../../../types/accommodation.types";
+import useBookingContextProvider from "../../../../../../context/BookingContext/hook";
 
 interface Props {
 	accommodation: AccommodationDetail;
