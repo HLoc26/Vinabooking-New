@@ -1,4 +1,6 @@
-import { Prisma, Accommodation, Address, Facility, FacilityConfig, type EAccommodationType } from "@/generated/client";
+import { Prisma, type EAccommodationType } from "@/generated/client";
+import { ImageFullInfo } from "./image.types";
+import { RoomWithDetails } from "./room.types";
 
 export enum ESortOption {
 	NEWEST = "newest",
@@ -20,8 +22,17 @@ export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
 	};
 }>;
 
+export type AccommodationFullInfo = AccommodationWithDetails & {
+	rooms?: RoomWithDetails[];
+	images?: ImageFullInfo[];
+
+	// Calculated fields
+	thumbnail?: string | null;
+	minPrice?: number;
+};
+
 export interface AccommodationSearchResult {
-	data: AccommodationWithDetails[];
+	data: AccommodationFullInfo[];
 	total: number;
 }
 
@@ -31,58 +42,8 @@ export interface SearchFilters {
 	ids?: string[];
 	facilities?: string[];
 }
-// --- Data Transfer Objects from other services ---
-
-/**
- * Data shape for a room coming from the Room Service.
- */
-export interface ServiceRoomDto {
-	id: string;
-	price: string | number;
-	remainingQuantity?: number;
-	[key: string]: unknown;
-}
-
-/**
- * Data shape for an image coming from the Image Service.
- */
-export interface ServiceImageDto {
-	id: string;
-	url: string;
-	variant: "ORIGINAL" | "THUMBNAIL" | "WEBP" | "OPTIMIZED";
-	isPrimary?: boolean;
-}
-
-// --- Internal Entities and DTOs ---
-
-/**
- * Enriched Accommodation entity used within the service layer.
- * Combines Prisma model with data from other services.
- */
-
-export interface AccommodationEntity extends Accommodation {
-	address?: Address | null;
-	facilities?: (FacilityConfig & { facility: Facility })[];
-
-	// Data from other services
-	rooms?: ServiceRoomDto[];
-	images?: ServiceImageDto[];
-
-	// Calculated fields
-	thumbnail?: string | null;
-	minPrice?: number;
-}
 
 // --- Search related types ---
-
-/**
- * Defines the available sorting options for search queries.
- */
-export enum SortByOption {
-	RECOMMENDED = "recommended",
-	PRICE_ASC = "price_asc",
-	PRICE_DESC = "price_desc",
-}
 
 /**
  * Query parameters for searching accommodations.
@@ -108,7 +69,7 @@ export interface SearchQuery {
 /**
  * Represents the final data structure for an item in the search results list.
  */
-export type SearchResultItem = Omit<AccommodationEntity, "rooms" | "images" | "minPrice" | "thumbnail"> & {
+export type SearchResultItem = AccommodationWithDetails & {
 	minPrice: number | null;
 	thumbnail: string | null;
 };

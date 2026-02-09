@@ -5,3 +5,6 @@ export { default as EmailService } from "./email.service";
 export { default as AccommodationService } from "./accommodation.service";
 export { default as RoomService } from "./room.service";
 export { default as ImageService } from "./image.service";
+export { default as UploadService } from "./upload.service";
+export { default as S3Service } from "./s3.service";
+export { default as BookingService } from "./booking.service";

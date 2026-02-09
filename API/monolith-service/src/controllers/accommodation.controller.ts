@@ -18,7 +18,10 @@ class AccommodationController {
 		const { id } = req.params;
 		const { checkIn, checkOut } = req.query;
 
-		const data = await this.#accommodationService.getAccommodationById(id, checkIn, checkOut);
+		const startDate = new Date(checkIn as string);
+		const endDate = new Date(checkOut as string);
+
+		const data = await this.#accommodationService.getAccommodationById(id, startDate, endDate);
 
 		ResponseHelper.success(res, data);
 	}
