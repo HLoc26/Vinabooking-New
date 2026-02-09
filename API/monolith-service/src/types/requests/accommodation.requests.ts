@@ -9,12 +9,12 @@ export interface GetAccommodationByIdParams {
 	id: string;
 }
 
-export interface GetAccommodationByIdQuery {
-	checkIn?: string;
-	checkOut?: string;
-}
+// export interface GetAccommodationByIdQuery {
+// 	checkIn?: string;
+// 	checkOut?: string;
+// }
 
-export type GetAccommodationByIdRequest = Request<GetAccommodationByIdParams, object, object, GetAccommodationByIdQuery>;
+export type GetAccommodationByIdRequest = Request<GetAccommodationByIdParams, object, object>;
 
 /**
  * GET /accommodations?byEntity=room&entityId=...
