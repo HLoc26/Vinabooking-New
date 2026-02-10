@@ -1,6 +1,5 @@
 import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
 import { Star } from "@mui/icons-material";
-import { useAccommodationReview } from "../../../../hooks/useAccommodationReview";
 import useUserBookings from "../../../../../user/hooks/useUserBookings";
 import useAuthContextProvider from "../../../../../../context/AuthContext/hook";
 import useModalContext from "../../../../../../context/ModalContext/hook";
@@ -10,6 +9,8 @@ import { type AccommodationDetail } from "../../../../types/accommodation.types"
 import { type Booking } from "../../../../../user/types/Booking";
 import BookingSelectionModal from "./components/BookingSelectionModal";
 import { useState } from "react";
+import { useReviews } from "../../../../hooks/useReviews";
+import useRooms from "../../../../hooks/useRooms";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
@@ -18,20 +19,31 @@ interface ReviewsTabProps {
 const REVIEWS_PER_PAGE = 5;
 
 export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
-	const { reviews, loading, error, refresh } = useAccommodationReview(accommodation.id);
+	const [page, setPage] = useState(1);
+	const { data, isLoading: loading, isError: error, refetch } = useReviews(accommodation.id, page, REVIEWS_PER_PAGE);
+
+	const reviews = data ?? [];
+	const refresh = () => {
+		refetch();
+	};
+
 	const { getCurrentUser } = useAuthContextProvider();
 	const user = getCurrentUser();
 	const userBookings = useUserBookings();
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
-	const [page, setPage] = useState(1);
 
+	const totalReviews = reviews.length;
+	const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + (r.star ?? 0), 0) / totalReviews : 0;
 	const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
-	const accommodationRoomIds = new Set(accommodation.rooms.map((r) => r.id));
+
+	const { data: rooms } = useRooms(accommodation.id);
+
+	const accommodationRoomIds = rooms ? new Set(rooms.map((r) => r.id)) : new Set();
 
 	const unreviewedBookings = userBookings
 		.filter((booking) => booking.status === "COMPLETED")
-		.filter((booking) => booking.details.some((d) => accommodationRoomIds.has(d.itemId)))
+		.filter((booking) => booking.details?.some((d) => accommodationRoomIds.has(d.itemId)))
 		.filter((booking) => !reviewedBookingIds.has(booking.id))
 		.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()); // sort by most recent first
 
@@ -61,12 +73,11 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 		}
 	};
 
-	const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+	const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
 		setPage(value);
 	};
 
-	const paginatedReviews = reviews.slice((page - 1) * REVIEWS_PER_PAGE, page * REVIEWS_PER_PAGE);
-
+	const paginatedReviews = reviews;
 	if (loading) {
 		return (
 			<Paper sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
@@ -85,9 +96,6 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 			</Paper>
 		);
 	}
-
-	const totalReviews = reviews.length;
-	const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + (r.star ?? 0), 0) / totalReviews : 0;
 
 	return (
 		<Paper sx={{ p: 3 }}>
@@ -129,7 +137,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 										<Rating value={review.star} readOnly size="small" />
 									</Box>
 									<Typography variant="caption" color="text.secondary">
-										{new Date(review.createdAt).toLocaleDateString("en-GB", {
+										{new Date(review.commentDate).toLocaleDateString("en-GB", {
 											day: "numeric",
 											month: "long",
 											year: "numeric",
