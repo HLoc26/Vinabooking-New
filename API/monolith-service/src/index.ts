@@ -73,7 +73,7 @@ const oauthService = new OAuthService(
 	userRepository
 );
 const imageService = new ImageService(imageRepository, s3Service);
-const bookingService = new BookingService(bookingRepository);
+const bookingService = new BookingService(bookingRepository, userService, emailService);
 const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
 const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service);
@@ -82,6 +82,7 @@ const reviewService = new ReviewService({
 	userService: userService,
 	bookingService: bookingService,
 });
+bookingService.setAccommodationService(accommodationService);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
@@ -89,7 +90,7 @@ const userController = new UserController(userService);
 const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
-const bookingController = new BookingController(bookingService, bookingRepository, userService, accommodationService, emailService);
+const bookingController = new BookingController(bookingService);
 const reviewController = new ReviewController(reviewService);
 
 // Routers

@@ -60,7 +60,6 @@ export class RoomService {
 			})
 		);
 
-		console.log(`[RoomService] Fetching extra data (Booking & Images) for ${rooms.length} rooms...`);
 		const [bookedCounts, imagesMapList] = await Promise.all([bookingTask, imagesTask]);
 		const bookedMap = new Map<string, number>();
 		bookedCounts.forEach((item) => bookedMap.set(item.roomId, item.bookedCount));
