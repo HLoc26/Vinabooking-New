@@ -36,8 +36,8 @@ export class RoomController {
 		const { accommodationId } = req.params;
 		const { startDate, endDate } = req.query;
 
-		const start = new Date(startDate as string);
-		const end = new Date(endDate as string);
+		const start = startDate ? new Date(startDate) : undefined;
+		const end = endDate ? new Date(endDate) : undefined;
 
 		const rooms = await this.#roomService.getRoomsByAccommodationId(accommodationId, start, end);
 
