@@ -1,10 +1,9 @@
 import { ChevronLeft, ChevronRight, Close } from "@mui/icons-material";
 import { Box, Dialog, IconButton } from "@mui/material";
 import type { Dispatch, SetStateAction } from "react";
-import type { ImageType } from "../../types/Image";
 
 type ImageGalleryProps = {
-	galleryImages: ImageType[];
+	galleryImages: string[]; // is the url of the image
 	openGallery: boolean;
 	currentIndex: number;
 	setCurrentIndex: Dispatch<SetStateAction<number>>;
@@ -100,7 +99,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ galleryImages, openGallery,
 						>
 							<Box
 								component="img"
-								src={galleryImages[currentIndex].url}
+								src={galleryImages[currentIndex]}
 								alt={`Image ${currentIndex + 1}`}
 								onClick={(e) => e.stopPropagation()}
 								sx={{
@@ -180,7 +179,7 @@ const ImageGallery: React.FC<ImageGalleryProps> = ({ galleryImages, openGallery,
 								<Box
 									key={idx}
 									component="img"
-									src={img.url}
+									src={img}
 									alt={`Thumbnail ${idx + 1}`}
 									onClick={() => setCurrentIndex(idx)}
 									sx={{
