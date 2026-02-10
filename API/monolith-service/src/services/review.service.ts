@@ -116,6 +116,7 @@ class ReviewService {
 				id: review.id,
 				star: review.star ?? 0,
 				comment: review.comment,
+				bookingId: review.bookingId,
 				commentDate: review.createdAt,
 				user: userData || { id: review.userId, name: "Unknown", avatar: "" },
 				children: [], // Sẽ fill sau
