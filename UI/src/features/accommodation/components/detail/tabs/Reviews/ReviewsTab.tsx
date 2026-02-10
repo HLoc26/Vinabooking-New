@@ -1,7 +1,6 @@
 import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
 import { Star } from "@mui/icons-material";
 import useUserBookings from "../../../../../user/hooks/useUserBookings";
-import useAuthContextProvider from "../../../../../../context/AuthContext/hook";
 import useModalContext from "../../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../../context/PushNotification/hook";
@@ -11,6 +10,7 @@ import BookingSelectionModal from "./components/BookingSelectionModal";
 import { useState } from "react";
 import { useReviews } from "../../../../hooks/useReviews";
 import useRooms from "../../../../hooks/useRooms";
+import { authStorage } from "../../../../../auth/utils/authStorage";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
@@ -27,8 +27,8 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 		refetch();
 	};
 
-	const { getCurrentUser } = useAuthContextProvider();
-	const user = getCurrentUser();
+	const user = authStorage.getUserSync();
+
 	const userBookings = useUserBookings();
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
