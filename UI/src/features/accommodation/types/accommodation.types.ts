@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Image } from "../../../types/Image";
 
 /**
  * @deprecated use ImageType from src/types/Imgae instead
@@ -70,7 +71,7 @@ export interface AccommodationDetail {
 	address: Address;
 	facilities: FacilityConfig[];
 	rooms: Room[];
-	images: AccommodationImage[];
+	images: Image[];
 }
 
 export type FacilityIconMap = Record<string, ReactNode>;
