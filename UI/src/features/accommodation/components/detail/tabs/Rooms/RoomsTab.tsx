@@ -1,7 +1,7 @@
 import { Box } from "@mui/material";
 import { RoomCard } from "./components/RoomCard";
 import useBookingContextProvider from "../../../../../../context/BookingContext/hook";
-import useRoom from "../../../../hooks/useRoom";
+import useRooms from "../../../../hooks/useRooms";
 
 interface Props {
 	accommodationId: string;
@@ -9,7 +9,7 @@ interface Props {
 
 export const RoomsTab = ({ accommodationId }: Props) => {
 	const { bookingInfo, updateRoomQuantity } = useBookingContextProvider();
-	const { data: rooms } = useRoom(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
+	const { data: rooms } = useRooms(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
 	if (!rooms) return null;
 	return (
 		<Box>
