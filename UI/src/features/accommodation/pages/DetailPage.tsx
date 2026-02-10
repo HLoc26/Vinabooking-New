@@ -2,7 +2,6 @@ import { useState, useMemo, useEffect } from "react";
 import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
-import { useAccommodationDetail } from "../hooks/useAccommodationDetail";
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
 import useBookingContextProvider from "../../../context/BookingContext/hook";
 import useSearchContext from "../../../context/SearchContext/hook";
@@ -21,12 +20,22 @@ export default function DetailPage() {
 	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
 	const { searchCriteria } = useSearchContext();
 
-	const { loading, error, thumbnails, displayImages } = useAccommodationDetail(accommodationId, bookingInfo.startDate, bookingInfo.endDate);
-
 	// TODO: navigate to 404 error
 	if (!accommodationId) navigate("/");
 
-	const { data: accommodation } = useAccommodation(accommodationId ?? "");
+	const { data: accommodation, isLoading: loading, isError: error } = useAccommodation(accommodationId ?? "");
+
+	const getThumbnails = (): string[] => {
+		if (!accommodation?.images) return [];
+
+		return accommodation?.images.map((img) => img.variants.find((v) => v.variant === "THUMBNAIL")?.url).filter((url): url is string => !!url);
+	};
+
+	const getDisplayImages = (): string[] => {
+		if (!accommodation?.images) return [];
+
+		return accommodation?.images.map((img) => img.variants.find((v) => v.variant === "WEBP")?.url).filter((url): url is string => !!url);
+	};
 
 	const { reviews } = useAccommodationReview(accommodation?.id ?? "");
 
@@ -87,7 +96,7 @@ export default function DetailPage() {
 	}, [accommodationId, navigate, searchCriteria]);
 
 	const openImageGallery = (index: number) => {
-		const safeIndex = Math.min(Math.max(0, index), displayImages.length);
+		const safeIndex = Math.min(Math.max(0, index), getDisplayImages().length);
 		setCurrentIndex(safeIndex);
 		setOpenGallery(true);
 	};
@@ -95,11 +104,11 @@ export default function DetailPage() {
 	const closeGallery = () => setOpenGallery(false);
 
 	const handlePrevImage = () => {
-		setCurrentIndex((prev) => (prev === 0 ? displayImages.length - 1 : prev - 1));
+		setCurrentIndex((prev) => (prev === 0 ? getDisplayImages().length - 1 : prev - 1));
 	};
 
 	const handleNextImage = () => {
-		setCurrentIndex((prev) => (prev === displayImages.length - 1 ? 0 : prev + 1));
+		setCurrentIndex((prev) => (prev === getDisplayImages().length - 1 ? 0 : prev + 1));
 	};
 
 	const handleUpdateStartDate = (newDate: Date) => {
@@ -156,7 +165,7 @@ export default function DetailPage() {
 	return (
 		<Box sx={{ bgcolor: "#f5f5f5", minHeight: "100vh", pb: 8 }}>
 			<Container maxWidth="lg" sx={{ pt: 2 }}>
-				<HeroGallery images={thumbnails} onOpenGallery={(i) => openImageGallery(i)} />
+				<HeroGallery images={getThumbnails()} onOpenGallery={(i) => openImageGallery(i)} />
 
 				<Grid container spacing={4} sx={{ mt: 3 }}>
 					{/* Cột trái – thông tin chính */}
@@ -183,7 +192,7 @@ export default function DetailPage() {
 
 			{/* Gallery modal */}
 			<ImageGallery
-				galleryImages={displayImages}
+				galleryImages={getDisplayImages()}
 				openGallery={openGallery}
 				currentIndex={currentIndex}
 				closeGallery={closeGallery}
