@@ -32,6 +32,10 @@ import RoomController from "./controllers/room.controller";
 import RoomService from "./services/room.service";
 import BookingRouter from "./routes/booking.routes";
 import BookingController from "./controllers/booking.controller";
+import ReviewRepository from "@/repositories/review.repository";
+import ReviewService from "@/services/review.service";
+import ReviewController from "@/controllers/review.controller";
+import ReviewRouter from "@/routes/review.routes";
 
 const app: Express = express();
 connectRedis();
@@ -46,6 +50,7 @@ const roomRepository = new RoomRepository(prismaClient);
 const imageRepository = new ImageRepository(prismaClient);
 const accommodationRepository = new AccommodationRepository(prismaClient);
 const bookingRepository = new BookingRepository(prismaClient);
+const reviewRepository = new ReviewRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -72,6 +77,11 @@ const bookingService = new BookingService(bookingRepository, userService, emailS
 const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
 const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service);
+const reviewService = new ReviewService({
+	reviewRepository: reviewRepository,
+	userService: userService,
+	bookingService: bookingService,
+});
 bookingService.setAccommodationService(accommodationService);
 
 // Controllers
@@ -81,6 +91,7 @@ const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
 const bookingController = new BookingController(bookingService);
+const reviewController = new ReviewController(reviewService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -89,7 +100,8 @@ const imageRouter = new ImageRouter(express.Router(), imageController, UploadCli
 const roomRouter = new RoomRouter(express.Router(), roomController);
 const accommodationRouter = new AccommodationRouter(express.Router(), accommodationController);
 const bookingRouter = new BookingRouter(express.Router(), bookingController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter);
+const reviewRouter = new ReviewRouter(express.Router(), reviewController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
