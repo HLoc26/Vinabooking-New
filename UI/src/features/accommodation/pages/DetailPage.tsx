@@ -8,6 +8,7 @@ import useSearchContext from "../../../context/SearchContext/hook";
 import ImageGallery from "../../../components/shared/ImageGallery";
 import { useAccommodationReview } from "../hooks/useAccommodationReview";
 import useAccommodation from "../hooks/useAccommodation";
+import useRooms from "../hooks/useRooms";
 
 // Helper format date YYYY-MM-DD
 const formatDateParam = (date: Date) => date.toLocaleDateString("sv-SE");
@@ -24,6 +25,8 @@ export default function DetailPage() {
 	if (!accommodationId) navigate("/");
 
 	const { data: accommodation, isLoading: loading, isError: error } = useAccommodation(accommodationId ?? "");
+	const { data: rawRooms } = useRooms(accommodationId ?? "");
+	const rooms = rawRooms ?? [];
 
 	const getThumbnails = (): string[] => {
 		if (!accommodation?.images) return [];
@@ -133,7 +136,7 @@ export default function DetailPage() {
 		if (!accommodation) return 0;
 
 		return bookingInfo.items.reduce((sum, item) => {
-			const room = accommodation.rooms.find((r) => r.id === item.id);
+			const room = rooms.find((r) => r.id === item.id);
 			if (!room) return sum;
 			return sum + item.count * parseFloat(room.price) * nights;
 		}, 0);
