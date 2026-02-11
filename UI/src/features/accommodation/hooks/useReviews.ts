@@ -1,9 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
 import { getReviews } from "../reviewApi";
 
-export const useReviews = (accommodationId: string, page: number, limit: number) => {
+export const useReviews = (accommodationId: string) => {
 	return useQuery({
-		queryKey: ["accommodation", accommodationId, "reviews", { page, limit }],
+		queryKey: ["accommodation", accommodationId, "reviews"],
 		queryFn: async () => {
 			const response = await getReviews(accommodationId);
 			const data = response.data;
