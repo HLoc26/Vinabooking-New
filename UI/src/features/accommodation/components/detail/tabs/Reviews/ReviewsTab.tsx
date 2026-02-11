@@ -7,7 +7,7 @@ import { usePushNotificationContext } from "../../../../../../context/PushNotifi
 import { type AccommodationDetail } from "../../../../types/accommodation.types";
 import { type Booking } from "../../../../../user/types/Booking";
 import BookingSelectionModal from "./components/BookingSelectionModal";
-import { useState } from "react";
+import { useMemo, useState } from "react";
 import { useReviews } from "../../../../hooks/useReviews";
 import useRooms from "../../../../hooks/useRooms";
 import { authStorage } from "../../../../../auth/utils/authStorage";
@@ -20,12 +20,24 @@ const REVIEWS_PER_PAGE = 5;
 
 export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const [page, setPage] = useState(1);
-	const { data, isLoading: loading, isError: error, refetch } = useReviews(accommodation.id, page, REVIEWS_PER_PAGE);
+	const { data, isLoading: loading, isError: error, refetch } = useReviews(accommodation.id);
 
-	const reviews = data ?? [];
+	const reviews = useMemo(() => data ?? [], [data]);
 	const refresh = () => {
 		refetch();
 	};
+
+	const { paginatedData, totalPages } = useMemo(() => {
+		if (!reviews) return { paginatedData: [], totalPages: 0 };
+
+		const start = (page - 1) * REVIEWS_PER_PAGE;
+		const end = start + REVIEWS_PER_PAGE;
+
+		return {
+			paginatedData: reviews.slice(start, end),
+			totalPages: Math.ceil(reviews.length / REVIEWS_PER_PAGE),
+		};
+	}, [reviews, page]);
 
 	const user = authStorage.getUserSync();
 
@@ -77,7 +89,6 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 		setPage(value);
 	};
 
-	const paginatedReviews = reviews;
 	if (loading) {
 		return (
 			<Paper sx={{ p: 3, display: "flex", justifyContent: "center", alignItems: "center", minHeight: 200 }}>
@@ -124,7 +135,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 
 			{/* Review List */}
 			<Stack spacing={3}>
-				{paginatedReviews.map((review) => (
+				{paginatedData.map((review) => (
 					<Box key={review.id}>
 						<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
 							<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
@@ -154,11 +165,9 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 				))}
 			</Stack>
 
-			{totalReviews > REVIEWS_PER_PAGE && (
-				<Stack alignItems="center" mt={3}>
-					<Pagination count={Math.ceil(totalReviews / REVIEWS_PER_PAGE)} page={page} onChange={handlePageChange} />
-				</Stack>
-			)}
+			<Stack alignItems="center" mt={3}>
+				<Pagination count={totalPages} page={page} onChange={handlePageChange} />
+			</Stack>
 		</Paper>
 	);
 };
