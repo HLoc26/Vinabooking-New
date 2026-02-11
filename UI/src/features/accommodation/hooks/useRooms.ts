@@ -15,6 +15,7 @@ const useRooms = (accommodationId: string, startDate?: Date, endDate?: Date) => 
 
 			return data;
 		},
+		placeholderData: [],
 	});
 };
 export default useRooms;
