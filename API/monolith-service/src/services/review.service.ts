@@ -1,26 +1,30 @@
 import ReviewRepository from "@/repositories/review.repository";
 import UserService from "./user.service";
-import { BookingService } from "@/services";
+import { BookingService, ImageService } from "@/services";
 import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
-import { Prisma } from "@/generated/client";
+import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
+import { ReviewResponse } from "@/types/responses/review.response";
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
 	reviewRepository: ReviewRepository;
 	userService: UserService;
 	bookingService: BookingService;
+	imageService: ImageService;
 }
 
 class ReviewService {
 	readonly #reviewRepository: ReviewRepository;
 	readonly #userService: UserService;
 	readonly #bookingService: BookingService;
+	readonly #imageService: ImageService;
 
 	constructor(config: ReviewServiceConfig) {
 		this.#reviewRepository = config.reviewRepository;
 		this.#userService = config.userService;
 		this.#bookingService = config.bookingService;
+		this.#imageService = config.imageService;
 	}
 
 	/**
@@ -90,36 +94,42 @@ class ReviewService {
 	/**
 	 * Lấy Reviews của Accommodation (Enrich thêm User Info)
 	 */
-	public async getReviewsByAccommodation(accommodationId: string) {
+	public async getReviewsByAccommodation(accommodationId: string): Promise<ReviewResponse[]> {
 		const reviews = await this.#reviewRepository.findByAccommodationId(accommodationId);
+		if (!reviews.length) return [];
+		const userIds = [...new Set(reviews.map((r) => r.userId))];
 
-		const parents = reviews.filter((r) => !r.parentId);
-		const children = reviews.filter((r) => r.parentId);
-
-		const result = await Promise.all(
-			parents.map(async (parent) => {
-				const parentReplies = children.filter((c) => c.parentId === parent.id);
-				const parentUser = await this.#userService.getUserById(parent.userId);
-
-				const enrichedReplies = await Promise.all(
-					parentReplies.map(async (reply) => {
-						const replyUser = await this.#userService.getUserById(reply.userId);
-						return {
-							...reply,
-							user: replyUser ? { id: replyUser.id, name: replyUser.name, avatar: null } : null,
-						};
-					})
-				);
-
-				return {
-					...parent,
-					user: parentUser ? { id: parentUser.id, name: parentUser.name, avatar: null } : null,
-					children: enrichedReplies,
-				};
+		const usersData = await Promise.all(
+			userIds.map(async (id) => {
+				const user = await this.#userService.getUserById(id);
+				if (!user) return null;
+				const images = await this.#imageService.getImage(EEntityType.USER_PROFILE, id);
+				const avatar = images.find((i) => i.references.some((r) => r.isPrimary))?.url || ""; // Lấy URL string
+				return { id: user.id, name: user.name, avatar };
 			})
 		);
 
-		return result;
+		const userMap = new Map(usersData.filter((u) => u !== null).map((u) => [u!.id, u!]));
+		const formatReview = (review: Review): ReviewResponse => {
+			const userData = userMap.get(review.userId);
+			return {
+				id: review.id,
+				star: review.star ?? 0,
+				comment: review.comment,
+				bookingId: review.bookingId,
+				commentDate: review.createdAt,
+				user: userData || { id: review.userId, name: "Unknown", avatar: "" },
+				children: [], // Sẽ fill sau
+			};
+		};
+		const parentReviews: ReviewResponse[] = reviews.filter((r) => !r.parentId).map(formatReview);
+
+		const childReviews = reviews.filter((r) => r.parentId).map(formatReview);
+
+		return parentReviews.map((parent) => {
+			parent.children = childReviews.filter((child) => reviews.find((r) => r.id === child.id)?.parentId === parent.id);
+			return parent;
+		});
 	}
 }
 
