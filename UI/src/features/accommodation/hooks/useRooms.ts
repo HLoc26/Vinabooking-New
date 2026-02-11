@@ -4,7 +4,7 @@ import { getRoomByAccommodationId } from "../roomApi";
 /**
  * To fetch room data by ID
  */
-const useRooms = (accommodationId: string, startDate: Date, endDate: Date) => {
+const useRooms = (accommodationId: string, startDate?: Date, endDate?: Date) => {
 	return useQuery({
 		queryKey: ["room", accommodationId],
 		queryFn: async () => {
@@ -15,6 +15,7 @@ const useRooms = (accommodationId: string, startDate: Date, endDate: Date) => {
 
 			return data;
 		},
+		placeholderData: [],
 	});
 };
 export default useRooms;

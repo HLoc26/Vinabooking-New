@@ -3,6 +3,8 @@ import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
 import BadRequestError from "@/errors/BadRequestError";
 import { CreateReviewRequest, GetAccommodationReviewsRequest } from "@/types/requests";
+import { ApiResponse } from "@/types/responses";
+import { ReviewResponse } from "@/types/responses/review.response";
 
 class ReviewController {
 	readonly #reviewService: ReviewService;
@@ -49,7 +51,7 @@ class ReviewController {
 	 * GET /reviews/accommodation/:accommodationId
 	 * Lấy danh sách review của một khách sạn
 	 */
-	public getAccommodationReviews = async (req: GetAccommodationReviewsRequest, res: Response) => {
+	public getAccommodationReviews = async (req: GetAccommodationReviewsRequest, res: Response<ApiResponse<ReviewResponse[]>>) => {
 		try {
 			const { accommodationId } = req.params;
 			if (!accommodationId) {
