@@ -1,6 +1,5 @@
 import { Paper, Typography, Box, Button, Link } from "@mui/material";
-import type { AccommodationDetail } from "../../types/accommodation.types";
-
+import type { AccommodationDetail } from "../../../../../types/accommodation.types";
 interface Props {
 	accommodation: AccommodationDetail;
 }

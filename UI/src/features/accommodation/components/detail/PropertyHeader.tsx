@@ -3,13 +3,13 @@ import { LocationOn, Share } from "@mui/icons-material";
 import type { AccommodationDetail } from "../../types/accommodation.types";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
 
-interface Props {
+interface PropertyHeaderProps {
 	accommodation: AccommodationDetail;
-	averageRating?: number;
-	reviewCount?: number;
+	averageRating: number;
+	reviewCount: number;
 }
 
-export const PropertyHeader = ({ accommodation, averageRating = 4.5, reviewCount = 4 }: Props) => {
+export const PropertyHeader = ({ accommodation, averageRating, reviewCount }: PropertyHeaderProps) => {
 	return (
 		<Paper sx={{ p: 3, mb: 3 }}>
 			<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>

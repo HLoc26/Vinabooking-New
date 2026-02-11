@@ -1,15 +1,16 @@
 import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
 import { Star } from "@mui/icons-material";
-import { useAccommodationReview } from "../../../hooks/useAccommodationReview";
-import useUserBookings from "../../../../user/hooks/useUserBookings";
-import useAuthContextProvider from "../../../../../context/AuthContext/hook";
-import useModalContext from "../../../../../context/ModalContext/hook";
-import ReviewModal from "../../../../../components/shared/ReviewModal";
-import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
-import { type AccommodationDetail } from "../../../types/accommodation.types";
-import { type Booking } from "../../../../user/types/Booking";
-import BookingSelectionModal from "../../../../../components/shared/BookingSelectionModal";
-import { useState } from "react";
+import useUserBookings from "../../../../../user/hooks/useUserBookings";
+import useModalContext from "../../../../../../context/ModalContext/hook";
+import ReviewModal from "../../../../../../components/shared/ReviewModal";
+import { usePushNotificationContext } from "../../../../../../context/PushNotification/hook";
+import { type AccommodationDetail } from "../../../../types/accommodation.types";
+import { type Booking } from "../../../../../user/types/Booking";
+import BookingSelectionModal from "./components/BookingSelectionModal";
+import { useMemo, useState } from "react";
+import { useReviews } from "../../../../hooks/useReviews";
+import useRooms from "../../../../hooks/useRooms";
+import { authStorage } from "../../../../../auth/utils/authStorage";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
@@ -18,20 +19,43 @@ interface ReviewsTabProps {
 const REVIEWS_PER_PAGE = 5;
 
 export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
-	const { reviews, loading, error, refresh } = useAccommodationReview(accommodation.id);
-	const { getCurrentUser } = useAuthContextProvider();
-	const user = getCurrentUser();
+	const [page, setPage] = useState(1);
+	const { data, isLoading: loading, isError: error, refetch } = useReviews(accommodation.id);
+
+	const reviews = useMemo(() => data ?? [], [data]);
+	const refresh = () => {
+		refetch();
+	};
+
+	const { paginatedData, totalPages } = useMemo(() => {
+		if (!reviews) return { paginatedData: [], totalPages: 0 };
+
+		const start = (page - 1) * REVIEWS_PER_PAGE;
+		const end = start + REVIEWS_PER_PAGE;
+
+		return {
+			paginatedData: reviews.slice(start, end),
+			totalPages: Math.ceil(reviews.length / REVIEWS_PER_PAGE),
+		};
+	}, [reviews, page]);
+
+	const user = authStorage.getUserSync();
+
 	const userBookings = useUserBookings();
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
-	const [page, setPage] = useState(1);
 
+	const totalReviews = reviews.length;
+	const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + (r.star ?? 0), 0) / totalReviews : 0;
 	const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
-	const accommodationRoomIds = new Set(accommodation.rooms.map((r) => r.id));
+
+	const { data: rooms } = useRooms(accommodation.id);
+
+	const accommodationRoomIds = rooms ? new Set(rooms.map((r) => r.id)) : new Set();
 
 	const unreviewedBookings = userBookings
 		.filter((booking) => booking.status === "COMPLETED")
-		.filter((booking) => booking.details.some((d) => accommodationRoomIds.has(d.itemId)))
+		.filter((booking) => booking.details?.some((d) => accommodationRoomIds.has(d.itemId)))
 		.filter((booking) => !reviewedBookingIds.has(booking.id))
 		.sort((a, b) => new Date(b.startDate).getTime() - new Date(a.startDate).getTime()); // sort by most recent first
 
@@ -61,11 +85,9 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 		}
 	};
 
-	const handlePageChange = (event: React.ChangeEvent<unknown>, value: number) => {
+	const handlePageChange = (_: React.ChangeEvent<unknown>, value: number) => {
 		setPage(value);
 	};
-
-	const paginatedReviews = reviews.slice((page - 1) * REVIEWS_PER_PAGE, page * REVIEWS_PER_PAGE);
 
 	if (loading) {
 		return (
@@ -85,9 +107,6 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 			</Paper>
 		);
 	}
-
-	const totalReviews = reviews.length;
-	const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + (r.star ?? 0), 0) / totalReviews : 0;
 
 	return (
 		<Paper sx={{ p: 3 }}>
@@ -116,7 +135,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 
 			{/* Review List */}
 			<Stack spacing={3}>
-				{paginatedReviews.map((review) => (
+				{paginatedData.map((review) => (
 					<Box key={review.id}>
 						<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
 							<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
@@ -129,7 +148,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 										<Rating value={review.star} readOnly size="small" />
 									</Box>
 									<Typography variant="caption" color="text.secondary">
-										{new Date(review.createdAt).toLocaleDateString("en-GB", {
+										{new Date(review.commentDate).toLocaleDateString("en-GB", {
 											day: "numeric",
 											month: "long",
 											year: "numeric",
@@ -146,11 +165,9 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 				))}
 			</Stack>
 
-			{totalReviews > REVIEWS_PER_PAGE && (
-				<Stack alignItems="center" mt={3}>
-					<Pagination count={Math.ceil(totalReviews / REVIEWS_PER_PAGE)} page={page} onChange={handlePageChange} />
-				</Stack>
-			)}
+			<Stack alignItems="center" mt={3}>
+				<Pagination count={totalPages} page={page} onChange={handlePageChange} />
+			</Stack>
 		</Paper>
 	);
 };

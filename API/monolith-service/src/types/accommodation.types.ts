@@ -1,4 +1,4 @@
-import { Prisma, type EAccommodationType } from "@/generated/client";
+import { EFacilityType, Prisma, type EAccommodationType } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 

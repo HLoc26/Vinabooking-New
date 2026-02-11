@@ -19,14 +19,13 @@ class AccommodationService {
 		this.#s3Service = s3Service;
 	}
 
-	async getAccommodationById(id: string, startDate?: Date, endDate?: Date): Promise<AccommodationFullInfo> {
+	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {
 		// 1. Create 3 Promises to run in parallel
 		const accommodationPromise = this.#accommodationRepository.findById(id);
-		const roomsPromise = this.#roomService.getRoomsByAccommodationId(id, startDate, endDate);
 		const imagesPromise = this.#imageService.getImage(EEntityType.ACCOMMODATION, id);
 
 		// 2. Await all Promises
-		const [accommodation, rooms, images] = await Promise.all([accommodationPromise, roomsPromise, imagesPromise]);
+		const [accommodation, images] = await Promise.all([accommodationPromise, imagesPromise]);
 
 		// 3. Check if accommodation exists
 		if (!accommodation) {
@@ -36,9 +35,19 @@ class AccommodationService {
 		// 4. Combine data and return
 		return {
 			...accommodation,
-			rooms: rooms,
 			images: images,
-		};
+			// Overwriting the nested Prisma structure with the flattened one
+			facilities: accommodation.facilities
+				.filter((f) => f.isAvailable)
+				.map((f) => ({
+					id: f.id,
+					name: f.facility.name,
+					type: f.facility.type,
+					description: f.facility.description,
+					fee: f.fee,
+					note: f.note,
+				})),
+		} as unknown as AccommodationFullInfo;
 	}
 
 	/**

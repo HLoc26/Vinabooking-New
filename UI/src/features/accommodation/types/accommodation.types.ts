@@ -1,4 +1,5 @@
 import type { ReactNode } from "react";
+import type { Image } from "../../../types/Image";
 
 /**
  * @deprecated use ImageType from src/types/Imgae instead
@@ -29,16 +30,10 @@ export type FacilityConfig = {
 	id: string;
 	fee: string;
 	note: string | null;
-	facility: Facility;
-};
-
-export type Facility = {
-	id: string;
 	name: string;
 	type: string;
 	description: string;
 };
-
 export type Room = {
 	id: string;
 	name: string;
@@ -76,7 +71,7 @@ export interface AccommodationDetail {
 	address: Address;
 	facilities: FacilityConfig[];
 	rooms: Room[];
-	images: AccommodationImage[];
+	images: Image[];
 }
 
 export type FacilityIconMap = Record<string, ReactNode>;
@@ -84,7 +79,6 @@ export type FacilityIconMap = Record<string, ReactNode>;
 /* =========================================================================
  * SEARCH
  * ========================================================================= */
-
 
 export type AccommodationType = "HOTEL" | "APARTMENT" | "RESORT" | "VILLA" | "HOMESTAY" | "HOSTEL" | string;
 
@@ -120,7 +114,7 @@ export interface PaginationMeta {
 export interface ApiResponse<T> {
 	success: boolean;
 	data: T;
-	error: any;
+	error: string | null;
 }
 
 export interface AccommodationSearchData {
