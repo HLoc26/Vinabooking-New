@@ -2,21 +2,21 @@ import { useState } from "react";
 import { Paper, Box, Typography, IconButton, Chip, Button } from "@mui/material";
 import { Person, Hotel, SquareFoot, Bathtub, Visibility, Remove, Add, ChevronLeft, ChevronRight, ExpandMore, ExpandLess } from "@mui/icons-material";
 
-import type { AccommodationDetail } from "../../types/accommodation.types";
-import { getViewTypeLabel } from "../../constants/viewTypes";
+import { getViewTypeLabel } from "../../../../../constants/viewTypes";
 
-import useModalContext from "../../../../context/ModalContext/hook";
+import useModalContext from "../../../../../../../context/ModalContext/hook";
 import RoomDetailModal from "./RoomDetailModal";
+import type { Room } from "../../../../../types/room.types";
 
-interface Props {
-	room: AccommodationDetail["rooms"][0];
+interface RoomCardProps {
+	room: Room;
 	quantity: number;
 	availableRooms: number;
 	onIncrease: () => void;
 	onDecrease: () => void;
 }
 
-export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecrease }: Props) => {
+export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecrease }: RoomCardProps) => {
 	const isLowStock = availableRooms <= 3;
 	const price = parseFloat(room.price);
 
@@ -345,7 +345,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 								{room.amenities.slice(0, showAllAmenities ? undefined : visibleAmenitiesCount).map((a) => (
 									<Chip
 										key={a.id}
-										label={a.amenity.name}
+										label={a.name}
 										size="small"
 										variant="outlined"
 										sx={{

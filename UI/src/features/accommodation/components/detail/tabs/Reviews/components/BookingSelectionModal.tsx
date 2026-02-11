@@ -1,8 +1,8 @@
 import { DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemButton, ListItemText, Typography, Stack, Pagination } from "@mui/material";
-import type { Booking, BookingDetail } from "../../features/user/types/Booking";
-import useModalContext from "../../context/ModalContext/hook";
-import useRoomInfo from "../../features/user/hooks/useRoomInfo";
-import { formatDate } from "../../utils/dateFormatter";
+import type { Booking, BookingDetail } from "../../../../../../user/types/Booking";
+import useModalContext from "../../../../../../../context/ModalContext/hook";
+import useRoomInfo from "../../../../../../user/hooks/useRoomInfo";
+import { formatDate } from "../../../../../../../utils/dateFormatter";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";
 import { useState } from "react";
 
@@ -90,4 +90,3 @@ const BookingSelectionModal = ({ bookings, onSelect }: BookingSelectionModalProp
 };
 
 export default BookingSelectionModal;
-

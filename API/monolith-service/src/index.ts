@@ -81,6 +81,7 @@ const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
 	bookingService: bookingService,
+	imageService: imageService,
 });
 bookingService.setAccommodationService(accommodationService);
 
