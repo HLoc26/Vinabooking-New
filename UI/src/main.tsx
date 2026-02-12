@@ -5,7 +5,6 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
-import AuthContextProvider from "./context/AuthContext/provider.tsx";
 import SearchProvider from "./context/SearchContext/provider.tsx";
 import StatsProvider from "../src/features/home/context/StatsContext/provider.tsx";
 import UserContextProvider from "./context/UserContext/provider.tsx";
@@ -24,22 +23,20 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 			<QueryClientProvider client={queryClient}>
 				<ThemeProvider theme={theme}>
 					<PushNotificationProvider>
-						<AuthContextProvider>
-							<UserContextProvider>
-								<BookingContextProvider>
-									<BrowserRouter>
-										<ModalProvider>
-											<StatsProvider>
-												<SearchProvider>
-													<CssBaseline />
-													<App />
-												</SearchProvider>
-											</StatsProvider>
-										</ModalProvider>
-									</BrowserRouter>
-								</BookingContextProvider>
-							</UserContextProvider>
-						</AuthContextProvider>
+						<UserContextProvider>
+							<BookingContextProvider>
+								<BrowserRouter>
+									<ModalProvider>
+										<StatsProvider>
+											<SearchProvider>
+												<CssBaseline />
+												<App />
+											</SearchProvider>
+										</StatsProvider>
+									</ModalProvider>
+								</BrowserRouter>
+							</BookingContextProvider>
+						</UserContextProvider>
 					</PushNotificationProvider>
 				</ThemeProvider>
 			</QueryClientProvider>
