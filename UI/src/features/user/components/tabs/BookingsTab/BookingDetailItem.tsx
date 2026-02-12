@@ -10,8 +10,8 @@ import useModalContext from "../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
-import useAuthContextProvider from "../../../../../context/AuthContext/hook";
 import { type ReviewData } from "../../../../../types/Review";
+import { authStorage } from "../../../../../features/auth/utils/authStorage"; // Import mới
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -71,8 +71,8 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 	const fullAddress = accommodation?.address?.fullAddress ?? "";
 
 	const { reviews, loading: reviewsLoading, refresh: refreshReviews } = useAccommodationReview(accommodation?.id || "");
-	const { getCurrentUser } = useAuthContextProvider();
-	const user = getCurrentUser();
+
+	const user = authStorage.getUserSync();
 
 	const userReview = reviews.find((review) => review.bookingId === booking.id && review.user.id === user?.id);
 
