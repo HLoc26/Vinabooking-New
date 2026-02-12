@@ -1,45 +1,26 @@
-import { useEffect, useState } from "react";
-import type { Booking } from "../types/Booking";
+import { useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import bookingApi from "../services/bookingApi";
-import type { UserDto } from "../../../types/UserDto";
-import useAuthContextProvider from "../../../context/AuthContext/hook";
+import { authStorage } from "../../../features/auth/utils/authStorage";
+import type { RootState } from "../../../app/store";
 
 const useUserBookings = () => {
-	const { getCurrentUser } = useAuthContextProvider();
-	const [user, setUser] = useState<UserDto | null>(null);
+	const userFromRedux = useSelector((state: RootState) => state.auth.user);
+	const userId = userFromRedux?.id || authStorage.getUserSync()?.id;
 
-	useEffect(() => {
-		const loggedIn = getCurrentUser();
-		setUser(loggedIn);
-	}, [getCurrentUser]);
-	const [booking, setBooking] = useState<Booking[]>([]);
+	const { data: bookings = [] } = useQuery({
+		queryKey: ["bookings", "user", userId],
+		queryFn: async () => {
+			if (!userId) return [];
+			const res = await bookingApi.getByUserId(userId);
+			return res.data || [];
+		},
+		enabled: !!userId,
+		staleTime: 1000 * 60 * 5,
+		refetchOnWindowFocus: false,
+	});
 
-	useEffect(() => {
-		let isMounted = true;
-
-		(async () => {
-			try {
-				if (!user?.id) return;
-				const res = await bookingApi.getByUserId(user.id);
-
-				if (!res.data) {
-					setBooking([]);
-					return;
-				}
-
-				if (isMounted) setBooking(res.data);
-			} catch (e: unknown) {
-				console.log(e);
-				if (isMounted) setBooking([]);
-			}
-		})();
-
-		return () => {
-			isMounted = false;
-		};
-	}, [user?.id]);
-
-	return booking;
+	return bookings;
 };
 
 export default useUserBookings;

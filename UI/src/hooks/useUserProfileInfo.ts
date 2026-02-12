@@ -1,57 +1,76 @@
-import { useCallback, useEffect, useState } from "react";
-import type { UserDto } from "../types/UserDto";
-import useAuthContextProvider from "../context/AuthContext/hook";
+import { useCallback } from "react";
+import { useDispatch, useSelector } from "react-redux";
+import { useQuery, useQueryClient } from "@tanstack/react-query";
 import userApi from "../services/userApi";
+import type { UserDto } from "../types/UserDto";
 import type { Image } from "../types/Image";
+import { authStorage } from "../features/auth/utils/authStorage";
+import { updateUserSync } from "../features/auth/authSlice";
+import type { RootState } from "../app/store";
 
 const useUserProfileInfo = () => {
-	const [userInfo, setUserInfo] = useState<UserDto | null>(null);
-	const [userAvatars, setUserAvatars] = useState<Image[]>([]);
-	const { getCurrentUser, updateUserInStorage } = useAuthContextProvider();
+	const dispatch = useDispatch();
+	const queryClient = useQueryClient();
 
-	useEffect(() => {
-		const user = getCurrentUser();
-		setUserInfo(user);
+	// 1. Get User Info
+	const userFromRedux = useSelector((state: RootState) => state.auth.user);
+	const userInfo = userFromRedux || authStorage.getUserSync();
+	const userId = userInfo?.id;
 
-		if (!user?.id) return;
+	// 2. Fetch User Avatars
+	const { data: userAvatars = [] } = useQuery({
+		queryKey: ["user", "avatar", userId],
+		queryFn: async () => {
+			if (!userId) return [];
+			const res = await userApi.getUserAvatar(userId);
+			if (!res.data) throw new Error("Images not found");
+			return res.data.images.filter((a) => a.isPrimary) || [];
+		},
+		enabled: !!userId,
+		staleTime: 1000 * 60 * 10,
+	});
 
-		(async () => {
-			if (!userInfo?.id) return;
-			try {
-				const res = await userApi.getUserAvatar(userInfo?.id);
-				if (!res.data) {
-					throw new Error("Images not found");
-				}
-				const avatars = res.data.images;
-
-				const primary = avatars.filter((a) => a.isPrimary);
-
-				setUserAvatars(primary);
-
-				if (res.error) {
-					throw new Error(res.error);
-				}
-			} catch (error: unknown) {
-				console.error(error);
-			}
-		})();
-	}, [getCurrentUser, userInfo?.id]);
-
+	// 3. Update User Info
 	const updateUserInfo = useCallback(
 		async (data: Partial<UserDto>) => {
-			if (!userInfo) return;
+			if (!userId) return;
 
-			const updatedUser = await userApi.updateUser(userInfo.id, data);
+			try {
+				const updatedUserRes = await userApi.updateUser(userId, data);
 
-			if (updatedUser.data) {
-				setUserInfo(updatedUser.data);
-				updateUserInStorage(updatedUser.data);
+				if (updatedUserRes.data) {
+					const newUser = updatedUserRes.data;
+
+					authStorage.setUser(newUser);
+					dispatch(updateUserSync(newUser));
+				}
+			} catch (error) {
+				console.error("Failed to update user info", error);
 			}
 		},
-		[userInfo, updateUserInStorage]
+		[userId, dispatch]
 	);
 
-	return { userInfo, userAvatars, updateUserInfo, setUserAvatars };
+	// 4. Update Avatar
+	const setUserAvatars = useCallback(
+		(newAvatars: Image[] | ((prev: Image[]) => Image[])) => {
+			queryClient.setQueryData<Image[]>(["user", "avatar", userId], (oldData) => {
+				const currentData = oldData || [];
+				if (typeof newAvatars === "function") {
+					return newAvatars(currentData);
+				}
+				return newAvatars;
+			});
+		},
+		[queryClient, userId]
+	);
+
+	return {
+		userInfo,
+		userAvatars,
+		updateUserInfo,
+		setUserAvatars,
+	};
 };
 
 export default useUserProfileInfo;
