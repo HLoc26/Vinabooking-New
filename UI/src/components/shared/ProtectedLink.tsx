@@ -32,10 +32,22 @@ export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children, canN
 	};
 
 	return (
-		<>
-			<div onClick={handleClick} style={{ cursor: "pointer" }}>
-				{children}
-			</div>
-		</>
+		<button
+			type="button"
+			onClick={handleClick}
+			style={{
+				background: "transparent",
+				border: "none",
+				padding: 0,
+				margin: 0,
+				textAlign: "inherit",
+				font: "inherit",
+				cursor: "pointer",
+				width: "100%",
+				display: "block",
+			}}
+		>
+			{children}
+		</button>
 	);
 };
