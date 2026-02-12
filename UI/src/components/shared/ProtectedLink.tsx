@@ -1,8 +1,8 @@
 import { useNavigate } from "react-router-dom";
 import React from "react";
 import LoginModal from "./LoginModal";
-import useAuthContextProvider from "../../context/AuthContext/hook";
 import useModalContext from "../../context/ModalContext/hook";
+import { authStorage } from "../../features/auth/utils/authStorage";
 
 type ProtectedLinkProps = {
 	to: string;
@@ -12,10 +12,7 @@ type ProtectedLinkProps = {
 };
 
 export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children, canNavigate, onFail }) => {
-	const { getCurrentUser } = useAuthContextProvider();
-	const userInfo = getCurrentUser();
 	const navigate = useNavigate();
-
 	const { openModal, closeModal } = useModalContext();
 
 	const handleClick = () => {
@@ -24,7 +21,9 @@ export const ProtectedLink: React.FC<ProtectedLinkProps> = ({ to, children, canN
 			return;
 		}
 
-		if (!userInfo) {
+		const isAuthenticated = !!authStorage.getAccessToken();
+
+		if (!isAuthenticated) {
 			openModal(<LoginModal onLoginSuccess={() => closeModal()} />); // chưa login thì mở modal
 			return;
 		}
