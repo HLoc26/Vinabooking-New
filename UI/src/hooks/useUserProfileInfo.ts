@@ -24,7 +24,7 @@ const useUserProfileInfo = () => {
 			if (!userId) return [];
 			const res = await userApi.getUserAvatar(userId);
 			if (!res.data) throw new Error("Images not found");
-			return res.data.images.filter((a) => a.isPrimary) || [];
+			return res.data.images.filter((img) => img.references?.some((ref) => ref.isPrimary)) || [];
 		},
 		enabled: !!userId,
 		staleTime: 1000 * 60 * 10,
