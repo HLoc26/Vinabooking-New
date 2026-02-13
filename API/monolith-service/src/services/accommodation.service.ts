@@ -95,7 +95,7 @@ class AccommodationService {
 	 * SEARCH API (Full Flow)
 	 */
 	async searchAccommodations(query: SearchQuery): Promise<{
-		data: SearchResultItem[];
+		data: AccommodationFullInfo[];
 		meta: {
 			page: number;
 			limit: number;
@@ -121,7 +121,9 @@ class AccommodationService {
 		const { availableAccommodations, totalMatchesInDB } = await this._findAndCheckAvailability(query, filteredIds, pageNum, limitNum);
 
 		// Step 3: Enrich the results with images and final pricing.
-		const enrichedResults = await this._enrichAccommodationsWithDetails(availableAccommodations, query.checkIn, query.checkOut);
+		// const enrichedResults = await this._enrichAccommodationsWithDetails(availableAccommodations, query.checkIn, query.checkOut);
+
+		const enrichedResults = availableAccommodations;
 
 		// Step 4: Sort the final list.
 		const sortedResults = this._sortResults(enrichedResults, query.sortBy);
@@ -218,7 +220,7 @@ class AccommodationService {
 				sortBy
 			);
 			totalMatchesInDB = searchResult.total;
-			const availableAccommodations = searchResult.data as AccommodationWithDetails[];
+			const availableAccommodations = searchResult.data as AccommodationFullInfo[];
 			return { availableAccommodations, totalMatchesInDB };
 		}
 	}
@@ -294,7 +296,7 @@ class AccommodationService {
 	/**
 	 * Step 4: Sorts the final results based on the sortBy query parameter.
 	 */
-	private _sortResults(accommodations: SearchResultItem[], sortBy?: ESortOption): SearchResultItem[] {
+	private _sortResults(accommodations: AccommodationFullInfo[], sortBy?: ESortOption): AccommodationFullInfo[] {
 		if (sortBy === ESortOption.PRICE_ASC || sortBy === ESortOption.RECOMMENDED) {
 			// Using slice() to avoid mutating the original array
 			return accommodations.slice().sort((a, b) => (a.minPrice || Infinity) - (b.minPrice || Infinity));
