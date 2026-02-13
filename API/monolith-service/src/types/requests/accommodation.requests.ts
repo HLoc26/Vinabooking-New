@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { type EAccommodationType } from "@/generated/client";
-import { ESortOption } from "@/types/accommodation.types";
+import { SearchQuery } from "@/types/accommodation.types";
 
 /**
  * GET /accommodations/:id?checkIn=...&checkOut=...
@@ -36,19 +36,4 @@ export interface GetAccommodationCountQuery {
 
 export type GetAccommodationCountRequest = Request<object, object, object, GetAccommodationCountQuery>;
 
-/**
- * GET /accommodations/search
- */
-export interface SearchAccommodationQuery {
-	keyword?: string;
-	city?: string;
-	type?: EAccommodationType;
-	minPrice?: string;
-	maxPrice?: string;
-	startDate?: string;
-	endDate?: string;
-	guests?: string;
-	sortBy?: ESortOption;
-}
-
-export type SearchAccommodationRequest = Request<object, object, object, SearchAccommodationQuery>;
+export type SearchAccommodationRequest = Request<object, object, object, SearchQuery>;
