@@ -32,18 +32,17 @@ class RoomRepository {
 	 */
 
 	public async findManyByIds(ids: string[]) {
-		if (!ids || ids.length === 0) {
-			return [];
-		}
+		if (!ids || ids.length === 0) return [];
+
 		return this.#prismaClient.room.findMany({
-			where: {
-				id: {
-					in: ids,
-				},
-			},
+			where: { id: { in: ids } },
 			include: {
 				beds: true,
-				amenities: true,
+				amenities: {
+					include: {
+						amenity: true, // This is the deep join required for names/icons
+					},
+				},
 			},
 		});
 	}
