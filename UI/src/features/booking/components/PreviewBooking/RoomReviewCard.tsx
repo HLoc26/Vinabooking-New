@@ -3,14 +3,6 @@ import React, { useState, type Dispatch, type SetStateAction } from "react";
 import type { Image } from "../../../../types/Image";
 import type { RoomFullDetail } from "../../../accommodation/types/room.types";
 
-// Update this to match the raw Amenity type coming from your API/Box
-interface Amenity {
-	id: string;
-	name: string;
-	type: string;
-	icon?: string;
-}
-
 type RoomReviewCardProps = {
 	room: RoomFullDetail & { count: number };
 	thumbnail: string;
@@ -18,19 +10,19 @@ type RoomReviewCardProps = {
 	loading?: boolean; // Added missing prop
 	setGalleryImages: Dispatch<SetStateAction<string[]>>;
 	openImageGallery: (index: number) => void;
-	amenities: Amenity[]; // Changed from AmenityConfig to match your Box data
+	amenities: RoomFullDetail["amenities"]; // Updated to match the actual structure
 };
 
 const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images, loading, setGalleryImages, openImageGallery, amenities }) => {
 	const [open, setOpen] = useState(false);
 
 	// Flat mapping logic remains consistent with the new Amenity interface
-	const flatAmenities = (amenities || []).map((a) => ({
-		id: a.id,
-		name: a.name,
-		type: a.type,
-	}));
-
+	const flatAmenities = (amenities || [])
+		.map((item: any) => {
+			// This reaches into the join table record to get the actual amenity
+			return item.amenity;
+		})
+		.filter(Boolean); // Removes any nulls just in case
 	const preview = flatAmenities.slice(0, 3);
 	const remaining = flatAmenities.length - preview.length;
 
