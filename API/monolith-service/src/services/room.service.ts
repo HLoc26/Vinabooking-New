@@ -28,6 +28,13 @@ export class RoomService {
 		}
 		return room;
 	}
+	async getRoomsByMultipleIds(ids: string[]) {
+		const rooms = await this.#roomRepository.findManyByIds(ids);
+		if (!rooms || rooms.length === 0) {
+			throw new NotFoundError(`No rooms found for the provided IDs: ${ids}`);
+		}
+		return rooms;
+	}
 
 	/**
 	 * (R) Lấy tất cả phòng thuộc một accommodation
