@@ -1,8 +1,8 @@
-import type { ContextInfo } from "../services/context/ContextInfoAdapter";
+import type { ContextInfoAdapter } from "../context/ContextInfoAdapter";
 
 /**
  * Returns the provided ContextInfo.
  */
-export function useContextInfo(info: ContextInfo): ContextInfo {
-    return info;
+export function useContextInfo(info: ContextInfoAdapter): ContextInfoAdapter {
+	return info;
 }
