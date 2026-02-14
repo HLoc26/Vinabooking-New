@@ -1,21 +1,22 @@
 import { useQuery } from "@tanstack/react-query";
-import { getRoomByAccommodationId } from "../roomApi";
+import { getRoomsByMultipleIds } from "../roomApi";
 
-/**
- * To fetch room data by ID
- */
-const useRooms = (accommodationId: string, startDate?: Date, endDate?: Date) => {
+const useRooms = (roomIds: string[]) => {
 	return useQuery({
-		queryKey: ["room", accommodationId],
+		queryKey: ["rooms", roomIds],
 		queryFn: async () => {
-			const response = await getRoomByAccommodationId(accommodationId, startDate, endDate);
-			if (!response) throw new Error("No data found");
+			if (!roomIds || roomIds.length === 0) return [];
+
+			const response = await getRoomsByMultipleIds(roomIds);
 			const data = response.data;
+
 			if (!data) throw new Error(response.error as string);
 
 			return data;
 		},
-		placeholderData: [],
+		enabled: roomIds.length > 0, // prevents running when empty
+		staleTime: 1000 * 60 * 5, // 5 minutes (same as accommodation)
 	});
 };
+
 export default useRooms;
