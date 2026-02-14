@@ -1,24 +1,32 @@
-import { useState, useEffect, lazy, Suspense, useMemo, useCallback } from "react";
+import { useState, useEffect, lazy, Suspense, useCallback } from "react";
 import { useNavigate } from "react-router-dom";
 import { Box, Typography, Grid, Paper, Divider } from "@mui/material";
 import { PreviewOutlined } from "@mui/icons-material";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import UserInfoPreviewCard from "../components/UserInfoPreviewCard";
-import RoomReviewBox from "../components/RoomReviewBox";
-import AccommodationInfoBox from "../components/AccommodationInfoBox";
-import type { ImageType } from "../../../types/Image";
-import useRoomsInfo from "../hooks/useRoomInfo";
-import useAccommodationInfo from "../hooks/useAccommodationInfo";
+import RoomReviewBox from "../components/PreviewBooking/RoomReviewBox";
+import AccommodationInfoBox from "../components/PreviewBooking/AccommodationInfoBox";
 import type { UserInfo } from "../types/UserInfo";
 import useBookingContextProvider from "../../../context/BookingContext/hook";
-const ImageGallery = lazy(() => import("../components/ImageGallery"));
+import useRooms from "../../accommodation/hooks/useRooms";
+import useAccommodation from "../../accommodation/hooks/useAccommodation";
+
+const ImageGallery = lazy(() => import("../../../components/shared/ImageGallery"));
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
 	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
-	const roomIds = useMemo(() => bookingInfo.items.map((i) => i.id), [bookingInfo.items]);
-	const { roomsInfo: selectedRooms, loading: roomInfoLoading } = useRoomsInfo(roomIds);
-	const { accommInfo } = useAccommodationInfo(bookingInfo.accommodationId);
+	const roomIds = bookingInfo.items.map((i) => i.id);
+	const { data: selectedRooms = [], isLoading: roomInfoLoading } = useRooms(roomIds);
+	const { data: accommInfo } = useAccommodation(bookingInfo.accommodationId);
+	const enrichedRooms = selectedRooms.map((room) => {
+		const bookingItem = bookingInfo.items.find((i) => i.id === room.id);
+
+		return {
+			...room,
+			count: bookingItem?.count ?? 0,
+		};
+	});
 
 	const { pushNotification } = usePushNotificationContext();
 
@@ -29,8 +37,7 @@ export default function BookingPreviewPage() {
 	// Image gallery
 	const [openGallery, setOpenGallery] = useState(false);
 	const [currentIndex, setCurrentIndex] = useState(0);
-	const [galleryImages, setGalleryImages] = useState<ImageType[]>([]);
-
+	const [galleryImages, setGalleryImages] = useState<string[]>([]);
 	const openImageGallery = (index: number) => {
 		const safeIndex = Math.min(Math.max(0, index), galleryImages.length);
 		setCurrentIndex(safeIndex);
@@ -113,7 +120,7 @@ export default function BookingPreviewPage() {
 							<Typography>Loading...</Typography>
 						) : (
 							<RoomReviewBox //
-								roomsInfo={selectedRooms}
+								roomsInfo={enrichedRooms}
 								setGalleryImages={setGalleryImages}
 								openImageGallery={openImageGallery}
 							/>
@@ -124,7 +131,7 @@ export default function BookingPreviewPage() {
 					<Grid size={{ xs: 12, md: 4 }}>
 						<AccommodationInfoBox
 							accommInfo={accommInfo!}
-							rooms={selectedRooms}
+							rooms={enrichedRooms}
 							agreed={agreed}
 							setAgreed={setAgreed}
 							setGalleryImages={setGalleryImages}
