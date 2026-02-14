@@ -3,6 +3,7 @@ import RoomController from "@/controllers/room.controller";
 import {
 	GetRoomByIdRequest,
 	GetRoomsByAccommodationRequest,
+	GetRoomsByMultipleIdsRequest,
 	CreateRoomRequest,
 	UpdateRoomRequest,
 	DeleteRoomRequest,
@@ -39,6 +40,9 @@ class RoomRouter {
 
 		this.router.get("/:id", (req: Request, res: Response) => {
 			return this.roomController.getRoomById(req as GetRoomByIdRequest, res);
+		});
+		this.router.post("/bulk", (req: Request, res: Response) => {
+			return this.roomController.getRoomsByMultipleIds(req as GetRoomsByMultipleIdsRequest, res);
 		});
 
 		this.router.patch("/:id", (req: Request, res: Response) => {
