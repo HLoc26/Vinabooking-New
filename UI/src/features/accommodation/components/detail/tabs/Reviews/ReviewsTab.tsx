@@ -9,7 +9,7 @@ import { type Booking } from "../../../../../user/types/Booking";
 import BookingSelectionModal from "./components/BookingSelectionModal";
 import { useMemo, useState } from "react";
 import { useReviews } from "../../../../hooks/useReviews";
-import useRooms from "../../../../hooks/useRooms";
+import useAccommodationRooms from "../../../../hooks/useAccommodationRooms";
 import { authStorage } from "../../../../../auth/utils/authStorage";
 
 interface ReviewsTabProps {
@@ -49,7 +49,7 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const averageRating = totalReviews ? reviews.reduce((sum, r) => sum + (r.star ?? 0), 0) / totalReviews : 0;
 	const reviewedBookingIds = new Set(reviews.map((r) => r.bookingId));
 
-	const { data: rooms } = useRooms(accommodation.id);
+	const { data: rooms } = useAccommodationRooms(accommodation.id);
 
 	const accommodationRoomIds = rooms ? new Set(rooms.map((r) => r.id)) : new Set();
 
