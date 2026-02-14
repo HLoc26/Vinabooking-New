@@ -27,6 +27,28 @@ class RoomRepository {
 	}
 
 	/**
+	 * (R) Tìm NHIỀU Rooms bằng danh sách IDs.
+	 * Bao gồm cả Beds và Amenities chi tiết.
+	 */
+
+	public async findManyByIds(ids: string[]) {
+		if (!ids || ids.length === 0) {
+			return [];
+		}
+		return this.#prismaClient.room.findMany({
+			where: {
+				id: {
+					in: ids,
+				},
+			},
+			include: {
+				beds: true,
+				amenities: true,
+			},
+		});
+	}
+
+	/**
 	 * (R) Tìm TẤT CẢ Rooms thuộc một Accommodation.
 	 */
 	public async findAllByAccommodationId(accommodationId: string): Promise<RoomWithDetails[]> {
