@@ -11,6 +11,11 @@ export type Dates = {
 	checkOut: Date | null;
 };
 
+export type StringDates = {
+	checkIn: string;
+	checkOut: string;
+};
+
 export type Price = {
 	min: number;
 	max: number;
@@ -25,7 +30,7 @@ export type Pagination = {
 
 export type Query = {
 	keyword: string;
-	dates: Dates;
+	dates: StringDates;
 	guests: Guests;
 	type: EAccommodationType;
 	price: Price;
