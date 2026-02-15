@@ -1,5 +1,6 @@
 import { configureStore } from "@reduxjs/toolkit";
 import authReducer from "../features/auth/authSlice";
+import searchReducer from "../features/search/searchSlice";
 import bookingReducer from "../features/booking/bookingSlice";
 
 import storage from "redux-persist/lib/storage";
@@ -48,6 +49,7 @@ const persistedBookingReducer = persistReducer(bookingPersistConfig, bookingRedu
 export const store = configureStore({
 	reducer: {
 		auth: authReducer,
+		search: searchReducer,
 		booking: persistedBookingReducer,
 	},
 	//Let redux ignore non-serial stuff bla bla bla
