@@ -1,14 +1,15 @@
 import React from "react";
 import { Card, CardMedia, CardContent, Box, Chip, Typography, Rating, Divider } from "@mui/material";
 import { LocationOn } from "@mui/icons-material";
-import type { AccommodationListItem } from "../../types/accommodation.types";
+import type { AccommodationDetail } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
 import { standardize } from "../../../../utils/moneyConverter";
 import { useAccommodationReview } from "../../hooks/useAccommodationReview";
+import { getAccommodationMinPrice } from "../../../../utils/pricing";
 
 interface Props {
-	accommodation: AccommodationListItem;
+	accommodation: AccommodationDetail;
 	variant: "grid" | "list";
 	onClick: (id: string) => void;
 }
@@ -20,9 +21,10 @@ const getTypeLabel = (type: string): string => {
 
 export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick }) => {
 	const { reviews } = useAccommodationReview(accommodation?.id ?? "");
+	const minPrice = getAccommodationMinPrice(accommodation);
 
 	const avgStar = reviews.reduce((sum, a) => sum + (a.star ?? 0), 0) / (reviews.filter((r) => typeof r.star === "number").length || 1);
-	const image = accommodation.thumbnail ?? `/images/${accommodation.type}.png`;
+	const image = accommodation.images?.[0].url ?? `/images/${accommodation.type}.png`;
 	if (variant === "list") {
 		return (
 			<Card
@@ -44,11 +46,6 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 							<Box sx={{ flex: 1 }}>
 								<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
 									<Chip label={getTypeLabel(accommodation.type)} size="small" color="primary" variant="outlined" />
-									{accommodation.distance && (
-										<Typography variant="caption" color="text.secondary">
-											{accommodation.distance} km from center
-										</Typography>
-									)}
 								</Box>
 								<Typography variant="h6" component="div" fontWeight="bold" sx={{ mb: 1, "&:hover": { color: "primary.main" } }}>
 									{accommodation.name}
@@ -107,7 +104,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 										Starting from
 									</Typography>
 									<Typography variant="h5" color="primary" fontWeight="bold">
-										${standardize(accommodation.minPrice || 100)}
+										${standardize(minPrice || 100)}
 									</Typography>
 									<Typography variant="caption" color="text.secondary">
 										per night
@@ -200,12 +197,6 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 					)}
 				</Box>
 
-				{accommodation.distance && (
-					<Typography variant="caption" color="text.secondary" sx={{ display: "block", mb: 1 }}>
-						{accommodation.distance} km from center
-					</Typography>
-				)}
-
 				<Typography
 					variant="body2"
 					color="text.secondary"
@@ -229,7 +220,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 							From
 						</Typography>{" "}
 						<Typography variant="h6" color="primary" fontWeight="bold">
-							${standardize(accommodation.minPrice || 100)}
+							${standardize(minPrice || 100)}
 						</Typography>
 						<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
 							/ night
