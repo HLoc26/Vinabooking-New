@@ -1,6 +1,5 @@
 import { EAccommodationType } from "../../../types/Accommodation";
 export const ACCOMMODATION_LABELS: Partial<Record<EAccommodationType, string>> = {
-	[EAccommodationType.ALL]: "Accommodation",
 	[EAccommodationType.HOTEL]: "Hotel",
 	[EAccommodationType.APARTMENT]: "Apartment",
 	[EAccommodationType.VILLA]: "Villa",
@@ -24,7 +23,6 @@ export const ACCOMMODATION_LABELS: Partial<Record<EAccommodationType, string>> =
 };
 
 export const ACCOMMODATION_QUOTES: Partial<Record<EAccommodationType, string>> = {
-	[EAccommodationType.ALL]: "",
 	[EAccommodationType.HOTEL]: "Experience world-class service and comfort.",
 	[EAccommodationType.APARTMENT]: "Enjoy the freedom of your own space with city views.",
 	[EAccommodationType.VILLA]: "Indulge in luxury and privacy in your own villa paradise.",
