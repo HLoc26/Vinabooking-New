@@ -121,12 +121,16 @@ class AccommodationService {
 		const { availableAccommodations, totalMatchesInDB } = await this._findAndCheckAvailability(query, filteredIds, pageNum, limitNum);
 
 		// Step 3: Enrich the results with images and final pricing.
+		// Update: let UI calculate this
 		// const enrichedResults = await this._enrichAccommodationsWithDetails(availableAccommodations, query.checkIn, query.checkOut);
 
 		const enrichedResults = availableAccommodations;
 
-		// Step 4: Sort the final list.
-		const sortedResults = this._sortResults(enrichedResults, query.sortBy);
+		// Step 4: reduce the facilities data
+		const reducedFacility = this._reduceFacility(enrichedResults);
+
+		// Step 5: Sort the final list.
+		const sortedResults = this._sortResults(reducedFacility, query.sortBy);
 
 		// Step 5: Return the paginated response.
 		return {
@@ -292,9 +296,29 @@ class AccommodationService {
 
 		return Promise.all(enrichedPromises);
 	}
-
 	/**
-	 * Step 4: Sorts the final results based on the sortBy query parameter.
+	 * Step 4: reduce facility data
+	 */
+	private _reduceFacility(accommodations: AccommodationFullInfo[]): AccommodationFullInfo[] {
+		return accommodations
+			.filter((a) => a.isActive)
+			.map(
+				(a) =>
+					({
+						...a,
+						facilities: a.facilities.map((f) => ({
+							id: f.id,
+							name: f.facility.name,
+							type: f.facility.type,
+							description: f.facility.description,
+							fee: f.fee,
+							note: f.note,
+						})),
+					}) as unknown as AccommodationFullInfo
+			);
+	}
+	/**
+	 * Step 5: Sorts the final results based on the sortBy query parameter.
 	 */
 	private _sortResults(accommodations: AccommodationFullInfo[], sortBy?: ESortOption): AccommodationFullInfo[] {
 		if (sortBy === ESortOption.PRICE_ASC || sortBy === ESortOption.RECOMMENDED) {
