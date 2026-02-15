@@ -3,11 +3,11 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
-import useSearchContext from "../../../context/SearchContext/hook";
 import ImageGallery from "../../../components/shared/ImageGallery";
-import { useAccommodationReview } from "../hooks/useAccommodationReview";
 import useAccommodation from "../hooks/useAccommodation";
 import useAccommodationRooms from "../hooks/useAccommodationRooms";
+import { useReviews } from "../hooks/useReviews";
+import { parseInputDate, toInputDate } from "../../../utils/dateFormatter";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { resetBooking, setBookingField } from "../../../features/booking/bookingSlice";
@@ -22,7 +22,7 @@ export default function DetailPage() {
 
 	const dispatch = useDispatch();
 	const bookingInfo = useSelector((state: RootState) => state.booking);
-	const { searchCriteria } = useSearchContext();
+	const searchCriteria = useSelector((state: RootState) => state.search);
 
 	// TODO: navigate to 404 error
 	if (!accommodationId) navigate("/");
@@ -43,8 +43,8 @@ export default function DetailPage() {
 		return accommodation?.images.map((img) => img.variants.find((v) => v.variant === "WEBP")?.url).filter((url): url is string => !!url);
 	};
 
-	const { reviews } = useAccommodationReview(accommodation?.id ?? "");
-
+	const { data: rawReviews } = useReviews(accommodation?.id ?? "");
+	const reviews = rawReviews ?? [];
 	const avgStar = reviews.reduce((sum, a) => sum + (a.star ?? 0), 0) / (reviews.filter((r) => typeof r.star === "number").length || 1);
 
 	const [tabValue, setTabValue] = useState(0);
@@ -80,8 +80,8 @@ export default function DetailPage() {
 			const dayAfter = new Date();
 			dayAfter.setDate(dayAfter.getDate() + 2);
 
-			finalCheckIn = searchCriteria.dates.checkIn || tomorrow;
-			finalCheckOut = searchCriteria.dates.checkOut || dayAfter;
+			finalCheckIn = parseInputDate(searchCriteria.dates?.checkIn || toInputDate(tomorrow));
+			finalCheckOut = parseInputDate(searchCriteria.dates?.checkOut || toInputDate(dayAfter));
 
 			shouldUpdateUrl = true;
 		}
