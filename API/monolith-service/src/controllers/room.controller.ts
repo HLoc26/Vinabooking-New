@@ -33,13 +33,19 @@ export class RoomController {
 		ResponseHelper.success(res, room);
 	}
 	async getRoomsByMultipleIds(req: GetRoomsByMultipleIdsRequest, res: Response) {
-		const { accommodationIds } = req.body;
+		const { id } = req.query;
 
-		if (!accommodationIds || accommodationIds.length === 0) {
+		if (!id) {
+			return ResponseHelper.success(res, []);
+		}
+		//Chia cai nay ra lam 1 2 3 4
+		const ids = id.split(",").map((i) => i.trim());
+
+		if (ids.length === 0) {
 			return ResponseHelper.success(res, []);
 		}
 
-		const rooms = await this.#roomService.getRoomsByMultipleIds(accommodationIds);
+		const rooms = await this.#roomService.getRoomsByMultipleIds(ids);
 		return ResponseHelper.success(res, rooms);
 	}
 
