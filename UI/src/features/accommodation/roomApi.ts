@@ -8,4 +8,4 @@ export const getRoomByAccommodationId = (accommodationId: string, startDate?: Da
 			params: { startDate, endDate },
 		})
 		.then((res) => res.data);
-export const getRoomsByMultipleIds = (accommodationIds: string[]) => apiClient.post<ApiResponse<RoomFullDetail[]>>(`/rooms/bulk`, { accommodationIds }).then((res) => res.data);
+export const getRoomsByMultipleIds = (roomIds: string[]) => apiClient.get<ApiResponse<RoomFullDetail[]>>(`/rooms?id=${roomIds.join(",")}`).then((res) => res.data);
