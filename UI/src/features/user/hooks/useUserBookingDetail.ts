@@ -1,52 +1,37 @@
-import { useEffect, useState } from "react";
-import type { Booking } from "../types/Booking";
+import { useSelector } from "react-redux";
+import { useQuery } from "@tanstack/react-query";
 import bookingApi from "../services/bookingApi";
-import type { UserDto } from "../../../types/UserDto";
-import useAuthContextProvider from "../../../context/AuthContext/hook";
+import { authStorage } from "../../../features/auth/utils/authStorage";
+import type { RootState } from "../../../app/store";
 
 const useUserBookingDetail = (bookingId: string) => {
-	const { getCurrentUser } = useAuthContextProvider();
-	const [user, setUser] = useState<UserDto | null>(null);
-	const [booking, setBooking] = useState<Booking | null>(null);
-	const [loading, setLoading] = useState<boolean>(true);
-	const [initialized, setInitialized] = useState(false);
+	const userFromRedux = useSelector((state: RootState) => state.auth.user);
+	const userId = userFromRedux?.id || authStorage.getUserSync()?.id;
 
-	useEffect(() => {
-		const loggedIn = getCurrentUser();
-		setUser(loggedIn);
-	}, [getCurrentUser]);
+	const {
+		data: booking,
+		isLoading,
+		isSuccess,
+		isError,
+	} = useQuery({
+		queryKey: ["booking", "detail", bookingId],
+		queryFn: async () => {
+			const res = await bookingApi.getById(bookingId);
+			return res.data || null;
+		},
+		enabled: !!userId && !!bookingId,
+		retry: 1,
+		staleTime: 1000 * 60 * 5,
+	});
 
-	useEffect(() => {
-		let isMounted = true;
+	const loading = isLoading && !!userId;
+	const initialized = isSuccess || isError;
 
-		(async () => {
-			if (!user?.id || !bookingId) return;
-
-			setLoading(true);
-			try {
-				const res = await bookingApi.getById(bookingId);
-				if (!res.data) {
-					if (isMounted) setBooking(null);
-				} else {
-					if (isMounted) setBooking(res.data);
-				}
-			} catch (e) {
-				console.log(e);
-				if (isMounted) setBooking(null);
-			} finally {
-				if (isMounted) {
-					setLoading(false);
-					setInitialized(true);
-				}
-			}
-		})();
-
-		return () => {
-			isMounted = false;
-		};
-	}, [user?.id, bookingId]);
-
-	return { booking, loading, initialized };
+	return {
+		booking: booking || null,
+		loading,
+		initialized,
+	};
 };
 
 export default useUserBookingDetail;
