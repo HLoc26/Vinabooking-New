@@ -2,18 +2,11 @@ import BookingContext, { type BookingContextType } from "./context";
 
 import { useCallback, useEffect, useState } from "react";
 import type { BookingContextInfo, ItemInfo } from "../../types/BookingContextInfo";
-
-import type { UserDto } from "../../types/UserDto";
-import useAuthContextProvider from "../AuthContext/hook";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../app/store";
 
 const useBookingInfo = (): BookingContextType => {
-	const { getCurrentUser } = useAuthContextProvider();
-	const [user, setUser] = useState<UserDto | null>(null);
-
-	useEffect(() => {
-		const loggedIn = getCurrentUser();
-		setUser(loggedIn);
-	}, [getCurrentUser]);
+	const user = useSelector((state: RootState) => state.auth.user);
 
 	const [bookingInfo, setBookingInfo] = useState<BookingContextInfo>({
 		accommodationId: "",
