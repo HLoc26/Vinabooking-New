@@ -41,7 +41,7 @@ class RoomRouter {
 		this.router.get("/:id", (req: Request, res: Response) => {
 			return this.roomController.getRoomById(req as GetRoomByIdRequest, res);
 		});
-		this.router.post("/bulk", (req: Request, res: Response) => {
+		this.router.get("/", (req: Request, res: Response) => {
 			return this.roomController.getRoomsByMultipleIds(req as GetRoomsByMultipleIdsRequest, res);
 		});
 
