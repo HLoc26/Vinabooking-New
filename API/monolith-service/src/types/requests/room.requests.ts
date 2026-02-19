@@ -18,7 +18,7 @@ export interface GetRoomsByAccommodationQuery {
 
 export type GetRoomsByAccommodationRequest = Request<{ accommodationId: string }, object, object, GetRoomsByAccommodationQuery>;
 
-export type GetRoomsByMultipleIdsRequest = Request<object, object, { accommodationIds: string[] }>;
+export type GetRoomsByMultipleIdsRequest = Request<object, object, object, { id?: string }>;
 
 // POST /rooms
 export type CreateRoomRequest = Request<object, object, Prisma.RoomCreateInput>;
