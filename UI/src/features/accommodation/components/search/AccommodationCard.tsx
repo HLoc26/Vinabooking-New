@@ -5,8 +5,6 @@ import type { AccommodationDetail } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
 import { standardize } from "../../../../utils/moneyConverter";
-import { useAccommodationReview } from "../../hooks/useAccommodationReview";
-import { getAccommodationMinPrice } from "../../../../utils/pricing";
 
 interface Props {
 	accommodation: AccommodationDetail;
@@ -20,11 +18,11 @@ const getTypeLabel = (type: string): string => {
 };
 
 export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick }) => {
-	const { reviews } = useAccommodationReview(accommodation?.id ?? "");
-	const minPrice = getAccommodationMinPrice(accommodation);
+	const minPrice = accommodation.minPrice;
 
-	const avgStar = reviews.reduce((sum, a) => sum + (a.star ?? 0), 0) / (reviews.filter((r) => typeof r.star === "number").length || 1);
-	const image = accommodation.images?.[0].url ?? `/images/${accommodation.type}.png`;
+	const avgStar = accommodation.avgStar;
+	const image = accommodation.images.length > 0 ? accommodation.images?.[0].url : `/images/${accommodation.type}.png`;
+
 	if (variant === "list") {
 		return (
 			<Card
@@ -57,14 +55,14 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 									</Typography>
 								</Box>
 								<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
-									{reviews.length > 0 ? (
+									{accommodation.reviewCount > 0 ? (
 										<>
 											<Rating value={avgStar} readOnly precision={0.1} size="small" />
 											<Typography variant="body2" fontWeight="bold">
 												{avgStar.toFixed(1)}
 											</Typography>
 											<Typography variant="body2" color="text.secondary">
-												({reviews.length} reviews)
+												({accommodation.reviewCount} reviews)
 											</Typography>
 										</>
 									) : (
@@ -180,14 +178,14 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 				</Box>
 
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
-					{reviews.length > 0 ? (
+					{accommodation.reviewCount > 0 ? (
 						<>
 							<Rating value={avgStar} readOnly precision={0.1} size="small" />
 							<Typography variant="body2" fontWeight="bold">
 								{avgStar.toFixed(1)}
 							</Typography>
 							<Typography variant="body2" color="text.secondary">
-								({reviews.length} reviews)
+								({accommodation.reviewCount} reviews)
 							</Typography>
 						</>
 					) : (
