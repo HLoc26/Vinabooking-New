@@ -11,8 +11,16 @@ export const useLocationSuggestions = (keyword: string) => {
 		// 3. Hàm gọi API
 		queryFn: async () => {
 			const res = await search({ keyword: debouncedKeyword });
-			if (!res || !res.data) return [];
-			return res.data || [];
+			if (!res)
+				return {
+					data: [],
+					meta: {
+						total: 0,
+						page: 0,
+						totalPages: 0,
+					},
+				};
+			return res.data;
 		},
 		enabled: debouncedKeyword.trim().length > 1, // only run if keyword > 1
 		staleTime: 1000 * 60 * 5, // 5mins
