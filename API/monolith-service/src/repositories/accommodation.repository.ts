@@ -18,6 +18,14 @@ class AccommodationRepository {
 		});
 	}
 
+	public async findByIdBatch(ids: string[]): Promise<AccommodationWithDetails[]> {
+		const accommodation = await this.#prismaClient.accommodation.findMany({
+			where: { id: { in: ids } },
+			include: { address: true, facilities: { include: { facility: true } } },
+		});
+		return accommodation;
+	}
+
 	public async countByType(): Promise<{ type: EAccommodationType; _count: { id: number } }[]> {
 		const result = await this.#prismaClient.accommodation.groupBy({
 			by: ["type"] as const,
@@ -49,7 +57,7 @@ class AccommodationRepository {
 		return await this.#prismaClient.accommodation.count({ where });
 	}
 
-	public async search(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST): Promise<AccommodationSearchResult> {
+	public async getPaginatedIds(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST) {
 		const where: Prisma.AccommodationWhereInput = {
 			isActive: true,
 		};
@@ -67,7 +75,7 @@ class AccommodationRepository {
 		// 3. IDs
 		if (filters.ids !== undefined) {
 			if (filters.ids.length === 0) {
-				return { data: [], total: 0 };
+				return { paginatedIds: [], statsRows: [], total: 0 };
 			}
 			where.id = { in: filters.ids };
 		}
@@ -85,19 +93,19 @@ class AccommodationRepository {
 			}));
 		}
 
-		// 1. Pre-count result
-		const total = await this.#prismaClient.accommodation.count({ where });
-		if (total === 0) return { data: [], total: 0 };
-
-		// 2. Get all IDs that matches
+		// Get all IDs that matches
 		const matchingRecords = await this.#prismaClient.accommodation.findMany({
 			where,
 			select: { id: true },
 		});
 		const matchedIds = matchingRecords.map((r) => r.id);
+		const totalMatches = matchedIds.length; // <-- Đếm tổng số lượng record thỏa mãn
 
+		if (totalMatches === 0) {
+			return { paginatedIds: [], statsRows: [], total: 0 };
+		}
 		// TODO: Add minPrice, avgStar, and reviewCount column for faster query
-		// 3. Use raw SQL
+		// Use raw SQL
 		let orderClause = Prisma.sql`ORDER BY a.createdAt DESC`;
 		if (sortBy === ESortOption.RECOMMENDED) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, avgStar IS NULL, minPrice ASC, avgStar DESC`;
 		if (sortBy === ESortOption.PRICE_ASC) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, minPrice ASC`;
@@ -139,28 +147,7 @@ class AccommodationRepository {
         `;
 
 		const paginatedIds = statsRows.map((row) => row.id);
-		if (paginatedIds.length === 0) return { data: [], total };
-
-		// 4. Fetch detail for paginated record
-		const unsortedData = await this.#prismaClient.accommodation.findMany({
-			where: { id: { in: paginatedIds } },
-			include: { address: true, facilities: { include: { facility: true } } },
-		});
-
-		// 5. Merge data, keep raw SQL's order
-		const data = paginatedIds.map((id) => {
-			const acc = unsortedData.find((d) => d.id === id)!;
-			const stats = statsRows.find((s) => s.id === id)!;
-
-			return {
-				...acc,
-				minPrice: stats.minPrice ? Number(stats.minPrice) : undefined,
-				avgStar: stats.avgStar ? Number(stats.avgStar) : null,
-				reviewCount: Number(stats.reviewCount || 0),
-			} as unknown as AccommodationFullInfo;
-		});
-
-		return { data, total };
+		return { paginatedIds, statsRows, total: totalMatches };
 	}
 }
 
