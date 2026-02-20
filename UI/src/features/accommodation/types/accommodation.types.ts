@@ -40,6 +40,10 @@ export interface AccommodationDetail {
 	facilities: FacilityConfig[];
 	rooms: Room[];
 	images: Image[];
+	minPrice: number;
+	thumbnail: string; // url
+	avgStar: number;
+	reviewCount: number;
 }
 
 export type FacilityIconMap = Record<string, ReactNode>;
