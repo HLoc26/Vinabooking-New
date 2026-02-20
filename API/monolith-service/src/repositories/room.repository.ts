@@ -40,7 +40,14 @@ class RoomRepository {
 				beds: true,
 				amenities: {
 					include: {
-						amenity: true, // This is the deep join required for names/icons
+						amenity: {
+							select: {
+								id: true,
+								name: true,
+								type: true,
+								description: true,
+							},
+						},
 					},
 				},
 			},
