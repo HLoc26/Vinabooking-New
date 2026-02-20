@@ -23,12 +23,13 @@ export type UploadResultProperties = "id" | "s3Key";
 export type UploadResult = Map<ImageProcessingResultKey, Map<UploadResultProperties, string>>;
 
 // Image retrieval
-type BaseImageInfo = Prisma.ImageGetPayload<{
+export type BaseImageInfo = Prisma.ImageGetPayload<{
 	include: {
 		variants: true;
 		references: {
 			select: {
 				isPrimary: true;
+				entityId: true;
 			};
 		};
 	};
