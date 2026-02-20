@@ -23,7 +23,7 @@ export const bookingApi = {
 				create: rooms.map((room) => ({
 					itemId: room.id,
 					itemType: room.type ?? "ROOM",
-					count: 1,
+					count: booking.items.find((item) => item.id === room.id)?.count ?? 1,
 					note: room.note ?? "",
 				})),
 			},
