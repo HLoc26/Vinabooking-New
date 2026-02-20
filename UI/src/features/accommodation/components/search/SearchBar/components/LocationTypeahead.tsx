@@ -1,6 +1,7 @@
 import React from "react";
 import { Box, Paper, List, ListItemButton, CircularProgress, Typography } from "@mui/material";
 import { useLocationSuggestions } from "../../../../hooks/useLocationSuggestions";
+import type { AccommodationDetail } from "../../../../types/accommodation.types";
 
 interface Props {
 	open: boolean;
@@ -9,7 +10,8 @@ interface Props {
 }
 
 export const LocationTypeahead: React.FC<Props> = ({ onSelect, open, keyword }) => {
-	const { data: results = [], isLoading } = useLocationSuggestions(keyword);
+	const { data, isLoading } = useLocationSuggestions(keyword);
+	const results = data?.data ?? [];
 
 	if (!open || keyword.trim().length === 0) return null;
 
@@ -35,7 +37,7 @@ export const LocationTypeahead: React.FC<Props> = ({ onSelect, open, keyword }) 
 				</Box>
 			) : results.length > 0 ? (
 				<List sx={{ p: 0 }}>
-					{results.map((loc: any) => (
+					{results.map((loc: AccommodationDetail) => (
 						<ListItemButton key={loc.id} onClick={() => onSelect(loc)} sx={{ py: 1.5 }}>
 							<Box>
 								<Typography variant="body2" fontWeight={600}>
