@@ -2,14 +2,18 @@ import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
 import { EEntityType, type EAccommodationType } from "@/generated/client";
-import { SearchQuery, ESortOption, AccommodationFullInfo, SearchFilters } from "@/types/accommodation.types";
+import { SearchQuery, ESortOption, AccommodationFullInfo, SearchFilters, AccommodationWithDetails } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
+import redisClient from "@/clients/redis.client";
+import { randomBytes } from "node:crypto";
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
 	readonly #roomService: RoomService;
 	readonly #imageService: ImageService;
 	readonly #s3Service: S3Service;
+	readonly CACHE_PREFIX = "acc:detail:";
+
 	constructor(accommodationRepository: AccommodationRepository, roomService: RoomService, imageService: ImageService, s3Service: S3Service) {
 		this.#accommodationRepository = accommodationRepository;
 		this.#roomService = roomService;
@@ -89,6 +93,39 @@ class AccommodationService {
 		};
 	}
 
+	async writeAccommodationsToCache(accommodation: AccommodationWithDetails[]) {
+		const CACHE_TTL = 86400;
+		const pipeline = redisClient.multi();
+
+		accommodation.forEach((acc) => {
+			pipeline.setEx(`${this.CACHE_PREFIX}${acc.id}`, CACHE_TTL, JSON.stringify(acc));
+		});
+		const log = await pipeline.exec();
+		console.log(log);
+	}
+
+	async getAccommodationsFromCache(ids: string[]): Promise<Map<string, AccommodationWithDetails>> {
+		const accommMap: Map<string, AccommodationWithDetails> = new Map();
+		if (ids.length === 0) return accommMap;
+
+		const accommInCache = await redisClient.mGet(ids.map((id) => `${this.CACHE_PREFIX}${id}`));
+
+		// const cacheHits = accommInCache.filter((item) => item !== null).length;
+		// console.log(`Cache request: ${ids.length} | Actual Cache hits: ${cacheHits}`);
+
+		accommInCache.forEach((accommString) => {
+			if (!accommString) return;
+
+			const acc: AccommodationWithDetails = JSON.parse(accommString);
+
+			// Make sure object is valid and have an id
+			if (acc && acc.id) {
+				accommMap.set(acc.id, acc);
+			}
+		});
+		return accommMap;
+	}
+
 	/**
 	 * SEARCH API (Full Flow)
 	 */
@@ -119,26 +156,48 @@ class AccommodationService {
 			facilities: query.facilities ? (Array.isArray(query.facilities) ? query.facilities : [query.facilities]) : undefined,
 		};
 
-		// Search, calculate minPrice, reviews, pagination, sort in repository
-		const { data, total } = await this.#accommodationRepository.search(searchFilters, offset, limitNum, query.sortBy);
-
-		if (data.length === 0) {
+		const { paginatedIds, statsRows, total } = await this.#accommodationRepository.getPaginatedIds(searchFilters, offset, limitNum, query.sortBy);
+		if (total === 0) {
 			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
 		}
+		const cachedData = await this.getAccommodationsFromCache(paginatedIds);
+
+		const missingIds = paginatedIds.filter((id) => !cachedData.get(id));
+
+		const allAccommodationsData = new Map<string, AccommodationWithDetails>();
+		cachedData.forEach((acc, id) => allAccommodationsData.set(id, acc));
+
+		if (missingIds.length > 0) {
+			const dbData = await this.#accommodationRepository.findByIdBatch(missingIds);
+			await this.writeAccommodationsToCache(dbData);
+
+			dbData.forEach((acc) => allAccommodationsData.set(acc.id, acc));
+		}
+
+		const mergedData = paginatedIds.map((id) => {
+			const acc = allAccommodationsData.get(id)!;
+			const stats = statsRows.find((s) => s.id === id)!;
+
+			return {
+				...acc,
+				minPrice: stats.minPrice ? Number(stats.minPrice) : undefined,
+				avgStar: stats.avgStar ? Number(stats.avgStar) : null,
+				reviewCount: Number(stats.reviewCount || 0),
+			} as unknown as AccommodationFullInfo;
+		});
 
 		// Get all images from accomms in 1 query
-		const accIds = data.map((acc) => acc.id);
-		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, accIds);
+		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, paginatedIds);
 
 		const imageMap: Record<string, ImageFullInfo[]> = {};
 		imagesBatch.forEach((img) => {
-			const roomId = img.references[0].entityId;
-			if (!imageMap[roomId]) imageMap[roomId] = [];
-			imageMap[roomId].push(img);
+			const entityId = img.references[0].entityId;
+			if (!imageMap[entityId]) imageMap[entityId] = [];
+			imageMap[entityId].push(img);
 		});
 
 		// Merge data and format facilities
-		const finalData = data.map((acc) => {
+		const finalData = mergedData.map((acc) => {
 			const accImages = imageMap[acc.id] || [];
 			const thumbnail = accImages.length > 0 ? this.#s3Service.getS3Url(accImages[0].s3Key) : null;
 
@@ -162,7 +221,7 @@ class AccommodationService {
 			meta: {
 				page: pageNum,
 				limit: limitNum,
-				total,
+				total, // Đã có biến total từ Repository trả về
 				totalPages: Math.ceil(total / limitNum) || 1,
 			},
 		};
