@@ -1,6 +1,5 @@
 import axioInstance from "../../../services/apiClient";
 import Cookies from "js-cookie";
-import type { RoomInfo } from "../types/RoomInfo";
 import type { BookingContextInfo } from "../../../types/BookingContextInfo";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
@@ -10,11 +9,16 @@ const ROOM_ENDPOINT = "/rooms";
 const ACCOM_ENDPOINT = "/accommodations";
 
 export const bookingApi = {
-	/**
-	 * Create a booking (mock or real).
-	 * Maps BookingDto → backend-compatible shape.
-	 */
-	async createBooking(booking: BookingContextInfo, rooms: RoomInfo[]) {
+	async createBooking(booking: BookingContextInfo) {
+		const token = Cookies.get(ACCESS_TOKEN_KEY);
+
+		const rooms = await Promise.all(
+			booking.items.map(async (item) => {
+				const res = await axioInstance.get(`${ROOM_ENDPOINT}/${item.id}`);
+				return res.data.data;
+			})
+		);
+
 		const payload = {
 			startDate: booking.startDate,
 			endDate: booking.endDate,
@@ -23,7 +27,7 @@ export const bookingApi = {
 				create: rooms.map((room) => ({
 					itemId: room.id,
 					itemType: room.type ?? "ROOM",
-					count: booking.items.find((item) => item.id === room.id)?.count ?? 1,
+					count: booking.items.find((i) => i.id === room.id)?.count ?? 1,
 					note: room.note ?? "",
 				})),
 			},
@@ -31,7 +35,7 @@ export const bookingApi = {
 			leaderName: booking.leader.name,
 			leaderEmail: booking.leader.email,
 		};
-		const token = Cookies.get(ACCESS_TOKEN_KEY);
+
 		const res = await axioInstance.post(BOOKING_ENDPOINT, payload, {
 			headers: {
 				Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
@@ -42,6 +46,29 @@ export const bookingApi = {
 		return res.data;
 	},
 
+	async saveDraft(booking: BookingContextInfo) {
+		const token = Cookies.get(ACCESS_TOKEN_KEY);
+
+		const payload = {
+			startDate: booking.startDate,
+			endDate: booking.endDate,
+			guestCount: booking.guestCount,
+			items: booking.items,
+			leaderName: booking.leader.name,
+			leaderEmail: booking.leader.email,
+			phone: booking.leader.phone,
+			status: "DRAFT",
+		};
+
+		const res = await axioInstance.post(`${BOOKING_ENDPOINT}/draft`, payload, {
+			headers: {
+				Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
+				"Content-Type": "application/json",
+			},
+		});
+
+		return res.data;
+	},
 	async getAccommIdByRoomId(roomId: string) {
 		const room = await axioInstance.get(`${ROOM_ENDPOINT}/${roomId}`);
 		return room.data.data.accommodationId;
