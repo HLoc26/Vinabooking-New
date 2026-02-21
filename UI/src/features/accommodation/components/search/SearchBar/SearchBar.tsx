@@ -10,14 +10,13 @@ import ChevronDownIcon from "@mui/icons-material/KeyboardArrowDownRounded";
 import { GuestMenu } from "./components/GuestMenu";
 import { LocationTypeahead } from "./components/LocationTypeahead";
 import { useSticky } from "../../../../../hooks/useSticky";
-import useBookingContextProvider from "../../../../../context/BookingContext/hook";
 import { DatePickerMenu } from "../../../../../components/shared/DatePickerMenu";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../../../app/store";
 import { updateSearchCriteria } from "../../../../search/searchSlice";
 import type { Dates, Query } from "../../../../../types/Query";
 import { buildSearchParams } from "../../../../../utils/search";
-import { datesToStringDates, stringDatesToDates } from "../../../../../utils/dateFormatter";
+import { setBookingField } from "../../../../booking/bookingSlice";
 
 const PAPER_HEIGHT = 72;
 const FIXED_TOP_OFFSET = 16;
@@ -59,8 +58,6 @@ const SearchBar: React.FC = () => {
 	const navigate = useNavigate();
 	const { sentinelRef: searchRef, sticky } = useSticky(175);
 	const criteria = useSelector((state: RootState) => state.search);
-
-	const { updateBookingInfo } = useBookingContextProvider();
 
 	const handleUpdateSearchCriteria = <K extends keyof Query>(key: K, value: Query[K]) => {
 		dispatch(updateSearchCriteria({ key, value }));
@@ -213,10 +210,10 @@ const SearchBar: React.FC = () => {
 							<Box display="flex" gap={1.5} alignItems="center">
 								<Box>
 									<Typography variant="body2" fontWeight={700} lineHeight={1.2}>
-										{dates.checkIn.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}
+										{dates.checkIn.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}{" "}
 									</Typography>
 									<Typography variant="caption" color="text.secondary" fontSize="0.7rem">
-										{dates.checkIn.toLocaleDateString("en-US", { weekday: "short" })}
+										{new Date(dates.checkIn).toLocaleDateString("en-US", { weekday: "short" })}
 									</Typography>
 								</Box>
 								<Typography variant="body2" color="text.secondary">
@@ -239,12 +236,12 @@ const SearchBar: React.FC = () => {
 							selectedDates={dates}
 							setSelectedDates={setDates}
 							onClose={() => {
-								handleUpdateSearchCriteria("dates", datesToStringDates(dates));
-								updateBookingInfo("startDate", dates.checkIn);
+								handleUpdateSearchCriteria("dates", dates);
 								const d = new Date();
 								d.setDate(d.getDate() + 2);
 								d.setHours(0, 0, 0, 0);
-								updateBookingInfo("endDate", dates.checkOut ?? d);
+								dispatch(setBookingField({ key: "startDate", value: dates.checkIn }));
+								dispatch(setBookingField({ key: "endDate", value: dates.checkOut ?? d }));
 								handleToggleDropdown("date", false);
 							}}
 						/>

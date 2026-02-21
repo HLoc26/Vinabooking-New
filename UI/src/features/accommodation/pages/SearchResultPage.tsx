@@ -28,7 +28,6 @@ export default function SearchResultPage() {
 	const { data, isLoading, error } = useSearchAccommodations();
 
 	const results = data?.data || [];
-	console.log("result", results);
 
 	const totalFound = data?.meta.total || 0;
 
