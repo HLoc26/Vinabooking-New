@@ -10,7 +10,7 @@ import useAccommodation from "../hooks/useAccommodation";
 import useAccommodationRooms from "../hooks/useAccommodationRooms";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
-import { setBookingField } from "../../../features/booking/bookingSlice";
+import { resetBooking, setBookingField } from "../../../features/booking/bookingSlice";
 
 // Helper format date YYYY-MM-DD
 const formatDateParam = (date: Date) => date.toLocaleDateString("sv-SE");
@@ -58,7 +58,9 @@ export default function DetailPage() {
 			navigate("/");
 			return;
 		}
-
+		if (bookingInfo.accommodationId && bookingInfo.accommodationId !== accommodationId) {
+			dispatch(resetBooking());
+		}
 		dispatch(setBookingField({ key: "accommodationId", value: accommodationId }));
 
 		const urlCheckIn = searchParams.get("checkIn");
