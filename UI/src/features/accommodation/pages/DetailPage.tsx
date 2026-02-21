@@ -3,12 +3,14 @@ import { useNavigate, useParams, useSearchParams } from "react-router-dom";
 import { Container, Grid, Box, CircularProgress, Typography } from "@mui/material";
 
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
-import useBookingContextProvider from "../../../context/BookingContext/hook";
 import useSearchContext from "../../../context/SearchContext/hook";
 import ImageGallery from "../../../components/shared/ImageGallery";
 import { useAccommodationReview } from "../hooks/useAccommodationReview";
 import useAccommodation from "../hooks/useAccommodation";
-import useRooms from "../hooks/useRooms";
+import useAccommodationRooms from "../hooks/useAccommodationRooms";
+import { useDispatch, useSelector } from "react-redux";
+import type { RootState } from "../../../app/store";
+import { resetBooking, setBookingField } from "../../../features/booking/bookingSlice";
 
 // Helper format date YYYY-MM-DD
 const formatDateParam = (date: Date) => date.toLocaleDateString("sv-SE");
@@ -18,14 +20,15 @@ export default function DetailPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
 	const [searchParams, setSearchParams] = useSearchParams();
 
-	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
+	const dispatch = useDispatch();
+	const bookingInfo = useSelector((state: RootState) => state.booking);
 	const { searchCriteria } = useSearchContext();
 
 	// TODO: navigate to 404 error
 	if (!accommodationId) navigate("/");
 
 	const { data: accommodation, isLoading: loading, isError: error } = useAccommodation(accommodationId ?? "");
-	const { data: rawRooms } = useRooms(accommodationId ?? "");
+	const { data: rawRooms } = useAccommodationRooms(accommodationId ?? "");
 	const rooms = rawRooms ?? [];
 
 	const getThumbnails = (): string[] => {
@@ -55,8 +58,10 @@ export default function DetailPage() {
 			navigate("/");
 			return;
 		}
-
-		updateBookingInfo("accommodationId", accommodationId);
+		if (bookingInfo.accommodationId && bookingInfo.accommodationId !== accommodationId) {
+			dispatch(resetBooking());
+		}
+		dispatch(setBookingField({ key: "accommodationId", value: accommodationId }));
 
 		const urlCheckIn = searchParams.get("checkIn");
 		const urlCheckOut = searchParams.get("checkOut");
@@ -82,10 +87,10 @@ export default function DetailPage() {
 		}
 
 		if (finalCheckIn.getTime() !== bookingInfo.startDate.getTime()) {
-			updateBookingInfo("startDate", finalCheckIn);
+			dispatch(setBookingField({ key: "startDate", value: finalCheckIn }));
 		}
 		if (finalCheckOut.getTime() !== bookingInfo.endDate.getTime()) {
-			updateBookingInfo("endDate", finalCheckOut);
+			dispatch(setBookingField({ key: "endDate", value: finalCheckOut }));
 		}
 
 		if (shouldUpdateUrl) {
@@ -115,14 +120,14 @@ export default function DetailPage() {
 	};
 
 	const handleUpdateStartDate = (newDate: Date) => {
-		updateBookingInfo("startDate", newDate);
+		dispatch(setBookingField({ key: "startDate", value: newDate }));
 		const newParams = new URLSearchParams(searchParams);
 		newParams.set("checkIn", formatDateParam(newDate));
 		setSearchParams(newParams);
 	};
 
 	const handleUpdateEndDate = (newDate: Date) => {
-		updateBookingInfo("endDate", newDate);
+		dispatch(setBookingField({ key: "endDate", value: newDate }));
 		const newParams = new URLSearchParams(searchParams);
 		newParams.set("checkOut", formatDateParam(newDate));
 		setSearchParams(newParams);
@@ -131,7 +136,6 @@ export default function DetailPage() {
 	// Tính số đêm
 	const nights = Math.max(0, Math.ceil((bookingInfo.endDate.getTime() - bookingInfo.startDate.getTime()) / (1000 * 60 * 60 * 24)));
 
-	// Tính tổng tiền – type-safe và tối ưu bằng useMemo
 	const totalPrice = useMemo(() => {
 		if (!accommodation) return 0;
 
@@ -140,7 +144,7 @@ export default function DetailPage() {
 			if (!room) return sum;
 			return sum + item.count * parseFloat(room.price) * nights;
 		}, 0);
-	}, [accommodation, bookingInfo.items, nights]);
+	}, [accommodation, bookingInfo.items, nights, rooms]);
 
 	if (loading) {
 		return (

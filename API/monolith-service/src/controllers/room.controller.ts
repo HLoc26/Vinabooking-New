@@ -5,6 +5,7 @@ import { BadRequestError } from "../errors";
 import type {
 	GetRoomByIdRequest,
 	GetRoomsByAccommodationRequest,
+	GetRoomsByMultipleIdsRequest,
 	CreateRoomRequest,
 	UpdateRoomRequest,
 	DeleteRoomRequest,
@@ -30,6 +31,22 @@ export class RoomController {
 		const { id } = req.params;
 		const room = await this.#roomService.getRoomById(id);
 		ResponseHelper.success(res, room);
+	}
+	async getRoomsByMultipleIds(req: GetRoomsByMultipleIdsRequest, res: Response) {
+		const { id } = req.query;
+
+		if (!id) {
+			return ResponseHelper.success(res, []);
+		}
+		//Chia cai nay ra lam 1 2 3 4
+		const ids = id.split(",").map((i) => i.trim());
+
+		if (ids.length === 0) {
+			return ResponseHelper.success(res, []);
+		}
+
+		const rooms = await this.#roomService.getRoomsByMultipleIds(ids);
+		return ResponseHelper.success(res, rooms);
 	}
 
 	async getRoomsByAccommodationId(req: GetRoomsByAccommodationRequest, res: Response) {

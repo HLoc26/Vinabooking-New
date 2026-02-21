@@ -24,7 +24,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 
 	// Image carousel state
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
-	const primaryImages = room.images.filter((img) => img.variant === "ORIGINAL");
+	const primaryImages = room.images.filter((img) => img.variants.some((variant) => variant.variant === "ORIGINAL"));
 
 	// Amenities expand state
 	const [showAllAmenities, setShowAllAmenities] = useState(false);
