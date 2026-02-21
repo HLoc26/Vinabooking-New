@@ -1,5 +1,3 @@
-import type { Dates, StringDates } from "../types/Query";
-
 /**
  * To DD/MM/YYYY
  */
@@ -20,20 +18,4 @@ export const parseInputDate = (dateString: string): Date => {
 	if (!dateString) return new Date();
 	const [y, m, d] = dateString.split("-").map(Number);
 	return new Date(y, m - 1, d);
-};
-
-export const datesToStringDates = (dates: Dates): StringDates => {
-	const nextDay = new Date(dates.checkIn);
-	nextDay.setDate(dates.checkIn.getDate() + 1);
-	return {
-		checkIn: toInputDate(dates.checkIn),
-		checkOut: toInputDate(dates.checkOut || nextDay),
-	};
-};
-
-export const stringDatesToDates = (stringDates: StringDates): Dates => {
-	return {
-		checkIn: parseInputDate(stringDates.checkIn),
-		checkOut: parseInputDate(stringDates.checkOut),
-	};
 };
