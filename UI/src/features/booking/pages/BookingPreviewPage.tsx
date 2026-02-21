@@ -7,18 +7,24 @@ import UserInfoPreviewCard from "../components/UserInfoPreviewCard";
 import RoomReviewBox from "../components/PreviewBooking/RoomReviewBox";
 import AccommodationInfoBox from "../components/PreviewBooking/AccommodationInfoBox";
 import type { UserInfo } from "../types/UserInfo";
-import useBookingContextProvider from "../../../context/BookingContext/hook";
 import useRooms from "../../accommodation/hooks/useRooms";
 import useAccommodation from "../../accommodation/hooks/useAccommodation";
+
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../../../app/store";
+import { setLeader } from "../bookingSlice";
 
 const ImageGallery = lazy(() => import("../../../components/shared/ImageGallery"));
 
 export default function BookingPreviewPage() {
 	const navigate = useNavigate();
-	const { bookingInfo, updateBookingInfo } = useBookingContextProvider();
+	const dispatch = useDispatch<AppDispatch>();
+	const bookingInfo = useSelector((state: RootState) => state.booking);
+
 	const roomIds = bookingInfo.items.map((i) => i.id);
 	const { data: selectedRooms = [], isLoading: roomInfoLoading } = useRooms(roomIds);
 	const { data: accommInfo } = useAccommodation(bookingInfo.accommodationId);
+
 	const enrichedRooms = selectedRooms.map((room) => {
 		const bookingItem = bookingInfo.items.find((i) => i.id === room.id);
 
@@ -28,18 +34,32 @@ export default function BookingPreviewPage() {
 		};
 	});
 
+	const authUser = useSelector((state: RootState) => state.auth.user);
+	useEffect(() => {
+		if (authUser && !bookingInfo.leader.email) {
+			dispatch(
+				setLeader({
+					name: authUser.name,
+					email: authUser.email,
+					phone: authUser.phone ?? "",
+				})
+			);
+		}
+	}, [authUser, bookingInfo.leader.email, dispatch]);
+
 	const { pushNotification } = usePushNotificationContext();
 
-	// MUITelInput + checkbox
+	// UI state
 	const [isEditing, setIsEditing] = useState(false);
 	const [agreed, setAgreed] = useState(false);
 
-	// Image gallery
+	// Image gallery state
 	const [openGallery, setOpenGallery] = useState(false);
 	const [currentIndex, setCurrentIndex] = useState(0);
 	const [galleryImages, setGalleryImages] = useState<string[]>([]);
+
 	const openImageGallery = (index: number) => {
-		const safeIndex = Math.min(Math.max(0, index), galleryImages.length);
+		const safeIndex = Math.min(Math.max(0, index), galleryImages.length - 1);
 		setCurrentIndex(safeIndex);
 		setOpenGallery(true);
 	};
@@ -54,8 +74,14 @@ export default function BookingPreviewPage() {
 		setCurrentIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
 	}, [galleryImages.length]);
 
+	// Redux version of updating leader
 	const handleUserInfoUpdate = (field: keyof UserInfo, value: string) => {
-		updateBookingInfo("leader", { ...bookingInfo.leader, [field]: value });
+		dispatch(
+			setLeader({
+				...bookingInfo.leader,
+				[field]: value,
+			})
+		);
 	};
 
 	const handleToggleEdit = () => {
@@ -71,10 +97,12 @@ export default function BookingPreviewPage() {
 			return pushNotification("Please confirm that all the information is correct.", "warning");
 		}
 
-		navigate("/booking/checkout", { state: { accommodation: accommInfo, rooms: selectedRooms } });
+		navigate("/booking/checkout", {
+			state: { accommodation: accommInfo, rooms: selectedRooms },
+		});
 	};
 
-	// Gallery keyboard support
+	// Keyboard support
 	useEffect(() => {
 		if (!openGallery) return;
 
@@ -86,48 +114,30 @@ export default function BookingPreviewPage() {
 
 		window.addEventListener("keydown", handleKeyDown);
 		return () => window.removeEventListener("keydown", handleKeyDown);
-	}, [openGallery, galleryImages.length, handleNextImage, handlePrevImage]);
+	}, [openGallery, handleNextImage, handlePrevImage]);
 
 	return (
 		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1400 }}>
-			<Paper
-				elevation={2}
-				sx={{
-					p: 3,
-					mb: 4,
-					borderRadius: 2,
-				}}
-			>
+			<Paper elevation={2} sx={{ p: 3, mb: 4, borderRadius: 2 }}>
 				<Box sx={{ display: "flex", alignItems: "center", gap: 2, mb: 2 }}>
 					<PreviewOutlined color="primary" sx={{ fontSize: 32 }} />
 					<Typography variant="h4">Booking Preview</Typography>
 				</Box>
+
 				<Divider />
+
 				<Grid container spacing={3} sx={{ justifyContent: "center", mt: 3 }}>
-					{/* LEFT COLUMN */}
+					{/* LEFT */}
 					<Grid size={{ xs: 12, md: 3 }}>
-						<UserInfoPreviewCard //
-							userInfo={bookingInfo.leader}
-							isEditing={isEditing}
-							handleToggleEdit={handleToggleEdit}
-							handleUserInfoUpdate={handleUserInfoUpdate}
-						/>
+						<UserInfoPreviewCard userInfo={bookingInfo.leader} isEditing={isEditing} handleToggleEdit={handleToggleEdit} handleUserInfoUpdate={handleUserInfoUpdate} />
 					</Grid>
 
-					{/* MIDDLE COLUMN */}
+					{/* MIDDLE */}
 					<Grid size={{ xs: 12, md: 5 }}>
-						{roomInfoLoading ? (
-							<Typography>Loading...</Typography>
-						) : (
-							<RoomReviewBox //
-								roomsInfo={enrichedRooms}
-								setGalleryImages={setGalleryImages}
-								openImageGallery={openImageGallery}
-							/>
-						)}
+						{roomInfoLoading ? <Typography>Loading...</Typography> : <RoomReviewBox roomsInfo={enrichedRooms} setGalleryImages={setGalleryImages} openImageGallery={openImageGallery} />}
 					</Grid>
 
-					{/* RIGHT COLUMN */}
+					{/* RIGHT */}
 					<Grid size={{ xs: 12, md: 4 }}>
 						<AccommodationInfoBox
 							accommInfo={accommInfo!}
@@ -142,7 +152,6 @@ export default function BookingPreviewPage() {
 				</Grid>
 			</Paper>
 
-			{/* FULLSCREEN GALLERY */}
 			{openGallery && (
 				<Suspense fallback={<div>Loading gallery...</div>}>
 					<ImageGallery
