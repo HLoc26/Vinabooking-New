@@ -9,7 +9,6 @@ import StatsProvider from "../src/features/home/context/StatsContext/provider.ts
 import UserContextProvider from "./context/UserContext/provider.tsx";
 import ModalProvider from "./context/ModalContext/provider.tsx";
 import { BrowserRouter } from "react-router-dom";
-import BookingContextProvider from "./context/BookingContext/provider.tsx";
 import { PersistGate } from "redux-persist/integration/react";
 import { persistor } from "./app/store.ts";
 
@@ -26,16 +25,14 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 					<ThemeProvider theme={theme}>
 						<PushNotificationProvider>
 							<UserContextProvider>
-								<BookingContextProvider>
-									<BrowserRouter>
-										<ModalProvider>
-											<StatsProvider>
-												<CssBaseline />
-												<App />
-											</StatsProvider>
-										</ModalProvider>
-									</BrowserRouter>
-								</BookingContextProvider>
+								<BrowserRouter>
+									<ModalProvider>
+										<StatsProvider>
+											<CssBaseline />
+											<App />
+										</StatsProvider>
+									</ModalProvider>
+								</BrowserRouter>
 							</UserContextProvider>
 						</PushNotificationProvider>
 					</ThemeProvider>
