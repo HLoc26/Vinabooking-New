@@ -1,22 +1,28 @@
 import { Box, Typography, Modal, Chip } from "@mui/material";
-import { useState } from "react";
-import type { ImageType } from "../../../types/Image";
-import type { AmenityConfig, RoomInfo } from "../types/RoomInfo";
+import React, { useState, type Dispatch, type SetStateAction } from "react";
+import type { Image } from "../../../../types/Image";
+import type { RoomFullDetail } from "../../../accommodation/types/room.types";
 
 type RoomReviewCardProps = {
-	room: RoomInfo;
-	thumbnail?: string;
-	images: ImageType[];
-	loading: boolean;
-	setGalleryImages: (imgs: ImageType[]) => void;
+	room: RoomFullDetail & { count: number };
+	thumbnail: string;
+	images: Image[];
+	loading?: boolean; // Added missing prop
+	setGalleryImages: Dispatch<SetStateAction<string[]>>;
 	openImageGallery: (index: number) => void;
-	amenities: AmenityConfig[];
+	amenities: RoomFullDetail["amenities"]; // Updated to match the actual structure
 };
 
 const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images, loading, setGalleryImages, openImageGallery, amenities }) => {
 	const [open, setOpen] = useState(false);
 
-	const flatAmenities = amenities.map((c) => c.amenity);
+	// Flat mapping logic remains consistent with the new Amenity interface
+	const flatAmenities = (amenities || [])
+		.map((item: any) => {
+			// This reaches into the join table record to get the actual amenity
+			return item.amenity;
+		})
+		.filter(Boolean); // Removes any nulls just in case
 	const preview = flatAmenities.slice(0, 3);
 	const remaining = flatAmenities.length - preview.length;
 
@@ -26,10 +32,23 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 		return acc;
 	}, {});
 
+	// REUSABLE CLICK HANDLER
+	const handlePhotoClick = (index: number) => {
+		// Map Image objects to their URL strings (preferring WEBP)
+		const imageUrls = images.map((img) => {
+			const webpVariant = img.variants?.find((v) => v.variant === "WEBP");
+			return webpVariant ? webpVariant.url : img.url;
+		});
+
+		setGalleryImages(imageUrls);
+		// Use a timeout to ensure state is committed before opening the modal
+		setTimeout(() => openImageGallery(index), 0);
+	};
+
 	return (
-		<Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2 }}>
+		<Box sx={{ border: "1px solid #e0e0e0", borderRadius: 2, p: 2, bgcolor: "background.paper" }}>
 			<Box display="flex" gap={2}>
-				{/* Image */}
+				{/* Image Section */}
 				<Box
 					sx={{
 						width: 120,
@@ -40,6 +59,7 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 						alignItems: "center",
 						justifyContent: "center",
 						overflow: "hidden",
+						bgcolor: "#f5f5f5",
 					}}
 				>
 					{loading ? (
@@ -49,17 +69,17 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 					) : images.length ? (
 						<Box
 							component="img"
+							// If thumbnail is empty string, fallback to first image URL
 							src={thumbnail || images[0].url}
 							alt={room.name}
-							onClick={() => {
-								setGalleryImages(images);
-								setTimeout(() => openImageGallery(0), 0);
-							}}
+							onClick={() => handlePhotoClick(0)} // FIX: Use the handler
 							sx={{
 								width: "100%",
 								height: "100%",
 								objectFit: "cover",
 								cursor: "pointer",
+								transition: "0.2s",
+								"&:hover": { opacity: 0.9 },
 							}}
 						/>
 					) : (
@@ -69,30 +89,27 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 					)}
 				</Box>
 
-				{/* Details */}
+				{/* Details Section */}
 				<Box flex={1} display="flex" flexDirection="column" justifyContent="space-between">
 					<Box>
 						<Typography variant="subtitle1" fontWeight={600} mb={0.5}>
-							{room.name}
+							{room.name} (x{room.count})
 						</Typography>
 
-						{/* Amenities preview */}
 						<Box display="flex" gap={1} flexWrap="wrap" mt={1}>
 							{preview.map((a) => (
-								<Chip key={a.id} label={a.name} size="small" />
+								<Chip key={a.id} label={a.name} size="small" variant="outlined" />
 							))}
-
 							{remaining > 0 && <Chip label={`+${remaining}`} size="small" onClick={() => setOpen(true)} sx={{ cursor: "pointer" }} />}
 						</Box>
 					</Box>
 
-					<Typography variant="h6" sx={{ color: "text.primary", mt: 1, mb: 0 }} textAlign="right">
+					<Typography variant="h6" fontWeight="bold" color="primary.main" textAlign="right">
 						$
 						{Number.parseFloat(room.price).toLocaleString("en-US", {
 							minimumFractionDigits: 2,
 							maximumFractionDigits: 2,
-						})}{" "}
-						× {room.count} {room.type?.toLowerCase() ?? "room"}(s)
+						})}
 					</Typography>
 				</Box>
 			</Box>
@@ -106,25 +123,24 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 						left: "50%",
 						transform: "translate(-50%, -50%)",
 						bgcolor: "background.paper",
-						p: 3,
-						borderRadius: 2,
-						width: 400,
-						maxHeight: "70vh",
+						p: 4,
+						borderRadius: 3,
+						width: { xs: "90%", sm: 400 },
+						maxHeight: "80vh",
 						overflowY: "auto",
 						boxShadow: 24,
 					}}
 				>
-					<Typography variant="h6" mb={2}>
-						Amenities
+					<Typography variant="h6" fontWeight="bold" mb={3}>
+						Room Amenities
 					</Typography>
 
 					{Object.entries(grouped).map(([type, items]) => (
-						<Box key={type} mb={2}>
-							<Typography variant="subtitle2" fontWeight={600} mb={1}>
+						<Box key={type} mb={3}>
+							<Typography variant="overline" color="text.secondary" fontWeight="bold">
 								{type}
 							</Typography>
-
-							<Box display="flex" gap={1} flexWrap="wrap">
+							<Box display="flex" gap={1} flexWrap="wrap" mt={1}>
 								{items.map((a) => (
 									<Chip key={a.id} label={a.name} size="small" />
 								))}

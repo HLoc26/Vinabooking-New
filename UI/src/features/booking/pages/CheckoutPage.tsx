@@ -1,34 +1,38 @@
-import { useLocation, useNavigate } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-import type { RoomInfo } from "../types/RoomInfo";
-import type { AccommodationInfo } from "../types/Accommodation";
 import { Box, Typography, Button, Paper, List, ListItem, Divider } from "@mui/material";
-import useBookingContextProvider from "../../../context/BookingContext/hook";
+import { useSelector, useDispatch } from "react-redux";
+import type { RootState, AppDispatch } from "../../../app/store";
+import { resetBooking } from "../../../features/booking/bookingSlice";
 import { formatDate } from "../../../utils/dateFormatter";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
-	const location = useLocation();
-	const roomInfo: RoomInfo[] = location.state?.rooms;
-	const accommodation: AccommodationInfo = location.state?.accommodation;
-	const { bookingInfo } = useBookingContextProvider();
+	const dispatch = useDispatch<AppDispatch>();
+	const bookingInfo = useSelector((state: RootState) => state.booking);
 
 	const { confirmBooking, loading } = useConfirmBooking();
 	const { pushNotification } = usePushNotificationContext();
 
-	if (!bookingInfo)
+	// If booking was cleared or never existed
+	if (!bookingInfo || bookingInfo.items.length === 0) {
 		return (
 			<Typography variant="h6" align="center" mt={5}>
 				No booking found
 			</Typography>
 		);
+	}
 
 	const handleConfirm = async () => {
 		try {
-			await confirmBooking(bookingInfo, roomInfo);
+			await confirmBooking(bookingInfo);
+
 			pushNotification("Booking confirmed successfully! Please check your booking history.", "success");
-			setTimeout(() => navigate("/"), 3000);
+
+			dispatch(resetBooking()); //Clear booking after success
+
+			setTimeout(() => navigate("/"), 2000);
 		} catch {
 			pushNotification("Failed to confirm booking. Please try again.", "error");
 		}
@@ -54,18 +58,15 @@ export default function CheckoutPage() {
 				<Typography variant="h6" gutterBottom>
 					Booking Summary
 				</Typography>
+
 				<Typography>
-					<strong>Accommodation:</strong> {accommodation.name}
+					<strong>Check-in:</strong> {formatDate(new Date(bookingInfo.startDate).toString())}
 				</Typography>
+
 				<Typography>
-					<strong>Address:</strong> {accommodation.address.fullAddress}
+					<strong>Check-out:</strong> {formatDate(new Date(bookingInfo.endDate).toString())}
 				</Typography>
-				<Typography>
-					<strong>Check-in:</strong> {formatDate(bookingInfo.startDate.toString())}
-				</Typography>
-				<Typography>
-					<strong>Check-out:</strong> {formatDate(bookingInfo.endDate.toString())}
-				</Typography>
+
 				<Typography>
 					<strong>Guests:</strong> {bookingInfo.guestCount}
 				</Typography>
@@ -75,10 +76,11 @@ export default function CheckoutPage() {
 				<Typography variant="subtitle1" gutterBottom>
 					Rooms / Beds
 				</Typography>
+
 				<List>
-					{roomInfo.map((room) => (
-						<ListItem key={room.id} sx={{ pl: 0 }}>
-							- {room.name}
+					{bookingInfo.items.map((item) => (
+						<ListItem key={item.id} sx={{ pl: 0 }}>
+							- {item.id} × {item.count}
 						</ListItem>
 					))}
 				</List>
