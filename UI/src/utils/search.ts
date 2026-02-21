@@ -1,13 +1,13 @@
 import { EAccommodationType } from "../types/Accommodation";
 import type { Query, SortOption } from "../types/Query";
-import { toInputDate } from "./dateFormatter";
+import { parseInputDate, toInputDate } from "./dateFormatter";
 
 const DEFAULT_GUESTS = { adults: 2, children: 0, rooms: 1 };
 const DEFAULT_PRICE = { min: 0, max: 500 };
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 18;
 
-const getDefaultDateStrings = () => {
+const getDefaultDates = () => {
 	const today = new Date();
 	const tomorrow = new Date(today);
 	tomorrow.setDate(today.getDate() + 1);
@@ -16,20 +16,20 @@ const getDefaultDateStrings = () => {
 	dayAfterTomorrow.setDate(tomorrow.getDate() + 1);
 
 	return {
-		checkIn: toInputDate(tomorrow),
-		checkOut: toInputDate(dayAfterTomorrow),
+		checkIn: tomorrow,
+		checkOut: dayAfterTomorrow,
 	};
 };
 
 export const parseSearchParamsToQuery = (params: URLSearchParams): Query => {
-	const defaultDates = getDefaultDateStrings();
+	const defaultDates = getDefaultDates();
 	const checkInParam = params.get("checkIn");
 	const checkOutParam = params.get("checkOut");
 
 	const dateRegex = /^\d{4}-\d{2}-\d{2}$/;
-	const checkIn = checkInParam && dateRegex.test(checkInParam) ? checkInParam : defaultDates.checkIn;
+	const checkIn = checkInParam && dateRegex.test(checkInParam) ? parseInputDate(checkInParam) : defaultDates.checkIn;
 
-	const checkOut = checkOutParam && dateRegex.test(checkOutParam) ? checkOutParam : defaultDates.checkOut;
+	const checkOut = checkOutParam && dateRegex.test(checkOutParam) ? parseInputDate(checkOutParam) : defaultDates.checkOut;
 
 	return {
 		keyword: params.get("keyword") || "",
@@ -72,10 +72,10 @@ export const buildSearchParams = (query: Query): string => {
 
 	// 2. Dates (to ISO string YYYY-MM-DD)
 	if (query.dates.checkIn) {
-		params.set("checkIn", query.dates.checkIn);
+		params.set("checkIn", toInputDate(query.dates.checkIn));
 	}
 	if (query.dates.checkOut) {
-		params.set("checkOut", query.dates.checkOut);
+		params.set("checkOut", toInputDate(query.dates.checkOut));
 	}
 
 	// 3. Guests

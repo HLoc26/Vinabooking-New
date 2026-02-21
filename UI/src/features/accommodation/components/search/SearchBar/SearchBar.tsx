@@ -69,7 +69,7 @@ const SearchBar: React.FC = () => {
 	// Local state
 	const [keyword, setKeyword] = useState(criteria.keyword);
 
-	const [dates, setDates] = useState<Dates>(() => stringDatesToDates(criteria.dates));
+	const [dates, setDates] = useState<Dates>(criteria.dates);
 	const [guests, setGuests] = useState(criteria.guests);
 
 	// Refs for dropdowns
@@ -87,14 +87,14 @@ const SearchBar: React.FC = () => {
 		// Bước 1: Đồng bộ dữ liệu mới nhất từ Local State vào Redux
 		// Sync latest data from LocalState to Redux
 		dispatch(updateSearchCriteria({ key: "keyword", value: keyword }));
-		dispatch(updateSearchCriteria({ key: "dates", value: datesToStringDates(dates) }));
+		dispatch(updateSearchCriteria({ key: "dates", value: dates }));
 		dispatch(updateSearchCriteria({ key: "guests", value: guests }));
 
 		// Bước 2: Build URL từ dữ liệu Local (để đảm bảo mới nhất)
 		const queryString = buildSearchParams({
 			...criteria, // Lấy các filter khác (price, type...)
 			keyword, // Ghi đè bằng local state
-			dates: datesToStringDates(dates),
+			dates: dates,
 			guests,
 		});
 
@@ -104,7 +104,7 @@ const SearchBar: React.FC = () => {
 	// Keep local state in sync if context changes externally
 	useEffect(() => {
 		setKeyword(criteria.keyword);
-		setDates(stringDatesToDates(criteria.dates));
+		setDates(criteria.dates);
 		setGuests(criteria.guests);
 	}, [criteria.keyword, criteria.dates, criteria.guests]);
 

@@ -7,7 +7,6 @@ import ImageGallery from "../../../components/shared/ImageGallery";
 import useAccommodation from "../hooks/useAccommodation";
 import useAccommodationRooms from "../hooks/useAccommodationRooms";
 import { useReviews } from "../hooks/useReviews";
-import { parseInputDate, toInputDate } from "../../../utils/dateFormatter";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
 import { resetBooking, setBookingField } from "../../../features/booking/bookingSlice";
@@ -80,8 +79,8 @@ export default function DetailPage() {
 			const dayAfter = new Date();
 			dayAfter.setDate(dayAfter.getDate() + 2);
 
-			finalCheckIn = parseInputDate(searchCriteria.dates?.checkIn || toInputDate(tomorrow));
-			finalCheckOut = parseInputDate(searchCriteria.dates?.checkOut || toInputDate(dayAfter));
+			finalCheckIn = searchCriteria.dates?.checkIn || tomorrow;
+			finalCheckOut = searchCriteria.dates?.checkOut || dayAfter;
 
 			shouldUpdateUrl = true;
 		}
