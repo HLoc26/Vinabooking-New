@@ -1,6 +1,6 @@
 import { useCallback } from "react";
 import { useDispatch, useSelector } from "react-redux";
-import { useQuery, useQueryClient } from "@tanstack/react-query";
+import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import userApi from "../services/userApi";
 import type { UserDto } from "../types/UserDto";
 import type { Image } from "../types/Image";
@@ -24,7 +24,9 @@ const useUserProfileInfo = () => {
 			if (!userId) return [];
 			const res = await userApi.getUserAvatar(userId);
 			if (!res.data) throw new Error("Images not found");
-			return res.data.images.filter((img) => img.references?.some((ref) => ref.isPrimary)) || [];
+
+			const images = res.data || [];
+			return images.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 		},
 		enabled: !!userId,
 		staleTime: 1000 * 60 * 10,
@@ -65,11 +67,23 @@ const useUserProfileInfo = () => {
 		[queryClient, userId]
 	);
 
+	// 5. Mutation gọi API upload file thật
+	const uploadAvatarMutation = useMutation({
+		mutationFn: async (file: File) => {
+			if (!userId) throw new Error("User not found");
+			return await userApi.uploadAvatar(userId, file);
+		},
+		onSuccess: () => {
+			queryClient.invalidateQueries({ queryKey: ["user", "avatar", userId] });
+		},
+	});
+
 	return {
 		userInfo,
 		userAvatars,
 		updateUserInfo,
 		setUserAvatars,
+		uploadAvatarMutation,
 	};
 };
 
