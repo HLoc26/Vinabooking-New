@@ -36,9 +36,9 @@ export default class BookingService {
 	}
 
 	public async getBookingsByUserId(userId: string) {
-		const bookings = await this.#bookingRepository.findByUserId(userId);
-		if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${userId}`);
-		return bookings;
+		const bookings = await this.#bookingRepository.findByUserId(userId, true);
+		//if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${userId}`);
+		return bookings || [];
 	}
 
 	public async getBookingsByRoomId(roomId: string) {
