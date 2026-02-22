@@ -7,15 +7,10 @@ import type { ChangeEvent } from "react";
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const ProfileAvatar: React.FC = () => {
-	const { userInfo, userAvatars, uploadAvatarMutation } = useUserProfileInfo();
+	const { userInfo, currentAvatarUrl, uploadAvatarMutation } = useUserProfileInfo();
 	const { pushNotification } = usePushNotificationContext();
 
 	const name = userInfo?.name;
-
-	const currentAvatar = userAvatars?.[0];
-	const thumbnailVariant = currentAvatar?.variants?.find((v) => v.variant === "THUMBNAIL");
-	const avatarUrl = thumbnailVariant?.url || currentAvatar?.url;
-
 	const isUploading = uploadAvatarMutation.isPending;
 
 	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
@@ -48,7 +43,7 @@ const ProfileAvatar: React.FC = () => {
 			<Box position="relative" display="inline-flex">
 				<Avatar
 					alt={name}
-					src={avatarUrl}
+					src={currentAvatarUrl}
 					sx={{
 						width: 120,
 						height: 120,
