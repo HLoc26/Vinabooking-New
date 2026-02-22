@@ -39,7 +39,17 @@ class UserService {
 			const criteria = field.id ? `ID ${field.id}` : `email ${field.email}`;
 			throw new NotFoundError(`User with ${criteria} not found`);
 		}
-		return userRaw;
+		if (withFavourites) {
+			const safeUser = userRaw as Record<string, unknown>;
+			const mappedFavourites = safeUser.favouriteLists || safeUser.favouriteList || safeUser.favourites || [];
+
+			return {
+				...userRaw,
+				favourites: mappedFavourites,
+			} as unknown as T extends true ? UserWithFavourites : User;
+		}
+
+		return userRaw as T extends true ? UserWithFavourites : User;
 	}
 
 	public async getUserById(id: string, withFavourites: boolean = false): Promise<User | UserWithFavourites | null> {
