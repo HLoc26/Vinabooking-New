@@ -1,4 +1,4 @@
-import { useCallback } from "react";
+import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import userApi from "../services/userApi";
@@ -33,25 +33,22 @@ const useUserProfileInfo = () => {
 	});
 
 	// 3. Update User Info
-	const updateUserInfo = useCallback(
-		async (data: Partial<UserDto>) => {
-			if (!userId) return;
-
-			try {
-				const updatedUserRes = await userApi.updateUser(userId, data);
-
-				if (updatedUserRes.data) {
-					const newUser = updatedUserRes.data;
-
-					authStorage.setUser(newUser);
-					dispatch(updateUserSync(newUser));
-				}
-			} catch (error) {
-				console.error("Failed to update user info", error);
+	const updateUserInfoMutation = useMutation({
+		mutationFn: async (data: Partial<UserDto>) => {
+			if (!userId) throw new Error("User not found");
+			const updatedUserRes = await userApi.updateUser(userId, data);
+			return updatedUserRes.data;
+		},
+		onSuccess: (newUser) => {
+			if (newUser) {
+				authStorage.setUser(newUser);
+				dispatch(updateUserSync(newUser));
 			}
 		},
-		[userId, dispatch]
-	);
+		onError: (error) => {
+			console.error("Failed to update user info", error);
+		},
+	});
 
 	// 4. Update Avatar
 	const setUserAvatars = useCallback(
@@ -78,10 +75,17 @@ const useUserProfileInfo = () => {
 		},
 	});
 
+	const currentAvatarUrl = useMemo(() => {
+		const currentAvatar = userAvatars?.[0];
+		const thumbnailVariant = currentAvatar?.variants?.find((v) => v.variant === "THUMBNAIL");
+		return thumbnailVariant?.url || currentAvatar?.url;
+	}, [userAvatars]);
+
 	return {
 		userInfo,
 		userAvatars,
-		updateUserInfo,
+		currentAvatarUrl,
+		updateUserInfoMutation,
 		setUserAvatars,
 		uploadAvatarMutation,
 	};
