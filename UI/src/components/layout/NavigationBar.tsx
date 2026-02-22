@@ -14,13 +14,12 @@ import { accommodationTypes } from "../../constants/accommodation.tsx";
 
 import LoginModal from "../shared/LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
-import { Avatar, ListItemIcon, ListItemText, Stack } from "@mui/material";
+import { Avatar, ListItemIcon, ListItemText, Stack, ListSubheader } from "@mui/material";
 import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineRounded } from "@mui/icons-material";
 import useModalContext from "../../context/ModalContext/hook.ts";
 
 import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
 import useUserProfileInfo from "../../hooks/useUserProfileInfo";
-import { authStorage } from "../../features/auth/utils/authStorage.ts";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -36,18 +35,18 @@ const NavigationBar: React.FC = () => {
 
 	const { pushNotification } = usePushNotificationContext();
 
-	const { userAvatars } = useUserProfileInfo();
-
-	const user = authStorage.getUserSync();
-	const thumbnail = userAvatars.find((a) => a.variant === "THUMBNAIL");
-
+	const { userInfo: user, currentAvatarUrl } = useUserProfileInfo();
 	const logoutMutation = useLogoutMutation();
+
+	const handleCloseNavMenu = () => setAnchorElNav(null);
+	const handleCloseAccommodationMenu = () => setAnchorElAccommodation(null);
+	const handleCloseProfileMenu = () => setAnchorElProfile(null);
 
 	const handleLogout = () => {
 		logoutMutation.mutate(undefined, {
 			onSuccess: () => {
 				pushNotification("Logged out successfully!", "success");
-				setAnchorElProfile(null);
+				handleCloseProfileMenu();
 			},
 			onError: (error) => {
 				pushNotification(error.message || "Failed to logout", "error");
@@ -92,10 +91,10 @@ const NavigationBar: React.FC = () => {
 							Accommodation Types
 						</Button>
 
-						<Menu
+						<Menu //
 							anchorEl={anchorElAccommodation}
 							open={Boolean(anchorElAccommodation)}
-							onClose={() => setAnchorElAccommodation(null)}
+							onClose={handleCloseAccommodationMenu}
 							slotProps={{ paper: { sx: { p: 2, minWidth: 400 } } }}
 						>
 							<Box sx={{ display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 1 }}>
@@ -104,7 +103,7 @@ const NavigationBar: React.FC = () => {
 										key={item.type}
 										component={RouterLink}
 										to={`/${item.type}`}
-										onClick={() => setAnchorElAccommodation(null)}
+										onClick={handleCloseAccommodationMenu}
 										sx={{ gap: 1 }}
 									>
 										{item.icon}
@@ -121,20 +120,20 @@ const NavigationBar: React.FC = () => {
 							<MenuIcon />
 						</IconButton>
 
-						<Menu anchorEl={anchorElNav} open={Boolean(anchorElNav)} onClose={() => setAnchorElNav(null)}>
+						<Menu anchorEl={anchorElNav} open={Boolean(anchorElNav)} onClose={handleCloseNavMenu}>
 							{pages.map((p) => (
-								<MenuItem key={p.path} component={RouterLink} to={p.path} onClick={() => setAnchorElNav(null)}>
+								<MenuItem key={p.path} component={RouterLink} to={p.path} onClick={handleCloseNavMenu}>
 									{p.label}
 								</MenuItem>
 							))}
-							<MenuItem disabled>Accommodation Types</MenuItem>
+							<ListSubheader sx={{ lineHeight: "36px", bgcolor: "transparent" }}>Accommodation Types</ListSubheader>
 
 							{accommodationTypes.map((item) => (
 								<MenuItem //
 									key={item.type}
 									component={RouterLink}
 									to={`/accommodation/${item.type}`}
-									onClick={() => setAnchorElNav(null)}
+									onClick={handleCloseNavMenu}
 									sx={{ pl: 4 }}
 								>
 									{item.label}
@@ -148,10 +147,13 @@ const NavigationBar: React.FC = () => {
 				<Box mr={7}>
 					{user ? (
 						<>
-							<Button endIcon={<ArrowDropDownIcon />} onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
+							<Button onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
 								<Stack direction={"row"} alignItems={"center"} gap={2}>
-									<Avatar alt={user.name} src={thumbnail?.url} />
-									<Typography variant="subtitle2">{user.name || "Profile"}</Typography>
+									<Avatar alt={user.name} src={currentAvatarUrl} />
+									<Typography variant="subtitle2" sx={{ textTransform: "none" }}>
+										{user.name || "Profile"}
+									</Typography>
+									<ArrowDropDownIcon />
 								</Stack>
 							</Button>
 
@@ -166,21 +168,21 @@ const NavigationBar: React.FC = () => {
 								}}
 								anchorEl={anchorElProfile}
 								open={Boolean(anchorElProfile)}
-								onClose={() => setAnchorElProfile(null)}
+								onClose={handleCloseProfileMenu}
 							>
-								<MenuItem component={RouterLink} to="/user/me/profile" onClick={() => setAnchorElProfile(null)}>
+								<MenuItem component={RouterLink} to="/user/me/profile" onClick={handleCloseProfileMenu}>
 									<ListItemIcon>
 										<PersonOutlineOutlined />
 									</ListItemIcon>
 									<ListItemText>My Profile</ListItemText>
 								</MenuItem>
-								<MenuItem component={RouterLink} to="/user/me/my-bookings" onClick={() => setAnchorElProfile(null)}>
+								<MenuItem component={RouterLink} to="/user/me/my-bookings" onClick={handleCloseProfileMenu}>
 									<ListItemIcon>
 										<LuggageOutlined />
 									</ListItemIcon>
 									<ListItemText>My Bookings</ListItemText>
 								</MenuItem>
-								<MenuItem component={RouterLink} to="/user/me/favorites" onClick={() => setAnchorElProfile(null)}>
+								<MenuItem component={RouterLink} to="/user/me/favorites" onClick={handleCloseProfileMenu}>
 									<ListItemIcon>
 										<StarOutlineRounded />
 									</ListItemIcon>
