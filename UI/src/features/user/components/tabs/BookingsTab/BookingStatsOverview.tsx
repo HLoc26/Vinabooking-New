@@ -51,9 +51,9 @@ const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings })
 
 	return (
 		<Stack direction="row" spacing={3}>
-			{stats.map((stat, idx) => (
+			{stats.map((stat) => (
 				<Paper
-					key={idx}
+					key={stat.label}
 					elevation={1}
 					sx={{
 						p: 2.5,
