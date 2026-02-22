@@ -14,9 +14,11 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 	const navigate = useNavigate();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
-	const thumbnails = accommodation.images.filter((i) => i.variant === "THUMBNAIL");
+	const images = accommodation?.images || [];
+	const thumbnails = images.filter((i) => i.variant === "THUMBNAIL");
 	const image = thumbnails.find((t) => t.isPrimary) ?? thumbnails[0];
-	const minPrice = Math.min(...accommodation.rooms.map((r) => Number(r.price)));
+	const rooms = accommodation?.rooms || [];
+	const minPrice = rooms.length > 0 ? Math.min(...rooms.map((r) => Number(r.price))) : 0;
 
 	const handleRemoveClick = (e: React.MouseEvent) => {
 		e.stopPropagation(); // tránh click lan ra card
@@ -46,7 +48,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 				}}
 			>
 				<Box sx={{ position: "relative" }}>
-					<CardMedia component="img" height="160" image={image?.url ?? "/images/default.jpg"} alt={accommodation.name} sx={{ objectFit: "cover" }} />
+					<CardMedia component="img" height="160" image={image?.url ?? "/images/default.jpg"} alt={accommodation?.name || "Accommodation"} sx={{ objectFit: "cover" }} />
 
 					<IconButton
 						sx={{
@@ -65,13 +67,13 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 
 				<CardContent sx={{ flexGrow: 1 }}>
 					<Typography noWrap variant="subtitle1" fontWeight={600}>
-						{accommodation.name}
+						{accommodation?.name || "Unknown Accommodation"}
 					</Typography>
 
 					<Box sx={{ display: "flex", alignItems: "center", mt: 0.5, mb: 1 }}>
 						<Place sx={{ fontSize: 18, mr: 0.5, color: "text.secondary" }} />
 						<Typography noWrap variant="body2" color="text.secondary">
-							{accommodation.address.fullAddress}
+							{accommodation?.address?.fullAddress || "Address not available"}
 						</Typography>
 					</Box>
 
@@ -83,11 +85,13 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 
 						<Stack direction="row" sx={{ textAlign: "right" }} alignItems={"end"} spacing={0.5}>
 							<Typography color="primary" fontWeight={700}>
-								${standardize(minPrice)}
+								{minPrice > 0 ? `$${standardize(minPrice)}` : "N/A"}
 							</Typography>
-							<Typography variant="caption" color="text.secondary">
-								/night
-							</Typography>
+							{minPrice > 0 && (
+								<Typography variant="caption" color="text.secondary">
+									/night
+								</Typography>
+							)}
 						</Stack>
 					</Box>
 				</CardContent>
@@ -97,7 +101,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 			<Dialog open={confirmOpen} onClose={() => setConfirmOpen(false)}>
 				<DialogTitle>Remove from Favourite</DialogTitle>
 				<DialogContent>
-					<Typography>Are you sure you want to remove "{accommodation.name}" from your favourite list?</Typography>
+					<Typography>Are you sure you want to remove "{accommodation?.name}" from your favourite list?</Typography>
 				</DialogContent>
 				<DialogActions>
 					<Button onClick={() => setConfirmOpen(false)}>Cancel</Button>
