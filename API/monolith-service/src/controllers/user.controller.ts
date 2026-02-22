@@ -25,16 +25,24 @@ class UserController {
 		// TODO: call image service to get user avatar
 		const user = await this.#userService.getUser({ id: userId });
 
-		return ResponseHelper.success(res, user);
+		return ResponseHelper.success(res, user as User);
 	}
 
 	public async getUser(req: Request, res: Response<ApiResponse<User | UserWithFavourites>>) {
-		const { id, withFavourites } = req.query;
-		if (!id) return ResponseHelper.error(res, "Missing user ID parameter");
+		try {
+			const { id, withFavourites } = req.query;
+			if (!id) return ResponseHelper.error(res, "Missing user ID parameter");
 
-		const isWithFavs = withFavourites === "true";
-		const user = await this.#userService.getUser({ id: id as string }, isWithFavs);
-		return ResponseHelper.success(res, user);
+			const isWithFavs = withFavourites === "true";
+
+			const user = await this.#userService.getUser({ id: id as string }, isWithFavs);
+
+			return ResponseHelper.success(res, user!);
+		} catch (error) {
+			console.error("[UserController.getUser] Error:", error);
+			const e = error as Error;
+			return ResponseHelper.error(res, e.message, 500);
+		}
 	}
 
 	public async createUser(req: SaveUserRequest, res: Response<ApiResponse<{ success: boolean }>>) {
@@ -54,54 +62,87 @@ class UserController {
 			return ResponseHelper.error(res, "Unauthorized", 401);
 		}
 
-		const data = req.body;
-
-		const updatedUser = await this.#userService.updateUser(userId, data);
-
+		const updatedUser = await this.#userService.updateUser(userId, req.body);
 		return ResponseHelper.success<User>(res, updatedUser);
 	}
 
 	// --- FAVOURITES ---
 	public async createFavouriteList(req: Request, res: Response<ApiResponse<FavouriteList>>) {
-		const userId = req.userId!;
-		const { name } = req.body;
-		if (!name) return ResponseHelper.error(res, "Name is required");
+		try {
+			const userId = req.userId;
+			if (!userId) return ResponseHelper.error(res, "Unauthorized", 401); // Clean code guard
 
-		const newList = await this.#favouriteService.createList(name, userId);
-		return ResponseHelper.success(res, newList, 201);
+			const { name } = req.body;
+			if (!name) return ResponseHelper.error(res, "Name is required");
+
+			const newList = await this.#favouriteService.createList(name, userId);
+			return ResponseHelper.success(res, newList, 201);
+		} catch (error) {
+			const e = error as Error;
+			return ResponseHelper.error(res, e.message, 400);
+		}
 	}
 
 	public async updateFavouriteList(req: Request, res: Response<ApiResponse<FavouriteList>>) {
-		const userId = req.userId!;
-		const listId = req.params.id as string;
-		const { name } = req.body;
+		try {
+			const userId = req.userId;
+			if (!userId) return ResponseHelper.error(res, "Unauthorized", 401);
 
-		const updatedList = await this.#favouriteService.updateList(userId, listId, name);
-		return ResponseHelper.success(res, updatedList);
+			const listId = req.params.id as string;
+			const { name } = req.body;
+
+			const updatedList = await this.#favouriteService.updateList(userId, listId, name);
+			return ResponseHelper.success(res, updatedList);
+		} catch (error) {
+			const e = error as Error;
+			return ResponseHelper.error(res, e.message, 400);
+		}
 	}
 
 	public async deleteFavouriteList(req: Request, res: Response<ApiResponse<{ success: boolean }>>) {
-		const userId = req.userId!;
-		const { listId } = req.query;
+		try {
+			const userId = req.userId;
+			if (!userId) return ResponseHelper.error(res, "Unauthorized", 401);
 
-		await this.#favouriteService.deleteList(userId, listId as string);
-		return ResponseHelper.success(res, { success: true });
+			const { listId } = req.query;
+			await this.#favouriteService.deleteList(userId, listId as string);
+			return ResponseHelper.success(res, { success: true });
+		} catch (error) {
+			const e = error as Error;
+			return ResponseHelper.error(res, e.message, 400);
+		}
 	}
 
 	public async addAccommodationToFavourite(req: Request, res: Response<ApiResponse<FavouriteItem>>) {
-		const { listId, accommodationId } = req.body;
-		if (!listId || !accommodationId) return ResponseHelper.error(res, "Missing required fields");
+		try {
+			const userId = req.userId;
+			if (!userId) return ResponseHelper.error(res, "Unauthorized", 401);
 
-		const addedItem = await this.#favouriteService.addAccommodation(listId, accommodationId);
-		return ResponseHelper.success(res, addedItem, 201);
+			const { listId, accommodationId } = req.body;
+			if (!listId || !accommodationId) return ResponseHelper.error(res, "Missing required fields");
+
+			const addedItem = await this.#favouriteService.addAccommodation(listId, accommodationId);
+			return ResponseHelper.success(res, addedItem, 201);
+		} catch (error) {
+			const e = error as Error;
+			return ResponseHelper.error(res, e.message, 400);
+		}
 	}
 
 	public async removeAccommodationFromFavourite(req: Request, res: Response<ApiResponse<{ success: boolean }>>) {
-		const { listId, accommodationId } = req.query;
-		if (!listId || !accommodationId) return ResponseHelper.error(res, "Missing required fields");
+		try {
+			const userId = req.userId;
+			if (!userId) return ResponseHelper.error(res, "Unauthorized", 401);
 
-		const result = await this.#favouriteService.removeAccommodation(listId as string, accommodationId as string);
-		return ResponseHelper.success(res, result);
+			const { listId, accommodationId } = req.query;
+			if (!listId || !accommodationId) return ResponseHelper.error(res, "Missing required fields");
+
+			const result = await this.#favouriteService.removeAccommodation(listId as string, accommodationId as string);
+			return ResponseHelper.success(res, result);
+		} catch (error) {
+			const e = error as Error;
+			return ResponseHelper.error(res, e.message, 400);
+		}
 	}
 }
 
