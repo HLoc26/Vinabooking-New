@@ -1,23 +1,25 @@
 import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Box, Button, Typography } from "@mui/material";
-import useUserContextProvider from "../../../../../context/UserContext/hook";
+import useUserProfileInfo from "../../../../../hooks/useUserProfileInfo";
 
 const ProfileAvatar: React.FC = () => {
-	const { userInfo, userAvatars } = useUserContextProvider();
+	const { userInfo, userAvatars } = useUserProfileInfo();
 
 	const name = userInfo?.name;
 
-	const thumbnail = userAvatars.find((a) => a.variant === "THUMBNAIL");
+	const currentAvatar = userAvatars?.[0];
+	const thumbnailVariant = currentAvatar?.variants?.find((v) => v.variant === "THUMBNAIL");
+	const avatarUrl = thumbnailVariant?.url || currentAvatar?.url;
 
 	return (
 		<Box display="flex" alignItems="center" gap={3}>
 			<Box>
-				<Avatar alt={name} src={thumbnail?.url} sx={{ width: 120, height: 120 }} />
+				<Avatar alt={name} src={avatarUrl} sx={{ width: 120, height: 120 }} />
 			</Box>
 			<Box>
 				<Typography variant="h6">{name}</Typography>
 				<Button variant="outlined" component="label" startIcon={<PhotoCamera />}>
-					Change avatar
+					{"Change avatar"}
 					<input type="file" hidden accept="image/*" />
 				</Button>
 				<Typography variant="caption" display="block" sx={{ mt: 1, color: "text.secondary" }}>
