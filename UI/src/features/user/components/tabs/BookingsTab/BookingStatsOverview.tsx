@@ -9,8 +9,18 @@ type BookingStatsOverviewProps = {
 
 const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings }) => {
 	const totalSpent = bookings.reduce((sum, b) => sum + Number(b.totalPrice), 0);
-	const upcomingBookings = bookings.filter((b) => b.status === "BOOKED" && b.startDate > new Date());
+	const upcomingBookings = bookings.filter((b) => b.status === "BOOKED" && new Date(b.startDate) > new Date());
+
 	const completedBookings = bookings.filter((b) => b.status === "COMPLETED");
+	const totalNights = completedBookings.reduce((sum, b) => {
+		const start = new Date(b.startDate).getTime();
+		const end = new Date(b.endDate).getTime();
+		const nights = Math.max(1, Math.ceil((end - start) / (1000 * 60 * 60 * 24))); // Tính số ngày, ít nhất là 1
+		return sum + nights;
+	}, 0);
+
+	// Tạm thời để Rating là N/A vì object Booking không chứa dữ liệu review
+	const avgRating = "N/A";
 
 	const stats = [
 		{
@@ -28,13 +38,13 @@ const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings })
 		{
 			label: "Total Nights",
 			icon: <NightsStayOutlined fontSize="large" />,
-			value: completedBookings.length ?? 0,
+			value: totalNights || 0,
 			bgColor: "#ead8ff", // tím nhạt
 		},
 		{
 			label: "Avg Rating Given",
 			icon: <StarRateRounded fontSize="large" />,
-			value: 5,
+			value: avgRating,
 			bgColor: "#fff2b3", // vàng nhạt
 		},
 	];
