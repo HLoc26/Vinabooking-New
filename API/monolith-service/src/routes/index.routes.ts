@@ -29,7 +29,7 @@ class AppRouter {
 			res.status(200).json({ health: "ok" });
 		});
 		this.#router.use("/auth", this.authRouter.router);
-		this.#router.use("/user", this.userRouter.router);
+		this.#router.use("/users", this.userRouter.router);
 		this.#router.use("/rooms", this.roomRouter.router);
 		this.#router.use("/images", this.imageRouter.router);
 		this.#router.use("/accommodations", this.accommodationRouter.router);
