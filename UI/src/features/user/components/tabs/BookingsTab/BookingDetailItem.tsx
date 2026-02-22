@@ -11,7 +11,7 @@ import ReviewModal from "../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
 import { type ReviewData } from "../../../../../types/Review";
-import { authStorage } from "../../../../../features/auth/utils/authStorage"; // Import mới
+import { authStorage } from "../../../../../features/auth/utils/authStorage";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -19,7 +19,7 @@ type BookingDetailItemProps = {
 };
 
 const StatusBadge: React.FC<{ status: Booking["status"] }> = ({ status }) => {
-	let color: "success" | "primary" | "error" | "default" = "default";
+	let color: "success" | "primary" | "error" | "default" | "warning" = "default";
 	let label: string = status;
 
 	if (status === "BOOKED") {
@@ -31,9 +31,12 @@ const StatusBadge: React.FC<{ status: Booking["status"] }> = ({ status }) => {
 	} else if (status === "CANCELLED") {
 		color = "error";
 		label = "Canceled";
+	} else if (status === "PENDING") {
+		color = "warning";
+		label = "Pending";
 	}
 
-	return <Chip label={label} color={color} size="small" sx={{ position: "absolute", top: 6, left: 6, fontWeight: 400 }} />;
+	return <Chip label={label} color={color} size="small" sx={{ position: "absolute", top: 6, left: 6, fontWeight: 600 }} />;
 };
 
 const BookingReview: React.FC<{ review: ReviewData }> = ({ review }) => {
@@ -115,7 +118,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: "auto" }}>
 				{accommodation ? (
 					<>
-						<CardMedia component="img" image={thumbnails?.[0].url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
+						<CardMedia component="img" image={thumbnails?.[0]?.url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
 						<StatusBadge status={status} />
 					</>
 				) : (
@@ -229,19 +232,18 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 								</Button>
 							)}
 
-							{status === "BOOKED" ||
-								(status === "PENDING" && (
-									<Button //
-										component={RouterLink}
-										to={`/user/manage-booking/${booking.id}`}
-										variant="contained"
-										color="primary"
-										size="small"
-										sx={{ fontSize: 13, py: 0.5, px: 2 }}
-									>
-										Manage Booking
-									</Button>
-								))}
+							{(status === "BOOKED" || status === "PENDING") && (
+								<Button //
+									component={RouterLink}
+									to={`/user/manage-booking/${booking.id}`}
+									variant="contained"
+									color="primary"
+									size="small"
+									sx={{ fontSize: 13, py: 0.5, px: 2 }}
+								>
+									Manage Booking
+								</Button>
+							)}
 
 							{status === "CANCELLED" && (
 								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} disabled>
