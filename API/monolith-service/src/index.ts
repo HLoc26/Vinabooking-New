@@ -6,8 +6,8 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository } from "@/repositories";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService } from "@/services";
+import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -51,6 +51,7 @@ const imageRepository = new ImageRepository(prismaClient);
 const accommodationRepository = new AccommodationRepository(prismaClient);
 const bookingRepository = new BookingRepository(prismaClient);
 const reviewRepository = new ReviewRepository(prismaClient);
+const favouriteRepository = new FavouriteRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -61,6 +62,7 @@ const authService = new AuthService({
 	emailService: emailService,
 });
 const userService = new UserService(userRepository);
+const favouriteService = new FavouriteService(favouriteRepository);
 const oauthService = new OAuthService(
 	{
 		googleClientId: process.env["GOOGLE_CLIENT_ID"]!,
@@ -87,7 +89,7 @@ bookingService.setAccommodationService(accommodationService);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
-const userController = new UserController(userService);
+const userController = new UserController(userService, favouriteService);
 const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
