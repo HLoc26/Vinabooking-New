@@ -16,6 +16,7 @@ import { authStorage } from "../../../../../features/auth/utils/authStorage";
 type BookingDetailItemProps = {
 	booking: Booking;
 	image: string;
+	hideManageButton?: boolean;
 };
 
 const StatusBadge: React.FC<{ status: Booking["status"] }> = ({ status }) => {
@@ -62,7 +63,7 @@ const BookingReview: React.FC<{ review: ReviewData }> = ({ review }) => {
 	);
 };
 
-const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image }) => {
+const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, hideManageButton }) => {
 	const { startDate, endDate, guestCount, status, referenceNo } = booking;
 
 	const roomId = booking.details?.[0]?.itemId || null;
@@ -232,7 +233,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image })
 								</Button>
 							)}
 
-							{(status === "BOOKED" || status === "PENDING") && (
+							{!hideManageButton && (status === "BOOKED" || status === "PENDING") && (
 								<Button //
 									component={RouterLink}
 									to={`/user/manage-booking/${booking.id}`}
