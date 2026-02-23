@@ -24,7 +24,7 @@ export default class BookingService {
 	}
 
 	public async getBookingById(id: string) {
-		const booking = await this.#bookingRepository.findById(id);
+		const booking = await this.#bookingRepository.findById(id, true);
 		if (!booking) throw new NotFoundError(`Booking with id ${id} not found`);
 		return booking;
 	}
