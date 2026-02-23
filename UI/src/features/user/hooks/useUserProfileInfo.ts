@@ -2,11 +2,11 @@ import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import userApi from "../services/userApi";
-import type { UserDto } from "../types/UserDto";
-import type { Image } from "../types/Image";
-import { authStorage } from "../features/auth/utils/authStorage";
-import { updateUserSync } from "../features/auth/authSlice";
-import type { RootState } from "../app/store";
+import type { UserDto } from "../../../types/UserDto";
+import type { Image } from "../../../types/Image";
+import { authStorage } from "../../../features/auth/utils/authStorage";
+import { updateUserSync } from "../../../features/auth/authSlice";
+import type { RootState } from "../../../app/store";
 
 const useUserProfileInfo = () => {
 	const dispatch = useDispatch();
@@ -22,11 +22,11 @@ const useUserProfileInfo = () => {
 		queryKey: ["user", "avatar", userId],
 		queryFn: async () => {
 			if (!userId) return [];
-			const res = await userApi.getUserAvatar(userId);
-			if (!res.data) throw new Error("Images not found");
 
-			const images = res.data || [];
-			return images.sort((a, b) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
+			const images = await userApi.getUserAvatar(userId);
+			if (!images) throw new Error("Images not found");
+
+			return images.sort((a: Image, b: Image) => new Date(b.createdAt).getTime() - new Date(a.createdAt).getTime());
 		},
 		enabled: !!userId,
 		staleTime: 1000 * 60 * 10,
@@ -36,8 +36,9 @@ const useUserProfileInfo = () => {
 	const updateUserInfoMutation = useMutation({
 		mutationFn: async (data: Partial<UserDto>) => {
 			if (!userId) throw new Error("User not found");
-			const updatedUserRes = await userApi.updateUser(userId, data);
-			return updatedUserRes.data;
+
+			const updatedUser = await userApi.updateUser(data as { name?: string; phone?: string });
+			return updatedUser;
 		},
 		onSuccess: (newUser) => {
 			if (newUser) {
@@ -77,7 +78,7 @@ const useUserProfileInfo = () => {
 
 	const currentAvatarUrl = useMemo(() => {
 		const currentAvatar = userAvatars?.[0];
-		const thumbnailVariant = currentAvatar?.variants?.find((v) => v.variant === "THUMBNAIL");
+		const thumbnailVariant = currentAvatar?.variants?.find((v: { variant: string; url: string }) => v.variant === "THUMBNAIL");
 		return thumbnailVariant?.url || currentAvatar?.url;
 	}, [userAvatars]);
 
