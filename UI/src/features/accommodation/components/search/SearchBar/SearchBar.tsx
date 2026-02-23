@@ -281,6 +281,12 @@ const SearchBar: React.FC = () => {
 							onGuestsChange={setGuests}
 							onClose={() => {
 								handleUpdateSearchCriteria("guests", guests);
+								dispatch(
+									setBookingField({
+										key: "guestCount",
+										value: guests.adults,
+									})
+								);
 								handleToggleDropdown("guest", false);
 							}}
 						/>
