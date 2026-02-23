@@ -177,11 +177,7 @@ const SearchBar: React.FC = () => {
 								placeholder="Search destinations"
 								variant="standard"
 								value={keyword}
-								onChange={(e) => {
-									setKeyword(e.target.value);
-									// REMOVED: handleUpdateSearchCriteria("keyword", e.target.value);
-									// It is now handled by the useEffect watching debouncedKeyword
-								}}
+								onChange={(e) => setKeyword(e.target.value)}
 								onFocus={(e) => {
 									e.stopPropagation();
 									handleToggleDropdown("location", true);
