@@ -245,12 +245,6 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 									Manage Booking
 								</Button>
 							)}
-
-							{status === "CANCELLED" && (
-								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} disabled>
-									Cancelled
-								</Button>
-							)}
 						</>
 					) : (
 						<></>
