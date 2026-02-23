@@ -1,5 +1,5 @@
 import React from "react";
-import useUserFavouriteList from "../../hooks/useUserFavouriteList";
+import useUserFavouriteList from "../../features/user/hooks/useUserFavouriteList";
 import { IconButton } from "@mui/material";
 import { StarOutlineRounded, StarRounded } from "@mui/icons-material";
 import FavouritePickerModal from "../../features/user/components/FavouritePickerModal";

@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { useQuery, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
-import type { RootState } from "../app/store";
-import type { FavouriteList } from "../types/FavouriteList";
-import favouriteApi from "../services/favouriteApi";
-import { usePushNotificationContext } from "../context/PushNotification/hook";
+import type { RootState } from "../../../app/store";
+import type { FavouriteList } from "../../../types/FavouriteList";
+import favouriteApi from "../../../services/favouriteApi";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { AxiosError, type AxiosResponse } from "axios";
-import type { ApiResponse } from "../types/Response";
+import type { ApiResponse } from "../../../types/Response";
 
 const useUserFavouriteList = () => {
 	const userFromRedux = useSelector((state: RootState) => state.auth.user);
