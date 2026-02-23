@@ -21,7 +21,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 	const minPrice = accommodation.minPrice;
 
 	const avgStar = accommodation.avgStar;
-	const image = accommodation.images.length > 0 ? accommodation.images?.[0].url : `/images/${accommodation.type}.png`;
+	const image = accommodation.images?.length > 0 ? accommodation.images?.[0].url : `/images/${accommodation.type}.png`;
 
 	if (variant === "list") {
 		return (
