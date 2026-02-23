@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from "@tanstack/react-query";
-import { fetchUserProfileApi, updateUserProfileApi } from "../userApi";
+import userApi from "../services/userApi";
 import { useDispatch } from "react-redux";
 import { updateUserSync } from "../../auth/authSlice";
 
@@ -7,7 +7,7 @@ import { updateUserSync } from "../../auth/authSlice";
 export const useUserProfile = () => {
 	const { data, isLoading, isError, isFetching } = useQuery({
 		queryKey: ["user", "profile"],
-		queryFn: fetchUserProfileApi,
+		queryFn: userApi.getMe,
 		staleTime: 1000 * 60 * 10,
 	});
 
@@ -20,7 +20,7 @@ export const useUpdateUserMutation = () => {
 	const dispatch = useDispatch();
 
 	return useMutation({
-		mutationFn: updateUserProfileApi,
+		mutationFn: userApi.updateUser,
 		onSuccess: (updatedUser) => {
 			queryClient.setQueryData(["user", "profile"], updatedUser);
 			if (!updatedUser) return;
