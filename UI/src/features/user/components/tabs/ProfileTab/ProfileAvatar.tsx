@@ -1,6 +1,6 @@
 import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Box, Button, Typography, CircularProgress } from "@mui/material";
-import useUserProfileInfo from "../../../../../hooks/useUserProfileInfo";
+import useUserProfileInfo from "../../../hooks/useUserProfileInfo";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import type { ChangeEvent } from "react";
 

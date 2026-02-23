@@ -19,7 +19,7 @@ import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineR
 import useModalContext from "../../context/ModalContext/hook.ts";
 
 import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
-import useUserProfileInfo from "../../hooks/useUserProfileInfo";
+import useUserProfileInfo from "../../features/user/hooks/useUserProfileInfo";
 
 const pages = [
 	{ label: "Search", path: "/search" },
