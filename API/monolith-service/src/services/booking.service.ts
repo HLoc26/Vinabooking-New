@@ -149,7 +149,9 @@ export default class BookingService {
 
 		// 6. Send email
 		await this.#emailService.sendConfirmationEmail(userEmailData);
-		await this.#emailService.sendConfirmationEmail(leaderEmailData);
+		if (user.email !== booking.leaderEmail) {
+			await this.#emailService.sendConfirmationEmail(leaderEmailData);
+		}
 
 		return booking;
 	}
@@ -199,7 +201,9 @@ export default class BookingService {
 
 		// 5. Send email
 		await this.#emailService.sendCancellationEmail(userEmailData);
-		await this.#emailService.sendCancellationEmail(leaderEmailData);
+		if (user.email !== booking.leaderEmail) {
+			await this.#emailService.sendCancellationEmail(leaderEmailData);
+		}
 
 		return { success: true };
 	}
