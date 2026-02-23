@@ -17,6 +17,7 @@ import { updateSearchCriteria } from "../../../../search/searchSlice";
 import type { Dates, Query } from "../../../../../types/Query";
 import { buildSearchParams } from "../../../../../utils/search";
 import { setBookingField } from "../../../../booking/bookingSlice";
+import { useDebounce } from "../../../../../hooks/useDebounce";
 
 const PAPER_HEIGHT = 72;
 const FIXED_TOP_OFFSET = 16;
@@ -59,12 +60,10 @@ const SearchBar: React.FC = () => {
 	const { sentinelRef: searchRef, sticky } = useSticky(175);
 	const criteria = useSelector((state: RootState) => state.search);
 
-	const handleUpdateSearchCriteria = <K extends keyof Query>(key: K, value: Query[K]) => {
-		dispatch(updateSearchCriteria({ key, value }));
-	};
-
 	// Local state
 	const [keyword, setKeyword] = useState(criteria.keyword);
+
+	const debouncedKeyword = useDebounce(keyword, 300);
 
 	const [dates, setDates] = useState<Dates>(criteria.dates);
 	const [guests, setGuests] = useState(criteria.guests);
@@ -80,18 +79,25 @@ const SearchBar: React.FC = () => {
 	const handleToggleDropdown = useCallback(<K extends keyof typeof isDropDownOpen>(key: K, open: boolean) => {
 		setDropDownOpen((prev) => ({ ...prev, [key]: open }));
 	}, []);
-	const handleSearch = () => {
-		// Bước 1: Đồng bộ dữ liệu mới nhất từ Local State vào Redux
-		// Sync latest data from LocalState to Redux
-		dispatch(updateSearchCriteria({ key: "keyword", value: keyword }));
-		dispatch(updateSearchCriteria({ key: "dates", value: dates }));
-		dispatch(updateSearchCriteria({ key: "guests", value: guests }));
 
-		// Bước 2: Build URL từ dữ liệu Local (để đảm bảo mới nhất)
+	const handleUpdateSearchCriteria = useCallback(
+		<K extends keyof Query>(key: K, value: Query[K]) => {
+			console.log(key, value);
+			dispatch(updateSearchCriteria({ key, value }));
+		},
+		[dispatch]
+	);
+
+	const handleSearch = () => {
+		// Sync latest data from LocalState to Redux
+		handleUpdateSearchCriteria("keyword", keyword);
+		handleUpdateSearchCriteria("dates", dates);
+		handleUpdateSearchCriteria("guests", guests);
+
 		const queryString = buildSearchParams({
-			...criteria, // Lấy các filter khác (price, type...)
-			keyword, // Ghi đè bằng local state
-			dates: dates,
+			...criteria, // Get other filters (price, type...)
+			keyword, // Overwrite with local state
+			dates,
 			guests,
 		});
 
@@ -106,6 +112,10 @@ const SearchBar: React.FC = () => {
 	}, [criteria.keyword, criteria.dates, criteria.guests]);
 
 	useEffect(() => {
+		handleUpdateSearchCriteria("keyword", debouncedKeyword);
+	}, [debouncedKeyword, handleUpdateSearchCriteria]);
+
+	useEffect(() => {
 		function handleClickOutside(e: MouseEvent) {
 			if (refs.location.current && !refs.location.current.contains(e.target as Node)) {
 				handleToggleDropdown("location", false);
@@ -113,7 +123,7 @@ const SearchBar: React.FC = () => {
 		}
 		document.addEventListener("mousedown", handleClickOutside);
 		return () => document.removeEventListener("mousedown", handleClickOutside);
-	}, []);
+	}, [handleToggleDropdown]);
 
 	return (
 		<>
@@ -167,7 +177,11 @@ const SearchBar: React.FC = () => {
 								placeholder="Search destinations"
 								variant="standard"
 								value={keyword}
-								onChange={(e) => setKeyword(e.target.value)}
+								onChange={(e) => {
+									setKeyword(e.target.value);
+									// REMOVED: handleUpdateSearchCriteria("keyword", e.target.value);
+									// It is now handled by the useEffect watching debouncedKeyword
+								}}
 								onFocus={(e) => {
 									e.stopPropagation();
 									handleToggleDropdown("location", true);
@@ -185,11 +199,11 @@ const SearchBar: React.FC = () => {
 
 						<LocationTypeahead
 							open={isDropDownOpen.location}
-							keyword={keyword}
+							keyword={debouncedKeyword} // ADDED: Pass the debounced keyword here to limit API calls
 							onSelect={(loc) => {
 								const newKeyword = loc.name ?? "";
 								setKeyword(newKeyword);
-								handleUpdateSearchCriteria("keyword", newKeyword);
+								// The useEffect will automatically catch this and update Redux after the delay
 								handleToggleDropdown("location", false);
 							}}
 						/>
@@ -213,7 +227,7 @@ const SearchBar: React.FC = () => {
 										{dates.checkIn.toLocaleDateString("en-US", { day: "numeric", month: "short", year: "numeric" })}{" "}
 									</Typography>
 									<Typography variant="caption" color="text.secondary" fontSize="0.7rem">
-										{new Date(dates.checkIn).toLocaleDateString("en-US", { weekday: "short" })}
+										{dates.checkIn.toLocaleDateString("en-US", { weekday: "short" })}
 									</Typography>
 								</Box>
 								<Typography variant="body2" color="text.secondary">
