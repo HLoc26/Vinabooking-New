@@ -16,7 +16,7 @@ class UserRouter {
 		this.router.patch("/", authMiddleware, (req: Request, res: Response) => this.userController.updateUser(req, res));
 		this.router.get("/me", authMiddleware, (req: Request, res: Response) => this.userController.getMe(req, res));
 
-		// GET /users?id=...&withFavourites=true
+		// GET /user?id=...&withFavourites=true
 		this.router.get("/", authMiddleware, (req: Request, res: Response) => this.userController.getUser(req, res));
 
 		// --- FAVOURITES ROUTES ---
