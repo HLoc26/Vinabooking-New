@@ -79,7 +79,7 @@ export const BookingCard = ({ rooms, nights, totalPrice }: Props) => {
 					canNavigate={() => rooms.length > 0}
 					onFail={() => pushNotification("Please choose at least one room", "error")}
 				>
-					<Button variant="contained" size="large" fullWidth>
+					<Button variant="contained" size="large" fullWidth sx={{ mt: 2 }}>
 						Reserve Now
 					</Button>
 				</ProtectedLink>
@@ -110,6 +110,8 @@ export const BookingCard = ({ rooms, nights, totalPrice }: Props) => {
 					const newParams = new URLSearchParams(searchParams);
 					newParams.set("checkIn", newCheckIn.toLocaleDateString("sv-SE"));
 					newParams.set("checkOut", newCheckOut.toLocaleDateString("sv-SE"));
+					// Re fetch rooms
+
 					setSearchParams(newParams, { replace: true });
 
 					setMenuAnchor(null);
