@@ -6,7 +6,7 @@ import { getRoomByAccommodationId } from "../roomApi";
  */
 const useAccommodationRooms = (accommodationId: string, startDate?: Date, endDate?: Date) => {
 	return useQuery({
-		queryKey: ["room", accommodationId],
+		queryKey: ["room", accommodationId, startDate, endDate],
 		queryFn: async () => {
 			const response = await getRoomByAccommodationId(accommodationId, startDate, endDate);
 			if (!response) throw new Error("No data found");

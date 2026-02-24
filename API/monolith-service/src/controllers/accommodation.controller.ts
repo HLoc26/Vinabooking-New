@@ -60,7 +60,14 @@ class AccommodationController {
 	 * GET /accommodations/search
 	 */
 	public async search(req: SearchAccommodationRequest, res: Response) {
-		const result = await this.#accommodationService.searchAccommodations(req.query);
+		const query = req.query;
+
+		// Handle case ALL. If ALL -> undefined -> prisma find all
+		if (query.type?.toString() === "ALL") {
+			query.type = undefined;
+		}
+
+		const result = await this.#accommodationService.searchAccommodations(query);
 
 		ResponseHelper.success(res, result);
 	}
