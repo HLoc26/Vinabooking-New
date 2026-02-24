@@ -7,7 +7,7 @@ import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
 import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository } from "@/repositories";
+import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FacilityRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -36,6 +36,8 @@ import ReviewRepository from "@/repositories/review.repository";
 import ReviewService from "@/services/review.service";
 import ReviewController from "@/controllers/review.controller";
 import ReviewRouter from "@/routes/review.routes";
+import FacilityRouter from "./routes/facility.routes";
+import FacilityController from "./controllers/facility.controller";
 
 const app: Express = express();
 connectRedis();
@@ -51,6 +53,7 @@ const imageRepository = new ImageRepository(prismaClient);
 const accommodationRepository = new AccommodationRepository(prismaClient);
 const bookingRepository = new BookingRepository(prismaClient);
 const reviewRepository = new ReviewRepository(prismaClient);
+const facilityRepository = new FacilityRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -93,6 +96,7 @@ const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
 const bookingController = new BookingController(bookingService);
 const reviewController = new ReviewController(reviewService);
+const facilityController = new FacilityController(facilityRepository);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -102,7 +106,8 @@ const roomRouter = new RoomRouter(express.Router(), roomController);
 const accommodationRouter = new AccommodationRouter(express.Router(), accommodationController);
 const bookingRouter = new BookingRouter(express.Router(), bookingController);
 const reviewRouter = new ReviewRouter(express.Router(), reviewController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter);
+const facilityRouter = new FacilityRouter(express.Router(), facilityController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 

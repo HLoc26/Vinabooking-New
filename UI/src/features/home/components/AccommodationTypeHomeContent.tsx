@@ -52,7 +52,7 @@ const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> 
 						items={currentCities}
 						renderItem={(city) => (
 							<Box sx={{ px: 1 }}>
-								<CityCard city={city} type={type} typeLabel={ACCOMMODATION_LABELS[type] ?? ACCOMMODATION_LABELS["ALL"]} />
+								<CityCard city={city} type={type} typeLabel={ACCOMMODATION_LABELS[type]} />
 							</Box>
 						)}
 					/>
