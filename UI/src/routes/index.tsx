@@ -1,7 +1,7 @@
 import { Routes, Route } from "react-router-dom";
 import { HomePage } from "../features/home/pages/Index";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
-import SearchPage from "../features/accommodation/pages/AccommodationSearchResults";
+import SearchResultPage from "../features/accommodation/pages/SearchResultPage";
 
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
@@ -27,7 +27,7 @@ export const AppRouter = () => (
 				path="/search"
 				element={
 					<TravelerLayout>
-						<SearchPage />
+						<SearchResultPage />
 					</TravelerLayout>
 				}
 			/>

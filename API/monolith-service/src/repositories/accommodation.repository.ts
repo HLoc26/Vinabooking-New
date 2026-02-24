@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, type EAccommodationType } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, AccommodationSearchResult, ESortOption } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, AccommodationSearchResult, ESortOption, AccommodationFullInfo } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -16,6 +16,14 @@ class AccommodationRepository {
 				facilities: { include: { facility: true } },
 			},
 		});
+	}
+
+	public async findByIdBatch(ids: string[]): Promise<AccommodationWithDetails[]> {
+		const accommodation = await this.#prismaClient.accommodation.findMany({
+			where: { id: { in: ids } },
+			include: { address: true, facilities: { include: { facility: true } } },
+		});
+		return accommodation;
 	}
 
 	public async countByType(): Promise<{ type: EAccommodationType; _count: { id: number } }[]> {
@@ -49,7 +57,7 @@ class AccommodationRepository {
 		return await this.#prismaClient.accommodation.count({ where });
 	}
 
-	public async search(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST): Promise<AccommodationSearchResult> {
+	public async getPaginatedIds(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST) {
 		const where: Prisma.AccommodationWhereInput = {
 			isActive: true,
 		};
@@ -67,7 +75,7 @@ class AccommodationRepository {
 		// 3. IDs
 		if (filters.ids !== undefined) {
 			if (filters.ids.length === 0) {
-				return { data: [], total: 0 };
+				return { paginatedIds: [], statsRows: [], total: 0 };
 			}
 			where.id = { in: filters.ids };
 		}
@@ -85,30 +93,61 @@ class AccommodationRepository {
 			}));
 		}
 
-		// 5. Sort
-		let orderBy: Prisma.AccommodationOrderByWithRelationInput = { createdAt: Prisma.SortOrder.desc };
+		// Get all IDs that matches
+		const matchingRecords = await this.#prismaClient.accommodation.findMany({
+			where,
+			select: { id: true },
+		});
+		const matchedIds = matchingRecords.map((r) => r.id);
+		const totalMatches = matchedIds.length; // <-- Đếm tổng số lượng record thỏa mãn
 
-		switch (sortBy) {
-			case ESortOption.NAME_ASC:
-				orderBy = { name: Prisma.SortOrder.asc };
-				break;
-			case ESortOption.NAME_DESC:
-				orderBy = { name: Prisma.SortOrder.desc };
-				break;
+		if (totalMatches === 0) {
+			return { paginatedIds: [], statsRows: [], total: 0 };
 		}
+		// TODO: Add minPrice, avgStar, and reviewCount column for faster query
+		// Use raw SQL
+		let orderClause = Prisma.sql`ORDER BY a.createdAt DESC`;
+		if (sortBy === ESortOption.RECOMMENDED) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, avgStar IS NULL, minPrice ASC, avgStar DESC`;
+		if (sortBy === ESortOption.PRICE_ASC) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, minPrice ASC`;
+		if (sortBy === ESortOption.PRICE_DESC) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, minPrice DESC`;
+		if (sortBy === ESortOption.NAME_ASC) orderClause = Prisma.sql`ORDER BY a.name ASC`;
+		if (sortBy === ESortOption.NAME_DESC) orderClause = Prisma.sql`ORDER BY a.name DESC`;
+		if (sortBy === ESortOption.RATING) orderClause = Prisma.sql`ORDER BY avgStar IS NULL, avgStar DESC`;
 
-		const [data, total] = await Promise.all([
-			this.#prismaClient.accommodation.findMany({
-				where,
-				include: { address: true, facilities: { include: { facility: true } } },
-				skip: offset,
-				take: limit,
-				orderBy,
-			}),
-			this.#prismaClient.accommodation.count({ where }),
-		]);
+		// TODO: unify table names in prisma.schema
+		const roomTable = "rooms";
+		const accommodationTable = "accommodations";
+		const reviewTable = "Review";
+		const bedTable = "beds";
+		const statsRows = await this.#prismaClient.$queryRaw<{ id: string; minPrice: number | null; avgStar: number | null; reviewCount: number }[]>`
+            SELECT 
+                a.id,
+                a.name,
+                a.createdAt,
+                (
+                    SELECT MIN(
+                        COALESCE(
+                            CAST(NULLIF(r.price, '') AS DECIMAL(10,2)),
+                            (SELECT MIN(CAST(b.price AS DECIMAL(10,2))) FROM ${Prisma.raw(bedTable)} b WHERE b.roomId = r.id)
+                        )
+                    )
+					FROM ${Prisma.raw(roomTable)} r
+                    WHERE r.accommodationId = a.id
+                ) AS minPrice,
+                (
+                    SELECT AVG(rev.star) FROM ${Prisma.raw(reviewTable)} rev WHERE rev.accommodationId = a.id
+                ) AS avgStar,
+                (
+                    SELECT COUNT(rev.id) FROM ${Prisma.raw(reviewTable)} rev WHERE rev.accommodationId = a.id
+                ) AS reviewCount
+			FROM ${Prisma.raw(accommodationTable)} a
+            WHERE a.id IN (${Prisma.join(matchedIds)})
+            ${orderClause}
+            LIMIT ${limit} OFFSET ${offset}
+        `;
 
-		return { data, total };
+		const paginatedIds = statsRows.map((row) => row.id);
+		return { paginatedIds, statsRows, total: totalMatches };
 	}
 }
 

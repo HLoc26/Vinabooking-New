@@ -3,31 +3,42 @@ import { ProtectedLink } from "../../../../components/shared/ProtectedLink";
 import { usePushNotificationContext } from "../../../../context/PushNotification/hook";
 import type { ItemInfo } from "../../../../types/BookingContextInfo";
 import { DatePickerMenu } from "../../../../components/shared/DatePickerMenu";
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { type Dates } from "../../../../types/Query";
+import { useDispatch, useSelector } from "react-redux";
+import { useSearchParams } from "react-router-dom";
+import type { RootState } from "../../../../app/store";
+import { setBookingField } from "../../../booking/bookingSlice";
 
 interface Props {
 	rooms: ItemInfo[];
 	nights: number;
 	totalPrice: number;
-	startDate: Date;
-	endDate: Date;
-	onStartDateChange: (date: Date) => void;
-	onEndDateChange: (date: Date) => void;
 }
 
-export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onStartDateChange, onEndDateChange }: Props) => {
+export const BookingCard = ({ rooms, nights, totalPrice }: Props) => {
 	const { pushNotification } = usePushNotificationContext();
+	const dispatch = useDispatch();
+	const [searchParams, setSearchParams] = useSearchParams();
+	const bookingInfo = useSelector((state: RootState) => state.booking);
+
 	const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 	const [dates, setDates] = useState<Dates>({
-		checkIn: startDate,
-		checkOut: endDate,
+		checkIn: bookingInfo.startDate,
+		checkOut: bookingInfo.endDate,
 	});
+
+	useEffect(() => {
+		setDates({
+			checkIn: bookingInfo.startDate,
+			checkOut: bookingInfo.endDate,
+		});
+	}, [bookingInfo.startDate, bookingInfo.endDate]);
 
 	const handleOpenMenu = (e: React.MouseEvent<HTMLElement>) => {
 		setDates({
-			checkIn: startDate,
-			checkOut: endDate,
+			checkIn: bookingInfo.startDate,
+			checkOut: bookingInfo.endDate,
 		});
 		setMenuAnchor(e.currentTarget);
 	};
@@ -60,7 +71,7 @@ export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onS
 						Dates
 					</Typography>
 					<Typography fontWeight={600}>
-						{startDate.toLocaleDateString()} — {endDate?.toLocaleDateString()}
+						{bookingInfo.startDate.toLocaleDateString()} — {bookingInfo.endDate?.toLocaleDateString()}
 					</Typography>
 				</Box>
 				<ProtectedLink //
@@ -68,7 +79,7 @@ export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onS
 					canNavigate={() => rooms.length > 0}
 					onFail={() => pushNotification("Please choose at least one room", "error")}
 				>
-					<Button variant="contained" size="large" fullWidth>
+					<Button variant="contained" size="large" fullWidth sx={{ mt: 2 }}>
 						Reserve Now
 					</Button>
 				</ProtectedLink>
@@ -85,14 +96,23 @@ export const BookingCard = ({ rooms, nights, totalPrice, startDate, endDate, onS
 				selectedDates={dates}
 				setSelectedDates={(dates) => setDates(dates)}
 				onClose={() => {
-					// commit
-					onStartDateChange(dates.checkIn);
+					const newCheckIn = dates.checkIn;
+					let newCheckOut = dates.checkOut;
 
-					const fallback = new Date();
-					fallback.setDate(fallback.getDate() + 2);
-					fallback.setHours(0, 0, 0, 0);
+					if (!newCheckOut) {
+						newCheckOut = new Date(newCheckIn);
+						newCheckOut.setDate(newCheckOut.getDate() + 2);
+					}
 
-					onEndDateChange(dates.checkOut ?? fallback);
+					dispatch(setBookingField({ key: "startDate", value: newCheckIn }));
+					dispatch(setBookingField({ key: "endDate", value: newCheckOut }));
+
+					const newParams = new URLSearchParams(searchParams);
+					newParams.set("checkIn", newCheckIn.toLocaleDateString("sv-SE"));
+					newParams.set("checkOut", newCheckOut.toLocaleDateString("sv-SE"));
+					// Re fetch rooms
+
+					setSearchParams(newParams, { replace: true });
 
 					setMenuAnchor(null);
 				}}

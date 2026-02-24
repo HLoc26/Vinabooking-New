@@ -1,7 +1,7 @@
 import React from "react";
 import { Box, Menu } from "@mui/material";
 import { Counter } from "./Counter";
-import type { Guests } from "../../types/Guest";
+import type { Guests } from "../../../../../../types/Query";
 
 export interface GuestMenuProps {
 	open: boolean;
