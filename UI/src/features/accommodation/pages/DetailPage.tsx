@@ -57,8 +57,10 @@ export default function DetailPage() {
 			navigate("/");
 			return;
 		}
+		let isReset = false;
 		if (bookingInfo.accommodationId && bookingInfo.accommodationId !== accommodationId) {
 			dispatch(resetBooking());
+			isReset = true; // Đánh dấu là vừa bị reset
 		}
 		dispatch(setBookingField({ key: "accommodationId", value: accommodationId }));
 
@@ -85,10 +87,10 @@ export default function DetailPage() {
 			shouldUpdateUrl = true;
 		}
 
-		if (finalCheckIn.getTime() !== bookingInfo.startDate.getTime()) {
+		if (isReset || finalCheckIn.getTime() !== bookingInfo.startDate.getTime()) {
 			dispatch(setBookingField({ key: "startDate", value: finalCheckIn }));
 		}
-		if (finalCheckOut.getTime() !== bookingInfo.endDate.getTime()) {
+		if (isReset || finalCheckOut.getTime() !== bookingInfo.endDate.getTime()) {
 			dispatch(setBookingField({ key: "endDate", value: finalCheckOut }));
 		}
 
@@ -116,20 +118,6 @@ export default function DetailPage() {
 
 	const handleNextImage = () => {
 		setCurrentIndex((prev) => (prev === getDisplayImages().length - 1 ? 0 : prev + 1));
-	};
-
-	const handleUpdateStartDate = (newDate: Date) => {
-		dispatch(setBookingField({ key: "startDate", value: newDate }));
-		const newParams = new URLSearchParams(searchParams);
-		newParams.set("checkIn", formatDateParam(newDate));
-		setSearchParams(newParams);
-	};
-
-	const handleUpdateEndDate = (newDate: Date) => {
-		dispatch(setBookingField({ key: "endDate", value: newDate }));
-		const newParams = new URLSearchParams(searchParams);
-		newParams.set("checkOut", formatDateParam(newDate));
-		setSearchParams(newParams);
 	};
 
 	// Tính số đêm
@@ -183,15 +171,7 @@ export default function DetailPage() {
 
 					{/* Cột phải – booking card sticky */}
 					<Grid size={{ xs: 12, md: 4 }}>
-						<BookingCard
-							rooms={bookingInfo.items}
-							nights={nights}
-							totalPrice={totalPrice}
-							startDate={bookingInfo.startDate}
-							endDate={bookingInfo.endDate}
-							onStartDateChange={handleUpdateStartDate}
-							onEndDateChange={handleUpdateEndDate}
-						/>
+						<BookingCard rooms={bookingInfo.items} nights={nights} totalPrice={totalPrice} />
 					</Grid>
 				</Grid>
 			</Container>
