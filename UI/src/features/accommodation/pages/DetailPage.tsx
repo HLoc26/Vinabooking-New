@@ -27,7 +27,7 @@ export default function DetailPage() {
 	if (!accommodationId) navigate("/");
 
 	const { data: accommodation, isLoading: loading, isError: error } = useAccommodation(accommodationId ?? "");
-	const { data: rawRooms } = useAccommodationRooms(accommodationId ?? "");
+	const { data: rawRooms } = useAccommodationRooms(accommodationId ?? "", bookingInfo.startDate, bookingInfo.endDate);
 	const rooms = rawRooms ?? [];
 
 	const getThumbnails = (): string[] => {
