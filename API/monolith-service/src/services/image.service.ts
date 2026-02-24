@@ -1,6 +1,6 @@
 import { EEntityType } from "@/generated/enums";
 import ImageRepository from "@/repositories/image.repository";
-import { ImageFullInfo } from "@/types/image.types";
+import { BaseImageInfo, ImageFullInfo } from "@/types/image.types";
 import S3Service from "./s3.service";
 
 class ImageService {
@@ -13,6 +13,20 @@ class ImageService {
 
 	async getImage(type: EEntityType, id: string): Promise<ImageFullInfo[]> {
 		const images = await this.#imageRepository.getEntityImage(type, id);
+		return this._sanitizeImage(images);
+	}
+
+	/**
+	 *
+	 * @param type entities' type
+	 * @param ids list of ids
+	 */
+	async getImagesBatch(type: EEntityType, ids: string[]): Promise<ImageFullInfo[]> {
+		const images = await this.#imageRepository.getEntityImageBatch(type, ids);
+		return this._sanitizeImage(images);
+	}
+
+	_sanitizeImage(images: BaseImageInfo[]) {
 		const sanitizedImages = images.map((img) => ({
 			...img,
 			// 1. Convert BigInt to string for JSON safety

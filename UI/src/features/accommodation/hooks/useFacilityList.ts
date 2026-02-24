@@ -1,16 +1,13 @@
-import { useEffect, useState } from "react";
-import type { Facility } from "../../../types/Accommodation";
-import accommodationApi from "../service/accommodationApi";
+import { useQuery } from "@tanstack/react-query";
+import { getFacilities } from "../facilityApi";
 
 const useFacilityList = () => {
-	const [facilities, setFacilities] = useState<Facility[]>([]);
-
-	useEffect(() => {
-		(async () => {
-			const res = await accommodationApi.getFacilities();
-			setFacilities(res?.data ?? []);
-		})();
-	}, []);
-	return facilities;
+	return useQuery({
+		queryKey: ["facilities"],
+		queryFn: () => getFacilities().then((r) => r.data),
+		staleTime: 1000 * 60 * 60, // 1h
+		placeholderData: [],
+	});
 };
+
 export default useFacilityList;

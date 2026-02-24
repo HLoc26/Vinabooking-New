@@ -1,4 +1,4 @@
-import { EFacilityType, Prisma, type EAccommodationType } from "@/generated/client";
+import { Prisma, type EAccommodationType } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 
@@ -9,6 +9,7 @@ export enum ESortOption {
 	PRICE_ASC = "price_asc",
 	PRICE_DESC = "price_desc",
 	RECOMMENDED = "recommended",
+	RATING = "rating",
 }
 
 export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
@@ -29,6 +30,8 @@ export type AccommodationFullInfo = AccommodationWithDetails & {
 	// Calculated fields
 	thumbnail?: string | null;
 	minPrice?: number;
+	avgStar?: number | null;
+	reviewCount?: number | null;
 };
 
 export interface AccommodationSearchResult {
@@ -65,11 +68,3 @@ export interface SearchQuery {
 	limit?: string;
 	sortBy?: ESortOption;
 }
-
-/**
- * Represents the final data structure for an item in the search results list.
- */
-export type SearchResultItem = AccommodationWithDetails & {
-	minPrice: number | null;
-	thumbnail: string | null;
-};

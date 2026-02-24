@@ -1,11 +1,12 @@
 import React, { type Dispatch, type SetStateAction } from "react";
 import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel } from "@mui/material";
 import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
-import useBookingContextProvider from "../../../../context/BookingContext/hook";
 import { formatDate } from "../../../../utils/dateFormatter";
 import type { AccommodationDetail } from "../../../accommodation/types/accommodation.types";
 import type { RoomFullDetail } from "../../../accommodation/types/room.types";
 import useAccommodation from "../../../accommodation/hooks/useAccommodation";
+import type { RootState } from "../../../../app/store";
+import { useSelector } from "react-redux";
 
 type BookingRoom = RoomFullDetail & {
 	count: number;
@@ -23,7 +24,7 @@ interface Props {
 }
 
 const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
-	const { bookingInfo: context } = useBookingContextProvider();
+	const bookingContext = useSelector((state: RootState) => state.booking);
 	const { data: accomImages, isLoading: accomImagesLoading } = useAccommodation(accommInfo?.id ?? "");
 
 	if (!accommInfo) {
@@ -31,8 +32,8 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 	}
 
 	// Calculate number of nights
-	const checkInDate = new Date(context.startDate);
-	const checkOutDate = new Date(context.endDate);
+	const checkInDate = new Date(bookingContext.startDate);
+	const checkOutDate = new Date(bookingContext.endDate);
 	const nights = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
 
 	// Calculate total price
@@ -149,19 +150,19 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 					<Box display="flex" alignItems="center" gap={1}>
 						<CalendarToday fontSize="small" color="primary" />
 						<Typography variant="body2">
-							<strong>Check-in:</strong> {formatDate(context.startDate.toString())}
+							<strong>Check-in:</strong> {formatDate(bookingContext.startDate.toString())}
 						</Typography>
 					</Box>
 					<Box display="flex" alignItems="center" gap={1}>
 						<CalendarToday fontSize="small" color="primary" />
 						<Typography variant="body2">
-							<strong>Check-out:</strong> {formatDate(context.endDate.toString())}
+							<strong>Check-out:</strong> {formatDate(bookingContext.endDate.toString())}
 						</Typography>
 					</Box>
 					<Box display="flex" alignItems="center" gap={1}>
 						<People fontSize="small" color="primary" />
 						<Typography variant="body2">
-							<strong>Guests:</strong> {context.guestCount}
+							<strong>Guests:</strong> {bookingContext.guestCount}
 						</Typography>
 					</Box>
 				</Box>

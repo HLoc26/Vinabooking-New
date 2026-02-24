@@ -57,11 +57,17 @@ export default class ImageRepository {
 	}
 
 	public async getEntityImage(entityType: EEntityType, entityId: string) {
-		const images = await this.#prisma.image.findMany({
+		return await this.getEntityImageBatch(entityType, [entityId]);
+	}
+
+	public async getEntityImageBatch(entityType: EEntityType, entityIds: string[]) {
+		return await this.#prisma.image.findMany({
 			where: {
 				references: {
 					some: {
-						entityId: entityId,
+						entityId: {
+							in: entityIds,
+						},
 						entityType: entityType,
 					},
 				},
@@ -71,10 +77,10 @@ export default class ImageRepository {
 				references: {
 					select: {
 						isPrimary: true,
+						entityId: true,
 					},
 				},
 			},
 		});
-		return images;
 	}
 }

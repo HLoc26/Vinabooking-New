@@ -19,6 +19,9 @@ const bookingSlice = createSlice({
 	name: "booking",
 	initialState,
 	reducers: {
+		updateBookingInfo<K extends keyof BookingContextInfo>(state: BookingContextInfo, action: PayloadAction<{ key: K; value: BookingContextInfo[K] }>) {
+			state[action.payload.key] = action.payload.value;
+		},
 		setAccommodationId(state, action: PayloadAction<string>) {
 			state.accommodationId = action.payload;
 		},

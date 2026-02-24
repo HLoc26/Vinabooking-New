@@ -1,17 +1,22 @@
 import { Router } from "express";
 import FacilityController from "../controllers/facility.controller";
-import FacilityRepository from "../repositories/facility.repository";
-import prismaClient from "../clients/prisma.client"; // adjust path if needed
 
-const router = Router();
+// Base route: /facilities
+class FacilityRouter {
+	readonly #facilityController: FacilityController;
+	constructor(
+		public router: Router,
+		facilityController: FacilityController
+	) {
+		this.#facilityController = facilityController;
+		this.registerRoutes();
+	}
 
-// --- Dependency Injection ---
-const facilityRepository = new FacilityRepository(prismaClient);
-const facilityController = new FacilityController(facilityRepository);
+	private registerRoutes() {
+		this.router.get("/", (req, res) => {
+			return this.#facilityController.getAll(req, res);
+		});
+	}
+}
 
-// --- Routes ---
-router.get("/", facilityController.getAll.bind(facilityController));
-
-export default router;
-
-//IDK this looks fun
+export default FacilityRouter;
