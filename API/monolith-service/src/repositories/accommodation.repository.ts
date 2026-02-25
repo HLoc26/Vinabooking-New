@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, type EAccommodationType } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, AccommodationSearchResult, ESortOption, AccommodationFullInfo } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, ESortOption } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -57,7 +57,7 @@ class AccommodationRepository {
 		return await this.#prismaClient.accommodation.count({ where });
 	}
 
-	public async getPaginatedIds(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST) {
+	public async getStatsRows(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST) {
 		const where: Prisma.AccommodationWhereInput = {
 			isActive: true,
 		};
@@ -146,8 +146,7 @@ class AccommodationRepository {
             LIMIT ${limit} OFFSET ${offset}
         `;
 
-		const paginatedIds = statsRows.map((row) => row.id);
-		return { paginatedIds, statsRows, total: totalMatches };
+		return { statsRows, total: totalMatches };
 	}
 }
 

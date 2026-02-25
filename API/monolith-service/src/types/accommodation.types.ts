@@ -68,3 +68,10 @@ export interface SearchQuery {
 	limit?: string;
 	sortBy?: ESortOption;
 }
+
+export interface AccommodationStats {
+	id: string;
+	minPrice: number | null;
+	avgStar: number | null;
+	reviewCount: number;
+}
