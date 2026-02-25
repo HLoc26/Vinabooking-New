@@ -1,6 +1,6 @@
 import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
 import { Star } from "@mui/icons-material";
-import useUserBookings from "../../../../../user/hooks/useUserBookings";
+import useUserBookings from "../../../../../booking/hooks/useUserBookings";
 import useModalContext from "../../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../../context/PushNotification/hook";

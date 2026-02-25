@@ -1,7 +1,7 @@
 import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import bookingApi from "../services/bookingApi";
-import { authStorage } from "../../../features/auth/utils/authStorage";
+import bookingApi from "../../user/services/bookingApi";
+import { authStorage } from "../../auth/utils/authStorage";
 import type { RootState } from "../../../app/store";
 
 const useUserBookings = () => {
