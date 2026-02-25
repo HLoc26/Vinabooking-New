@@ -1,20 +1,19 @@
 import { Box, Container, Typography } from "@mui/material";
 import HorizontalList from "./HorizontalList";
 import { ACCOMMODATION_LABELS } from "../constants/Const";
-import type { Accommodation, EAccommodationType } from "../../../types/Accommodation";
-import { useFetchAccommodationCountByType } from "../hooks/useFetchAccommodationCountByType";
+import type { AccommodationDetail, EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { useMemo } from "react";
 import CityCard from "./CityCard";
 import type { City } from "../types/City";
 import { CITIES } from "../constants/CityConst";
+import useAccommodationsByType from "../../accommodation/hooks/useAccommodationsByType";
 
 type AccommodationTypeHomeContentProps = {
 	type: EAccommodationType;
 };
 
 const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> = ({ type }) => {
-	const { accommodations } = useFetchAccommodationCountByType(type);
-
+	const { data: accommodations = [] } = useAccommodationsByType(type);
 	// Group theo city
 	const currentCities: City[] = useMemo(() => {
 		const grouped = accommodations.reduce(
@@ -24,7 +23,7 @@ const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> 
 				acc[city].push(item);
 				return acc;
 			},
-			{} as Record<string, Accommodation[]>
+			{} as Record<string, AccommodationDetail[]>
 		);
 
 		console.log(grouped);

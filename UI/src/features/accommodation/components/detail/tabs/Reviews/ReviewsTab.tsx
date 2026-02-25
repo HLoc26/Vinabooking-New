@@ -9,7 +9,7 @@ import { type Booking } from "../../../../../user/types/Booking";
 import BookingSelectionModal from "./components/BookingSelectionModal";
 import { useMemo, useState } from "react";
 import { useReviews } from "../../../../hooks/useReviews";
-import useAccommodationRooms from "../../../../hooks/useAccommodationRooms";
+import useAccommodationRooms from "../../../../hooks/useRoomsByAccommodation";
 import { authStorage } from "../../../../../auth/utils/authStorage";
 
 interface ReviewsTabProps {

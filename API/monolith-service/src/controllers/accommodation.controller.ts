@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import AccommodationService from "../services/accommodation.service";
 import ResponseHelper from "../utils/response";
 
-import { GetAccommodationByIdRequest, GetAccommodationByEntityRequest, GetAccommodationCountRequest, SearchAccommodationRequest } from "@/types/requests";
+import { GetAccommodationByIdRequest, GetAccommodationByEntityRequest, GetAccommodationCountRequest, SearchAccommodationRequest, PostAccommodationIdsRequest } from "@/types/requests";
 
 class AccommodationController {
 	readonly #accommodationService: AccommodationService;
@@ -38,6 +38,14 @@ class AccommodationController {
 		ResponseHelper.error(res, "Invalid query parameters");
 	}
 
+	/**
+	 * POST /accommodations/_mget
+	 */
+	public async getAccommodationsBatch(req: PostAccommodationIdsRequest, res: Response) {
+		const { ids } = req.body;
+		const accommodations = await this.#accommodationService.getAccommodationsBatch(ids);
+		ResponseHelper.success(res, accommodations);
+	}
 	/**
 	 * GET /accommodations/stats
 	 */

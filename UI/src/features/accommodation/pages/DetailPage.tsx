@@ -5,7 +5,7 @@ import { Container, Grid, Box, CircularProgress, Typography } from "@mui/materia
 import { HeroGallery, PropertyHeader, DetailTabs, BookingCard } from "../components/detail";
 import ImageGallery from "../../../components/shared/ImageGallery";
 import useAccommodation from "../hooks/useAccommodation";
-import useAccommodationRooms from "../hooks/useAccommodationRooms";
+import useAccommodationRooms from "../hooks/useRoomsByAccommodation";
 import { useReviews } from "../hooks/useReviews";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
