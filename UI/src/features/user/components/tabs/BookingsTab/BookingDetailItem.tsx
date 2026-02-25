@@ -2,8 +2,8 @@ import React from "react";
 import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton, Avatar, Rating } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
 import type { Booking } from "../../../types/Booking";
-import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
-import useRoomInfo from "../../../hooks/useRoomInfo";
+import useAccommodationByRoom from "../../../../accommodation/hooks/useAccommodationByRoom";
+import useRooms from "../../../../accommodation/hooks/useRooms";
 import { formatDate } from "../../../../../utils/dateFormatter";
 import { Link as RouterLink } from "react-router-dom";
 import useModalContext from "../../../../../context/ModalContext/hook";
@@ -12,6 +12,7 @@ import { usePushNotificationContext } from "../../../../../context/PushNotificat
 import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
 import { type ReviewData } from "../../../../../types/Review";
 import { authStorage } from "../../../../../features/auth/utils/authStorage";
+import { getThumbnailUrl } from "../../../../../utils/image";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -68,8 +69,11 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 
 	const roomId = booking.details?.[0]?.itemId || null;
 
-	const accommodation = useAccommodationByRoom(roomId ?? "");
-	const room = useRoomInfo(roomId ?? "");
+	const { data: accommodation } = useAccommodationByRoom(roomId ?? "");
+	const { data: rooms } = useRooms([roomId ?? ""]);
+
+	const room = rooms?.[0];
+
 	const roomName = room?.name ?? "";
 	const accommodationName = accommodation?.name ?? "";
 	const fullAddress = accommodation?.address?.fullAddress ?? "";
@@ -82,7 +86,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 
 	const images = accommodation?.images;
 
-	const thumbnails = images?.filter((i) => i.variant == "THUMBNAIL");
+	const thumbnail = getThumbnailUrl(images ?? []);
 
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
@@ -119,7 +123,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: "auto" }}>
 				{accommodation ? (
 					<>
-						<CardMedia component="img" image={thumbnails?.[0]?.url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
+						<CardMedia component="img" image={thumbnail ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
 						<StatusBadge status={status} />
 					</>
 				) : (

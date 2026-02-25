@@ -1,4 +1,4 @@
-import { EAccommodationType } from "../types/Accommodation";
+import { EAccommodationType } from "../features/accommodation/types/accommodation.types";
 import type { Query, SortOption } from "../types/Query";
 import { parseInputDate, toInputDate } from "./dateFormatter";
 

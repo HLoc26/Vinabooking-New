@@ -1,12 +1,13 @@
 import { useState } from "react";
 import { Place, StarRounded } from "@mui/icons-material";
 import { Box, Card, CardContent, CardMedia, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack } from "@mui/material";
-import type { Accommodation } from "../../../types/Accommodation";
+import type { AccommodationDetail } from "../../../../accommodation/types/accommodation.types";
 import { standardize } from "../../../../../utils/moneyConverter";
 import { useNavigate } from "react-router-dom";
+import { getThumbnailUrl } from "../../../../../utils/image";
 
 type AccommodationCardProps = {
-	accommodation: Accommodation;
+	accommodation: AccommodationDetail;
 	onRemove?: (accommodationId: string) => void; // callback khi confirm xoá
 };
 
@@ -15,8 +16,9 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const images = accommodation?.images || [];
-	const thumbnails = images.filter((i) => i.variant === "THUMBNAIL");
-	const image = thumbnails.find((t) => t.isPrimary) ?? thumbnails[0];
+
+	const displayUrl = getThumbnailUrl(images);
+
 	const rooms = accommodation?.rooms || [];
 	const minPrice = rooms.length > 0 ? Math.min(...rooms.map((r) => Number(r.price))) : 0;
 
@@ -48,7 +50,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 				}}
 			>
 				<Box sx={{ position: "relative" }}>
-					<CardMedia component="img" height="160" image={image?.url ?? "/images/default.jpg"} alt={accommodation?.name || "Accommodation"} sx={{ objectFit: "cover" }} />
+					<CardMedia component="img" height="160" image={displayUrl ?? "/images/default.jpg"} alt={accommodation?.name || "Accommodation"} sx={{ objectFit: "cover" }} />
 
 					<IconButton
 						sx={{

@@ -1,6 +1,6 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { Query } from "../../types/Query";
-import { EAccommodationType } from "../../types/Accommodation";
+import { EAccommodationType } from "../accommodation/types/accommodation.types";
 
 const tomorrow = new Date();
 tomorrow.setDate(tomorrow.getDate() + 1);

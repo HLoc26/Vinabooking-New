@@ -27,6 +27,16 @@ export interface GetAccommodationByEntityQuery {
 export type GetAccommodationByEntityRequest = Request<object, object, object, GetAccommodationByEntityQuery>;
 
 /**
+ * POST /accommodations
+ */
+
+export interface PostAccommodationIdsBody {
+	ids: string[];
+}
+
+export type PostAccommodationIdsRequest = Request<object, PostAccommodationIdsBody>;
+
+/**
  * GET /accommodations/count?city=...&type=...
  */
 export interface GetAccommodationCountQuery {

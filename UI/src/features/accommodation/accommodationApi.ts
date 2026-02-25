@@ -1,14 +1,23 @@
 import apiClient from "../../services/apiClient";
 import type { Query } from "../../types/Query";
 import type { ApiResponse } from "../../types/Response";
-import type { AccommodationDetail, AccommodationSearchData } from "./types/accommodation.types";
+import type { AccommodationDetail, AccommodationSearchData, EAccommodationType } from "./types/accommodation.types";
+import type { StatsResponse } from "./types/stats.types";
 
 export const getAccommodationById = (id: string) => apiClient.get<ApiResponse<AccommodationDetail>>(`/accommodations/${id}`).then((data) => data.data);
+
+export const getAccommodationsBatch = (ids: string[]) => apiClient.post<ApiResponse<AccommodationDetail[]>>(`/accommodations/_mget`, { ids }).then((data) => data.data);
+
+export const getAccoomodationByRoomId = (roomId: string) => apiClient.get<ApiResponse<AccommodationDetail>>(`/accommodations?byEntity=room&entityId=${roomId}`).then((data) => data.data);
+
+export const getAccommodationByType = (type: EAccommodationType) => search({ type });
+
+export const getStats = () => apiClient.get<ApiResponse<StatsResponse>>("/accommodations/stats").then((data) => data.data);
 
 export const search = async (query: Partial<Query>): Promise<ApiResponse<AccommodationSearchData> | undefined> => {
 	// Map from nested to flat
 	const params: {
-		[key: string]: string | string[] | undefined;
+		[key: string]: string | Date | string[] | null | undefined;
 	} = {
 		keyword: query.keyword,
 		type: query.type,
