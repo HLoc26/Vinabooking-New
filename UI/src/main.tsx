@@ -5,7 +5,6 @@ import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
 import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
-import StatsProvider from "../src/features/home/context/StatsContext/provider.tsx";
 import ModalProvider from "./context/ModalContext/provider.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { PersistGate } from "redux-persist/integration/react";
@@ -24,10 +23,8 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 						<PushNotificationProvider>
 							<BrowserRouter>
 								<ModalProvider>
-									<StatsProvider>
-										<CssBaseline />
-										<App />
-									</StatsProvider>
+									<CssBaseline />
+									<App />
 								</ModalProvider>
 							</BrowserRouter>
 						</PushNotificationProvider>

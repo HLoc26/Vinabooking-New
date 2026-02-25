@@ -1,17 +1,17 @@
 import { Box, Button, Container, Paper, Typography } from "@mui/material";
 import HorizontalList from "./HorizontalList";
 import CityCard from "./CityCard";
-import useStats from "../context/StatsContext/hook";
 import { CITIES } from "../constants/CityConst";
 import { ACCOMMODATION_TYPES } from "../constants/AccommodationTypeConst";
 import TypeCard from "./TypeCard";
 import FAQ from "./FAQ";
 import type { City } from "../types/City";
-import { EAccommodationType } from "../../../types/Accommodation";
+import { EAccommodationType } from "../../accommodation/types/accommodation.types";
+import useAccommodationStats from "../../accommodation/hooks/useAccommodationStats";
 
 const HomeContent: React.FC = () => {
-	const { cities } = useStats(); // TODO: Add loading and skeleton
-
+	const { data: stats } = useAccommodationStats();
+	const cities = stats?.cities || [];
 	return (
 		<Box flexGrow={1}>
 			<Container sx={{ py: 4 }}>
