@@ -1,6 +1,6 @@
 import { Box } from "@mui/material";
 import { RoomCard } from "./components/RoomCard";
-import useAccommodationRooms from "../../../../hooks/useAccommodationRooms";
+import useAccommodationRooms from "../../../../hooks/useRoomsByAccommodation";
 
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../../../../../app/store";
