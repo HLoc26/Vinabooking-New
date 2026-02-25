@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import useUserBookingDetail from "../hooks/useUserBookingDetail";
+import useUserBookingDetail from "../../booking/hooks/useUserBookingDetail";
 import bookingApi from "../services/bookingApi";
 import { useState } from "react";
 
