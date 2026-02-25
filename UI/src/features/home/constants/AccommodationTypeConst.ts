@@ -4,11 +4,6 @@ import { ACCOMMODATION_LABELS, ACCOMMODATION_HERO_IMAGES } from "./Const";
 
 export const ACCOMMODATION_TYPES: AccommodationTypeData[] = [
 	{
-		id: EAccommodationType.ALL,
-		name: ACCOMMODATION_LABELS[EAccommodationType.ALL]!,
-		imageUrl: ACCOMMODATION_HERO_IMAGES[EAccommodationType.ALL]!,
-	},
-	{
 		id: EAccommodationType.HOTEL,
 		name: ACCOMMODATION_LABELS[EAccommodationType.HOTEL]!,
 		imageUrl: ACCOMMODATION_HERO_IMAGES[EAccommodationType.HOTEL]!,
