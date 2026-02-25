@@ -8,7 +8,7 @@ import { parseJwt } from "../../../utils/jwt";
 import type { UserDto } from "../../../types/UserDto";
 import type { RootState } from "../../../app/store";
 import type { CognitoIdToken } from "../types/Auth";
-import { fetchUserProfileApi } from "../../user/userApi";
+import userApi from "../../user/services/userApi";
 
 export const useAuthCheck = () => {
 	const dispatch = useDispatch();
@@ -30,7 +30,7 @@ export const useAuthCheck = () => {
 	// 2. Gọi API Check User trong DB
 	const { isError: isDbError } = useQuery({
 		queryKey: ["user", "me", "validation"],
-		queryFn: fetchUserProfileApi,
+		queryFn: userApi.getMe,
 		retry: false,
 		enabled: isRefreshSuccess,
 	});

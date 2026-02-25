@@ -24,7 +24,7 @@ export default class BookingService {
 	}
 
 	public async getBookingById(id: string) {
-		const booking = await this.#bookingRepository.findById(id);
+		const booking = await this.#bookingRepository.findById(id, true);
 		if (!booking) throw new NotFoundError(`Booking with id ${id} not found`);
 		return booking;
 	}
@@ -36,9 +36,9 @@ export default class BookingService {
 	}
 
 	public async getBookingsByUserId(userId: string) {
-		const bookings = await this.#bookingRepository.findByUserId(userId);
-		if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${userId}`);
-		return bookings;
+		const bookings = await this.#bookingRepository.findByUserId(userId, true);
+		//if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${userId}`);
+		return bookings || [];
 	}
 
 	public async getBookingsByRoomId(roomId: string) {
@@ -149,7 +149,9 @@ export default class BookingService {
 
 		// 6. Send email
 		await this.#emailService.sendConfirmationEmail(userEmailData);
-		await this.#emailService.sendConfirmationEmail(leaderEmailData);
+		if (user.email !== booking.leaderEmail) {
+			await this.#emailService.sendConfirmationEmail(leaderEmailData);
+		}
 
 		return booking;
 	}
@@ -199,7 +201,9 @@ export default class BookingService {
 
 		// 5. Send email
 		await this.#emailService.sendCancellationEmail(userEmailData);
-		await this.#emailService.sendCancellationEmail(leaderEmailData);
+		if (user.email !== booking.leaderEmail) {
+			await this.#emailService.sendCancellationEmail(leaderEmailData);
+		}
 
 		return { success: true };
 	}

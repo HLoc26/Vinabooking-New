@@ -1,11 +1,12 @@
 import React from "react";
-import useUserFavouriteList from "../../hooks/useUserFavouriteList";
+import useUserFavouriteList from "../../features/user/hooks/useUserFavouriteList";
 import { IconButton } from "@mui/material";
 import { StarOutlineRounded, StarRounded } from "@mui/icons-material";
 import FavouritePickerModal from "../../features/user/components/FavouritePickerModal";
 import useModalContext from "../../context/ModalContext/hook";
 import LoginModal from "./LoginModal";
-import useUserContextProvider from "../../context/UserContext/hook";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../app/store";
 
 interface FavouriteButtonProps {
 	accommodationId: string;
@@ -13,7 +14,7 @@ interface FavouriteButtonProps {
 }
 
 const FavouriteButton: React.FC<FavouriteButtonProps> = ({ accommodationId, className }) => {
-	const { userInfo } = useUserContextProvider();
+	const userInfo = useSelector((state: RootState) => state.auth.user);
 
 	const { favouriteLists, handleAddToFavourite, handleRemoveFromFavourite } = useUserFavouriteList();
 
