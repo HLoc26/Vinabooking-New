@@ -1,10 +1,10 @@
 import { DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemButton, ListItemText, Typography, Stack, Pagination } from "@mui/material";
 import type { Booking, BookingDetail } from "../../../../../../user/types/Booking";
 import useModalContext from "../../../../../../../context/ModalContext/hook";
-import useRoomInfo from "../../../../../../user/hooks/useRoomInfo";
 import { formatDate } from "../../../../../../../utils/dateFormatter";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";
 import { useState } from "react";
+import useRooms from "../../../../../hooks/useRooms";
 
 interface BookingSelectionModalProps {
 	bookings: Booking[];
@@ -14,10 +14,10 @@ interface BookingSelectionModalProps {
 const BOOKINGS_PER_PAGE = 3;
 
 const RoomItem = ({ detail }: { detail: BookingDetail }) => {
-	const room = useRoomInfo(detail.itemId);
+	const { data: room } = useRooms([detail.itemId]);
 	return (
 		<Typography variant="body2" color="text.secondary" sx={{ ml: 1 }}>
-			• {room?.name || "..."}
+			• {room?.[0].name || "..."}
 		</Typography>
 	);
 };
