@@ -1,0 +1,25 @@
+import { EAccommodationType } from "../types/accommodation.types";
+
+export const ACCOMMODATION_DEFAULT_IMAGES: Partial<Record<EAccommodationType, string>> = {
+	[EAccommodationType.ALL]: "/images/ALL.jpg",
+	[EAccommodationType.HOTEL]: "/images/HOTEL.avif",
+	[EAccommodationType.APARTMENT]: "/images/APARTMENT.avif",
+	[EAccommodationType.VILLA]: "/images/VILLA.avif",
+	[EAccommodationType.VACATION_HOME]: "/images/VACATION_HOME.avif",
+	[EAccommodationType.GUESTHOUSE]: "/images/GUESTHOUSE.avif",
+	[EAccommodationType.HOSTEL]: "/images/HOSTEL.avif",
+	[EAccommodationType.BED_AND_BREAKFAST]: "/images/BED_AND_BREAKFAST.jpg",
+	[EAccommodationType.HOMESTAY]: "/images/HOMESTAY.avif",
+	[EAccommodationType.CAMPGROUND]: "/images/CAMPGROUND.avif",
+	[EAccommodationType.COUNTRY_HOUSE]: "/images/COUNTRY_HOUSE.avif",
+	[EAccommodationType.BOAT]: "/images/BOAT.avif",
+	[EAccommodationType.LUXURY_TENT]: "/images/LUXURY_TENT.avif",
+	[EAccommodationType.CABIN]: "/images/CABIN.avif",
+	[EAccommodationType.MOTEL]: "/images/MOTEL.avif",
+	[EAccommodationType.RESORT]: "/images/RESORT.avif",
+	[EAccommodationType.FARMSTAY]: "/images/FARMSTAY.avif",
+	[EAccommodationType.CAPSULE_HOTEL]: "/images/CAPSULE_HOTEL.avif",
+	[EAccommodationType.TREEHOUSE]: "/images/TREEHOUSE.avif",
+	[EAccommodationType.TOWNHOUSE]: "/images/TOWNHOUSE.avif",
+	[EAccommodationType.OTHER]: "/images/OTHER.avif",
+};
