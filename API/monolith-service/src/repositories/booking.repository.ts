@@ -17,7 +17,7 @@ class BookingRepository {
 	}
 
 	// ---------- findByUser ----------
-	public async findByUserId<T extends boolean = false>(userId: string, withDetails?: T): Promise<T extends true ? BookingWithDetails[] : Booking[]> {
+	public async findByUserId<T extends boolean = true>(userId: string, withDetails: boolean = true): Promise<T extends true ? BookingWithDetails[] : Booking[]> {
 		const bookings = await this.#prismaClient.booking.findMany({
 			where: { userId },
 			include: withDetails ? { details: true } : undefined,

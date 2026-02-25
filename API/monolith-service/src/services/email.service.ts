@@ -46,7 +46,7 @@ export class EmailService {
                 <p>Cảm ơn bạn đã trở thành thành viên của <b>Vinabooking</b>.</p>
                 <p>Hãy bắt đầu khám phá những địa điểm tuyệt vời ngay hôm nay.</p>
                 <br/>
-                <a href="${process.env.CLIENT_URL || "#"}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Khám phá ngay</a>
+                <a href="${process.env.CLIENT_URL}" style="background-color: #007bff; color: white; padding: 10px 20px; text-decoration: none; border-radius: 5px;">Khám phá ngay</a>
             </div>
         `;
 
@@ -159,7 +159,7 @@ export class EmailService {
                 <!-- CTA -->
                 <tr>
                   <td style="padding:0 28px 22px; text-align:center;">
-                    <a href="#" style="background:#0066cc; color:#ffffff; text-decoration:none; padding:12px 22px; border-radius:6px; display:inline-block; font-weight:600;">Manage my booking</a>
+                    <a href="${process.env.CLIENT_URL}/user" style="background:#0066cc; color:#ffffff; text-decoration:none; padding:12px 22px; border-radius:6px; display:inline-block; font-weight:600;">Manage my booking</a>
                   </td>
                 </tr>
 
@@ -225,7 +225,7 @@ export class EmailService {
 
 						<tr>
 							<td style="padding:0 0 22px; text-align:center;">
-								<a href="#" style="background:#0066cc; color:#ffffff; text-decoration:none; padding:12px 22px; border-radius:6px; display:inline-block; font-weight:600;">View my bookings</a>
+								<a href="${process.env.CLIENT_URL}/user" style="background:#0066cc; color:#ffffff; text-decoration:none; padding:12px 22px; border-radius:6px; display:inline-block; font-weight:600;">View my bookings</a>
 							</td>
 						</tr>
 
