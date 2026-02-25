@@ -12,6 +12,7 @@ import { usePushNotificationContext } from "../../../../../context/PushNotificat
 import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
 import { type ReviewData } from "../../../../../types/Review";
 import { authStorage } from "../../../../../features/auth/utils/authStorage";
+import { getThumbnailUrl } from "../../../../../utils/image";
 
 type BookingDetailItemProps = {
 	booking: Booking;
@@ -85,7 +86,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 
 	const images = accommodation?.images;
 
-	const thumbnails = images?.filter((i) => i.variant == "THUMBNAIL");
+	const thumbnail = getThumbnailUrl(images ?? []);
 
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
@@ -122,7 +123,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: "auto" }}>
 				{accommodation ? (
 					<>
-						<CardMedia component="img" image={thumbnails?.[0]?.url ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
+						<CardMedia component="img" image={thumbnail ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
 						<StatusBadge status={status} />
 					</>
 				) : (
