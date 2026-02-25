@@ -2,10 +2,9 @@ import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
 import { EEntityType, type EAccommodationType } from "@/generated/client";
-import { SearchQuery, ESortOption, AccommodationFullInfo, SearchFilters, AccommodationWithDetails } from "@/types/accommodation.types";
+import { SearchQuery, ESortOption, AccommodationFullInfo, SearchFilters, AccommodationWithDetails, AccommodationStats } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
-import { randomBytes } from "node:crypto";
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
@@ -21,43 +20,96 @@ class AccommodationService {
 		this.#s3Service = s3Service;
 	}
 
-	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {
-		// 1. Create 3 Promises to run in parallel
-		const accommodationPromise = this.#accommodationRepository.findById(id);
-		const imagesPromise = this.#imageService.getImage(EEntityType.ACCOMMODATION, id);
+	private async _getBaseAccommodations(ids: string[]): Promise<Map<string, AccommodationWithDetails>> {
+		const allAccommodationsData = new Map<string, AccommodationWithDetails>();
+		if (ids.length === 0) return allAccommodationsData;
 
-		// 2. Await all Promises
-		const [accommodation, images] = await Promise.all([accommodationPromise, imagesPromise]);
+		const cachedData = await this.getAccommodationsFromCache(ids);
+		const missingIds = ids.filter((id) => !cachedData.get(id));
 
-		// 3. Check if accommodation exists
-		if (!accommodation) {
-			throw new NotFoundError(`Accommodation with ID ${id} not found`);
+		cachedData.forEach((acc, id) => allAccommodationsData.set(id, acc));
+
+		if (missingIds.length > 0) {
+			const dbData = await this.#accommodationRepository.findByIdBatch(missingIds);
+			await this.writeAccommodationsToCache(dbData);
+			dbData.forEach((acc) => allAccommodationsData.set(acc.id, acc));
 		}
 
-		// 4. Combine data and return
-		return {
-			...accommodation,
-			images: images,
-			// Overwriting the nested Prisma structure with the flattened one
-			facilities: accommodation.facilities
-				.filter((f) => f.isAvailable)
-				.map((f) => ({
-					id: f.id,
-					name: f.facility.name,
-					type: f.facility.type,
-					description: f.facility.description,
-					fee: f.fee,
-					note: f.note,
-				})),
-		} as unknown as AccommodationFullInfo;
+		return allAccommodationsData;
 	}
 
 	/**
-	 * Gets Accommodation details by a Room ID.
+	 * Hàm gom data chính.
+	 * @param preFetchedStats: Truyền vào nếu đã lấy stats từ Search (để tránh query DB 2 lần)
 	 */
+	async getAccommodationsBatch(ids: string[], preFetchedStats?: AccommodationStats[]): Promise<AccommodationFullInfo[]> {
+		if (ids.length === 0) return [];
+
+		// 1. Lấy dữ liệu cơ bản (Tận dụng Cache)
+		const baseDataMap = await this._getBaseAccommodations(ids);
+
+		// 2. Xử lý Stats (Nếu search chưa truyền vào thì tự đi lấy)
+		let statsRows = preFetchedStats;
+		if (!statsRows) {
+			// Gọi hàm repo, truyền đủ tham số: filters, offset=0, limit=ids.length
+			const result = await this.#accommodationRepository.getStatsRows({ ids }, 0, ids.length);
+			statsRows = result.statsRows;
+		}
+
+		// 3. Lấy toàn bộ hình ảnh
+		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
+		const imageMap: Record<string, ImageFullInfo[]> = {};
+		imagesBatch.forEach((img) => {
+			const entityId = img.references[0].entityId;
+			if (!imageMap[entityId]) imageMap[entityId] = [];
+			imageMap[entityId].push(img);
+		});
+
+		// 4. Merge Data & Chuẩn hóa Facilities
+		const finalData = ids.map((id) => {
+			const acc = baseDataMap.get(id)!;
+			const stats = statsRows!.find((s: AccommodationStats) => s.id === id); // Fix undefined potential
+			const accImages = imageMap[id] || [];
+			const thumbnail = accImages.length > 0 ? this.#s3Service.getS3Url(accImages[0].s3Key) : null;
+
+			return {
+				...acc,
+				thumbnail,
+				images: accImages,
+				// Lấy data từ stats (nếu có)
+				minPrice: stats?.minPrice ? Number(stats.minPrice) : undefined,
+				avgStar: stats?.avgStar ? Number(stats.avgStar) : null,
+				reviewCount: Number(stats?.reviewCount || 0),
+				// Chuẩn hóa facilities thống nhất cho cả app
+				facilities: acc.facilities
+					.filter((f) => f.isAvailable) // Đồng bộ logic filter
+					.map((f) => ({
+						id: f.id,
+						name: f.facility.name,
+						type: f.facility.type,
+						description: f.facility.description,
+						fee: f.fee,
+						note: f.note,
+					})),
+			} as unknown as AccommodationFullInfo;
+		});
+
+		return finalData;
+	}
+
+	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {
+		// Gọi qua batch để TẬN DỤNG CACHE và tự động map hình ảnh, stats, facilities!
+		const results = await this.getAccommodationsBatch([id]);
+
+		if (!results || results.length === 0) {
+			throw new NotFoundError(`Accommodation with ID ${id} not found`);
+		}
+
+		return results[0];
+	}
+
 	async getAccommodationByRoomId(roomId: string): Promise<AccommodationFullInfo> {
 		const accommodationId = (await this.#roomService.getRoomById(roomId)).accommodationId;
-
 		return this.getAccommodationById(accommodationId);
 	}
 
@@ -131,20 +183,14 @@ class AccommodationService {
 	 */
 	async searchAccommodations(query: SearchQuery): Promise<{
 		data: AccommodationFullInfo[];
-		meta: {
-			page: number;
-			limit: number;
-			total: number;
-			totalPages: number;
-		};
+		meta: { page: number; limit: number; total: number; totalPages: number };
 	}> {
 		const pageNum = Number(query.page || "1");
 		const limitNum = Number(query.limit || "20");
 		const offset = (pageNum - 1) * limitNum;
 
-		// Get availables from room service
+		// 1. Lọc IDs từ phòng trống
 		const filteredIds = await this._getInitialFilteredIds(query);
-
 		if (filteredIds?.length === 0) {
 			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
 		}
@@ -156,72 +202,23 @@ class AccommodationService {
 			facilities: query.facilities ? (Array.isArray(query.facilities) ? query.facilities : [query.facilities]) : undefined,
 		};
 
-		const { paginatedIds, statsRows, total } = await this.#accommodationRepository.getPaginatedIds(searchFilters, offset, limitNum, query.sortBy);
+		// 2. Gọi SQL Raw để lấy danh sách phân trang và các chỉ số thống kê
+		const { statsRows, total } = await this.#accommodationRepository.getStatsRows(searchFilters, offset, limitNum, query.sortBy);
+		const paginatedIds = statsRows.map((row) => row.id);
+
 		if (total === 0) {
 			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
 		}
-		const cachedData = await this.getAccommodationsFromCache(paginatedIds);
 
-		const missingIds = paginatedIds.filter((id) => !cachedData.get(id));
-
-		const allAccommodationsData = new Map<string, AccommodationWithDetails>();
-		cachedData.forEach((acc, id) => allAccommodationsData.set(id, acc));
-
-		if (missingIds.length > 0) {
-			const dbData = await this.#accommodationRepository.findByIdBatch(missingIds);
-			await this.writeAccommodationsToCache(dbData);
-
-			dbData.forEach((acc) => allAccommodationsData.set(acc.id, acc));
-		}
-
-		const mergedData = paginatedIds.map((id) => {
-			const acc = allAccommodationsData.get(id)!;
-			const stats = statsRows.find((s) => s.id === id)!;
-
-			return {
-				...acc,
-				minPrice: stats.minPrice ? Number(stats.minPrice) : undefined,
-				avgStar: stats.avgStar ? Number(stats.avgStar) : null,
-				reviewCount: Number(stats.reviewCount || 0),
-			} as unknown as AccommodationFullInfo;
-		});
-
-		// Get all images from accomms in 1 query
-		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, paginatedIds);
-
-		const imageMap: Record<string, ImageFullInfo[]> = {};
-		imagesBatch.forEach((img) => {
-			const entityId = img.references[0].entityId;
-			if (!imageMap[entityId]) imageMap[entityId] = [];
-			imageMap[entityId].push(img);
-		});
-
-		// Merge data and format facilities
-		const finalData = mergedData.map((acc) => {
-			const accImages = imageMap[acc.id] || [];
-			const thumbnail = accImages.length > 0 ? this.#s3Service.getS3Url(accImages[0].s3Key) : null;
-
-			return {
-				...acc,
-				thumbnail,
-				images: accImages,
-				facilities: acc.facilities.map((f) => ({
-					id: f.id,
-					name: f.facility.name,
-					type: f.facility.type,
-					description: f.facility.description,
-					fee: f.fee,
-					note: f.note,
-				})),
-			} as unknown as AccommodationFullInfo;
-		});
+		// 3. TRUYỀN STATS ROWS VÀO ĐỂ KHÔNG PHẢI QUERY LẠI (Tối ưu x2 tốc độ)
+		const finalData = await this.getAccommodationsBatch(paginatedIds, statsRows);
 
 		return {
 			data: finalData,
 			meta: {
 				page: pageNum,
 				limit: limitNum,
-				total, // Đã có biến total từ Repository trả về
+				total,
 				totalPages: Math.ceil(total / limitNum) || 1,
 			},
 		};
