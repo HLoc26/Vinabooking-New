@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Typography } from "@mui/material";
-import { EAccommodationType } from "../../../types/Accommodation";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
 import SearchBar from "../../accommodation/components/search/SearchBar/SearchBar";
+import { EAccommodationType } from "../../accommodation/types/accommodation.types";
 
 interface HeroProps {
 	currentType: EAccommodationType;

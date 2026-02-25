@@ -1,5 +1,5 @@
+import { EAccommodationType } from "../../accommodation/types/accommodation.types";
 import type { AccommodationTypeData } from "../types/AccommodationTypeData";
-import { EAccommodationType } from "../../../types/Accommodation";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_HERO_IMAGES } from "./Const";
 
 export const ACCOMMODATION_TYPES: AccommodationTypeData[] = [

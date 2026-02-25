@@ -7,7 +7,6 @@ import { SearchFiltersSidebar, ActiveFiltersBar, ResultsHeader, AccommodationCar
 import { useScrollToTopOnMount } from "../../../hooks/useScrollToTopMount";
 import { PRICE_FILTER_CONFIG } from "../constants/searchFilters";
 import { standardize } from "../../../utils/moneyConverter";
-import { EAccommodationType } from "../../../types/Accommodation";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import { useDispatch, useSelector } from "react-redux";
@@ -16,6 +15,7 @@ import { useSearchAccommodations } from "../hooks/useSearchAccommodation";
 import { syncFromUrl } from "../../search/searchSlice";
 import { parseSearchParamsToQuery } from "../../../utils/search";
 import useFacilityList from "../hooks/useFacilityList";
+import { EAccommodationType } from "../types/accommodation.types";
 
 export default function SearchResultPage() {
 	const navigate = useNavigate();

@@ -1,7 +1,7 @@
 import { Box, Container, Typography } from "@mui/material";
 import HorizontalList from "./HorizontalList";
 import { ACCOMMODATION_LABELS } from "../constants/Const";
-import type { Accommodation, EAccommodationType } from "../../../types/Accommodation";
+import type { AccommodationDetail, EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { useFetchAccommodationCountByType } from "../hooks/useFetchAccommodationCountByType";
 import { useMemo } from "react";
 import CityCard from "./CityCard";

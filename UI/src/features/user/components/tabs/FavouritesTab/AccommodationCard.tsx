@@ -1,12 +1,12 @@
 import { useState } from "react";
 import { Place, StarRounded } from "@mui/icons-material";
 import { Box, Card, CardContent, CardMedia, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack } from "@mui/material";
-import type { Accommodation } from "../../../types/Accommodation";
+import type { AccommodationDetail } from "../../../../accommodation/types/accommodation.types";
 import { standardize } from "../../../../../utils/moneyConverter";
 import { useNavigate } from "react-router-dom";
 
 type AccommodationCardProps = {
-	accommodation: Accommodation;
+	accommodation: AccommodationDetail;
 	onRemove?: (accommodationId: string) => void; // callback khi confirm xoá
 };
 

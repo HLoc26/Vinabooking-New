@@ -7,10 +7,10 @@ import { FilterList } from "@mui/icons-material";
 // Types & Utils
 import type { RootState } from "../../../../app/store";
 import { ACCOMMODATION_TYPE_OPTIONS, PRICE_FILTER_CONFIG } from "../../constants/searchFilters";
-import { EAccommodationType, type Facility } from "../../../../types/Accommodation";
+import { EAccommodationType, type FacilityConfig } from "../../types/accommodation.types";
 
 type SearchFiltersSidebarProps = {
-	facilityList: Facility[];
+	facilityList: FacilityConfig[];
 	loading?: boolean;
 };
 export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ facilityList, loading = false }) => {
