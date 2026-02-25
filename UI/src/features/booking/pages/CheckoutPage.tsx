@@ -6,6 +6,7 @@ import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../../app/store";
 import { resetBooking } from "../../../features/booking/bookingSlice";
 import { formatDate } from "../../../utils/dateFormatter";
+import useRooms from "../../accommodation/hooks/useRooms";
 
 export default function CheckoutPage() {
 	const navigate = useNavigate();
@@ -14,6 +15,9 @@ export default function CheckoutPage() {
 
 	const { confirmBooking, loading } = useConfirmBooking();
 	const { pushNotification } = usePushNotificationContext();
+
+	const roomIds = bookingInfo.items.map((i) => i.id);
+	const { data: selectedRooms = [] } = useRooms(roomIds);
 
 	// If booking was cleared or never existed
 	if (!bookingInfo || bookingInfo.items.length === 0) {
@@ -78,11 +82,15 @@ export default function CheckoutPage() {
 				</Typography>
 
 				<List>
-					{bookingInfo.items.map((item) => (
-						<ListItem key={item.id} sx={{ pl: 0 }}>
-							- {item.id} × {item.count}
-						</ListItem>
-					))}
+					{selectedRooms.map((room) => {
+						const bookingItem = bookingInfo.items.find((i) => i.id === room.id);
+
+						return (
+							<ListItem key={room.id} sx={{ pl: 0 }}>
+								- {room.name} × {bookingItem?.count ?? 0}
+							</ListItem>
+						);
+					})}
 				</List>
 			</Paper>
 
