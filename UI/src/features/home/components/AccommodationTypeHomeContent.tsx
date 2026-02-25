@@ -7,6 +7,7 @@ import CityCard from "./CityCard";
 import type { City } from "../types/City";
 import { CITIES } from "../constants/CityConst";
 import useAccommodationsByType from "../../accommodation/hooks/useAccommodationsByType";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../accommodation/types/Const";
 
 type AccommodationTypeHomeContentProps = {
 	type: EAccommodationType;
@@ -31,7 +32,7 @@ const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> 
 		return Object.entries(grouped)
 			.map(([city, list]) => {
 				const fallbackImage = CITIES.find((c) => c.name.toLowerCase() === city.toLowerCase())?.imageUrl;
-				const imageUrl = fallbackImage || `/images/${type}.png`;
+				const imageUrl = fallbackImage || `${ACCOMMODATION_DEFAULT_IMAGES[type]}`;
 				return {
 					id: city.toLowerCase(),
 					name: city,
