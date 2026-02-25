@@ -6,13 +6,8 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-<<<<<<< refactor/ui/user
 import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository } from "@/repositories";
-=======
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FacilityRepository } from "@/repositories";
->>>>>>> feat/redux-tanstack-query
+import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -58,11 +53,8 @@ const imageRepository = new ImageRepository(prismaClient);
 const accommodationRepository = new AccommodationRepository(prismaClient);
 const bookingRepository = new BookingRepository(prismaClient);
 const reviewRepository = new ReviewRepository(prismaClient);
-<<<<<<< refactor/ui/user
 const favouriteRepository = new FavouriteRepository(prismaClient);
-=======
 const facilityRepository = new FacilityRepository(prismaClient);
->>>>>>> feat/redux-tanstack-query
 
 // Services
 const s3Service = new S3Service();
