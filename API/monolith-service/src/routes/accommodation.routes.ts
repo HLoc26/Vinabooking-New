@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import AccommodationController from "../controllers/accommodation.controller";
 
-import { GetAccommodationByIdRequest, GetAccommodationByEntityRequest, GetAccommodationCountRequest, SearchAccommodationRequest } from "@/types/requests";
+import { GetAccommodationByIdRequest, GetAccommodationByEntityRequest, GetAccommodationCountRequest, SearchAccommodationRequest, PostAccommodationIdsRequest } from "@/types/requests";
 
 class AccommodationRouter {
 	constructor(
@@ -25,6 +25,14 @@ class AccommodationRouter {
 		 * GET /?byEntity=room&entityId=:roomId
 		 */
 		this.router.get("/", (req: Request, res: Response) => this.accommodationController.getAccommodations(req as GetAccommodationByEntityRequest, res));
+
+		/**
+		 * POST /_mget
+		 * Use POST /_mget (though it does not follow the RESTful convention) for 2 reasons:
+		 *   1. Already have a GET accommodations/ route
+		 *	 2. List of IDs could be too long for GET (414 URI too long)
+		 */
+		this.router.post("/_mget", (req: Request, res: Response) => this.accommodationController.getAccommodationsBatch(req as PostAccommodationIdsRequest, res));
 
 		// GET /:id
 		this.router.get("/:id", (req: Request, res: Response) => this.accommodationController.getById(req as unknown as GetAccommodationByIdRequest, res));
