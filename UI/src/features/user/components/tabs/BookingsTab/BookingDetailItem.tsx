@@ -2,8 +2,8 @@ import React from "react";
 import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton, Avatar, Rating } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
 import type { Booking } from "../../../types/Booking";
-import useAccommodationByRoom from "../../../hooks/useAccommodationByRoom";
-import useRoomInfo from "../../../hooks/useRoomInfo";
+import useAccommodationByRoom from "../../../../accommodation/hooks/useAccommodationByRoom";
+import useRooms from "../../../../accommodation/hooks/useRooms";
 import { formatDate } from "../../../../../utils/dateFormatter";
 import { Link as RouterLink } from "react-router-dom";
 import useModalContext from "../../../../../context/ModalContext/hook";
@@ -68,8 +68,11 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 
 	const roomId = booking.details?.[0]?.itemId || null;
 
-	const accommodation = useAccommodationByRoom(roomId ?? "");
-	const room = useRoomInfo(roomId ?? "");
+	const { data: accommodation } = useAccommodationByRoom(roomId ?? "");
+	const { data: rooms } = useRooms([roomId ?? ""]);
+
+	const room = rooms?.[0];
+
 	const roomName = room?.name ?? "";
 	const accommodationName = accommodation?.name ?? "";
 	const fullAddress = accommodation?.address?.fullAddress ?? "";
