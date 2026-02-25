@@ -5,6 +5,7 @@ import type { AccommodationDetail } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
 import { standardize } from "../../../../utils/moneyConverter";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../types/Const";
 
 interface Props {
 	accommodation: AccommodationDetail;
@@ -21,7 +22,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 	const minPrice = accommodation.minPrice;
 
 	const avgStar = accommodation.avgStar;
-	const image = accommodation.images?.length > 0 ? accommodation.images?.[0].url : `/images/${accommodation.type}.png`;
+	const image = accommodation.images?.length > 0 ? accommodation.images?.[0].url : `${ACCOMMODATION_DEFAULT_IMAGES[accommodation.type]}`;
 
 	if (variant === "list") {
 		return (
