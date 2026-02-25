@@ -1,4 +1,5 @@
-import { EAccommodationType } from "../../../types/Accommodation";
+import { EAccommodationType } from "../../accommodation/types/accommodation.types";
+
 export const ACCOMMODATION_LABELS: Partial<Record<EAccommodationType, string>> = {
 	[EAccommodationType.HOTEL]: "Hotel",
 	[EAccommodationType.APARTMENT]: "Apartment",
