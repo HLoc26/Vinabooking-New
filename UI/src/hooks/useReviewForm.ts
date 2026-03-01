@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import reviewApi from "../services/reviewApi";
-import type { ReviewDto } from "../types/Review";
+import type { ReviewData, ReviewDto } from "../types/Review";
 
 interface UseReviewFormProps {
 	accommodationId: string;
@@ -8,7 +8,21 @@ interface UseReviewFormProps {
 	parentId?: string | null;
 	onSuccess?: () => void;
 }
+export const useMyReviewByBooking = (bookingId: string) => {
+	const [review, setReview] = useState<ReviewData | null>(null);
+	const [loading, setLoading] = useState(true);
 
+	useEffect(() => {
+		if (!bookingId) return;
+
+		reviewApi
+			.getMyReviewByBooking(bookingId)
+			.then((data) => setReview(data ?? null))
+			.finally(() => setLoading(false));
+	}, [bookingId]);
+
+	return { review, loading };
+};
 export const useReviewForm = ({ accommodationId, bookingId, parentId, onSuccess }: UseReviewFormProps) => {
 	const [comment, setComment] = useState("");
 	const [star, setStar] = useState<number | null>(null);
