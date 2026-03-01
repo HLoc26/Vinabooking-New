@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, Booking, BookingDetail } from "@generated/client";
+import { PrismaClient, Prisma, Booking, BookingDetail } from "@/generated/client";
 
 export type BookingWithDetails = Booking & {
 	details: BookingDetail[];
@@ -17,13 +17,70 @@ class BookingRepository {
 	}
 
 	// ---------- findByUser ----------
-	public async findByUserId<T extends boolean = false>(userId: string, withDetails?: T): Promise<T extends true ? BookingWithDetails[] : Booking[]> {
+	public async findByUserId<T extends boolean = true>(userId: string, withDetails: boolean = true): Promise<T extends true ? BookingWithDetails[] : Booking[]> {
 		const bookings = await this.#prismaClient.booking.findMany({
 			where: { userId },
 			include: withDetails ? { details: true } : undefined,
 		});
 
 		return bookings as T extends true ? BookingWithDetails[] : Booking[];
+	}
+
+	public async findByRoomId(roomId: string) {
+		return await this.#prismaClient.booking.findMany({
+			where: { details: { some: { itemId: roomId, itemType: "ROOM" } } },
+			include: { details: true },
+		});
+	}
+
+	public async findByAccommodationId(accommId: string): Promise<BookingWithDetails[]> {
+		// Find all rooms and their beds for the given accommodation
+		const rooms = await this.#prismaClient.room.findMany({
+			where: {
+				accommodationId: accommId,
+			},
+			select: {
+				id: true,
+				beds: {
+					select: {
+						id: true,
+					},
+				},
+			},
+		});
+
+		if (rooms.length === 0) {
+			return [];
+		}
+
+		const roomIds = rooms.map((room) => room.id);
+		const bedIds = rooms.flatMap((room) => room.beds.map((bed) => bed.id));
+
+		return this.#prismaClient.booking.findMany({
+			where: {
+				details: {
+					some: {
+						OR: [
+							{
+								itemType: "ROOM",
+								itemId: {
+									in: roomIds,
+								},
+							},
+							{
+								itemType: "BED",
+								itemId: {
+									in: bedIds,
+								},
+							},
+						],
+					},
+				},
+			},
+			include: {
+				details: true,
+			},
+		});
 	}
 
 	// ---------- internal shared finder ----------
@@ -47,17 +104,19 @@ class BookingRepository {
 	}
 
 	// ---------- status updates ----------
-	public async confirm(id: string): Promise<Booking> {
+	public async confirm(id: string): Promise<BookingWithDetails> {
 		return this.#prismaClient.booking.update({
 			where: { id },
 			data: { status: "BOOKED" },
+			include: { details: true },
 		});
 	}
 
-	public async cancel(id: string): Promise<Booking> {
+	public async cancel(id: string): Promise<BookingWithDetails> {
 		return this.#prismaClient.booking.update({
 			where: { id },
 			data: { status: "CANCELLED" },
+			include: { details: true },
 		});
 	}
 

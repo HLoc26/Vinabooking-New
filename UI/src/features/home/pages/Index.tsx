@@ -1,5 +1,5 @@
 import { Hero } from "../components/Hero";
-import { EAccommodationType } from "../../../types/Accommodation";
+import { EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { useParams } from "react-router-dom";
 import { useEffect, useState } from "react";
 import HomeContent from "../components/HomeContent";

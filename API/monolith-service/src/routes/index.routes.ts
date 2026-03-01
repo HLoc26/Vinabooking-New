@@ -1,10 +1,27 @@
 import express from "express";
 import type { Router, Request, Response } from "express";
+import AuthRouter from "./auth.routes";
+import UserRouter from "./user.routes";
+import RoomRouter from "./room.routes";
+import ImageRouter from "./image.routes";
+import AccommodationRouter from "./accommodation.routes";
+import BookingRouter from "./booking.routes";
+import ReviewRouter from "./review.routes";
+import FacilityRouter from "./facility.routes";
 
 class AppRouter {
 	#router: Router;
 
-	constructor() {
+	constructor(
+		private authRouter: AuthRouter,
+		private userRouter: UserRouter,
+		private imageRouter: ImageRouter,
+		private roomRouter: RoomRouter,
+		private accommodationRouter: AccommodationRouter,
+		private bookingRouter: BookingRouter,
+		private reviewRouter: ReviewRouter,
+		private facilityRouter: FacilityRouter
+	) {
 		this.#router = express.Router();
 		this.#registerRoutes();
 	}
@@ -13,6 +30,14 @@ class AppRouter {
 		this.#router.get("/health", (_: Request, res: Response) => {
 			res.status(200).json({ health: "ok" });
 		});
+		this.#router.use("/auth", this.authRouter.router);
+		this.#router.use("/user", this.userRouter.router);
+		this.#router.use("/rooms", this.roomRouter.router);
+		this.#router.use("/images", this.imageRouter.router);
+		this.#router.use("/accommodations", this.accommodationRouter.router);
+		this.#router.use("/bookings", this.bookingRouter.router);
+		this.#router.use("/reviews", this.reviewRouter.router);
+		this.#router.use("/facilities", this.facilityRouter.router);
 	}
 
 	public get router(): Router {

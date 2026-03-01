@@ -2,7 +2,7 @@ import { useEffect, useState } from "react";
 import FavouriteDetailView from "./FavouriteDetailView";
 import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import FolderCard from "./FolderCard";
-import useUserFavouriteList from "../../../../../hooks/useUserFavouriteList";
+import useUserFavouriteList from "../../../../../features/user/hooks/useUserFavouriteList";
 import type { FavouriteList } from "../../../../../types/FavouriteList";
 import { CreateNewFolderOutlined } from "@mui/icons-material";
 import CreateFavouriteListModal from "./CreateFavouriteListModal";
@@ -34,14 +34,7 @@ const FavouritesTabSkeleton = (
 const FavouritesTab: React.FC = () => {
 	const [selected, setSelected] = useState<FavouriteList | null>(null);
 
-	const {
-		favouriteLists,
-		loading: favListLoading,
-		handleCreateFavouriteList,
-		handleDeleteFavouriteList,
-		handleRemoveFromFavourite,
-		handleUpdateFavouriteList,
-	} = useUserFavouriteList();
+	const { favouriteLists, loading: favListLoading, handleCreateFavouriteList, handleDeleteFavouriteList, handleRemoveFromFavourite, handleUpdateFavouriteList } = useUserFavouriteList();
 
 	const { openModal } = useModalContext();
 
@@ -61,14 +54,7 @@ const FavouritesTab: React.FC = () => {
 	}
 
 	if (selected) {
-		return (
-			<FavouriteDetailView
-				favourite={selected}
-				onBack={() => setSelected(null)}
-				handleRemoveFromFavourite={handleRemoveFromFavourite}
-				handleUpdateFavourite={handleUpdateFavouriteList}
-			/>
-		);
+		return <FavouriteDetailView favourite={selected} onBack={() => setSelected(null)} handleRemoveFromFavourite={handleRemoveFromFavourite} handleUpdateFavourite={handleUpdateFavouriteList} />;
 	}
 
 	return (

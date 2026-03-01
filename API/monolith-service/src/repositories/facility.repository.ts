@@ -1,4 +1,4 @@
-import { PrismaClient, Facility } from "@generated/client";
+import { PrismaClient, Facility } from "@/generated/client";
 
 class FacilityRepository {
 	readonly #prismaClient: PrismaClient;

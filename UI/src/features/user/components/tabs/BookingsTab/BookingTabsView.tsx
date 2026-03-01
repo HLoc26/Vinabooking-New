@@ -29,10 +29,12 @@ const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImag
 	const filteredBookings = useMemo(() => {
 		switch (currentTab) {
 			case 1:
-				return bookings.filter((b) => b.status === "BOOKED");
+				return bookings.filter((b) => b.status === "PENDING");
 			case 2:
-				return bookings.filter((b) => b.status === "COMPLETED");
+				return bookings.filter((b) => b.status === "BOOKED");
 			case 3:
+				return bookings.filter((b) => b.status === "COMPLETED");
+			case 4:
 				return bookings.filter((b) => b.status === "CANCELLED");
 			default:
 				return bookings;
@@ -43,8 +45,9 @@ const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImag
 
 	return (
 		<Box>
-			<Tabs value={currentTab} onChange={handleChange} variant="standard" textColor="primary" indicatorColor="primary">
+			<Tabs value={currentTab} onChange={handleChange} variant="standard" textColor="primary" indicatorColor="primary" sx={{ "& .MuiTabs-flexContainer": { overflowX: "auto" } }}>
 				<Tab label="All" />
+				<Tab label="Pending" />
 				<Tab label="Upcoming" />
 				<Tab label="Completed" />
 				<Tab label="Canceled" />
@@ -52,8 +55,8 @@ const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImag
 
 			<Box mt={2}>
 				{paginatedBookings.length === 0 ? (
-					<Typography variant="body2" color="text.secondary">
-						No bookings found.
+					<Typography variant="body2" color="text.secondary" sx={{ py: 4, textAlign: "center" }}>
+						No bookings found in this category.
 					</Typography>
 				) : (
 					paginatedBookings.map((b) => <BookingDetailItem key={b.id} booking={b} image={defaultImage} />)

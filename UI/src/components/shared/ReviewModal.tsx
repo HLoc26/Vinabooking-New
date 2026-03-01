@@ -4,7 +4,7 @@ import useModalContext from "../../context/ModalContext/hook";
 import { type Booking, type BookingDetail } from "../../features/user/types/Booking";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";
 import { formatDate } from "../../utils/dateFormatter";
-import useRoomInfo from "../../features/user/hooks/useRoomInfo";
+import useRooms from "../../features/accommodation/hooks/useRooms";
 
 interface ReviewModalProps {
 	accommodationId: string;
@@ -15,11 +15,11 @@ interface ReviewModalProps {
 }
 
 const RoomItem = ({ detail }: { detail: BookingDetail }) => {
-	const room = useRoomInfo(detail.itemId);
+	const { data: room } = useRooms([detail.itemId]);
 	return (
 		<Stack direction="row" spacing={1} alignItems="center">
 			<KingBedOutlined fontSize="small" />
-			<Typography variant="body2">{room?.name || "..."}</Typography>
+			<Typography variant="body2">{room?.[0].name || "..."}</Typography>
 		</Stack>
 	);
 };

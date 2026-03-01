@@ -1,20 +1,20 @@
 import { Box, Container, Typography } from "@mui/material";
 import HorizontalList from "./HorizontalList";
 import { ACCOMMODATION_LABELS } from "../constants/Const";
-import type { Accommodation, EAccommodationType } from "../../../types/Accommodation";
-import { useFetchAccommodationCountByType } from "../hooks/useFetchAccommodationCountByType";
+import type { AccommodationDetail, EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { useMemo } from "react";
 import CityCard from "./CityCard";
 import type { City } from "../types/City";
 import { CITIES } from "../constants/CityConst";
+import useAccommodationsByType from "../../accommodation/hooks/useAccommodationsByType";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../accommodation/types/Const";
 
 type AccommodationTypeHomeContentProps = {
 	type: EAccommodationType;
 };
 
 const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> = ({ type }) => {
-	const { accommodations } = useFetchAccommodationCountByType(type);
-
+	const { data: accommodations = [] } = useAccommodationsByType(type);
 	// Group theo city
 	const currentCities: City[] = useMemo(() => {
 		const grouped = accommodations.reduce(
@@ -24,7 +24,7 @@ const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> 
 				acc[city].push(item);
 				return acc;
 			},
-			{} as Record<string, Accommodation[]>
+			{} as Record<string, AccommodationDetail[]>
 		);
 
 		console.log(grouped);
@@ -32,7 +32,7 @@ const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> 
 		return Object.entries(grouped)
 			.map(([city, list]) => {
 				const fallbackImage = CITIES.find((c) => c.name.toLowerCase() === city.toLowerCase())?.imageUrl;
-				const imageUrl = fallbackImage || `/images/${type}.png`;
+				const imageUrl = fallbackImage || `${ACCOMMODATION_DEFAULT_IMAGES[type]}`;
 				return {
 					id: city.toLowerCase(),
 					name: city,
@@ -52,7 +52,7 @@ const AccommodationTypeHomeContent: React.FC<AccommodationTypeHomeContentProps> 
 						items={currentCities}
 						renderItem={(city) => (
 							<Box sx={{ px: 1 }}>
-								<CityCard city={city} type={type} typeLabel={ACCOMMODATION_LABELS[type] ?? ACCOMMODATION_LABELS["ALL"]} />
+								<CityCard city={city} type={type} typeLabel={ACCOMMODATION_LABELS[type]} />
 							</Box>
 						)}
 					/>

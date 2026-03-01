@@ -1,5 +1,5 @@
 import { useParams } from "react-router-dom";
-import useUserBookingDetail from "../hooks/useUserBookingDetail";
+import useUserBookingDetail from "../../booking/hooks/useUserBookingDetail";
 import bookingApi from "../services/bookingApi";
 import { useState } from "react";
 
@@ -139,7 +139,7 @@ const ManageBookingDetailPage = () => {
 
 				{/* Accommodation Card */}
 				<Box sx={{ mb: 3 }}>
-					<BookingDetailItem booking={booking} image={"/fallback.png"} />
+					<BookingDetailItem booking={booking} image={"/fallback.png"} hideManageButton={true} />
 				</Box>
 
 				{/* Management Card */}

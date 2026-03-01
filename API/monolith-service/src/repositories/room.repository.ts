@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma, Room, Bed } from "@generated/client";
-import type { RoomFilterOptions, RoomWithDetails, AmenityConfigWithDetails } from "../types/room.types";
+import { PrismaClient, Prisma, Room, Bed } from "@/generated/client";
+import type { RoomFilterOptions, RoomWithDetails, AmenityConfigWithDetails } from "@/types/room.types";
 
 class RoomRepository {
 	readonly #prismaClient: PrismaClient;
@@ -20,6 +20,34 @@ class RoomRepository {
 				amenities: {
 					include: {
 						amenity: true,
+					},
+				},
+			},
+		});
+	}
+
+	/**
+	 * (R) Tìm NHIỀU Rooms bằng danh sách IDs.
+	 * Bao gồm cả Beds và Amenities chi tiết.
+	 */
+
+	public async findManyByIds(ids: string[]) {
+		if (!ids || ids.length === 0) return [];
+
+		return this.#prismaClient.room.findMany({
+			where: { id: { in: ids } },
+			include: {
+				beds: true,
+				amenities: {
+					include: {
+						amenity: {
+							select: {
+								id: true,
+								name: true,
+								type: true,
+								description: true,
+							},
+						},
 					},
 				},
 			},
