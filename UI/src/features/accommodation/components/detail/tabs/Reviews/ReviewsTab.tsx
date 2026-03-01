@@ -11,6 +11,7 @@ import { useMemo, useState } from "react";
 import { useReviews } from "../../../../hooks/useReviews";
 import useAccommodationRooms from "../../../../hooks/useRoomsByAccommodation";
 import { authStorage } from "../../../../../auth/utils/authStorage";
+import ImageGallery from "../../../../../../components/shared/ImageGallery";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
@@ -21,7 +22,6 @@ const REVIEWS_PER_PAGE = 5;
 export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const [page, setPage] = useState(1);
 	const { data, isLoading: loading, isError: error, refetch } = useReviews(accommodation.id);
-
 	const reviews = useMemo(() => data ?? [], [data]);
 	const refresh = () => {
 		refetch();
@@ -52,6 +52,25 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const { data: rooms } = useAccommodationRooms(accommodation.id);
 
 	const accommodationRoomIds = rooms ? new Set(rooms.map((r) => r.id)) : new Set();
+
+	const [openGallery, setOpenGallery] = useState(false);
+	const [galleryImages, setGalleryImages] = useState<string[]>([]);
+	const [currentIndex, setCurrentIndex] = useState(0);
+	const openImageGallery = (images: string[], index: number) => {
+		setGalleryImages(images);
+		setCurrentIndex(index);
+		setOpenGallery(true);
+	};
+
+	const closeGallery = () => setOpenGallery(false);
+
+	const handlePrevImage = () => {
+		setCurrentIndex((prev) => (prev === 0 ? galleryImages.length - 1 : prev - 1));
+	};
+
+	const handleNextImage = () => {
+		setCurrentIndex((prev) => (prev === galleryImages.length - 1 ? 0 : prev + 1));
+	};
 
 	const unreviewedBookings = userBookings
 		.filter((booking) => booking.status === "COMPLETED")
@@ -135,39 +154,88 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 
 			{/* Review List */}
 			<Stack spacing={3}>
-				{paginatedData.map((review) => (
-					<Box key={review.id}>
-						<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
-							<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
-							<Box sx={{ flex: 1 }}>
-								<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "start" }}>
-									<Box>
-										<Typography variant="subtitle2" fontWeight="bold">
-											{review.user.name}
+				{paginatedData.map((review) => {
+					// Prepare full-size image URLs once per review
+					return (
+						<Box key={review.id}>
+							<Box sx={{ display: "flex", gap: 2, mb: 1 }}>
+								<Avatar sx={{ bgcolor: "primary.main" }}>{review.user.name?.charAt(0).toUpperCase() || "U"}</Avatar>
+
+								<Box sx={{ flex: 1 }}>
+									<Box
+										sx={{
+											display: "flex",
+											justifyContent: "space-between",
+											alignItems: "start",
+										}}
+									>
+										<Box>
+											<Typography variant="subtitle2" fontWeight="bold">
+												{review.user.name}
+											</Typography>
+											<Rating value={review.star} readOnly size="small" />
+										</Box>
+
+										<Typography variant="caption" color="text.secondary">
+											{new Date(review.commentDate).toLocaleDateString("en-GB", {
+												day: "numeric",
+												month: "long",
+												year: "numeric",
+											})}
 										</Typography>
-										<Rating value={review.star} readOnly size="small" />
 									</Box>
-									<Typography variant="caption" color="text.secondary">
-										{new Date(review.commentDate).toLocaleDateString("en-GB", {
-											day: "numeric",
-											month: "long",
-											year: "numeric",
-										})}
+
+									<Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
+										{review.comment}
 									</Typography>
+
+									{/* Images */}
+									{review.images?.length > 0 && (
+										<Stack direction="row" spacing={1} mt={2} flexWrap="wrap">
+											{review.images.map((img, index) => (
+												<Box key={img.id}>
+													<img
+														src={img.url}
+														alt="review"
+														width={100}
+														height={100}
+														style={{
+															objectFit: "cover",
+															borderRadius: 8,
+															cursor: "pointer",
+														}}
+														onClick={() =>
+															openImageGallery(
+																review.images.map((image) => image.url),
+																index
+															)
+														}
+													/>
+												</Box>
+											))}
+										</Stack>
+									)}
 								</Box>
-								<Typography variant="body2" color="text.secondary" sx={{ mt: 1 }}>
-									{review.comment}
-								</Typography>
 							</Box>
+
+							<Divider sx={{ mt: 2 }} />
 						</Box>
-						<Divider sx={{ mt: 2 }} />
-					</Box>
-				))}
+					);
+				})}
 			</Stack>
 
 			<Stack alignItems="center" mt={3}>
 				<Pagination count={totalPages} page={page} onChange={handlePageChange} />
 			</Stack>
+			<ImageGallery
+				galleryImages={galleryImages}
+				openGallery={openGallery}
+				currentIndex={currentIndex}
+				setCurrentIndex={setCurrentIndex}
+				closeGallery={closeGallery}
+				handlePrevImage={handlePrevImage}
+				handleNextImage={handleNextImage}
+			/>
 		</Paper>
 	);
 };
