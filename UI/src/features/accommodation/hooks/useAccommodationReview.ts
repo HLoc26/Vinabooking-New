@@ -14,7 +14,6 @@ export const useAccommodationReview = (accommodationId: string): UseAccommodatio
 	const [reviews, setReviews] = useState<ReviewData[]>([]);
 	const [loading, setLoading] = useState<boolean>(true);
 	const [error, setError] = useState<string | null>(null);
-
 	const fetchReviews = async () => {
 		if (!accommodationId) return;
 		setLoading(true);
@@ -23,7 +22,7 @@ export const useAccommodationReview = (accommodationId: string): UseAccommodatio
 		try {
 			const response = await reviewApi.getByAccommodation(accommodationId);
 			// API trả về mảng ReviewData
-			setReviews(response.data ?? []);
+			setReviews(response ?? []);
 		} catch (err: unknown) {
 			const e = err as Error;
 			console.error(e);
