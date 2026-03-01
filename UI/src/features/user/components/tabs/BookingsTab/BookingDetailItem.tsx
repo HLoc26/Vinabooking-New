@@ -90,6 +90,7 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 
 	const { openModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
+	const [localReviewed, setLocalReviewed] = React.useState(false);
 
 	const handleOpenReview = () => {
 		openModal(
@@ -99,6 +100,8 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 				booking={booking}
 				onSuccess={() => {
 					pushNotification("Create review successfully", "success");
+
+					setLocalReviewed(true); // instantly block button
 					refreshReviews();
 				}}
 			/>
@@ -231,9 +234,9 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 
 					{accommodation ? (
 						<>
-							{status === "COMPLETED" && !userReview && (
-								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} onClick={handleOpenReview} disabled={reviewsLoading}>
-									Write a Review
+							{status === "COMPLETED" && (
+								<Button variant="contained" color="success" size="small" sx={{ fontSize: 13 }} onClick={handleOpenReview} disabled={!!userReview || localReviewed || reviewsLoading}>
+									{userReview || localReviewed ? "Reviewed" : "Write a Review"}
 								</Button>
 							)}
 
