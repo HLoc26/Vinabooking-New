@@ -440,6 +440,7 @@ model Review {
     parent   Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
     replies  Review[] @relation("ReviewToReplies")
 
+    @@unique([bookingId, userId])
     @@index([accommodationId])
     @@index([userId])
 }
