@@ -1,16 +1,19 @@
 import { Response } from "express";
 import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
+import { ReviewRepository } from "@/repositories";
 import BadRequestError from "@/errors/BadRequestError";
-import { CreateReviewRequest, GetAccommodationReviewsRequest } from "@/types/requests";
+import { CreateReviewRequest, GetAccommodationReviewsRequest, AuthRequest } from "@/types/requests";
 import { ApiResponse } from "@/types/responses";
 import { ReviewResponse } from "@/types/responses/review.response";
 
 class ReviewController {
 	readonly #reviewService: ReviewService;
+	readonly #reviewRepository: ReviewRepository;
 
-	constructor(reviewService: ReviewService) {
+	constructor(reviewService: ReviewService, reviewRepository: ReviewRepository) {
 		this.#reviewService = reviewService;
+		this.#reviewRepository = reviewRepository;
 	}
 
 	/**
@@ -65,6 +68,18 @@ class ReviewController {
 			const e = error as Error;
 			return ResponseHelper.error(res, e.message, 400);
 		}
+	};
+	public getMyReviewByBooking = async (req: AuthRequest, res: Response) => {
+		const userId = req.userId;
+		const bookingId = req.params.bookingId as string;
+
+		if (!userId) {
+			return ResponseHelper.error(res, "Unauthorized", 401);
+		}
+
+		const review = await this.#reviewRepository.findByBookingAndUser(bookingId, userId);
+
+		return ResponseHelper.success(res, review);
 	};
 }
 
