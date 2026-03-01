@@ -20,6 +20,7 @@ const reviewApi = {
 			},
 		});
 	},
+	getMyReviewByBooking: (bookingId: string) => apiClient.get<ApiResponse<ReviewData>>(`/reviews/booking/${bookingId}/me`).then((r) => r.data.data),
 };
 
 export default reviewApi;
