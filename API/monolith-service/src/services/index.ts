@@ -1,0 +1,12 @@
+export { default as OAuthService } from "./oauth.service";
+export { default as AuthService } from "./auth.service";
+export { default as UserService } from "./user.service";
+export { default as EmailService } from "./email.service";
+export { default as AccommodationService } from "./accommodation.service";
+export { default as RoomService } from "./room.service";
+export { default as ImageService } from "./image.service";
+export { default as UploadService } from "./upload.service";
+export { default as S3Service } from "./s3.service";
+export { default as BookingService } from "./booking.service";
+export { default as ReviewService } from "./review.service";
+export { default as FavouriteService } from "./favourite.service"; // EXPORT THÊM SERVICE MỚI

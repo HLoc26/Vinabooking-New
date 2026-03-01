@@ -1,7 +1,6 @@
 import { Wifi, Pool, LocalParking, Restaurant, FitnessCenter, Spa } from "@mui/icons-material";
-import type { SortOption } from "../types/accommodation.types";
+import { EAccommodationType, type SortOption } from "../types/accommodation.types";
 import type { ReactElement } from "react";
-import { EAccommodationType } from "../../../types/Accommodation";
 
 export interface AccommodationTypeOption {
 	value: EAccommodationType;

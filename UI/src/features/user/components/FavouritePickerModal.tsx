@@ -2,7 +2,7 @@ import { DialogTitle, DialogContent, List, ListItem, ListItemIcon, Checkbox, Lis
 import type { FavouriteList } from "../../../types/FavouriteList";
 import useModalContext from "../../../context/ModalContext/hook";
 import { useState, useEffect } from "react";
-import useUserFavouriteList from "../../../hooks/useUserFavouriteList";
+import useUserFavouriteList from "../../../features/user/hooks/useUserFavouriteList";
 import CreateFavouriteListModal from "./tabs/FavouritesTab/CreateFavouriteListModal";
 
 type FavouritePickerModalProps = {

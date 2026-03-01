@@ -1,4 +1,5 @@
-import { Prisma } from "@generated/client";
+import { Prisma } from "@/generated/client";
+import { ImageFullInfo } from "./image.types";
 
 export interface RoomFilterOptions {
 	minPrice?: number;
@@ -20,3 +21,8 @@ export type RoomWithDetails = Prisma.RoomGetPayload<{
 export type AmenityConfigWithDetails = Prisma.AmenityConfigGetPayload<{
 	include: { amenity: true };
 }>;
+
+export type RoomFullDetail = RoomWithDetails & {
+	remainingQuantity: number;
+	images: ImageFullInfo[];
+};
