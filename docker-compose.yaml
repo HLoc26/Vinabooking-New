@@ -1,135 +1,20 @@
 version: "3.9"
 
 services:
-    accommodation-service:
+    monolith-service:
         build:
-            context: "./API/accommodation-service"
+            context: "./API/monolith-service"
             dockerfile: "Dockerfile"
         env_file:
-            - ./API/common.env
-            - ./API/accommodation-service/docker.env
+            - ./API/monolith-service/docker.env
         ports:
-            - "3001:3001"
+            - "8080:8080"
         volumes:
-            - ./API/accommodation-service:/app
+            - ./API/monolith-service:/app
             - /app/node_modules
-    auth-service:
-        build:
-            context: "./API/auth-service"
-            dockerfile: "Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/auth-service/docker.env
-        ports:
-            - "3002:3002"
-            - "50052:50052"
-        volumes:
-            - ./API/auth-service:/app
-            - /app/node_modules
-        sysctls:
-            - net.ipv6.conf.all.disable_ipv6=1
-            - net.ipv6.conf.default.disable_ipv6=1
-
-    booking-service:
-        build:
-            context: "./API/booking-service"
-            dockerfile: "Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/booking-service/docker.env
-        ports:
-            - "3003:3003"
-        volumes:
-            - ./API/booking-service:/app
-            - /app/node_modules
-
-    review-service:
-        build:
-            context: "./API/review-service"
-            dockerfile: "Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/review-service/docker.env
-        ports:
-            - "3004:3004"
-        volumes:
-            - ./API/review-service:/app
-            - /app/node_modules
-
-    room-service:
-        build:
-            context: "./API/room-service"
-            dockerfile: "Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/room-service/docker.env
-        ports:
-            - "3005:3005"
-        volumes:
-            - ./API/room-service:/app
-            - /app/node_modules
-
-    user-service:
-        build:
-            context: "./API/user-service"
-            dockerfile: "Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/user-service/docker.env
-        ports:
-            - "3006:3006"
-        volumes:
-            - ./API/user-service:/app
-            - /app/node_modules
-
-    image-service:
-        build:
-            context: "./"
-            dockerfile: "./API/image-service/Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/image-service/docker.env
-        ports:
-            - "3007:3007"
-            - "50057:50057"
-        volumes:
-            - ./API/image-service:/app
-            - /app/node_modules
-
-    email-service:
-        build:
-            context: "./"
-            dockerfile: "./API/email-service/Dockerfile"
-        env_file:
-            - ./API/common.env
-            - ./API/email-service/docker.env
-        ports:
-            - "3008:3008"
-            - "50058:50058"
-        volumes:
-            - ./API/email-service:/app
-            - /app/node_modules
-
-    api-gateway:
-        build:
-            context: "./API/api-gateway"
-            dockerfile: "Dockerfile"
-        ports:
-            - "3000:3000"
-        env_file:
-            - ./API/common.env
-            - ./API/api-gateway/.env
         depends_on:
-            - accommodation-service
-            - auth-service
-            - booking-service
-            - review-service
-            - room-service
-            - user-service
-        volumes:
-            - ./API/api-gateway:/app
-            - /app/node_modules
-
+            - redis
+            - db
     ui:
         build:
             context: ./UI
@@ -139,9 +24,6 @@ services:
         volumes:
             - ./UI:/app
             - /app/node_modules
-        depends_on:
-            - api-gateway
-
     db:
         image: mysql:8.4
         env_file:
