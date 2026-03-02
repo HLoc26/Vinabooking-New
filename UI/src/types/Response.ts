@@ -1,6 +1,6 @@
-import type { AccommodationAddress, EAccommodationType } from "./Accommodation";
 import type { ReviewDto } from "./Review";
-import type { UserDto } from "./UserDto";
+import type { UserDto } from "../features/user/types/user.types";
+import type { Address, EAccommodationType } from "../features/accommodation/types/accommodation.types";
 
 export interface AuthResponse {
 	token: string;
@@ -73,7 +73,7 @@ export interface AccommodationListItem {
 	createdAt?: string;
 	updatedAt?: string;
 	addressId?: string;
-	address: AccommodationAddress;
+	address: Address;
 	facilities: string[];
 	thumbnail: string;
 	rating?: number;

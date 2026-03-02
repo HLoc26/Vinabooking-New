@@ -2,7 +2,7 @@ import { useCallback, useMemo } from "react";
 import { useDispatch, useSelector } from "react-redux";
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import userApi from "../services/userApi";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../types/user.types";
 import type { Image } from "../../../types/Image";
 import { authStorage } from "../../../features/auth/utils/authStorage";
 import { updateUserSync } from "../../../features/auth/authSlice";

@@ -5,7 +5,7 @@ import { loginSuccess, logoutSuccess } from "../authSlice";
 import { refreshToken } from "../authApi";
 import { authStorage } from "../utils/authStorage";
 import { parseJwt } from "../../../utils/jwt";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../../user/types/user.types";
 import type { RootState } from "../../../app/store";
 import type { CognitoIdToken } from "../types/Auth";
 import userApi from "../../user/services/userApi";

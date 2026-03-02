@@ -2,7 +2,7 @@ import { Box, Button, Card, CardContent, Typography } from "@mui/material";
 import type { UserInfo } from "../types/UserInfo";
 import UserInfoItem from "./UserInfoItem";
 import { EmailOutlined, PersonOutline, PhoneOutlined } from "@mui/icons-material";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../../user/types/user.types";
 
 type UserInfoPreviewCardProps = {
 	userInfo: UserDto;

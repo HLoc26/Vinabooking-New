@@ -1,5 +1,5 @@
 import Cookies from "js-cookie";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../../user/types/user.types";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY || "access_token";
 const USER_KEY = import.meta.env.VITE_USER_KEY || "user_info";

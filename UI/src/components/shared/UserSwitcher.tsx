@@ -1,6 +1,6 @@
 import React from "react";
 import { ToggleButton, ToggleButtonGroup, Box, Typography } from "@mui/material";
-import type { EUserType } from "../../types/UserDto";
+import type { EUserType } from "../../features/user/types/user.types";
 
 interface Props {
 	value: EUserType;
