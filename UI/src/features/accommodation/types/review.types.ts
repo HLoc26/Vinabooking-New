@@ -1,3 +1,5 @@
+import type { Image } from "../../../types/Image";
+
 export interface Review {
 	id: string;
 	star: number;
@@ -10,4 +12,7 @@ export interface Review {
 	};
 	children: Review[];
 	commentDate: Date;
+}
+export interface ReviewWithImages extends Review {
+	images: Image[];
 }

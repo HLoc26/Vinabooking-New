@@ -1,20 +1,40 @@
 import { useQuery } from "@tanstack/react-query";
-import { getReviews } from "../reviewApi";
+import { getReviews, getReviewImages } from "../reviewApi";
+import type { Review, ReviewWithImages } from "../types/review.types";
 
-export const useReviews = (accommodationId: string) => {
-	return useQuery({
+export const useReviews = (accommodationId?: string) => {
+	return useQuery<ReviewWithImages[]>({
 		queryKey: ["accommodation", accommodationId, "reviews"],
+		enabled: !!accommodationId, // 👈 prevents crash
 		queryFn: async () => {
-			const response = await getReviews(accommodationId);
-			const data = response.data;
-			console.log(response);
+			if (!accommodationId) return [];
 
-			if (!data) {
-				return []; // fallback to empty array
-			}
-			return data;
+			const response = await getReviews(accommodationId);
+			const reviews: Review[] = response.data ?? [];
+
+			if (!reviews.length) return [];
+
+			const reviewsWithImages: ReviewWithImages[] = await Promise.all(
+				reviews.map(async (review) => {
+					try {
+						const images = await getReviewImages(review.id);
+
+						return {
+							...review,
+							images: images ?? [],
+						};
+					} catch {
+						return {
+							...review,
+							images: [],
+						};
+					}
+				})
+			);
+
+			return reviewsWithImages;
 		},
-		staleTime: 1000 * 60 * 10, // 10 mins
+		staleTime: 1000 * 60 * 10,
 		placeholderData: [],
 	});
 };

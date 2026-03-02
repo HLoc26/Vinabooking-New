@@ -23,9 +23,20 @@ class ReviewRepository {
 	}
 
 	// ---------- find by accommodation ----------
-	public async findByAccommodationId(accommodationId: string): Promise<Review[]> {
+	public async findByAccommodationId(accommodationId: string) {
 		return this.#prisma.review.findMany({
-			where: { accommodationId },
+			where: {
+				accommodationId,
+				parentId: null, // only main reviews
+			},
+			include: {
+				user: true,
+				replies: {
+					include: {
+						user: true,
+					},
+				},
+			},
 			orderBy: { createdAt: "desc" },
 		});
 	}
@@ -35,6 +46,19 @@ class ReviewRepository {
 		return this.#prisma.review.findMany({
 			where: { userId },
 			orderBy: { createdAt: "desc" },
+		});
+	} // I swear I will use them later (never)
+
+	//------------ find by booking and user ----------
+	public async findByBookingAndUser(bookingId: string, userId: string) {
+		return this.#prisma.review.findFirst({
+			where: {
+				bookingId,
+				userId,
+			},
+			include: {
+				user: true,
+			},
 		});
 	}
 }
