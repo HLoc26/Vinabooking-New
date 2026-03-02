@@ -2,7 +2,7 @@ import { Response } from "express";
 import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
 import BadRequestError from "@/errors/BadRequestError";
-import { CreateReviewRequest, GetAccommodationReviewsRequest, AuthRequest } from "@/types/requests";
+import { CreateReviewRequest, GetAccommodationReviewsRequest, GetUserByBookingRequest } from "@/types/requests";
 import { ApiResponse } from "@/types/responses";
 import { ReviewResponse } from "@/types/responses/review.response";
 
@@ -66,10 +66,13 @@ class ReviewController {
 			return ResponseHelper.error(res, e.message, 400);
 		}
 	};
-	public getMyReviewByBooking = async (req: AuthRequest, res: Response) => {
+	public getMyReviewByBooking = async (req: GetUserByBookingRequest, res: Response) => {
 		const userId = req.userId;
-		const bookingId = req.params.bookingId as string;
+		const bookingId = req.params.bookingId;
 
+		if (!bookingId) {
+			return ResponseHelper.error(res, "Missing bookingId parameter", 400);
+		}
 		if (!userId) {
 			return ResponseHelper.error(res, "Unauthorized", 401);
 		}
