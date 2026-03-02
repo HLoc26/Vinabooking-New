@@ -12,6 +12,7 @@ import { useReviews } from "../../../../hooks/useReviews";
 import useAccommodationRooms from "../../../../hooks/useRoomsByAccommodation";
 import { authStorage } from "../../../../../auth/utils/authStorage";
 import ImageGallery from "../../../../../../components/shared/ImageGallery";
+import { getThumbnailUrls } from "../../../../../../utils/image";
 
 interface ReviewsTabProps {
 	accommodation: AccommodationDetail;
@@ -192,10 +193,10 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 									{/* Images */}
 									{review.images?.length > 0 && (
 										<Stack direction="row" spacing={1} mt={2} flexWrap="wrap">
-											{review.images.map((img, index) => (
-												<Box key={img.id}>
+											{getThumbnailUrls(review.images).map((img, index) => (
+												<Box key={img}>
 													<img
-														src={img.url}
+														src={img}
 														alt="review"
 														width={100}
 														height={100}
