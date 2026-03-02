@@ -1,8 +1,8 @@
 import React, { useEffect, useRef } from "react";
 import { Box, Card, CardContent, Typography } from "@mui/material";
 import { useSearchParams, useNavigate } from "react-router-dom";
-import LoginForm from "../features/auth/components/LoginForm";
-import { usePushNotificationContext } from "../context/PushNotification/hook";
+import LoginForm from "../components/LoginForm";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 const LoginPage: React.FC = () => {
 	const [searchParams] = useSearchParams();

@@ -1,5 +1,5 @@
 import { Routes, Route } from "react-router-dom";
-import { OAuthSuccessPage, OAuthErrorPage } from "../pages/OAuthHandlerPage";
+import { OAuthSuccessPage, OAuthErrorPage } from "../features/auth/pages/OAuthHandlerPage";
 
 export const OAuthRouter = () => (
 	<Routes>

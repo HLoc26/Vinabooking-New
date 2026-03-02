@@ -1,6 +1,6 @@
 import React from "react";
 import { Box, Card, CardContent, Typography } from "@mui/material";
-import RegisterForm from "../features/auth/components/RegisterForm";
+import RegisterForm from "../components/RegisterForm";
 
 const RegisterPage: React.FC = () => {
 	return (
