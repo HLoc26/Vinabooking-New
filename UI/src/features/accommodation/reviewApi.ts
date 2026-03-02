@@ -1,6 +1,7 @@
 import apiClient from "../../services/apiClient";
+import type { Image } from "../../types/Image";
 import type { ApiResponse } from "../../types/Response";
-import type { Review, ReviewImage } from "./types/review.types";
+import type { Review } from "./types/review.types";
 
 export const getReviews = (accommodationId: string) => apiClient.get<ApiResponse<Review[]>>(`/reviews/accommodation/${accommodationId}`).then((res) => res.data);
-export const getReviewImages = (reviewId: string) => apiClient.get<ApiResponse<ReviewImage[]>>(`/images/REVIEW/${reviewId}`).then((res) => res.data?.data ?? []);
+export const getReviewImages = (reviewId: string) => apiClient.get<ApiResponse<Image[]>>(`/images/REVIEW/${reviewId}`).then((res) => res.data?.data ?? []);
