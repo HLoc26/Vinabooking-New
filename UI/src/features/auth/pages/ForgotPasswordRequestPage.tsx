@@ -1,8 +1,8 @@
 import React from "react";
 import { Box, Paper } from "@mui/material";
-import ForgotPasswordVerifyForm from "../features/auth/components/ForgotPasswordVerifyForm";
+import ForgotPasswordRequestForm from "../components/ForgotPasswordRequestForm";
 
-const ForgotPasswordVerifyPage: React.FC = () => {
+const ForgotPasswordRequestPage: React.FC = () => {
 	return (
 		<Box display="flex" flexDirection="column" alignItems="center" justifyContent="center" minHeight="100vh" sx={{ bgcolor: "background.default", px: 2 }}>
 			<Paper
@@ -15,10 +15,10 @@ const ForgotPasswordVerifyPage: React.FC = () => {
 					bgcolor: "background.paper",
 				}}
 			>
-				<ForgotPasswordVerifyForm />
+				<ForgotPasswordRequestForm />
 			</Paper>
 		</Box>
 	);
 };
 
-export default ForgotPasswordVerifyPage;
+export default ForgotPasswordRequestPage;
