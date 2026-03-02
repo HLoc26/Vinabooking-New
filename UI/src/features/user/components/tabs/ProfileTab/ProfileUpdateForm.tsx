@@ -1,83 +1,104 @@
 import { Cancel, Edit, Save } from "@mui/icons-material";
-import { Box, Button, Stack, TextField, Tooltip, Typography } from "@mui/material";
+import { Box, Button, Stack, TextField, Tooltip, Typography, Skeleton } from "@mui/material";
 import { useEffect, useState } from "react";
-import useUserContextProvider from "../../../../../context/UserContext/hook";
 import { MuiTelInput } from "mui-tel-input";
-import type { UserDto } from "../../../../../types/UserDto";
+import { useUpdateUserMutation, useUserProfile } from "../../../hooks/useUserProfile";
+import { useForm, Controller } from "react-hook-form";
+import type { UpdateUserInfoDto } from "../../../types";
 
 const ProfileUpdateForm: React.FC = () => {
-	const [editing, setEditing] = useState(false);
-	const { userInfo, updateUserInfo } = useUserContextProvider();
+	// UI State for toggling View/Edit mode
+	const [isEditing, setIsEditing] = useState(false);
 
-	const [draft, setDraft] = useState<UserDto | null>(null);
+	// 1. Fetch Data (Server State)
+	const { data: user, isLoading } = useUserProfile();
 
-	// When turn off edit or userInfo changes, sync draft
+	// 2. Mutation (Update Logic)
+	// Assuming useUpdateUserMutation returns { mutate, isPending } based on TanStack Query standards
+	const { mutate, isPending } = useUpdateUserMutation();
+
+	// 3. Form Management
+	const {
+		register,
+		handleSubmit,
+		reset,
+		control, // Needed for MuiTelInput
+		formState: { errors },
+	} = useForm<UpdateUserInfoDto>();
+
+	// 4. Sync Data: When user data loads, populate the form
 	useEffect(() => {
-		if (!editing) setDraft(userInfo || null);
-	}, [editing, userInfo]);
+		if (user) {
+			reset({
+				name: user.name,
+				phone: user.phone,
+			});
+		}
+	}, [user, reset]);
 
-	const handleSave = async () => {
-		if (!draft) return;
-
-		await updateUserInfo({ name: draft.name, phone: draft.phone });
-		setEditing(false);
+	// 5. Handlers
+	const onSubmit = (data: UpdateUserInfoDto) => {
+		mutate(data, {
+			onSuccess: () => {
+				setIsEditing(false); // Switch back to view mode on success
+			},
+		});
 	};
 
 	const handleCancel = () => {
-		setDraft(userInfo || null);
-		setEditing(false);
+		reset(); // Revert form to the last known 'user' data
+		setIsEditing(false);
 	};
 
+	if (isLoading) {
+		return <Skeleton variant="rectangular" height={200} />;
+	}
+
 	return (
-		<Box>
+		<Box component="form" onSubmit={handleSubmit(onSubmit)}>
 			<Box display="flex" justifyContent="space-between" alignItems="center" mb={2}>
 				<Typography variant="h6">Account Information</Typography>
 
-				{!editing ? (
-					<Button
-						startIcon={<Edit />}
-						onClick={() => {
-							setDraft(userInfo || null);
-							setEditing(true);
-						}}
-					>
+				{!isEditing ? (
+					<Button startIcon={<Edit />} onClick={() => setIsEditing(true)}>
 						Edit
 					</Button>
 				) : (
 					<Stack direction="row" spacing={1}>
-						<Button startIcon={<Cancel />} onClick={handleCancel}>
+						<Button startIcon={<Cancel />} onClick={handleCancel} disabled={isPending}>
 							Cancel
 						</Button>
-						<Button variant="contained" startIcon={<Save />} onClick={handleSave}>
-							Save
+						<Button
+							variant="contained"
+							startIcon={<Save />}
+							type="submit" // Triggers handleSubmit
+							disabled={isPending}
+						>
+							{isPending ? "Saving..." : "Save"}
 						</Button>
 					</Stack>
 				)}
 			</Box>
 
-			<Stack>
+			<Stack spacing={3}>
 				<Stack direction="row" spacing={3}>
-					<TextField
-						fullWidth
-						margin="normal"
-						label="Full Name"
-						disabled={!editing}
-						value={draft?.name || ""}
-						onChange={(e) => setDraft((prev) => (prev ? { ...prev, name: e.target.value } : prev))}
-					/>
+					{/* Full Name Input */}
+					<TextField fullWidth label="Full Name" disabled={!isEditing} error={!!errors.name} helperText={errors.name?.message} {...register("name", { required: "Name is required" })} />
 
-					<MuiTelInput
-						fullWidth
-						margin="normal"
-						label="Phone Number"
-						disabled={!editing}
-						value={draft?.phone || ""}
-						onChange={(value) => setDraft((prev) => (prev ? { ...prev, phone: value } : prev))}
+					{/* Phone Input - Uses Controller because MuiTelInput is a controlled component */}
+					<Controller
+						name="phone"
+						control={control}
+						rules={{ required: "Phone number is required" }}
+						render={({ field, fieldState }) => (
+							<MuiTelInput {...field} fullWidth label="Phone Number" disabled={!isEditing} error={!!fieldState.error} helperText={fieldState.error?.message} />
+						)}
 					/>
 				</Stack>
 
+				{/* Email Input - Read Only */}
 				<Tooltip title="Editing your email is not allowed." placement="left" arrow>
-					<TextField fullWidth margin="normal" label="Email" disabled value={draft?.email || ""} />
+					<TextField fullWidth label="Email" disabled value={user?.email || ""} />
 				</Tooltip>
 			</Stack>
 		</Box>

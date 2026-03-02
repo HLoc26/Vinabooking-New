@@ -13,9 +13,9 @@ export interface AuthResponse {
 }
 
 export interface SignUpResponse {
-	UserSub: string | undefined;
-	CodeDeliveryDestination?: string | undefined;
-	CodeDeliveryMedium?: "EMAIL" | "SMS" | undefined;
+	userSub: string | undefined;
+	destination?: string | undefined;
+	deliveryMedium?: "EMAIL" | "SMS" | undefined;
 }
 
 export interface GetOTPResponse {
@@ -33,6 +33,14 @@ export interface LogInResponse {
 	expiresIn: number;
 	tokenType: string | "Bearer";
 	user: UserDto;
+}
+
+export interface RefreshResponse {
+	accessToken: string;
+	idToken: string;
+	refreshToken?: string;
+	expiresIn: number;
+	tokenType: string;
 }
 
 export interface ApiResponse<T> {

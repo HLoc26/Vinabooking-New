@@ -1,226 +1,231 @@
-import React, { useState, useEffect, useCallback } from "react";
+import React, { useEffect, useState } from "react";
+import { useNavigate, useSearchParams } from "react-router-dom";
+import { useSelector } from "react-redux";
 import { Box, Paper, Typography, Divider, TextField, MenuItem, Slider, FormGroup, FormControlLabel, Checkbox, InputAdornment } from "@mui/material";
 import { FilterList } from "@mui/icons-material";
 
+// Types & Utils
+import type { RootState } from "../../../../app/store";
 import { ACCOMMODATION_TYPE_OPTIONS, PRICE_FILTER_CONFIG } from "../../constants/searchFilters";
-import useSearchFromParams from "../../hooks/useSearchFromParams";
-import { parseEAccommodationType } from "../../../../utils/search";
-import { EAccommodationType, type Facility } from "../../../../types/Accommodation";
-import { useNavigate } from "react-router-dom";
-import { standardize } from "../../../../utils/moneyConverter";
-import { useSticky } from "../../../../hooks/useSticky";
+import { EAccommodationType, type FacilityConfig } from "../../types/accommodation.types";
 
-type SearchFiltersSidebar = {
-	facilityList: Facility[];
+type SearchFiltersSidebarProps = {
+	facilityList: FacilityConfig[];
+	loading?: boolean;
 };
-
-export const SearchFiltersSidebar: React.FC<SearchFiltersSidebar> = ({ facilityList }) => {
+export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ facilityList, loading = false }) => {
 	const navigate = useNavigate();
-	const { criteria, loading } = useSearchFromParams();
+	const [searchParams] = useSearchParams();
 
-	// Local state for debounce
-	const [pendingParams, setPendingParams] = useState<URLSearchParams | null>(null);
-	const [locals, setLocals] = useState({
-		type: criteria.type,
-		price: {
-			min: criteria.price.min,
-			max: criteria.price.max,
-		},
-		facilities: criteria.facilities,
-	});
+	// Get data from Redux (url synced by parent)
+	const criteria = useSelector((state: RootState) => state.search);
 
-	// Debounced navigate
+	// Local state only used for smooth UI slibar
+	const [localPrice, setLocalPrice] = useState<number[]>([criteria.price.min, criteria.price.max]);
+
+	// Sync: when Redux changes due to URL change, update local state
+	// to make sure back/forward works
 	useEffect(() => {
-		if (!pendingParams) return;
-		const handler = setTimeout(() => {
-			navigate(`/search?${pendingParams.toString()}`, { replace: true });
-		}, 300); // 300ms debounce
-		return () => clearTimeout(handler);
-	}, [pendingParams, navigate]);
+		setLocalPrice([criteria.price.min, criteria.price.max]);
+	}, [criteria.price.min, criteria.price.max]);
 
-	const updateParams = useCallback((updates: Record<string, string | number>) => {
-		const newParams = new URLSearchParams(window.location.search);
+	// Helper: Update URL (Single Source of Truth)
+	const updateFilter = (updates: Record<string, string | null>) => {
+		const newParams = new URLSearchParams(searchParams);
+
+		// Reset to page 1
+		newParams.set("page", "1");
+
 		Object.entries(updates).forEach(([key, value]) => {
-			newParams.set(key, Array.isArray(value) ? value.join(",") : value.toString());
+			if (value === null || value === "") {
+				newParams.delete(key);
+			} else {
+				newParams.set(key, value);
+			}
 		});
-		setPendingParams(newParams);
-	}, []);
 
-	const handleTypeChange = (value: string) => setLocals((prev) => ({ ...prev, type: parseEAccommodationType(value) }));
-
-	const handleMinPriceChange = (value: number) => setLocals((prev) => ({ ...prev, price: { ...prev.price, min: value } }));
-	const handleMaxPriceChange = (value: number) => setLocals((prev) => ({ ...prev, price: { ...prev.price, max: value } }));
-	const commitPrice = () => updateParams({ minPrice: locals.price.min, maxPrice: locals.price.max });
-
-	const handlePriceRangeCommit = (_: Event | React.SyntheticEvent<Element, Event>, value: number[]) => {
-		if (Array.isArray(value)) updateParams({ minPrice: value[0], maxPrice: value[1] });
+		navigate(`/search?${newParams.toString()}`);
 	};
 
-	const toggleFacility = (facility: string) => {
-		setLocals((prev) => {
-			const newFacilities = prev.facilities.includes(facility) ? prev.facilities.filter((f) => f !== facility) : [...prev.facilities, facility];
-			updateParams({ facilities: newFacilities.join(",") });
-			return { ...prev, facilities: newFacilities };
+	// --- HANDLERS ---
+
+	const handleTypeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const value = e.target.value;
+		updateFilter({
+			type: value === EAccommodationType.ALL ? null : value,
+		});
+	};
+
+	// Slider logic:
+	// - onChange: only update UI local
+	// - onChangeCommitted: Update URL (to fetch data)
+	const handleSliderChange = (_: Event, newValue: number | number[]) => {
+		if (Array.isArray(newValue)) {
+			setLocalPrice(newValue);
+		}
+	};
+
+	const handleSliderCommit = (_: Event | React.SyntheticEvent | null, newValue: number | number[]) => {
+		if (Array.isArray(newValue)) {
+			updateFilter({
+				minPrice: newValue[0].toString(),
+				maxPrice: newValue[1].toString(),
+			});
+		}
+	};
+
+	// Input Text logic (Min/Max inputs)
+	const handleInputChange = (type: "min" | "max", value: string) => {
+		const numVal = Number(value);
+		const newRange = type === "min" ? [numVal, localPrice[1]] : [localPrice[0], numVal];
+
+		setLocalPrice(newRange);
+	};
+
+	const handleInputCommit = () => {
+		updateFilter({
+			minPrice: localPrice[0].toString(),
+			maxPrice: localPrice[1].toString(),
+		});
+	};
+
+	const toggleFacility = (facilityName: string) => {
+		const currentFacilities = criteria.facilities;
+		let newFacilities: string[];
+
+		if (currentFacilities.includes(facilityName)) {
+			newFacilities = currentFacilities.filter((f) => f !== facilityName);
+		} else {
+			newFacilities = [...currentFacilities, facilityName];
+		}
+
+		updateFilter({
+			facilities: newFacilities.length > 0 ? newFacilities.join(",") : null,
 		});
 	};
 
 	const clearAllFilters = () => {
-		setLocals({
-			type: EAccommodationType.ALL,
-			price: { min: PRICE_FILTER_CONFIG.MIN, max: PRICE_FILTER_CONFIG.MAX },
-			facilities: [],
-		});
-		updateParams({
-			type: EAccommodationType.ALL,
-			minPrice: PRICE_FILTER_CONFIG.MIN,
-			maxPrice: PRICE_FILTER_CONFIG.MAX,
-			facilities: "",
-		});
+		const newParams = new URLSearchParams();
+		// Giữ lại keyword, date, guest
+		if (searchParams.get("keyword")) newParams.set("keyword", searchParams.get("keyword")!);
+		if (searchParams.get("checkIn")) newParams.set("checkIn", searchParams.get("checkIn")!);
+		if (searchParams.get("checkOut")) newParams.set("checkOut", searchParams.get("checkOut")!);
+		if (searchParams.get("adults")) newParams.set("adults", searchParams.get("adults")!);
+
+		navigate(`/search?${newParams.toString()}`);
 	};
-	useSticky(200);
 
 	return (
-		<Paper
-			elevation={2}
-			sx={{
-				p: 3,
-				position: "sticky",
-				top: 180,
-				borderRadius: 2,
-				opacity: loading ? 0.7 : 1,
-				transition: "opacity 0.3s",
-			}}
-		>
-			<Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
-				<FilterList sx={{ mr: 1 }} />
-				<Typography variant="h6" fontWeight="bold">
-					Filters
-				</Typography>
-			</Box>
-			<Divider sx={{ mb: 1 }} />
-
-			{/* Accommodation Type */}
-			<Box sx={{ mb: 1 }}>
-				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0 }}>
-					Accommodation Type
-				</Typography>
-				<TextField
-					select
-					fullWidth
-					value={locals.type}
-					onChange={(e) => {
-						const value = e.target.value;
-						handleTypeChange(value);
-						updateParams({ type: parseEAccommodationType(value) }); // commit right away
-					}}
-					size="small"
-					disabled={loading}
-				>
-					{ACCOMMODATION_TYPE_OPTIONS.map((type) => (
-						<MenuItem key={type.value} value={type.value}>
-							{type.label}
-						</MenuItem>
-					))}
-				</TextField>
-			</Box>
-
-			{/* Price Range */}
-			<Box sx={{ mb: 2 }}>
-				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0.5 }}>
-					Price Range (per night)
-				</Typography>
-				<Box sx={{ display: "flex", gap: 2, mb: 1, justifyContent: "space-between" }}>
-					<TextField
-						label="Min"
-						size="small"
-						value={locals.price.min}
-						onChange={(e) => handleMinPriceChange(Number(e.target.value))}
-						onBlur={commitPrice}
-						disabled={loading}
-						type="number"
-						slotProps={{
-							input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
-							htmlInput: { min: PRICE_FILTER_CONFIG.MIN, max: locals.price.max - PRICE_FILTER_CONFIG.STEP, step: PRICE_FILTER_CONFIG.STEP },
-						}}
-					/>
-					<TextField
-						label="Max"
-						size="small"
-						value={locals.price.max}
-						onChange={(e) => handleMaxPriceChange(Number(e.target.value))}
-						onBlur={commitPrice}
-						disabled={loading}
-						type="number"
-						slotProps={{
-							input: { startAdornment: <InputAdornment position="start">$</InputAdornment> },
-							htmlInput: { min: locals.price.min + PRICE_FILTER_CONFIG.STEP, max: PRICE_FILTER_CONFIG.MAX, step: PRICE_FILTER_CONFIG.STEP },
-						}}
-					/>
-				</Box>
-				<Slider
-					value={[locals.price.min, locals.price.max]}
-					onChange={(_e, v) =>
-						Array.isArray(v) &&
-						setLocals((prev) => ({
-							...prev,
-							price: { min: v[0], max: v[1] },
-						}))
-					}
-					valueLabelDisplay="auto"
-					min={PRICE_FILTER_CONFIG.MIN}
-					max={PRICE_FILTER_CONFIG.MAX}
-					step={PRICE_FILTER_CONFIG.STEP}
-					onChangeCommitted={handlePriceRangeCommit}
-					valueLabelFormat={(v) => `$${v}`}
-					disabled={loading}
-				/>
-				<Box sx={{ display: "flex", justifyContent: "space-between" }}>
-					<Typography variant="body2" color="text.secondary">
-						{standardize(locals.price.min)}
-					</Typography>
-					<Typography variant="body2" color="text.secondary">
-						{standardize(locals.price.max)}
-					</Typography>
-				</Box>
-			</Box>
-
-			{/* Facilities */}
-			<Box sx={{ mb: 1 }}>
-				<Typography variant="subtitle1" fontWeight="bold" sx={{ mb: 0 }}>
-					Facilities & Amenities
-				</Typography>
-				<Box sx={{ maxHeight: 200, overflowY: "auto", pr: 2 }}>
-					<FormGroup>
-						{facilityList.map((facility) => (
-							<FormControlLabel
-								key={facility.id}
-								control={<Checkbox checked={locals.facilities.includes(facility.name)} onChange={() => toggleFacility(facility.name)} size="small" disabled={loading} />}
-								label={facility.name}
-							/>
-						))}
-					</FormGroup>
-				</Box>
-			</Box>
-
-			<Box
-				onClick={clearAllFilters}
+		<Box sx={{ height: "100%", position: "relative" }}>
+			<Paper
+				elevation={0}
+				variant="outlined"
 				sx={{
-					py: 1.5,
-					px: 2,
-					border: "1px solid",
-					borderColor: "divider",
-					borderRadius: 1,
-					textAlign: "center",
-					cursor: loading ? "not-allowed" : "pointer",
-					opacity: loading ? 0.5 : 1,
-					transition: "all 0.2s",
-					"&:hover": { bgcolor: loading ? "transparent" : "action.hover" },
+					p: 3,
+					borderRadius: 3,
+					bgcolor: "white",
+					opacity: loading ? 0.7 : 1,
+					pointerEvents: loading ? "none" : "auto",
+					transition: "opacity 0.2s",
+					position: "sticky",
+					top: 160,
+					zIndex: 10,
 				}}
 			>
-				<Typography variant="body2" fontWeight="medium">
-					Clear All Filters
-				</Typography>
-			</Box>
-		</Paper>
+				{/* HEADER */}
+				<Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+					<FilterList sx={{ mr: 1 }} fontSize="small" />
+					<Typography variant="h6" fontWeight="bold">
+						Bộ lọc
+					</Typography>
+				</Box>
+				<Divider sx={{ mb: 3 }} />
+
+				{/* TYPE */}
+				<Box sx={{ mb: 4 }}>
+					<Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+						Loại chỗ ở
+					</Typography>
+					<TextField select fullWidth value={criteria.type || EAccommodationType.ALL} onChange={handleTypeChange} size="small" disabled={loading}>
+						{ACCOMMODATION_TYPE_OPTIONS.map((type) => (
+							<MenuItem key={type.value} value={type.value}>
+								{type.label}
+							</MenuItem>
+						))}
+					</TextField>
+				</Box>
+
+				{/* PRICE */}
+				<Box sx={{ mb: 4 }}>
+					<Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+						Khoảng giá
+					</Typography>
+					<Slider
+						value={localPrice}
+						onChange={handleSliderChange}
+						onChangeCommitted={handleSliderCommit}
+						min={PRICE_FILTER_CONFIG.MIN}
+						max={PRICE_FILTER_CONFIG.MAX}
+						step={PRICE_FILTER_CONFIG.STEP}
+						valueLabelDisplay="auto"
+						disabled={loading}
+					/>
+					<Box sx={{ display: "flex", gap: 2, mt: 1 }}>
+						<TextField
+							label="Min"
+							size="small"
+							type="number"
+							value={localPrice[0]}
+							onChange={(e) => handleInputChange("min", e.target.value)}
+							onBlur={handleInputCommit}
+							slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }}
+						/>
+						<TextField
+							label="Max"
+							size="small"
+							type="number"
+							value={localPrice[1]}
+							onChange={(e) => handleInputChange("max", e.target.value)}
+							onBlur={handleInputCommit}
+							slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }}
+						/>
+					</Box>
+				</Box>
+
+				{/* FACILITIES */}
+				<Box sx={{ mb: 3 }}>
+					<Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
+						Tiện ích
+					</Typography>
+					<Box sx={{ maxHeight: 150, overflowY: "auto" }}>
+						<FormGroup>
+							{facilityList.map((facility) => (
+								<FormControlLabel
+									key={facility.id}
+									control={<Checkbox checked={criteria.facilities.includes(facility.name)} onChange={() => toggleFacility(facility.name)} size="small" />}
+									label={<Typography variant="body2">{facility.name}</Typography>}
+								/>
+							))}
+						</FormGroup>
+					</Box>
+				</Box>
+
+				{/* CLEAR BUTTON */}
+				<Box
+					onClick={clearAllFilters}
+					sx={{
+						py: 1.5,
+						textAlign: "center",
+						cursor: "pointer",
+						borderRadius: 1,
+						"&:hover": { bgcolor: "action.hover", color: "primary.main" },
+					}}
+				>
+					<Typography variant="body2" fontWeight="600" sx={{ textDecoration: "underline" }}>
+						Xóa bộ lọc
+					</Typography>
+				</Box>
+			</Paper>
+		</Box>
 	);
 };

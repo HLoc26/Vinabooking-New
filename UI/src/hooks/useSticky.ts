@@ -1,25 +1,31 @@
 import { useState, useEffect, useRef } from "react";
 
 export const useSticky = (offset = 0) => {
-	const ref = useRef<HTMLDivElement | null>(null);
+	const sentinelRef = useRef<HTMLDivElement | null>(null);
 	const [sticky, setSticky] = useState(false);
 
 	useEffect(() => {
-		if (!ref.current) return;
+		const element = sentinelRef.current;
+		if (!element) return;
 
 		const observer = new IntersectionObserver(
 			([entry]) => {
-				setSticky(!entry.isIntersecting);
+				if (entry.boundingClientRect.y < 0) {
+					setSticky(!entry.isIntersecting);
+				}
 			},
 			{
 				threshold: 0,
-				rootMargin: `-${offset}px 0px 0px 0px`,
+				rootMargin: `-${offset}px 0px 0px 0px`, // Offset để chỉnh điểm kích hoạt
 			}
 		);
 
-		observer.observe(ref.current);
-		return () => observer.disconnect();
+		observer.observe(element);
+
+		return () => {
+			if (element) observer.unobserve(element);
+		};
 	}, [offset]);
 
-	return { ref, sticky };
+	return { sentinelRef, sticky };
 };

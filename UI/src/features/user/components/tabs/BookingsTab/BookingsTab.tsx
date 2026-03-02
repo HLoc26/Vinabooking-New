@@ -1,7 +1,7 @@
 import { Divider, Stack } from "@mui/material";
 import BookingStatsOverview from "./BookingStatsOverview";
 import BookingTabsView from "./BookingTabsView";
-import useUserBookings from "../../../hooks/useUserBookings";
+import useUserBookings from "../../../../booking/hooks/useUserBookings";
 
 const BookingTab: React.FC = () => {
 	const bookings = useUserBookings();

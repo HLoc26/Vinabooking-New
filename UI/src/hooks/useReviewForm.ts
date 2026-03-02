@@ -1,6 +1,6 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import reviewApi from "../services/reviewApi";
-import type { ReviewDto } from "../types/Review";
+import type { ReviewData, ReviewDto } from "../types/Review";
 
 interface UseReviewFormProps {
 	accommodationId: string;
@@ -8,17 +8,32 @@ interface UseReviewFormProps {
 	parentId?: string | null;
 	onSuccess?: () => void;
 }
+export const useMyReviewByBooking = (bookingId: string) => {
+	const [review, setReview] = useState<ReviewData | null>(null);
+	const [loading, setLoading] = useState(true);
 
+	useEffect(() => {
+		if (!bookingId) return;
+
+		reviewApi
+			.getMyReviewByBooking(bookingId)
+			.then((data) => setReview(data ?? null))
+			.finally(() => setLoading(false));
+	}, [bookingId]);
+
+	return { review, loading };
+};
 export const useReviewForm = ({ accommodationId, bookingId, parentId, onSuccess }: UseReviewFormProps) => {
 	const [comment, setComment] = useState("");
 	const [star, setStar] = useState<number | null>(null);
+	const [images, setImages] = useState<File[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
 
 	const isReply = !!parentId;
 	const isBookingReview = !!bookingId;
 
-	// kiểm tra XOR: chỉ được có 1 trong 2
+	// XOR validation
 	if ((parentId && isBookingReview) || (!parentId && !isBookingReview)) {
 		throw new Error("Review must have exactly one of parentId or bookingId");
 	}
@@ -36,9 +51,19 @@ export const useReviewForm = ({ accommodationId, bookingId, parentId, onSuccess 
 		};
 
 		try {
-			await reviewApi.create(payload);
+			//  Create review
+			const createdReview = await reviewApi.create(payload);
+
+			//  Upload images if exist
+			if (images.length > 0) {
+				await reviewApi.uploadImages("review", createdReview.id, images);
+			}
+
+			// reset form
 			setComment("");
 			setStar(null);
+			setImages([]);
+
 			onSuccess?.();
 		} catch (err: unknown) {
 			const e = err as Error;
@@ -54,6 +79,8 @@ export const useReviewForm = ({ accommodationId, bookingId, parentId, onSuccess 
 		setComment,
 		star,
 		setStar,
+		images,
+		setImages,
 		loading,
 		error,
 		isReply,

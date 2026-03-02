@@ -4,7 +4,7 @@ import AccommodationCard from "./AccommodationCard";
 import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "../../../../../utils/dateFormatter";
 import type { FavouriteList } from "../../../../../types/FavouriteList";
-import useBatchAccommodationInfo from "../../../hooks/useBatchAccommodationInfo";
+import useAccommodationsBatch from "../../../../accommodation/hooks/useAccommodationsBatch";
 
 type FavouriteDetailViewProps = {
 	favourite: FavouriteList;
@@ -25,7 +25,7 @@ const FavouriteDetailView: React.FC<FavouriteDetailViewProps> = ({ favourite, on
 
 	const accommodationIds = useMemo(() => favourite.items.map((i) => i.accommodationId), [favourite.items]);
 
-	const accommodation = useBatchAccommodationInfo(accommodationIds);
+	const { data: accommodation } = useAccommodationsBatch(accommodationIds);
 
 	const handleNameChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		setName(event.target.value);

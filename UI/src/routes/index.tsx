@@ -1,14 +1,14 @@
 import { Routes, Route } from "react-router-dom";
 import { HomePage } from "../features/home/pages/Index";
 import AccommodationDetailPage from "../features/accommodation/pages/DetailPage";
-import SearchPage from "../features/accommodation/pages/AccommodationSearchResults";
+import SearchResultPage from "../features/accommodation/pages/SearchResultPage";
 
-import { OAuthRouter } from "./oauth";
 import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
 import { UserRouter } from "./user";
 
 import { TravelerLayout } from "../components/layout/TravelerLayout";
+import { OAuthRouter } from "./oauth";
 
 export const AppRouter = () => (
 	<>
@@ -27,7 +27,7 @@ export const AppRouter = () => (
 				path="/search"
 				element={
 					<TravelerLayout>
-						<SearchPage />
+						<SearchResultPage />
 					</TravelerLayout>
 				}
 			/>
