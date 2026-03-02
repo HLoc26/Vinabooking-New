@@ -50,6 +50,8 @@ model User {
     phone String?
     role  ERole   @default(TRAVELLER)
 
+    ownerProfile OwnerProfile?
+
     favourites     FavouriteList[]
     accommodations Accommodation[]
     bookings       Booking[]
@@ -58,6 +60,21 @@ model User {
     updatedAt         DateTime           @updatedAt
     userAuthProviders UserAuthProvider[]
     reviews           Review[]
+}
+
+model OwnerProfile {
+    id     String @id @default(uuid())
+    userId String @unique
+    user   User   @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+    businessName String? @db.VarChar(255)
+    taxId        String? @db.VarChar(50)
+    contactPhone String  @db.VarChar(20)
+
+    isVerified Boolean @default(false)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
 }
 
 // Auth
