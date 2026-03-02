@@ -16,7 +16,7 @@ class ReviewRouter {
 	private initRoutes() {
 		// GET /reviews/accommodation/:accommodationId
 		this.router.get("/accommodation/:accommodationId", this.reviewController.getAccommodationReviews);
-
+		this.router.get("/booking/:bookingId/me", authMiddleware, this.reviewController.getMyReviewByBooking);
 		// POST /reviews
 		this.router.post("/", authMiddleware, this.reviewController.createReview);
 	}

@@ -15,3 +15,5 @@ export type CreateReviewRequest = Request<unknown, unknown, CreateReviewPayload>
 // Request Object dùng để lấy review (GET /reviews/accommodation/:accommodationId)
 // Param: accommodationId
 export type GetAccommodationReviewsRequest = Request<{ accommodationId: string }>;
+
+export type GetUserByBookingRequest = Request<{ bookingId: string }>;

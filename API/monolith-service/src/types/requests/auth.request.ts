@@ -51,3 +51,7 @@ export interface VerifyTokenBody {
 	tokenType: ETokenType; // Use Enum
 }
 export type VerifyRequest = Request<object, object, VerifyTokenBody>;
+
+export interface AuthRequest extends Request {
+	userId?: string;
+}
