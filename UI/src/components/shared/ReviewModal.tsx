@@ -2,7 +2,7 @@ import { DialogTitle, DialogContent, DialogActions, Button, TextField, Rating, T
 import DeleteIcon from "@mui/icons-material/Delete";
 import { useReviewForm } from "../../hooks/useReviewForm";
 import useModalContext from "../../context/ModalContext/hook";
-import { type Booking, type BookingDetail } from "../../features/user/types/Booking";
+import { type Booking, type BookingDetail } from "../../features/booking/types/Booking";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";
 import { formatDate } from "../../utils/dateFormatter";
 import useRooms from "../../features/accommodation/hooks/useRooms";

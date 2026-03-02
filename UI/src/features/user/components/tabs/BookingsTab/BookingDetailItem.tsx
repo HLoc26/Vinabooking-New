@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton, Avatar, Rating } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
-import type { Booking } from "../../../types/Booking";
+import type { Booking } from "../../../../booking/types/Booking";
 import useAccommodationByRoom from "../../../../accommodation/hooks/useAccommodationByRoom";
 import useRooms from "../../../../accommodation/hooks/useRooms";
 import { formatDate } from "../../../../../utils/dateFormatter";
