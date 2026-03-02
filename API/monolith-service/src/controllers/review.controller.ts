@@ -1,7 +1,6 @@
 import { Response } from "express";
 import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
-import { ReviewRepository } from "@/repositories";
 import BadRequestError from "@/errors/BadRequestError";
 import { CreateReviewRequest, GetAccommodationReviewsRequest, AuthRequest } from "@/types/requests";
 import { ApiResponse } from "@/types/responses";
@@ -9,11 +8,9 @@ import { ReviewResponse } from "@/types/responses/review.response";
 
 class ReviewController {
 	readonly #reviewService: ReviewService;
-	readonly #reviewRepository: ReviewRepository;
 
-	constructor(reviewService: ReviewService, reviewRepository: ReviewRepository) {
+	constructor(reviewService: ReviewService) {
 		this.#reviewService = reviewService;
-		this.#reviewRepository = reviewRepository;
 	}
 
 	/**
@@ -77,7 +74,7 @@ class ReviewController {
 			return ResponseHelper.error(res, "Unauthorized", 401);
 		}
 
-		const review = await this.#reviewRepository.findByBookingAndUser(bookingId, userId);
+		const review = await this.#reviewService.findByBookingAndUser(bookingId, userId);
 
 		return ResponseHelper.success(res, review);
 	};
