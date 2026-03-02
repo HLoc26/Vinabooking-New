@@ -1,8 +1,8 @@
 import { useSelector } from "react-redux";
 import { useQuery } from "@tanstack/react-query";
-import bookingApi from "../../user/services/bookingApi";
 import { authStorage } from "../../auth/utils/authStorage";
 import type { RootState } from "../../../app/store";
+import { bookingApi } from "../services/bookingApi";
 
 const useUserBookingDetail = (bookingId: string) => {
 	const userFromRedux = useSelector((state: RootState) => state.auth.user);
