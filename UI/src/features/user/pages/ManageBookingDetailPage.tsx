@@ -1,12 +1,12 @@
 import { useParams } from "react-router-dom";
 import useUserBookingDetail from "../../booking/hooks/useUserBookingDetail";
-import bookingApi from "../services/bookingApi";
 import { useState } from "react";
 
 import { Box, Card, CardContent, Typography, Button, Divider, CircularProgress, Chip, Stack, Paper } from "@mui/material";
 import { EventAvailable, ConfirmationNumber, Cancel, CheckCircle, Pending, Block } from "@mui/icons-material";
 
 import BookingDetailItem from "../components/tabs/BookingsTab/BookingDetailItem";
+import { bookingApi } from "../../booking/services/bookingApi";
 
 const ManageBookingDetailPage = () => {
 	const { bookingId } = useParams<{ bookingId: string }>();
