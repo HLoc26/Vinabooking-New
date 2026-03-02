@@ -2,12 +2,14 @@ import React from "react";
 import { authApi } from "../../../services/authApi";
 import type { ApiResponse, SignUpResponse } from "../../../types/Response";
 import { AxiosError } from "axios";
+import { register, resendOtp, confirmOtp } from "../../auth/authApi";
+import { useMutation } from "@tanstack/react-query";
 
-export const useRegister = () => {
+export const useRegisterLegacy = () => {
 	const [loading, setLoading] = React.useState(false);
 	const [error, setError] = React.useState<string | null>(null);
 
-	const register = React.useCallback(async (name: string, email: string, password: string, phone: string, userType: string) => {
+	const registerLegacy = React.useCallback(async (name: string, email: string, password: string, phone: string, userType: string) => {
 		setLoading(true);
 		setError(null);
 		try {
@@ -27,8 +29,8 @@ export const useRegister = () => {
 
 			setLoading(false);
 			return {
-				destination: data.CodeDeliveryDestination || "your email",
-				medium: data.CodeDeliveryMedium || "EMAIL",
+				destination: data.destination || "your email",
+				medium: data.deliveryMedium || "EMAIL",
 			};
 		} catch (e: unknown) {
 			setLoading(false);
@@ -43,7 +45,7 @@ export const useRegister = () => {
 		}
 	}, []);
 
-	const resendOtp = React.useCallback(async (email: string) => {
+	const resendOtpLegacy = React.useCallback(async (email: string) => {
 		try {
 			setLoading(true);
 			setError(null);
@@ -72,7 +74,7 @@ export const useRegister = () => {
 		}
 	}, []);
 
-	const confirmOtp = React.useCallback(async (email: string, confirmCode: string) => {
+	const confirmOtpLegacy = React.useCallback(async (email: string, confirmCode: string) => {
 		try {
 			setLoading(true);
 			setError(null);
@@ -98,7 +100,50 @@ export const useRegister = () => {
 		}
 	}, []);
 
-	return { register, resendOtp, confirmOtp, loading, error } as const;
+	return { registerLegacy, resendOtpLegacy, confirmOtpLegacy, loading, error } as const;
 };
 
-export default useRegister;
+export const useRegister = () => {
+	return useMutation({
+		mutationFn: async (payload: { name: string; email: string; password: string; phone: string; userType: string }) => {
+			const response: ApiResponse<SignUpResponse> = await register(payload);
+
+			if (!response.data) {
+				throw new Error(response.error as string);
+			}
+			return {
+				destination: response.data.destination || "your email",
+				medium: response.data.deliveryMedium || "EMAIL",
+				id: response.data.userSub,
+			};
+		},
+	});
+};
+export const useResendOtp = () => {
+	return useMutation({
+		mutationFn: async (email: string) => {
+			const response = await resendOtp(email);
+			if (!response.data) {
+				throw new Error(response.error as string);
+			}
+			return {
+				destination: response.data.CodeDeliveryDestination || "your email",
+				medium: response.data.CodeDeliveryMedium || "EMAIL",
+			};
+		},
+	});
+};
+
+export const useConfirmOtp = () => {
+	return useMutation({
+		mutationFn: async (payload: { email: string; confirmCode: string; id: string }) => {
+			const response = await confirmOtp({ id: payload.id, email: payload.email, confirmCode: payload.confirmCode });
+			if (!response.data) {
+				throw new Error(response.error as string);
+			}
+			return response.data.success;
+		},
+	});
+};
+
+export default useRegisterLegacy;

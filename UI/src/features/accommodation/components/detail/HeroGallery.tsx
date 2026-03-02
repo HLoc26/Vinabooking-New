@@ -1,8 +1,7 @@
 import { Box, Button } from "@mui/material";
-import type { ImageType } from "../../../../types/Image";
 
 interface Props {
-	images: ImageType[];
+	images: string[];
 	onOpenGallery: (i: number) => void;
 }
 
@@ -24,7 +23,7 @@ export const HeroGallery = ({ images, onOpenGallery }: Props) => {
 		>
 			{images.slice(0, 5).map((img, idx) => (
 				<Box
-					key={img.id}
+					key={img}
 					onClick={() => onOpenGallery(idx)}
 					sx={{
 						cursor: "pointer",
@@ -64,7 +63,7 @@ export const HeroGallery = ({ images, onOpenGallery }: Props) => {
 					}}
 				>
 					<img
-						src={img.url || "https://via.placeholder.com/800x600"}
+						src={img || "https://via.placeholder.com/800x600"}
 						alt={`Photo ${idx + 1}`}
 						loading={idx === 0 ? "eager" : "lazy"}
 						style={{

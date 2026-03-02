@@ -1,0 +1,498 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider      = "prisma-client"
+    output        = "../src/generated"
+    binaryTargets = ["native", "linux-musl-openssl-3.0.x"]
+}
+
+datasource db {
+    provider = "mysql"
+}
+
+// User
+
+enum ERole {
+    TRAVELLER
+    ACCOMMODATION_OWNER
+}
+
+model FavouriteList {
+    id      String @id @default(uuid())
+    name    String
+    owner   User   @relation(fields: [ownerId], references: [id])
+    ownerId String
+
+    createdAt DateTime        @default(now())
+    updatedAt DateTime        @updatedAt
+    items     FavouriteItem[]
+
+    @@unique([name, ownerId])
+}
+
+model FavouriteItem {
+    id String @id @default(uuid())
+
+    favouriteList FavouriteList @relation(fields: [listId], references: [id], onDelete: Cascade)
+    listId        String
+
+    accommodationId String
+}
+
+model User {
+    id    String  @id // Cognito sub UUIDv4
+    email String  @unique
+    name  String
+    phone String?
+    role  ERole   @default(TRAVELLER)
+
+    favourites FavouriteList[]
+
+    createdAt         DateTime           @default(now())
+    updatedAt         DateTime           @updatedAt
+    userAuthProviders UserAuthProvider[]
+    reviews           Review[]
+}
+
+// Auth
+enum EProvider {
+    Credentials
+    Google
+}
+
+model UserAuthProvider {
+    email    String
+    userId   String
+    user     User      @relation(fields: [userId], references: [id], onDelete: Cascade)
+    provider EProvider @default(Credentials)
+
+    @@id([userId, provider])
+    @@index([email])
+}
+
+//Booking
+model Booking {
+    id          String         @id @default(uuid())
+    startDate   DateTime
+    endDate     DateTime
+    guestCount  Int            @default(1)
+    leaderName  String?
+    leaderEmail String?
+    totalPrice  Decimal?       @db.Decimal(10, 2)
+    phone       String?
+    referenceNo Int            @unique
+    status      EBookingStatus @default(BOOKED)
+
+    // Relations
+    details   BookingDetail[]
+    userId    String // who made the booking (traveler)   
+    createdAt DateTime        @default(now())
+    updatedAt DateTime        @updatedAt
+    reviews   Review[]
+}
+
+model BookingDetail {
+    id    String  @id @default(uuid())
+    count Int     @default(1)
+    note  String?
+
+    // Relations
+    bookingId String
+    Booking   Booking   @relation(fields: [bookingId], references: [id])
+    itemId    String // itemType
+    itemType  EItemType
+    createdAt DateTime  @default(now())
+    updatedAt DateTime  @updatedAt
+}
+
+enum EBookingStatus {
+    DRAFT
+    PENDING // waiting for payment, confirmation from accommodation owner
+    CANCELLED
+    BOOKED // successfully paid and confirmed
+    COMPLETED // stay completed, review can be left
+}
+
+enum EItemType {
+    ROOM
+    BED
+}
+
+// Accommodation
+
+enum EAccommodationType {
+    HOTEL
+    APARTMENT
+    VILLA
+    VACATION_HOME
+    GUESTHOUSE
+    HOSTEL
+    BED_AND_BREAKFAST
+    HOMESTAY
+    CAMPGROUND
+    COUNTRY_HOUSE
+    BOAT
+    LUXURY_TENT
+    CABIN
+    MOTEL
+    RESORT
+    FARMSTAY
+    CAPSULE_HOTEL
+    TREEHOUSE
+    TOWNHOUSE
+    OTHER
+}
+
+enum ERentalType {
+    ENTIRE_PLACE
+    PRIVATE_ROOM
+    SHARED_ROOM
+}
+
+enum EFacilityType {
+    GENERAL
+    FOOD_AND_DRINK
+    PUBLIC_FACILITIES
+    SERVICES
+    SAFETY
+    ACCESSIBILITY
+    ENTERTAINMENT
+    OUTDOOR
+    TRANSPORTATION
+    WELLNESS
+    SPECIAL_AMENITIES
+    SUSTAINABILITY
+    OTHER
+}
+
+model Accommodation {
+    id          String             @id @default(uuid())
+    name        String             @db.VarChar(255)
+    description String?            @db.Text
+    type        EAccommodationType
+    rentalType  ERentalType?       @default(ENTIRE_PLACE)
+    isActive    Boolean            @default(true)
+
+    // Relation to User (Owner)
+    ownerId String
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    address   Address? @relation(fields: [addressId], references: [id])
+    addressId String?  @unique @db.VarChar(191)
+
+    facilities FacilityConfig[]
+    rooms      Room[]
+    reviews    Review[]
+
+    @@index([type])
+    @@index([rentalType])
+    @@index([ownerId])
+    @@map("accommodations")
+}
+
+model Address {
+    id          String  @id @default(uuid())
+    street      String  @db.VarChar(255)
+    ward        String? @db.VarChar(100)
+    district    String? @db.VarChar(100)
+    city        String  @db.VarChar(100)
+    country     String  @db.VarChar(100)
+    countryCode String  @db.Char(2)
+    postalCode  String? @db.VarChar(20)
+
+    // Geolocation
+    latitude  Decimal? @db.Decimal(10, 8)
+    longitude Decimal? @db.Decimal(11, 8)
+
+    fullAddress String  @db.VarChar(500)
+    placeId     String? @db.VarChar(255)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    accommodation Accommodation?
+
+    @@index([city, ward])
+    @@index([countryCode, city])
+    @@index([latitude, longitude])
+    @@index([postalCode])
+    @@map("addresses")
+}
+
+model Facility {
+    id          String        @id @default(uuid())
+    name        String        @db.VarChar(191)
+    type        EFacilityType @default(GENERAL)
+    description String?       @db.Text
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    configs FacilityConfig[]
+
+    @@unique([name])
+    @@index([type])
+    @@map("facilities")
+}
+
+model FacilityConfig {
+    id          String   @id @default(uuid())
+    fee         Decimal? @default(0) @db.Decimal(10, 2)
+    note        String?  @db.Text
+    isAvailable Boolean  @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+    accommodationId String        @db.VarChar(191)
+
+    facility   Facility @relation(fields: [facilityId], references: [id])
+    facilityId String   @db.VarChar(191)
+
+    @@unique([accommodationId, facilityId])
+    @@index([accommodationId])
+    @@index([facilityId])
+    @@map("facility_configs")
+}
+
+// Room
+
+enum EAmenityType {
+    COMFORT
+    ENTERTAINMENT
+    BATHROOM
+    KITCHEN
+    SAFETY
+    ACCESSIBILITY
+    WORKSPACE
+    OUTDOOR
+    OTHER
+}
+
+enum EBedType {
+    SINGLE
+    DOUBLE
+    QUEEN
+    KING
+    SUPER_KING
+    TWIN
+    SOFA_BED
+    BUNK_BED
+    FUTON
+    MURPHY_BED
+    OTHER
+}
+
+enum EViewType {
+    SEA
+    OCEAN
+    RIVER
+    LAKE
+    CITY
+    GARDEN
+    MOUNTAIN
+    POOL
+    STREET
+    COURTYARD
+    LANDMARK
+    PARTIAL_SEA
+    PARTIAL_CITY
+    NONE
+    OTHER
+}
+
+enum EPricingType {
+    PER_NIGHT
+    PER_PERSON_PER_NIGHT
+    PER_HOUR
+    CUSTOM
+}
+
+model Room {
+    id String @id @default(uuid())
+
+    // Relation to Accommodation
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+    accommodationId String        @db.VarChar(191)
+
+    name        String  @db.VarChar(191)
+    description String? @db.Text
+
+    quantity    Int @default(1) @db.UnsignedInt
+    maxAdults   Int @default(2) @db.UnsignedInt
+    maxChildren Int @default(0) @db.UnsignedInt
+
+    size          Decimal? @db.Decimal(5, 2)
+    bedroomCount  Int      @default(1) @db.UnsignedInt
+    bathroomCount Int      @default(1) @db.UnsignedInt
+
+    viewType        EViewType @default(NONE)
+    viewDescription String?   @db.VarChar(191)
+
+    price       Decimal?     @db.Decimal(10, 2)
+    pricingType EPricingType @default(PER_NIGHT)
+
+    isActive Boolean @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    beds      Bed[]
+    amenities AmenityConfig[]
+
+    @@index([accommodationId, isActive])
+    @@index([maxAdults, maxChildren])
+    @@index([price])
+    @@index([viewType])
+    @@index([bathroomCount])
+    @@index([bedroomCount])
+    @@map("rooms")
+}
+
+model Bed {
+    id          String  @id @default(uuid())
+    name        String  @db.VarChar(191)
+    description String? @db.Text
+
+    bedType EBedType
+    size    String?  @db.VarChar(50)
+
+    price Decimal? @db.Decimal(10, 2)
+
+    isActive Boolean @default(true)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    roomId String @db.VarChar(191)
+
+    @@unique([roomId, name])
+    @@index([roomId])
+    @@index([roomId, isActive])
+    @@index([price])
+    @@map("beds")
+}
+
+model Amenity {
+    id          String       @id @default(uuid())
+    name        String       @db.VarChar(191)
+    type        EAmenityType @default(OTHER)
+    description String?      @db.Text
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    rooms AmenityConfig[]
+
+    @@unique([name, type])
+    @@index([type])
+    @@map("amenities")
+}
+
+model AmenityConfig {
+    id   String  @id @default(uuid())
+    note String? @db.VarChar(255)
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    room   Room   @relation(fields: [roomId], references: [id], onDelete: Cascade, onUpdate: Cascade)
+    roomId String @db.VarChar(191)
+
+    amenity   Amenity @relation(fields: [amenityId], references: [id])
+    amenityId String  @db.VarChar(191)
+
+    @@unique([roomId, amenityId])
+    @@index([roomId])
+    @@index([amenityId])
+    @@map("amenity_configs")
+}
+
+//Review
+
+model Review {
+    id        String   @id @default(uuid())
+    star      Int?
+    comment   String   @db.Text
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    // Relations
+    userId String
+    user   User   @relation(fields: [userId], references: [id])
+
+    accommodationId String
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id])
+
+    bookingId String?
+    booking   Booking? @relation(fields: [bookingId], references: [id])
+
+    // Self relation (Replies)
+    parentId String?
+    parent   Review?  @relation("ReviewToReplies", fields: [parentId], references: [id])
+    replies  Review[] @relation("ReviewToReplies")
+
+    @@unique([bookingId, userId])
+    @@index([accommodationId])
+    @@index([userId])
+}
+
+// Original image
+model Image {
+    id          String           @id @default(uuid())
+    s3Key       String
+    filename    String
+    contentType String
+    size        BigInt // In bytes
+    createdAt   DateTime         @default(now())
+    references  ImageReference[]
+    variants    ImageVariant[]
+}
+
+enum EEntityType {
+    ACCOMMODATION
+    USER_PROFILE
+    ROOM
+    REVIEW
+}
+
+model ImageReference {
+    id String @id @default(uuid())
+
+    imageId String
+    image   Image  @relation(fields: [imageId], references: [id])
+
+    entityType EEntityType
+    entityId   String
+
+    isPrimary Boolean  @default(false)
+    createdAt DateTime @default(now())
+
+    @@index([entityType, entityId])
+}
+
+enum EVariantType {
+    ORIGINAL
+    THUMBNAIL // smaller image for thumbnail 
+    WEBP // use webp
+    OPTIMIZED // optimized for phone (idk if we need this)
+}
+
+model ImageVariant {
+    id      String       @id @default(uuid())
+    s3Key   String
+    variant EVariantType
+
+    imageId String
+    image   Image  @relation(fields: [imageId], references: [id])
+
+    @@index([variant, imageId])
+}

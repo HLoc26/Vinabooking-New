@@ -4,7 +4,7 @@ import LocationOnIcon from "@mui/icons-material/LocationOn";
 import { useNavigate } from "react-router-dom";
 import type { City } from "../types/City";
 import { ACCOMMODATION_LABELS } from "../constants/Const";
-import type { EAccommodationType } from "../../../types/Accommodation";
+import type { EAccommodationType } from "../../accommodation/types/accommodation.types";
 
 interface CityCardProps {
 	city: City;
