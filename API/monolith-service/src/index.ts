@@ -97,7 +97,7 @@ const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
 const bookingController = new BookingController(bookingService);
-const reviewController = new ReviewController(reviewService, reviewRepository);
+const reviewController = new ReviewController(reviewService);
 const facilityController = new FacilityController(facilityRepository);
 
 // Routers
