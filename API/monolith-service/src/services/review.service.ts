@@ -134,6 +134,9 @@ class ReviewService {
 	public async getMyReviewByBooking(userId: string, bookingId: string) {
 		return this.#reviewRepository.findByBookingAndUser(bookingId, userId);
 	}
+	public async findByBookingAndUser(bookingId: string, userId: string) {
+		return this.#reviewRepository.findByBookingAndUser(bookingId, userId);
+	}
 }
 
 export default ReviewService;
