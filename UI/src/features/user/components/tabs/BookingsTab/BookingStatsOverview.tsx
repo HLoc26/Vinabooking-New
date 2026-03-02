@@ -1,5 +1,5 @@
 import { Paper, Stack, Typography, Box } from "@mui/material";
-import type { Booking } from "../../../types/Booking";
+import type { Booking } from "../../../../booking/types/Booking";
 import { WalletOutlined, LuggageOutlined, NightsStayOutlined, StarRateRounded } from "@mui/icons-material";
 import { standardize } from "../../../../../utils/moneyConverter";
 

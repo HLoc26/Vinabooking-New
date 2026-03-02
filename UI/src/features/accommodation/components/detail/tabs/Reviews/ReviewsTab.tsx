@@ -5,7 +5,7 @@ import useModalContext from "../../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../../context/PushNotification/hook";
 import { type AccommodationDetail } from "../../../../types/accommodation.types";
-import { type Booking } from "../../../../../user/types/Booking";
+import { type Booking } from "../../../../../booking/types/Booking";
 import BookingSelectionModal from "./components/BookingSelectionModal";
 import { useMemo, useState } from "react";
 import { useReviews } from "../../../../hooks/useReviews";
