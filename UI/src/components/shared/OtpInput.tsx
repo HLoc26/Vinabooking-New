@@ -52,7 +52,7 @@ const OtpInput: React.FC<OtpInputProps> = ({ length = 6, onChange }) => {
 						input: {
 							style: {
 								textAlign: "center",
-								fontSize: "1.5rem",
+								fontSize: "1.3rem",
 								width: "2.5rem",
 								height: "3rem",
 							},
