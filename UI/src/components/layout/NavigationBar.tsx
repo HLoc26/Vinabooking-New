@@ -8,14 +8,14 @@ import Menu from "@mui/material/Menu";
 import MenuItem from "@mui/material/MenuItem";
 import MenuIcon from "@mui/icons-material/Menu";
 import Button from "@mui/material/Button";
-import { Link as RouterLink } from "react-router-dom";
+import { Link as RouterLink, useNavigate } from "react-router-dom";
 import ArrowDropDownIcon from "@mui/icons-material/ArrowDropDown";
 import { accommodationTypes } from "../../constants/accommodation.tsx";
 
 import LoginModal from "../shared/LoginModal.tsx";
 import { usePushNotificationContext } from "../../context/PushNotification/hook.tsx";
 import { Avatar, ListItemIcon, ListItemText, Stack, ListSubheader } from "@mui/material";
-import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineRounded } from "@mui/icons-material";
+import { AddHomeWorkRounded, ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineRounded } from "@mui/icons-material";
 import useModalContext from "../../context/ModalContext/hook.ts";
 
 import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
@@ -26,15 +26,15 @@ const pages = [
 	{ label: "Destinations", path: "/destinations" },
 	{ label: "About Us", path: "/about" },
 ];
+
 const NavigationBar: React.FC = () => {
+	const navigate = useNavigate();
 	const [anchorElNav, setAnchorElNav] = useState<null | HTMLElement>(null);
 	const [anchorElAccommodation, setAnchorElAccommodation] = useState<null | HTMLElement>(null);
 	const [anchorElProfile, setAnchorElProfile] = useState<null | HTMLElement>(null);
 
 	const { openModal, closeModal } = useModalContext();
-
 	const { pushNotification } = usePushNotificationContext();
-
 	const { userInfo: user, currentAvatarUrl } = useUserProfileInfo();
 	const logoutMutation = useLogoutMutation();
 
@@ -54,16 +54,22 @@ const NavigationBar: React.FC = () => {
 		});
 	};
 
+	const isOwner = user?.role === "ACCOMMODATION_OWNER";
+
 	return (
-		<AppBar position="sticky" color="inherit" elevation={1}>
+		<AppBar position="sticky" color="inherit" elevation={1} sx={{ px: 20 }}>
 			<Toolbar sx={{ display: "flex", justifyContent: "space-between" }}>
-				{/* Left */}
+				{/* ================= LEFT SIDE ================= */}
 				<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-					<Typography //
+					<Typography
 						variant="h6"
 						component={RouterLink}
 						to="/"
-						sx={{ textDecoration: "none", color: "inherit", fontWeight: 600 }}
+						sx={{
+							textDecoration: "none",
+							color: "inherit",
+							fontWeight: 600,
+						}}
 					>
 						VinaBooking
 					</Typography>
@@ -143,14 +149,27 @@ const NavigationBar: React.FC = () => {
 					</Box>
 				</Box>
 
-				{/* Right side */}
-				<Box mr={7}>
+				{/* ================= RIGHT SIDE ================= */}
+				<Stack direction="row" alignItems="center" spacing={2} pr={{ xs: 0, md: 2 }}>
+					{/* Become a Host / Host Dashboard */}
+					<Button
+						variant="text"
+						onClick={() => navigate(isOwner ? "/owner/dashboard" : "/owner/landing")}
+						sx={{
+							display: { xs: "none", sm: "block" }, // Does not shown on small screens
+							color: "text.primary",
+							fontWeight: 600,
+						}}
+					>
+						{isOwner ? "Host Dashboard" : "Become a host"}
+					</Button>
+
 					{user ? (
 						<>
 							<Button onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
 								<Stack direction={"row"} alignItems={"center"} gap={2}>
-									<Avatar alt={user.name} src={currentAvatarUrl} />
-									<Typography variant="subtitle2" sx={{ textTransform: "none" }}>
+									<Avatar alt={user.name} src={currentAvatarUrl} sx={{ width: 32, height: 32 }} />
+									<Typography variant="subtitle2" sx={{ textTransform: "none", display: { xs: "none", sm: "block" } }}>
 										{user.name || "Profile"}
 									</Typography>
 									<ArrowDropDownIcon />
@@ -158,14 +177,8 @@ const NavigationBar: React.FC = () => {
 							</Button>
 
 							<Menu
-								anchorOrigin={{
-									vertical: "bottom",
-									horizontal: "right",
-								}}
-								transformOrigin={{
-									vertical: "top",
-									horizontal: "right",
-								}}
+								anchorOrigin={{ vertical: "bottom", horizontal: "right" }}
+								transformOrigin={{ vertical: "top", horizontal: "right" }}
 								anchorEl={anchorElProfile}
 								open={Boolean(anchorElProfile)}
 								onClose={handleCloseProfileMenu}
@@ -188,6 +201,20 @@ const NavigationBar: React.FC = () => {
 									</ListItemIcon>
 									<ListItemText>Favorites</ListItemText>
 								</MenuItem>
+
+								<MenuItem
+									sx={{ display: { xs: "flex", sm: "none" } }}
+									onClick={() => {
+										handleCloseProfileMenu();
+										navigate(isOwner ? "/owner/dashboard" : "/owner/landing");
+									}}
+								>
+									<ListItemIcon>
+										<AddHomeWorkRounded />
+									</ListItemIcon>
+									<ListItemText>{isOwner ? "Host Dashboard" : "Become a host"}</ListItemText>
+								</MenuItem>
+
 								<MenuItem onClick={handleLogout}>
 									<ListItemIcon>
 										<ExitToAppOutlined />
@@ -201,7 +228,7 @@ const NavigationBar: React.FC = () => {
 							Login
 						</Button>
 					)}
-				</Box>
+				</Stack>
 			</Toolbar>
 		</AppBar>
 	);
