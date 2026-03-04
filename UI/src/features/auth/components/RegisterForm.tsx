@@ -15,9 +15,10 @@ import { GoogleAuthButton } from "../../../components/shared/GoogleAuthButton";
 
 interface RegisterFormProps {
 	defaultUserType: EUserType;
+	allowOAuth: boolean;
 }
 
-const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLER" }) => {
+const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLER", allowOAuth = true }) => {
 	const [values, setValues] = useState({
 		name: "",
 		email: "",
@@ -163,17 +164,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLE
 					Login
 				</Link>
 			</Typography>
-			<Box display="flex" flexDirection="column" alignItems="center" width="100%">
-				<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
-					<Divider sx={{ flexGrow: 1 }} />
-					<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
-						or
-					</Typography>
-					<Divider sx={{ flexGrow: 1 }} />
-				</Box>
+			{allowOAuth && (
+				<Box display="flex" flexDirection="column" alignItems="center" width="100%">
+					<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
+						<Divider sx={{ flexGrow: 1 }} />
+						<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
+							or
+						</Typography>
+						<Divider sx={{ flexGrow: 1 }} />
+					</Box>
 
-				<GoogleAuthButton />
-			</Box>
+					<GoogleAuthButton />
+				</Box>
+			)}
 		</Box>
 	);
 };
