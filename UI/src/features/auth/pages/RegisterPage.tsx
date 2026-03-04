@@ -27,8 +27,13 @@ const RegisterPage: React.FC = () => {
 					>
 						Register
 					</Typography>
+					{isOwnerPage && (
+						<Typography variant="subtitle1" textAlign="center" color="text.secondary">
+							as Accommodation Owner
+						</Typography>
+					)}
 					<Box mt={3}>
-						<RegisterForm defaultUserType={(isOwnerPage ? "ACCOMMODATION_OWNER" : "TRAVELLER") as EUserType} />
+						<RegisterForm defaultUserType={(isOwnerPage ? "ACCOMMODATION_OWNER" : "TRAVELLER") as EUserType} allowOAuth={!isOwnerPage} />
 					</Box>
 				</CardContent>
 			</Card>
