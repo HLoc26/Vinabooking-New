@@ -33,15 +33,13 @@ const HomeContent: React.FC = () => {
 			</Container>
 
 			{/* Types */}
-			<Paper elevation={0} sx={{ bgcolor: "#f3f4f6", py: 4 }}>
-				<Container>
-					<HorizontalList //
-						title="Find accommodation by type"
-						items={ACCOMMODATION_TYPES}
-						renderItem={(type, onClick) => <TypeCard data={type} onClick={onClick} />}
-					/>
-				</Container>
-			</Paper>
+			<Container>
+				<HorizontalList //
+					title="Find accommodation by type"
+					items={ACCOMMODATION_TYPES}
+					renderItem={(type, onClick) => <TypeCard data={type} onClick={onClick} />}
+				/>
+			</Container>
 
 			{/* FAQ */}
 			<Container sx={{ py: 6 }}>
@@ -49,7 +47,7 @@ const HomeContent: React.FC = () => {
 			</Container>
 
 			{/* CTA Banner */}
-			<Container sx={{ py: 8 }}>
+			<Container>
 				<Paper
 					sx={{
 						p: { xs: 4, md: 8 },

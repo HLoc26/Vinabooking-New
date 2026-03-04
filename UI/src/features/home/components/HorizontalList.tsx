@@ -14,16 +14,13 @@ interface HorizontalListProps<T> {
 
 const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalListProps<T>) => {
 	const scrollRef = useRef<HTMLDivElement>(null);
+	const { goToType } = useAccommodationTypeNavigation();
 
-	// Mouse dragging logic
 	let isDown = false;
 	let startX = 0;
 	let scrollLeft = 0;
-	const { goToType } = useAccommodationTypeNavigation();
-	const handleItemClick = (item: any) => {
-		// item.value = your enum key
-		goToType(item.name);
-	};
+
+	const handleItemClick = (item: any) => goToType(item.name);
 
 	const handleMouseDown = (e: React.MouseEvent) => {
 		isDown = true;
@@ -35,43 +32,107 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 		if (!isDown || !scrollRef.current) return;
 		e.preventDefault();
 		const x = e.pageX - scrollRef.current.offsetLeft;
-		const walk = (x - startX) * 1; // Drag speed
-		scrollRef.current.scrollLeft = scrollLeft - walk;
+		scrollRef.current.scrollLeft = scrollLeft - (x - startX);
 	};
+
 	const handleMouseUp = () => (isDown = false);
 
-	// Scroll arrows
 	const scrollByAmount = (amount: number) => {
-		if (scrollRef.current) {
-			scrollRef.current.scrollBy({ left: amount, behavior: "smooth" });
-		}
+		scrollRef.current?.scrollBy({ left: amount, behavior: "smooth" });
+	};
+
+	// Arrow button style — warm white with orange hover
+	const arrowSx = {
+		position: "absolute" as const,
+		top: "50%",
+		transform: "translateY(-50%)",
+		zIndex: 5,
+		display: { xs: "none", sm: "flex" },
+		width: 42,
+		height: 42,
+		border: "1.5px solid #F3E8D8",
+		color: "#6B7280",
+		boxShadow: "0 2px 12px rgba(0,0,0,0.08)",
+		transition: "all 0.2s ease",
+		bgcolor: "#FFF7ED",
+		"&:hover": {
+			bgcolor: "#FFF7ED",
+			border: "1.5px solid #FDBA74",
+			color: "#F97316",
+			boxShadow: "0 4px 16px rgba(249,115,22,0.15)",
+		},
 	};
 
 	return (
-		<Box sx={{ position: "relative", py: { xs: 4, md: 8 } }}>
+		<Box sx={{ position: "relative", pt: { xs: 4, md: 7 } }}>
 			{/* Header */}
 			<Box
 				sx={{
 					display: "flex",
 					justifyContent: "space-between",
-					alignItems: "center",
-					mb: 3,
+					alignItems: "flex-end",
+					mb: 4,
 					px: 2,
 				}}
 			>
-				<Typography variant="h5" fontWeight="bold" color="text.primary">
-					{title}
-				</Typography>
+				<Box>
+					{/* Accent bar + eyebrow */}
+					<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 0.75 }}>
+						<Box
+							sx={{
+								width: 24,
+								height: 3.5,
+								borderRadius: 2,
+								background: "linear-gradient(90deg, #F97316, #FDBA74)",
+							}}
+						/>
+						<Typography
+							variant="caption"
+							sx={{
+								color: "#F97316",
+								fontFamily: "'Sora', sans-serif",
+								fontWeight: 700,
+								letterSpacing: "0.12em",
+								textTransform: "uppercase",
+								fontSize: "0.65rem",
+							}}
+						>
+							Explore
+						</Typography>
+					</Box>
+
+					<Typography
+						variant="h5"
+						sx={{
+							fontFamily: "'Sora', sans-serif",
+							fontWeight: 800,
+							color: "text.primary",
+							letterSpacing: "-0.02em",
+						}}
+					>
+						{title}
+					</Typography>
+				</Box>
 
 				{onSeeAll && (
 					<Button
 						onClick={onSeeAll}
-						endIcon={<ArrowForwardIcon />}
+						endIcon={<ArrowForwardIcon sx={{ fontSize: "1rem !important" }} />}
 						sx={{
-							textTransform: "none",
-							color: "orange.600",
-							fontWeight: 500,
-							"&:hover": { color: "orange.700", bgcolor: "transparent" },
+							fontFamily: "'Sora', sans-serif",
+							fontWeight: 700,
+							fontSize: "0.82rem",
+							color: "#F97316",
+							border: "1.5px solid #FDBA74",
+							borderRadius: "100px",
+							px: 2.25,
+							py: 0.65,
+							bgcolor: "#FFF7ED",
+							"&:hover": {
+								bgcolor: "#FFEDD5",
+								border: "1.5px solid #F97316",
+								boxShadow: "0 2px 10px rgba(249,115,22,0.15)",
+							},
 						}}
 					>
 						See all
@@ -79,71 +140,62 @@ const HorizontalList = <T,>({ title, items, renderItem, onSeeAll }: HorizontalLi
 				)}
 			</Box>
 
-			{/* Scroll Container */}
+			{/* Scroll container */}
 			<Box sx={{ position: "relative" }}>
-				{/* Left Arrow */}
-				<IconButton
-					onClick={() => scrollByAmount(-300)}
-					sx={{
-						position: "absolute",
-						left: 0,
-						top: "50%",
-						transform: "translateY(-50%)",
-						zIndex: 5,
-						display: { xs: "none", sm: "flex" },
-						bgcolor: "white",
-						boxShadow: 2,
-						":hover": { bgcolor: "grey.100" },
-					}}
-				>
-					<ArrowBackIcon />
+				<IconButton onClick={() => scrollByAmount(-320)} sx={{ ...arrowSx, left: -30 }}>
+					<ArrowBackIcon fontSize="small" />
 				</IconButton>
-
-				{/* Scrollable content */}
 				<Box
-					ref={scrollRef}
-					onMouseDown={handleMouseDown}
-					onMouseMove={handleMouseMove}
-					onMouseLeave={handleMouseUp}
-					onMouseUp={handleMouseUp}
 					sx={{
-						display: "flex",
-						overflowX: "auto",
-						gap: 2,
-						px: 2,
-						pb: 2,
-						scrollBehavior: "smooth",
-						cursor: "grab",
-						"&:active": { cursor: "grabbing" },
-						"&::-webkit-scrollbar": { display: "none" },
+						position: "relative",
+						overflow: "hidden", // Đảm bảo mask không bị tràn
+						maskImage: {
+							xs: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+							md: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
+						},
+						WebkitMaskImage: {
+							xs: "linear-gradient(to right, transparent, black 15%, black 85%, transparent)",
+							md: "linear-gradient(to right, transparent, black 5%, black 95%, transparent)",
+						},
 					}}
 				>
-					{items.map((item, index) => (
-						<Box key={index} sx={{ flex: "0 0 auto", width: { xs: "70%", sm: "40%", md: "30%", lg: "25%" } }}>
-							{renderItem(item, () => handleItemClick(item))}
-						</Box>
-					))}
+					<Box
+						ref={scrollRef}
+						onMouseDown={handleMouseDown}
+						onMouseMove={handleMouseMove}
+						onMouseLeave={handleMouseUp}
+						onMouseUp={handleMouseUp}
+						sx={{
+							display: "flex",
+							overflowX: "auto",
+							gap: 2,
+							px: 2,
+							pb: 2,
+							scrollBehavior: "smooth",
+							cursor: "grab",
+							"&:active": { cursor: "grabbing" },
+							"&::-webkit-scrollbar": { display: "none" },
+						}}
+					>
+						{items.map((item, index) => (
+							<Box
+								key={index}
+								sx={{
+									flex: "0 0 auto",
+									width: { xs: "72%", sm: "42%", md: "31%", lg: "24%" },
+								}}
+							>
+								{renderItem(item, () => handleItemClick(item))}
+							</Box>
+						))}
+					</Box>
 				</Box>
-
-				{/* Right Arrow */}
-				<IconButton
-					onClick={() => scrollByAmount(300)}
-					sx={{
-						position: "absolute",
-						right: 0,
-						top: "50%",
-						transform: "translateY(-50%)",
-						zIndex: 5,
-						display: { xs: "none", sm: "flex" },
-						bgcolor: "white",
-						boxShadow: 2,
-						":hover": { bgcolor: "grey.100" },
-					}}
-				>
-					<ArrowForwardIcon />
+				<IconButton onClick={() => scrollByAmount(320)} sx={{ ...arrowSx, right: -30 }}>
+					<ArrowForwardIcon fontSize="small" />
 				</IconButton>
 			</Box>
 		</Box>
 	);
 };
+
 export default HorizontalList;
