@@ -80,7 +80,7 @@ const ConfirmOTPPage: React.FC = () => {
 					bgcolor: "background.paper",
 				}}
 			>
-				<Typography variant="h5" textAlign="center" mb={2}>
+				<Typography variant="h5" textAlign="center" mb={2} color="textPrimary">
 					Confirm OTP
 				</Typography>
 
@@ -101,7 +101,7 @@ const ConfirmOTPPage: React.FC = () => {
 					{loading ? "Verifying..." : "Verify"}
 				</Button>
 
-				<Typography textAlign="center" variant="body2" mt={2}>
+				<Typography textAlign="center" variant="body2" mt={2} color="textPrimary">
 					Didn't receive the code?{" "}
 					<Link component="button" onClick={handleResend} color="primary">
 						Resend
