@@ -14,14 +14,18 @@ import type { EUserType } from "../../user/types/user.types";
 import { validatePassword, getPasswordChecklist } from "../utils/validatePassword";
 import { GoogleAuthButton } from "../../../components/shared/GoogleAuthButton";
 
-const RegisterForm: React.FC = () => {
+interface RegisterFormProps {
+	defaultUserType: EUserType;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLER" }) => {
 	const [values, setValues] = useState({
 		name: "",
 		email: "",
 		password: "",
 		phone: "",
 		confirmPassword: "",
-		userType: "TRAVELLER" as EUserType,
+		userType: defaultUserType,
 	});
 
 	const [checklist, setChecklist] = useState(getPasswordChecklist(""));
