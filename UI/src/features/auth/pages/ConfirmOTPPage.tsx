@@ -9,6 +9,7 @@ import { usePushNotificationContext } from "../../../context/PushNotification/ho
 const ConfirmOTPPage: React.FC = () => {
 	const navigate = useNavigate();
 	const location = useLocation();
+	const isOwnerPage = location.pathname.startsWith("/owner");
 	const { pushNotification } = usePushNotificationContext();
 	const state = location.state as OtpLocationState | undefined;
 
@@ -18,7 +19,8 @@ const ConfirmOTPPage: React.FC = () => {
 	const loading = resendOtpMutation.isPending || confirmOtpMutation.isPending;
 	React.useEffect(() => {
 		if (!state || !state.destination) {
-			navigate("/auth/register");
+			if (isOwnerPage) navigate("/owner/register");
+			else navigate("/auth/register");
 		}
 	}, [state, navigate]);
 
@@ -40,7 +42,8 @@ const ConfirmOTPPage: React.FC = () => {
 			const success = await confirmOtpMutation.mutateAsync({ email: state.email, confirmCode: otp, id: state.id });
 			if (success) {
 				pushNotification("Success! Please wait for the redirect.");
-				navigate("/auth/login");
+				if (isOwnerPage) navigate("/owner/login");
+				else navigate("/auth/login");
 			}
 		} catch (e) {
 			const error = e as Error;
