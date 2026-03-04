@@ -7,7 +7,6 @@ import { useNavigate } from "react-router-dom";
 import { useRegister } from "../../auth/hooks/useRegister";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
-import UserSwitcher from "../../../components/shared/UserSwitcher";
 import PasswordToolbox from "../../../components/shared/PasswordToolbox";
 import type { EUserType } from "../../user/types/UserDto";
 
@@ -97,9 +96,6 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLE
 
 	return (
 		<Box component="form" onSubmit={handleSubmit}>
-			<Box display="flex" justifyContent="center">
-				<UserSwitcher value={values.userType} onChange={(v) => setValues((s) => ({ ...s, userType: v }))} />
-			</Box>
 			<TextField //
 				fullWidth
 				margin="normal"
