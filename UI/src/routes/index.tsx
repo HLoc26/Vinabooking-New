@@ -9,6 +9,7 @@ import { UserRouter } from "./user";
 
 import { TravelerLayout } from "../components/layout/TravelerLayout";
 import { OAuthRouter } from "./oauth";
+import { OwnerRouter } from "./owner";
 
 export const AppRouter = () => (
 	<>
@@ -56,6 +57,7 @@ export const AppRouter = () => (
 			<Route path="/auth/*" element={<AuthRouter />} />
 			<Route path="/oauth/*" element={<OAuthRouter />} />
 			<Route path="/booking/*" element={<BookingRouter />} />
+			<Route path="/owner/*" element={<OwnerRouter />} />
 		</Routes>
 	</>
 );
