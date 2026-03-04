@@ -80,14 +80,19 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLE
 				userType: values.userType,
 			});
 			if (!response) throw new Error("");
-			navigate("/auth/otp", {
+			const state = {
 				state: {
 					destination: response.destination,
 					medium: response.medium,
 					email: values.email,
 					id: response.id,
 				},
-			});
+			};
+			if (defaultUserType == "ACCOMMODATION_OWNER") {
+				navigate("/owner/otp", state);
+			} else {
+				navigate("/auth/otp", state);
+			}
 		} catch (e) {
 			const error = e as Error;
 			console.log(error);
