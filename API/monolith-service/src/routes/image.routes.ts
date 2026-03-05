@@ -2,6 +2,7 @@ import { Router, type Request, type Response } from "express";
 import ImageController from "@/controllers/image.controller";
 import type { GetImagesRequest, UploadRequest } from "../types/requests";
 import multer from "multer";
+import { authMiddleware } from "@/middlewares/auth.middleware";
 
 // Base route: /images
 class ImageRouter {
@@ -20,6 +21,7 @@ class ImageRouter {
 	private registerRoutes() {
 		this.router.post(
 			"/:type/:id", // type could be "profile" | "accommodation" | "room" | "review"
+			authMiddleware,
 			this.#uploadClient.array("files", 10),
 			(req: Request, res: Response) => {
 				const uploadRequest = req as unknown as UploadRequest;
