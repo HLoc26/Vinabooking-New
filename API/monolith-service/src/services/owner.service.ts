@@ -1,6 +1,7 @@
 import BadRequestError from "@/errors/BadRequestError";
 import { OwnerRepository } from "@/repositories";
 import { ERole } from "@/generated/client";
+import redisClient from "@/clients/redis.client";
 
 class OwnerService {
 	readonly #ownerRepo: OwnerRepository;
@@ -24,7 +25,17 @@ class OwnerService {
 			throw new BadRequestError("User is already an accommodation owner");
 		}
 
-		return await this.#ownerRepo.upgradeRoleAndCreateProfile(userId, data);
+		const result = await this.#ownerRepo.upgradeRoleAndCreateProfile(userId, data);
+
+		// --- CACHE INVALIDATION ---
+		try {
+			const cacheKey = `user:${userId}:role`;
+			await redisClient.del(cacheKey);
+		} catch (redisErr) {
+			console.error(`[Redis] Failed to delete role cache for user ${userId} after upgrade:`, redisErr);
+		}
+
+		return result;
 	}
 }
 
