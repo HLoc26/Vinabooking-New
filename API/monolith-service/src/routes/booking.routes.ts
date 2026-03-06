@@ -1,6 +1,7 @@
 import BookingController from "@/controllers/booking.controller";
 import { authMiddleware } from "@/middlewares/auth.middleware";
 import { Router, type Response } from "express";
+
 class BookingRouter {
 	constructor(
 		public router: Router,
@@ -10,7 +11,7 @@ class BookingRouter {
 	}
 
 	private registerRoutes() {
-		this.router.get("/", (req, res) => this.bookingController.getBookings(req, res));
+		this.router.get("/", authMiddleware, (req, res) => this.bookingController.getBookings(req, res));
 
 		this.router.post("/", authMiddleware, (req, res: Response) => {
 			return this.bookingController.createBooking(req, res);

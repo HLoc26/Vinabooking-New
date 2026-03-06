@@ -5,3 +5,4 @@ export * from "./image.request";
 export * from "./accommodation.requests";
 export * from "./booking.requests";
 export * from "./review.requests";
+export * from "./owner.request";

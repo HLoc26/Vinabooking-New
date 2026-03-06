@@ -74,6 +74,13 @@ class UserRepository {
 		});
 		return user;
 	}
+
+	public async getRoleById(id: string): Promise<{ role: string } | null> {
+		return this.#prismaClient.user.findUnique({
+			where: { id },
+			select: { role: true },
+		});
+	}
 }
 
 export default UserRepository;

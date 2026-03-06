@@ -9,4 +9,5 @@ export { default as UploadService } from "./upload.service";
 export { default as S3Service } from "./s3.service";
 export { default as BookingService } from "./booking.service";
 export { default as ReviewService } from "./review.service";
-export { default as FavouriteService } from "./favourite.service"; // EXPORT THÊM SERVICE MỚI
+export { default as FavouriteService } from "./favourite.service";
+export { default as OwnerService } from "./owner.service";
