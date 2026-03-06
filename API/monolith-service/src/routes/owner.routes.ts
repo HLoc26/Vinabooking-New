@@ -1,6 +1,8 @@
 import { Router, Request, Response } from "express";
 import OwnerController from "@/controllers/owner.controller";
 import { authMiddleware } from "@/middlewares/auth.middleware";
+import { requireRole } from "@/middlewares/role.middleware";
+import { ERole } from "@/generated/client";
 import { UpgradeOwnerRequest } from "@/types/requests";
 
 class OwnerRouter {
@@ -14,7 +16,8 @@ class OwnerRouter {
 	private registerRoutes() {
 		this.router.use(authMiddleware);
 
-		this.router.get("/profile/me", (req: Request, res: Response) => {
+		const onlyOwnerGuard = requireRole([ERole.ACCOMMODATION_OWNER]);
+		this.router.get("/profile/me", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.ownerController.getMyProfile(req, res);
 		});
 
