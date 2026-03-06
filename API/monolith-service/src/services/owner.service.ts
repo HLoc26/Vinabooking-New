@@ -1,7 +1,6 @@
 import BadRequestError from "@/errors/BadRequestError";
 import { OwnerRepository } from "@/repositories";
-import { ERole } from "@/generated/client";
-import redisClient from "@/clients/redis.client";
+import { redisClient } from "@/registry";
 
 class OwnerService {
 	readonly #ownerRepo: OwnerRepository;
@@ -21,8 +20,8 @@ class OwnerService {
 			throw new BadRequestError("User not found");
 		}
 
-		if (user.role === ERole.ACCOMMODATION_OWNER || user.ownerProfile) {
-			throw new BadRequestError("User is already an accommodation owner");
+		if (user.ownerProfile) {
+			throw new BadRequestError("Owner profile already exists for this user");
 		}
 
 		const result = await this.#ownerRepo.upgradeRoleAndCreateProfile(userId, data);
