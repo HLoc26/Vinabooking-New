@@ -1,8 +1,7 @@
 import { NextFunction, Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
-import prismaClient from "@/clients/prisma.client";
 import { ERole } from "@/generated/client";
-import redisClient from "@/clients/redis.client";
+import { userRepository, redisClient } from "@/registry";
 
 export const requireRole = (allowedRoles: ERole[]) => {
 	return async (req: Request, res: Response, next: NextFunction): Promise<void> => {
@@ -24,10 +23,7 @@ export const requireRole = (allowedRoles: ERole[]) => {
 			}
 
 			if (!userRole) {
-				const user = await prismaClient.user.findUnique({
-					where: { id: userId },
-					select: { role: true },
-				});
+				const user = await userRepository.getRoleById(userId);
 
 				if (!user) {
 					ResponseHelper.error(res, "Forbidden: You do not have permission to perform this action", 403);
