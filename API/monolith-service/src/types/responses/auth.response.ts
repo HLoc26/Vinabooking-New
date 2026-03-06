@@ -46,6 +46,7 @@ export interface LogInResponse {
 		name?: string | null;
 		phone?: string | null;
 		email: string;
+		role?: string | null;
 	};
 }
 
@@ -71,5 +72,6 @@ export interface VerifyResponse {
 	user: {
 		id: string;
 		username: string;
+		role?: string | null;
 	};
 }

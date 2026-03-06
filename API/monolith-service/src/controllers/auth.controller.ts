@@ -120,6 +120,7 @@ class AuthController {
 				name: userInDb?.name,
 				phone: userInDb?.phone,
 				email: email,
+				role: userInDb?.role,
 			},
 		});
 	}
@@ -146,10 +147,14 @@ class AuthController {
 		if (typeof payload.sub !== "string" || typeof username !== "string") {
 			throw new BadRequestError("Token payload missing required fields (sub or username)");
 		}
+
+		const userInDb = await this.#userService.getUserById(payload.sub);
+
 		return ResponseHelper.success<VerifyResponse>(res, {
 			user: {
 				id: payload.sub,
 				username: username,
+				role: userInDb?.role,
 			},
 		});
 	}

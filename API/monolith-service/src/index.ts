@@ -6,8 +6,8 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository } from "@/repositories";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService } from "@/services";
+import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -38,6 +38,8 @@ import ReviewController from "@/controllers/review.controller";
 import ReviewRouter from "@/routes/review.routes";
 import FacilityRouter from "./routes/facility.routes";
 import FacilityController from "./controllers/facility.controller";
+import OwnerController from "./controllers/owner.controller";
+import OwnerRouter from "./routes/owner.routes";
 
 const app: Express = express();
 connectRedis();
@@ -55,6 +57,7 @@ const bookingRepository = new BookingRepository(prismaClient);
 const reviewRepository = new ReviewRepository(prismaClient);
 const favouriteRepository = new FavouriteRepository(prismaClient);
 const facilityRepository = new FacilityRepository(prismaClient);
+const ownerRepository = new OwnerRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -89,6 +92,7 @@ const reviewService = new ReviewService({
 	imageService: imageService,
 });
 bookingService.setAccommodationService(accommodationService);
+const ownerService = new OwnerService(ownerRepository);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
@@ -99,6 +103,7 @@ const accommodationController = new AccommodationController(accommodationService
 const bookingController = new BookingController(bookingService);
 const reviewController = new ReviewController(reviewService);
 const facilityController = new FacilityController(facilityRepository);
+const ownerController = new OwnerController(ownerService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -109,7 +114,8 @@ const accommodationRouter = new AccommodationRouter(express.Router(), accommodat
 const bookingRouter = new BookingRouter(express.Router(), bookingController);
 const reviewRouter = new ReviewRouter(express.Router(), reviewController);
 const facilityRouter = new FacilityRouter(express.Router(), facilityController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter);
+const ownerRouter = new OwnerRouter(express.Router(), ownerController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
