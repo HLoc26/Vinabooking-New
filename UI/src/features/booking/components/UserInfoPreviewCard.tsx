@@ -1,14 +1,13 @@
 import { Box, Button, Card, CardContent, Typography } from "@mui/material";
-import type { UserInfo } from "../types/UserInfo";
 import UserInfoItem from "./UserInfoItem";
 import { EmailOutlined, PersonOutline, PhoneOutlined } from "@mui/icons-material";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../../user/types/UserDto";
 
 type UserInfoPreviewCardProps = {
 	userInfo: UserDto;
 	isEditing: boolean;
 	handleToggleEdit: () => void;
-	handleUserInfoUpdate: (field: keyof UserInfo, value: string) => void;
+	handleUserInfoUpdate: (field: keyof UserDto, value: string) => void;
 };
 
 const UserInfoPreviewCard: React.FC<UserInfoPreviewCardProps> = ({ userInfo, isEditing, handleToggleEdit, handleUserInfoUpdate: handleUserInfoChange }) => {

@@ -1,6 +1,6 @@
 import type { AccommodationAddress, EAccommodationType } from "./Accommodation";
 import type { ReviewDto } from "./Review";
-import type { UserDto } from "./UserDto";
+import type { UserDto } from "../features/user/types/UserDto";
 
 export interface AuthResponse {
 	token: string;
