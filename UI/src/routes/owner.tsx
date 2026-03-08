@@ -3,6 +3,8 @@ import OwnerLandingPage from "../features/home/pages/OwnerLandingPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import ConfirmOTPPage from "../features/auth/pages/ConfirmOTPPage";
 import LoginPage from "../features/auth/pages/LoginPage";
+import OwnerHomePage from "../features/owner/pages/OwnerHomePage";
+import { OwnerLayout } from "../components/layout/OwnerLayout";
 
 export const OwnerRouter = () => (
 	<Routes>
@@ -10,5 +12,13 @@ export const OwnerRouter = () => (
 		<Route path="/register" element={<RegisterPage />} />
 		<Route path="/login" element={<LoginPage />} />
 		<Route path="/otp" element={<ConfirmOTPPage />} />
+		<Route
+			path="/home"
+			element={
+				<OwnerLayout>
+					<OwnerHomePage />
+				</OwnerLayout>
+			}
+		/>
 	</Routes>
 );
