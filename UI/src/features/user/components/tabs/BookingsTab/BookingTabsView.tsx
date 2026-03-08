@@ -1,16 +1,15 @@
 import React, { useState, useMemo, useEffect } from "react";
 import { Tabs, Tab, Box, Typography, Stack, Pagination } from "@mui/material";
-import type { Booking } from "../../../types/Booking";
+import type { Booking } from "../../../../booking/types/Booking";
 import BookingDetailItem from "./BookingDetailItem";
 
 type BookingTabsViewProps = {
 	bookings: Booking[];
-	defaultImage: string; // Dùng cho tất cả ảnh placeholder
 };
 
 const BOOKINGS_PER_PAGE = 3;
 
-const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImage }) => {
+const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings }) => {
 	const [currentTab, setCurrentTab] = useState(0);
 	const [page, setPage] = useState(1);
 
@@ -59,7 +58,7 @@ const BookingTabsView: React.FC<BookingTabsViewProps> = ({ bookings, defaultImag
 						No bookings found in this category.
 					</Typography>
 				) : (
-					paginatedBookings.map((b) => <BookingDetailItem key={b.id} booking={b} image={defaultImage} />)
+					paginatedBookings.map((b) => <BookingDetailItem key={b.id} booking={b} />)
 				)}
 			</Box>
 			{filteredBookings.length > BOOKINGS_PER_PAGE && (

@@ -1,5 +1,5 @@
 import { DialogTitle, DialogContent, DialogActions, Button, List, ListItem, ListItemButton, ListItemText, Typography, Stack, Pagination } from "@mui/material";
-import type { Booking, BookingDetail } from "../../../../../../user/types/Booking";
+import type { Booking, BookingDetail } from "../../../../../../booking/types/Booking";
 import useModalContext from "../../../../../../../context/ModalContext/hook";
 import { formatDate } from "../../../../../../../utils/dateFormatter";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";

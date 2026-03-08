@@ -1,15 +1,16 @@
-import { useParams } from "react-router-dom";
+import { useParams, useNavigate } from "react-router-dom";
 import useUserBookingDetail from "../../booking/hooks/useUserBookingDetail";
-import bookingApi from "../services/bookingApi";
 import { useState } from "react";
 
 import { Box, Card, CardContent, Typography, Button, Divider, CircularProgress, Chip, Stack, Paper } from "@mui/material";
-import { EventAvailable, ConfirmationNumber, Cancel, CheckCircle, Pending, Block } from "@mui/icons-material";
+import { EventAvailable, ConfirmationNumber, Cancel, CheckCircle, Pending, Block, ArrowBack } from "@mui/icons-material";
 
 import BookingDetailItem from "../components/tabs/BookingsTab/BookingDetailItem";
+import { bookingApi } from "../../booking/services/bookingApi";
 
 const ManageBookingDetailPage = () => {
 	const { bookingId } = useParams<{ bookingId: string }>();
+	const navigate = useNavigate();
 	const { booking, loading, initialized } = useUserBookingDetail(bookingId ?? "");
 
 	const [loadingCancel, setLoadingCancel] = useState(false);
@@ -95,7 +96,13 @@ const ManageBookingDetailPage = () => {
 					<Typography variant="h5" fontWeight={600} gutterBottom>
 						Booking Not Found
 					</Typography>
-					<Typography color="text.secondary">The booking you're looking for doesn't exist or has been removed.</Typography>
+					<Typography color="text.secondary" sx={{ mb: 3 }}>
+						The booking you're looking for doesn't exist or has been removed.
+					</Typography>
+					{/* Added back button for 404 state as well */}
+					<Button startIcon={<ArrowBack />} onClick={() => navigate("/user/me/my-bookings")}>
+						Back to My Bookings
+					</Button>
 				</Paper>
 			</Box>
 		);
@@ -104,15 +111,22 @@ const ManageBookingDetailPage = () => {
 	const statusConfig = getStatusConfig(booking.status);
 
 	return (
-		<Box
-			sx={{
-				minHeight: "100vh",
-				py: 6,
-				pt: 2,
-				px: 2,
-			}}
-		>
+		<Box sx={{ minHeight: "100vh", py: 6, pt: 2, px: 2 }}>
 			<Box sx={{ maxWidth: 720, mx: "auto" }}>
+				{/* Navigation Back Button */}
+				<Button
+					startIcon={<ArrowBack />}
+					onClick={() => navigate("/user/me/my-bookings")}
+					sx={{
+						mb: 2,
+						textTransform: "none",
+						fontWeight: 600,
+						color: "text.secondary",
+					}}
+				>
+					Back to My Bookings
+				</Button>
+
 				{/* Header */}
 				<Paper
 					elevation={1}
@@ -139,7 +153,7 @@ const ManageBookingDetailPage = () => {
 
 				{/* Accommodation Card */}
 				<Box sx={{ mb: 3 }}>
-					<BookingDetailItem booking={booking} image={"/fallback.png"} hideManageButton={true} />
+					<BookingDetailItem booking={booking} hideManageButton={true} />
 				</Box>
 
 				{/* Management Card */}

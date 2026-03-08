@@ -10,7 +10,7 @@ const BookingTab: React.FC = () => {
 		<Stack spacing={3}>
 			<BookingStatsOverview bookings={bookings} />
 			<Divider variant="inset" />
-			<BookingTabsView bookings={bookings} defaultImage="https://placeholders.io/300/300/accommodation?style=photographic" />
+			<BookingTabsView bookings={bookings} />
 		</Stack>
 	);
 };
