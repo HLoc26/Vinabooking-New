@@ -1,6 +1,6 @@
 import { createSlice } from "@reduxjs/toolkit";
 import type { PayloadAction } from "@reduxjs/toolkit";
-import type { BookingContextInfo } from "../../types/BookingContextInfo";
+import type { BookingContextInfo } from "./types/BookingContextInfo";
 
 const initialState: BookingContextInfo = {
 	accommodationId: "",
