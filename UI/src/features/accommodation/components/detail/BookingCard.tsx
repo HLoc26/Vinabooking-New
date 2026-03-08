@@ -1,7 +1,7 @@
 import { Paper, Typography, Button, Box, Divider, Stack } from "@mui/material";
 import { ProtectedLink } from "../../../../components/shared/ProtectedLink";
 import { usePushNotificationContext } from "../../../../context/PushNotification/hook";
-import type { ItemInfo } from "../../../../types/BookingContextInfo";
+import type { ItemInfo } from "../../../booking/types/BookingContextInfo";
 import { DatePickerMenu } from "../../../../components/shared/DatePickerMenu";
 import { useState, useEffect } from "react";
 import { type Dates } from "../../../../types/Query";
