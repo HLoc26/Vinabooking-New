@@ -1,7 +1,7 @@
 import apiClient from "../../../services/apiClient";
 import type { ApiResponse } from "../../../types/Response";
 import type { Image } from "../../../types/Image";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../types/UserDto";
 import type { UpdateUserInfoDto } from "../types";
 
 const userApi = {
