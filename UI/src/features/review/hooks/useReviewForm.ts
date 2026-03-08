@@ -1,6 +1,6 @@
 import { useState, useEffect } from "react";
 import reviewApi from "../services/reviewApi";
-import type { ReviewData, ReviewDto } from "../types/Review";
+import type { Review, ReviewDto } from "../types/review.types";
 
 interface UseReviewFormProps {
 	accommodationId: string;
@@ -9,7 +9,7 @@ interface UseReviewFormProps {
 	onSuccess?: () => void;
 }
 export const useMyReviewByBooking = (bookingId: string) => {
-	const [review, setReview] = useState<ReviewData | null>(null);
+	const [review, setReview] = useState<Review | null>(null);
 	const [loading, setLoading] = useState(true);
 
 	useEffect(() => {
@@ -56,7 +56,7 @@ export const useReviewForm = ({ accommodationId, bookingId, parentId, onSuccess 
 
 			//  Upload images if exist
 			if (images.length > 0) {
-				await reviewApi.uploadImages("review", createdReview.id, images);
+				await reviewApi.uploadImages("review", createdReview!.id, images);
 			}
 
 			// reset form

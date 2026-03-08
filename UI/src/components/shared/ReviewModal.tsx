@@ -1,6 +1,6 @@
 import { DialogTitle, DialogContent, DialogActions, Button, TextField, Rating, Typography, CircularProgress, Box, Stack, IconButton } from "@mui/material";
 import DeleteIcon from "@mui/icons-material/Delete";
-import { useReviewForm } from "../../hooks/useReviewForm";
+import { useReviewForm } from "../../features/review/hooks/useReviewForm";
 import useModalContext from "../../context/ModalContext/hook";
 import { type Booking, type BookingDetail } from "../../features/booking/types/Booking";
 import { CalendarMonthOutlined, KingBedOutlined } from "@mui/icons-material";

@@ -9,8 +9,8 @@ import { Link as RouterLink } from "react-router-dom";
 import useModalContext from "../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../components/shared/ReviewModal";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
-import { useAccommodationReview } from "../../../../accommodation/hooks/useAccommodationReview";
-import { type ReviewData } from "../../../../../types/Review";
+import { useAccommodationReview } from "../../../../review/hooks/useAccommodationReview";
+import { type Review } from "../../../../review/types/review.types";
 import { authStorage } from "../../../../../features/auth/utils/authStorage";
 import { getThumbnailUrl } from "../../../../../utils/image";
 import { ACCOMMODATION_DEFAULT_IMAGES } from "../../../../accommodation/types/Const";
@@ -41,7 +41,7 @@ const StatusBadge: React.FC<{ status: Booking["status"] }> = ({ status }) => {
 	return <Chip label={label} color={color} size="small" sx={{ position: "absolute", top: 6, left: 6, fontWeight: 600 }} />;
 };
 
-const BookingReview: React.FC<{ review: ReviewData }> = ({ review }) => {
+const BookingReview: React.FC<{ review: Review }> = ({ review }) => {
 	return (
 		<Box mt={2}>
 			<Divider />
