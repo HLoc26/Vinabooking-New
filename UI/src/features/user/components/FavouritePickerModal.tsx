@@ -1,5 +1,5 @@
 import { DialogTitle, DialogContent, List, ListItem, ListItemIcon, Checkbox, ListItemText, DialogActions, Button, CircularProgress, Stack } from "@mui/material";
-import type { FavouriteList } from "../../../types/FavouriteList";
+import type { FavouriteList } from "../types/FavouriteList";
 import useModalContext from "../../../context/ModalContext/hook";
 import { useState, useEffect } from "react";
 import useUserFavouriteList from "../../../features/user/hooks/useUserFavouriteList";

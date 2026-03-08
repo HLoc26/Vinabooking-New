@@ -1,7 +1,7 @@
 import { useQuery, useMutation, useQueryClient } from "@tanstack/react-query";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../app/store";
-import type { FavouriteList } from "../../../types/FavouriteList";
+import type { FavouriteList } from "../types/FavouriteList";
 import favouriteApi from "../services/favouriteApi";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { AxiosError, type AxiosResponse } from "axios";
