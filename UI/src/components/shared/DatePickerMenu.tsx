@@ -3,7 +3,7 @@ import { Box, Menu, IconButton, Typography } from "@mui/material";
 import ChevronLeftIcon from "@mui/icons-material/ChevronLeft";
 import ChevronRightIcon from "@mui/icons-material/ChevronRight";
 import CalendarMonth from "./CalendarMonth";
-import type { Dates } from "../../types/Query";
+import type { Dates } from "../../features/search/types/Query";
 
 interface DatePickerMenuProps {
 	open: boolean;

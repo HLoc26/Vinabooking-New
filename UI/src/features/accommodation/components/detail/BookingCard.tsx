@@ -4,7 +4,7 @@ import { usePushNotificationContext } from "../../../../context/PushNotification
 import type { ItemInfo } from "../../../booking/types/BookingContextInfo";
 import { DatePickerMenu } from "../../../../components/shared/DatePickerMenu";
 import { useState, useEffect } from "react";
-import { type Dates } from "../../../../types/Query";
+import { type Dates } from "../../../search/types/Query";
 import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import type { RootState } from "../../../../app/store";
