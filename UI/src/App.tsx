@@ -21,7 +21,6 @@ function App() {
 		);
 	}
 	const isOwnerPage = location.pathname.startsWith("/owner");
-	console.log(isOwnerPage);
 
 	return (
 		<ThemeProvider theme={isOwnerPage ? darkTheme : theme}>
