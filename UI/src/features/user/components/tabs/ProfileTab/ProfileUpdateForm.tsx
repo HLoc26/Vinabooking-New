@@ -2,20 +2,21 @@ import { Cancel, Edit, Save } from "@mui/icons-material";
 import { Box, Button, Stack, TextField, Tooltip, Typography, Skeleton } from "@mui/material";
 import { useEffect, useState } from "react";
 import { MuiTelInput } from "mui-tel-input";
-import { useUpdateUserMutation, useUserProfile } from "../../../hooks/useUserProfile";
+import { useUserProfile } from "../../../hooks/useUserProfile";
 import { useForm, Controller } from "react-hook-form";
 import type { UpdateUserInfoDto } from "../../../types";
+import { useUpdateUser } from "../../../hooks/useUpdateUser";
 
 const ProfileUpdateForm: React.FC = () => {
 	// UI State for toggling View/Edit mode
 	const [isEditing, setIsEditing] = useState(false);
 
 	// 1. Fetch Data (Server State)
-	const { data: user, isLoading } = useUserProfile();
+	const { userInfo, isLoading } = useUserProfile();
 
 	// 2. Mutation (Update Logic)
 	// Assuming useUpdateUserMutation returns { mutate, isPending } based on TanStack Query standards
-	const { mutate, isPending } = useUpdateUserMutation();
+	const { mutate, isPending } = useUpdateUser();
 
 	// 3. Form Management
 	const {
@@ -28,13 +29,13 @@ const ProfileUpdateForm: React.FC = () => {
 
 	// 4. Sync Data: When user data loads, populate the form
 	useEffect(() => {
-		if (user) {
+		if (userInfo) {
 			reset({
-				name: user.name,
-				phone: user.phone,
+				name: userInfo.name,
+				phone: userInfo.phone,
 			});
 		}
-	}, [user, reset]);
+	}, [userInfo, reset]);
 
 	// 5. Handlers
 	const onSubmit = (data: UpdateUserInfoDto) => {
@@ -98,7 +99,7 @@ const ProfileUpdateForm: React.FC = () => {
 
 				{/* Email Input - Read Only */}
 				<Tooltip title="Editing your email is not allowed." placement="left" arrow>
-					<TextField fullWidth label="Email" disabled value={user?.email || ""} />
+					<TextField fullWidth label="Email" disabled value={userInfo?.email || ""} />
 				</Tooltip>
 			</Stack>
 		</Box>
