@@ -19,7 +19,8 @@ import { ExitToAppOutlined, LuggageOutlined, PersonOutlineOutlined, StarOutlineR
 import useModalContext from "../../context/ModalContext/hook.ts";
 
 import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
-import useUserProfileInfo from "../../features/user/hooks/useUserProfileInfo";
+import { useUserProfile } from "../../features/user/hooks/useUserProfile.ts";
+import { useUserAvatars } from "../../features/user/hooks/useUserAvatars.ts";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -34,8 +35,8 @@ const NavigationBar: React.FC = () => {
 	const { openModal, closeModal } = useModalContext();
 
 	const { pushNotification } = usePushNotificationContext();
-
-	const { userInfo: user, currentAvatarUrl } = useUserProfileInfo();
+	const { currentAvatarUrl } = useUserAvatars();
+	const { userInfo: user } = useUserProfile();
 	const logoutMutation = useLogoutMutation();
 
 	const handleCloseNavMenu = () => setAnchorElNav(null);
