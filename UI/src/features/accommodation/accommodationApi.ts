@@ -1,5 +1,5 @@
 import apiClient from "../../services/apiClient";
-import type { Query } from "../../types/Query";
+import type { Query } from "../search/types/Query";
 import type { ApiResponse } from "../../types/Response";
 import type { AccommodationDetail, AccommodationSearchData, EAccommodationType } from "./types/accommodation.types";
 import type { StatsResponse } from "./types/stats.types";

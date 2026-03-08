@@ -1,5 +1,5 @@
 import { EAccommodationType } from "../features/accommodation/types/accommodation.types";
-import type { Query, SortOption } from "../types/Query";
+import type { Query, SortOption } from "../features/search/types/Query";
 import { parseInputDate, toInputDate } from "./dateFormatter";
 
 const DEFAULT_GUESTS = { adults: 2, children: 0, rooms: 1 };

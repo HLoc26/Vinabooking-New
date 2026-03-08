@@ -1,4 +1,4 @@
-import type { EAccommodationType } from "./Accommodation";
+import type { EAccommodationType } from "../../accommodation/types/accommodation.types";
 
 export type Guests = {
 	adults: number;
