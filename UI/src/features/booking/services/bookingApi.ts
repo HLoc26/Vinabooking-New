@@ -1,6 +1,8 @@
 import axioInstance from "../../../services/apiClient";
 import Cookies from "js-cookie";
 import type { BookingContextInfo } from "../../../types/BookingContextInfo";
+import type { Booking } from "../types/Booking";
+import type { ApiResponse } from "../../../types/Response";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const BOOKING_ENDPOINT = "/bookings";
@@ -9,6 +11,18 @@ const ROOM_ENDPOINT = "/rooms";
 const ACCOM_ENDPOINT = "/accommodations";
 
 export const bookingApi = {
+	async getByUserId(userId: string) {
+		return axioInstance.get<ApiResponse<Booking[]>>("/bookings", { params: { entity: "user", id: userId } }).then((r) => r.data);
+	},
+
+	async getById(bookingId: string) {
+		return axioInstance.get<ApiResponse<Booking>>("/bookings", { params: { entity: "id", id: bookingId } }).then((r) => r.data);
+	},
+
+	async cancel(bookingId: string) {
+		return axioInstance.patch(`/bookings/cancel?id=${bookingId}`).then((r) => r.data);
+	},
+
 	async createBooking(booking: BookingContextInfo) {
 		const token = Cookies.get(ACCESS_TOKEN_KEY);
 

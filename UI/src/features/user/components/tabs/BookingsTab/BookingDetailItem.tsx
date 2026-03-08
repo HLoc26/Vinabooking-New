@@ -1,7 +1,7 @@
 import React from "react";
 import { Card, CardContent, CardMedia, Typography, Link, Stack, Box, Button, Chip, Divider, Skeleton, Avatar, Rating } from "@mui/material";
 import { CalendarMonthOutlined, MapOutlined, PersonOutline, ArrowForward } from "@mui/icons-material";
-import type { Booking } from "../../../types/Booking";
+import type { Booking } from "../../../../booking/types/Booking";
 import useAccommodationByRoom from "../../../../accommodation/hooks/useAccommodationByRoom";
 import useRooms from "../../../../accommodation/hooks/useRooms";
 import { formatDate } from "../../../../../utils/dateFormatter";
@@ -13,10 +13,10 @@ import { useAccommodationReview } from "../../../../accommodation/hooks/useAccom
 import { type ReviewData } from "../../../../../types/Review";
 import { authStorage } from "../../../../../features/auth/utils/authStorage";
 import { getThumbnailUrl } from "../../../../../utils/image";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../../../accommodation/types/Const";
 
 type BookingDetailItemProps = {
 	booking: Booking;
-	image: string;
 	hideManageButton?: boolean;
 };
 
@@ -64,7 +64,7 @@ const BookingReview: React.FC<{ review: ReviewData }> = ({ review }) => {
 	);
 };
 
-const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, hideManageButton }) => {
+const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, hideManageButton }) => {
 	const { startDate, endDate, guestCount, status, referenceNo } = booking;
 
 	const roomId = booking.details?.[0]?.itemId || null;
@@ -126,7 +126,12 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, image, h
 			<Box sx={{ position: "relative", minWidth: 200, width: 200, height: "auto" }}>
 				{accommodation ? (
 					<>
-						<CardMedia component="img" image={thumbnail ?? image} alt={accommodationName || "Accommodation"} sx={{ width: "200px", height: "100%", objectFit: "cover" }} />
+						<CardMedia
+							component="img"
+							image={thumbnail || `${ACCOMMODATION_DEFAULT_IMAGES[accommodation.type]}`}
+							alt={accommodationName || "Accommodation"}
+							sx={{ width: "200px", height: "100%", objectFit: "cover" }}
+						/>
 						<StatusBadge status={status} />
 					</>
 				) : (
