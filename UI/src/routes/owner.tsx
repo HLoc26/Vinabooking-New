@@ -5,6 +5,7 @@ import ConfirmOTPPage from "../features/auth/pages/ConfirmOTPPage";
 import LoginPage from "../features/auth/pages/LoginPage";
 import OwnerHomePage from "../features/owner/pages/OwnerHomePage";
 import { OwnerLayout } from "../components/layout/OwnerLayout";
+import OwnerOnboardPage from "../features/owner/pages/OwnerOnboardPage";
 
 export const OwnerRouter = () => (
 	<Routes>
@@ -12,6 +13,7 @@ export const OwnerRouter = () => (
 		<Route path="/register" element={<RegisterPage />} />
 		<Route path="/login" element={<LoginPage />} />
 		<Route path="/otp" element={<ConfirmOTPPage />} />
+		<Route path="/onboard" element={<OwnerOnboardPage />} />
 		<Route
 			path="/home"
 			element={
