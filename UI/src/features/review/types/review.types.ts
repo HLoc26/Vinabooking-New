@@ -16,3 +16,11 @@ export interface Review {
 export interface ReviewWithImages extends Review {
 	images: Image[];
 }
+
+export interface ReviewDto {
+	comment: string;
+	accommodationId: string;
+	parentId?: string;
+	bookingId?: string;
+	star?: number | null;
+}
