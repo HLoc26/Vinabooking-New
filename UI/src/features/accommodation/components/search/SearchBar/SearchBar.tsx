@@ -14,7 +14,7 @@ import { DatePickerMenu } from "../../../../../components/shared/DatePickerMenu"
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../../../../app/store";
 import { updateSearchCriteria } from "../../../../search/searchSlice";
-import type { Dates, Query } from "../../../../../types/Query";
+import type { Dates, Query } from "../../../../search/types/Query";
 import { buildSearchParams } from "../../../../../utils/search";
 import { setBookingField } from "../../../../booking/bookingSlice";
 import { useDebounce } from "../../../../../hooks/useDebounce";
