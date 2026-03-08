@@ -156,7 +156,7 @@ const NavigationBar: React.FC = () => {
 					{/* Become a Host / Host Dashboard */}
 					<Button
 						variant="text"
-						onClick={() => navigate(isOwner ? "/owner/dashboard" : "/owner/landing")}
+						onClick={() => navigate(isOwner ? "/owner/home" : "/owner/landing")}
 						sx={{
 							display: { xs: "none", sm: "block" }, // Does not shown on small screens
 							color: "text.primary",
@@ -208,7 +208,7 @@ const NavigationBar: React.FC = () => {
 									sx={{ display: { xs: "flex", sm: "none" } }}
 									onClick={() => {
 										handleCloseProfileMenu();
-										navigate(isOwner ? "/owner/dashboard" : "/owner/landing");
+										navigate(isOwner ? "/owner/home" : "/owner/landing");
 									}}
 								>
 									<ListItemIcon>
