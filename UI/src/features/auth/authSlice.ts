@@ -1,15 +1,18 @@
 import { createSlice, type PayloadAction } from "@reduxjs/toolkit";
 import type { UserDto } from "../user/types/UserDto";
 import { authStorage } from "./utils/authStorage";
+import type { OwnerProfileData } from "../owner/types/owner.types";
 
 interface AuthState {
 	user: UserDto | null;
+	ownerProfile: OwnerProfileData | null;
 	token: string | null;
 	isAuthenticated: boolean;
 }
 
 const initialState: AuthState = {
 	token: authStorage.getAccessToken() ?? null,
+	ownerProfile: authStorage.getOwnerProfileSync<OwnerProfileData>(),
 	user: authStorage.getUserSync<UserDto>(),
 	isAuthenticated: !!authStorage.getAccessToken(),
 };
@@ -38,8 +41,12 @@ export const authSlice = createSlice({
 			state.user = action.payload;
 			authStorage.setUser(action.payload);
 		},
+
+		setOwnerProfile: (state, action: PayloadAction<OwnerProfileData>) => {
+			state.ownerProfile = action.payload;
+		},
 	},
 });
 
-export const { loginSuccess, logoutSuccess, updateUserSync } = authSlice.actions;
+export const { loginSuccess, logoutSuccess, updateUserSync, setOwnerProfile } = authSlice.actions;
 export default authSlice.reducer;
