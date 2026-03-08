@@ -22,16 +22,21 @@ export const authSlice = createSlice({
 			state.token = action.payload.token;
 			state.user = action.payload.user;
 			state.isAuthenticated = true;
+			authStorage.setAccessToken(action.payload.token);
+			authStorage.setUser(action.payload.user);
 		},
 
 		logoutSuccess: (state) => {
 			state.token = null;
 			state.user = null;
 			state.isAuthenticated = false;
+			authStorage.clearAccessToken();
+			authStorage.clearUser();
 		},
 
 		updateUserSync: (state, action: PayloadAction<UserDto>) => {
 			state.user = action.payload;
+			authStorage.setUser(action.payload);
 		},
 	},
 });
