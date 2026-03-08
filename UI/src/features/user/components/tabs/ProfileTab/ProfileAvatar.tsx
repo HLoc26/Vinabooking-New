@@ -1,17 +1,20 @@
 import { PhotoCamera } from "@mui/icons-material";
 import { Avatar, Box, Button, Typography, CircularProgress } from "@mui/material";
-import useUserProfileInfo from "../../../hooks/useUserProfileInfo";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import type { ChangeEvent } from "react";
+import { useUserAvatars } from "../../../hooks/useUserAvatars";
+import { useUploadAvatar } from "../../../hooks/useUploadAvatar";
+import { useUserProfile } from "../../../hooks/useUserProfile";
 
 const MAX_FILE_SIZE = 10 * 1024 * 1024; // 10MB
 
 const ProfileAvatar: React.FC = () => {
-	const { userInfo, currentAvatarUrl, uploadAvatarMutation } = useUserProfileInfo();
+	const { userInfo } = useUserProfile();
+	const { currentAvatarUrl } = useUserAvatars();
+	const { mutate: uploadAvatarMutation, isPending: isUploading } = useUploadAvatar();
 	const { pushNotification } = usePushNotificationContext();
 
 	const name = userInfo?.name;
-	const isUploading = uploadAvatarMutation.isPending;
 
 	const handleFileChange = (event: ChangeEvent<HTMLInputElement>) => {
 		const file = event.target.files?.[0];
@@ -24,7 +27,7 @@ const ProfileAvatar: React.FC = () => {
 		}
 
 		// Gọi mutation upload
-		uploadAvatarMutation.mutate(file, {
+		uploadAvatarMutation(file, {
 			onSuccess: () => {
 				pushNotification("Avatar updated successfully!", "success");
 			},

@@ -19,7 +19,8 @@ import { AddHomeWorkRounded, ExitToAppOutlined, LuggageOutlined, PersonOutlineOu
 import useModalContext from "../../context/ModalContext/hook.ts";
 
 import { useLogoutMutation } from "../../features/auth/hooks/useLogout";
-import useUserProfileInfo from "../../features/user/hooks/useUserProfileInfo";
+import { useUserProfile } from "../../features/user/hooks/useUserProfile.ts";
+import { useUserAvatars } from "../../features/user/hooks/useUserAvatars.ts";
 
 const pages = [
 	{ label: "Search", path: "/search" },
@@ -35,7 +36,8 @@ const NavigationBar: React.FC = () => {
 
 	const { openModal, closeModal } = useModalContext();
 	const { pushNotification } = usePushNotificationContext();
-	const { userInfo: user, currentAvatarUrl } = useUserProfileInfo();
+	const { currentAvatarUrl } = useUserAvatars();
+	const { userInfo } = useUserProfile();
 	const logoutMutation = useLogoutMutation();
 
 	const handleCloseNavMenu = () => setAnchorElNav(null);
@@ -54,7 +56,7 @@ const NavigationBar: React.FC = () => {
 		});
 	};
 
-	const isOwner = user?.role === "ACCOMMODATION_OWNER";
+	const isOwner = userInfo?.role === "ACCOMMODATION_OWNER";
 
 	return (
 		<AppBar position="sticky" color="inherit" elevation={1} sx={{ px: 20 }}>
@@ -164,13 +166,13 @@ const NavigationBar: React.FC = () => {
 						{isOwner ? "Host Dashboard" : "Become a host"}
 					</Button>
 
-					{user ? (
+					{userInfo ? (
 						<>
 							<Button onClick={(e) => setAnchorElProfile(e.currentTarget)} sx={{ color: "text.primary" }}>
 								<Stack direction={"row"} alignItems={"center"} gap={2}>
-									<Avatar alt={user.name} src={currentAvatarUrl} sx={{ width: 32, height: 32 }} />
+									<Avatar alt={userInfo.name} src={currentAvatarUrl} sx={{ width: 32, height: 32 }} />
 									<Typography variant="subtitle2" sx={{ textTransform: "none", display: { xs: "none", sm: "block" } }}>
-										{user.name || "Profile"}
+										{userInfo.name || "Profile"}
 									</Typography>
 									<ArrowDropDownIcon />
 								</Stack>
