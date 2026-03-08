@@ -4,18 +4,44 @@ import LoginModal from "../../../../components/shared/LoginModal.tsx";
 import AddHomeWorkRoundedIcon from "@mui/icons-material/AddHomeWorkRounded";
 import useModalContext from "../../../../context/ModalContext/hook.ts";
 import { useNavigate } from "react-router-dom";
+import { useSelector } from "react-redux";
+import type { RootState } from "../../../../app/store";
 
 const OwnerLandingHeader: React.FC = () => {
 	const [scrolled, setScrolled] = useState(false);
 	const navigate = useNavigate();
-
 	const { openModal, closeModal } = useModalContext();
+
+	// Fetch user authentication state from Redux
+	const user = useSelector((state: RootState) => state.auth.user);
 
 	useEffect(() => {
 		const onScroll = () => setScrolled(window.scrollY > 20);
 		window.addEventListener("scroll", onScroll);
 		return () => window.removeEventListener("scroll", onScroll);
 	}, []);
+
+	const handleGetStarted = () => {
+		if (user) {
+			// If authenticated, skip registration and go directly to the onboarding form
+			navigate("/owner/onboard");
+		} else {
+			// If guest, redirect to the registration flow
+			navigate("/owner/register");
+		}
+	};
+
+	const handleSignIn = () => {
+		openModal(
+			<LoginModal
+				onLoginSuccess={() => {
+					// Once logged in via Header, redirect immediately to onboarding
+					closeModal();
+					navigate("/owner/onboard");
+				}}
+			/>
+		);
+	};
 
 	return (
 		<>
@@ -36,8 +62,14 @@ const OwnerLandingHeader: React.FC = () => {
 			>
 				<Container maxWidth="lg">
 					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ height: 72 }}>
-						{/* Logo */}
-						<Stack direction="row" alignItems="center" spacing={1.5} sx={{ cursor: "pointer", userSelect: "none" }}>
+						{/* Brand Logo */}
+						<Stack
+							direction="row"
+							alignItems="center"
+							spacing={1.5}
+							sx={{ cursor: "pointer", userSelect: "none" }}
+							onClick={() => navigate("/")} // Navigate back to the main marketplace home
+						>
 							<Box
 								sx={{
 									width: 36,
@@ -69,7 +101,7 @@ const OwnerLandingHeader: React.FC = () => {
 							</Typography>
 						</Stack>
 
-						{/* Nav links — desktop only */}
+						{/* Navigation links — Desktop only */}
 						<Stack direction="row" spacing={1} alignItems="center" sx={{ display: { xs: "none", md: "flex" } }}>
 							{["Why host", "How it works", "FAQ"].map((label) => (
 								<Button
@@ -91,26 +123,30 @@ const OwnerLandingHeader: React.FC = () => {
 							))}
 						</Stack>
 
-						{/* Auth buttons */}
+						{/* Authentication Actions */}
 						<Stack direction="row" spacing={1.5} alignItems="center">
+							{/* Display Sign In only for unauthenticated users */}
+							{!user && (
+								<Button
+									onClick={handleSignIn}
+									sx={{
+										color: "rgba(255,255,255,0.7)",
+										fontFamily: "'Sora', sans-serif",
+										fontWeight: 600,
+										fontSize: "0.875rem",
+										px: 2.5,
+										py: 1,
+										borderRadius: 3,
+										textTransform: "none",
+										"&:hover": { color: "#fff", background: "rgba(255,255,255,0.06)" },
+									}}
+								>
+									Sign in
+								</Button>
+							)}
+
 							<Button
-								onClick={() => openModal(<LoginModal onLoginSuccess={closeModal} />)}
-								sx={{
-									color: "rgba(255,255,255,0.7)",
-									fontFamily: "'Sora', sans-serif",
-									fontWeight: 600,
-									fontSize: "0.875rem",
-									px: 2.5,
-									py: 1,
-									borderRadius: 3,
-									textTransform: "none",
-									"&:hover": { color: "#fff", background: "rgba(255,255,255,0.06)" },
-								}}
-							>
-								Sign in
-							</Button>
-							<Button
-								onClick={() => navigate("/owner/register")}
+								onClick={handleGetStarted}
 								variant="contained"
 								sx={{
 									background: "linear-gradient(135deg, #f5a623, #e8942a)",
@@ -130,7 +166,8 @@ const OwnerLandingHeader: React.FC = () => {
 									},
 								}}
 							>
-								Get started
+								{/* Dynamic CTA text based on auth status */}
+								{user ? "Continue Setup" : "Get started"}
 							</Button>
 						</Stack>
 					</Stack>
