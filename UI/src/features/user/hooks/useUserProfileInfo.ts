@@ -42,7 +42,6 @@ const useUserProfileInfo = () => {
 		},
 		onSuccess: (newUser) => {
 			if (newUser) {
-				authStorage.setUser(newUser);
 				dispatch(updateUserSync(newUser));
 			}
 		},
