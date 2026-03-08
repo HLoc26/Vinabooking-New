@@ -7,7 +7,7 @@ import CityCard from "./CityCard";
 import type { City } from "../types/City";
 import { CITIES } from "../constants/CityConst";
 import useAccommodationsByType from "../../accommodation/hooks/useAccommodationsByType";
-import { ACCOMMODATION_DEFAULT_IMAGES } from "../../accommodation/types/Const";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../accommodation/types/const";
 
 type AccommodationTypeHomeContentProps = {
 	type: EAccommodationType;
