@@ -165,7 +165,17 @@ const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLE
 			</Button>
 			<Typography variant="body2" textAlign="center" mt={2}>
 				Already have an account?{" "}
-				<Link component="button" onClick={() => navigate("/auth/login")} color="primary">
+				<Link
+					component="button"
+					onClick={() => {
+						if (defaultUserType == "ACCOMMODATION_OWNER") {
+							navigate("/owner/login");
+						} else {
+							navigate("/auth/login");
+						}
+					}}
+					color="primary"
+				>
 					Login
 				</Link>
 			</Typography>
