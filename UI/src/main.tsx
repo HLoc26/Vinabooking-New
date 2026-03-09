@@ -1,11 +1,8 @@
 import React from "react";
 import ReactDOM from "react-dom/client";
 import App from "./App.tsx";
-import { ThemeProvider } from "@mui/material/styles";
 import CssBaseline from "@mui/material/CssBaseline";
-import theme from "./theme/theme.ts";
 import PushNotificationProvider from "./context/PushNotification/provider.tsx";
-import ModalProvider from "./context/ModalContext/provider.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { PersistGate } from "redux-persist/integration/react";
 import { store, persistor } from "./app/store.ts";
@@ -19,16 +16,12 @@ ReactDOM.createRoot(document.getElementById("root")!).render(
 		<PersistGate loading={null} persistor={persistor}>
 			<Provider store={store}>
 				<QueryClientProvider client={queryClient}>
-					<ThemeProvider theme={theme}>
-						<PushNotificationProvider>
-							<BrowserRouter>
-								<ModalProvider>
-									<CssBaseline />
-									<App />
-								</ModalProvider>
-							</BrowserRouter>
-						</PushNotificationProvider>
-					</ThemeProvider>
+					<PushNotificationProvider>
+						<BrowserRouter>
+							<CssBaseline />
+							<App />
+						</BrowserRouter>
+					</PushNotificationProvider>
 				</QueryClientProvider>
 			</Provider>
 		</PersistGate>

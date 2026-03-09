@@ -1,5 +1,5 @@
 import AxiosInstance from "../../services/apiClient";
-import type { LogInResponse, ApiResponse, SignUpResponse, RefreshResponse, GetOTPResponse, ConfirmUserResponse } from "../../types/Response";
+import type { LogInResponse, ApiResponse, SignUpResponse, RefreshResponse, GetOTPResponse, ConfirmUserResponse, ForgotPasswordSendOtpResponse } from "../../types/Response";
 
 export const login = async (payload: {
 	email: string; //
@@ -56,4 +56,16 @@ export const resendOtp = async (
 
 export const confirmOtp = async (payload: { id: string; email: string; confirmCode: string }) =>
 	AxiosInstance.post<ApiResponse<ConfirmUserResponse>>("/auth/sign-up/confirm", payload) //
+		.then((r) => r.data);
+
+export const forgotPassword = async (email: string) =>
+	AxiosInstance.post<ApiResponse<ForgotPasswordSendOtpResponse>>("/auth/forgot-password", { email }) //
+		.then((r) => r.data);
+
+export const confirmForgotPassword = async (payload: {
+	email: string; //
+	code: string;
+	newPassword: string;
+}) =>
+	AxiosInstance.post<ApiResponse<{ success: boolean }>>("/auth/forgot-password/confirm", payload) //
 		.then((r) => r.data);

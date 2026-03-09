@@ -1,6 +1,6 @@
 import axioInstance from "../../../services/apiClient";
 import Cookies from "js-cookie";
-import type { BookingContextInfo } from "../../../types/BookingContextInfo";
+import type { BookingContextInfo } from "../types/BookingContextInfo";
 import type { Booking } from "../types/Booking";
 import type { ApiResponse } from "../../../types/Response";
 

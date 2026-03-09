@@ -1,35 +1,25 @@
-import { useCallback, useState, useEffect } from "react";
+import { useEffect } from "react";
 import { useNavigate } from "react-router-dom";
+import { useDispatch } from "react-redux";
+import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-
-const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
-const USER_KEY = import.meta.env.VITE_USER_KEY;
-
-interface OAuthUser {
-	id: string;
-	email: string;
-	name: string;
-}
+import { loginSuccess } from "../../auth/authSlice";
+import type { UserDto } from "../../user/types/UserDto";
 
 export const useOAuthCallback = () => {
 	const navigate = useNavigate();
+	const dispatch = useDispatch();
+	const queryClient = useQueryClient();
 	const { pushNotification } = usePushNotificationContext();
 
-	const [loading, setLoading] = useState(true);
-	const [error, setError] = useState<string | null>(null);
-
-	const handleOAuthCallback = useCallback(async () => {
-		try {
+	const mutation = useMutation({
+		mutationFn: async () => {
 			const params = new URLSearchParams(window.location.search);
 			const message = params.get("message");
 
-			// Have message in params means it is redirected from /oauth/error
+			// Nếu có lỗi từ URL (redirect từ /oauth/error)
 			if (message) {
-				const decoded = decodeURIComponent(message);
-				setError(decoded);
-				pushNotification(decoded, "error");
-				navigate("/auth/login");
-				return;
+				throw new Error(decodeURIComponent(message));
 			}
 
 			const accessToken = params.get("accessToken");
@@ -40,26 +30,37 @@ export const useOAuthCallback = () => {
 				throw new Error("Invalid or missing OAuth response.");
 			}
 
-			const user: OAuthUser = JSON.parse(decodeURIComponent(userRaw));
+			// Parse user data từ URL
+			const user: UserDto = JSON.parse(decodeURIComponent(userRaw));
 
-			await cookieStore.set(ACCESS_TOKEN_KEY, accessToken);
-			localStorage.setItem(USER_KEY, JSON.stringify(user));
+			return { accessToken, user };
+		},
+		onSuccess: (data) => {
+			// 1. Dispatch Redux (tự động xử lý luôn authStorage bên trong slice)
+			dispatch(loginSuccess({ token: data.accessToken, user: data.user }));
 
+			// 2. Cập nhật ngay cache React Query để UI (Navbar) thay đổi ngay lập tức
+			queryClient.setQueryData(["user", "profile"], data.user);
+
+			// 3. Thông báo và điều hướng
 			pushNotification("Successfully logged in with Google!", "success");
-			setTimeout(() => navigate("/"), 800);
-		} catch (err) {
-			const e = err as Error;
-			setError(e.message);
-			pushNotification(e.message, "error");
-			setTimeout(() => navigate("/auth/login"), 1000);
-		} finally {
-			setLoading(false);
-		}
-	}, [navigate, pushNotification]);
+			navigate("/", { replace: true });
+		},
+		onError: (error: Error) => {
+			pushNotification(error.message, "error");
+			navigate("/auth/login", { replace: true });
+		},
+	});
 
+	// Tự động chạy mutation 1 lần khi hook được gọi (mount component)
 	useEffect(() => {
-		handleOAuthCallback();
-	}, [handleOAuthCallback]);
+		if (!mutation.isPending && !mutation.isSuccess && !mutation.isError) {
+			mutation.mutate();
+		}
+	}, [mutation]);
 
-	return { loading, error };
+	return {
+		loading: mutation.isPending,
+		error: mutation.error?.message || null,
+	};
 };

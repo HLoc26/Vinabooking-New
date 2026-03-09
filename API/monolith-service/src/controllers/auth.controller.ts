@@ -180,25 +180,29 @@ class AuthController {
 	}
 
 	public async signOut(req: Request, res: Response<ApiResponse<SignOutResponse>>) {
-		const authHeader = req.headers.authorization;
-		if (!authHeader?.startsWith("Bearer ")) {
-			throw new BadRequestError("Access token missing");
-		}
-
-		const accessToken = authHeader.split(" ")[1];
-
-		const response = await this.#authService.signOut(accessToken);
-		const statusCode = response.$metadata?.httpStatusCode;
-
-		if (statusCode !== 200) {
-			throw new IdentityProviderError(`Error while signing out with code ${statusCode}`);
-		}
-
 		res.clearCookie("refresh_token", {
 			httpOnly: true,
 			secure: true,
 			sameSite: "none",
 		});
+
+		const authHeader = req.headers.authorization;
+		if (!authHeader?.startsWith("Bearer ")) {
+			return ResponseHelper.success<SignOutResponse>(res, { success: true });
+		}
+
+		const accessToken = authHeader.split(" ")[1];
+
+		try {
+			const response = await this.#authService.signOut(accessToken);
+			const statusCode = response.$metadata?.httpStatusCode;
+
+			if (statusCode !== 200) {
+				console.error(`Error while signing out with code ${statusCode}`);
+			}
+		} catch (error) {
+			console.warn("Cognito signOut failed, likely due to an expired or invalid token. Proceeding with logout.", error);
+		}
 
 		return ResponseHelper.success<SignOutResponse>(res, { success: true });
 	}

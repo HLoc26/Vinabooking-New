@@ -3,7 +3,7 @@ import { Box, Grid, IconButton, Input, Pagination, Paper, Skeleton, Typography }
 import AccommodationCard from "./AccommodationCard";
 import { useEffect, useMemo, useState } from "react";
 import { formatDate } from "../../../../../utils/dateFormatter";
-import type { FavouriteList } from "../../../../../types/FavouriteList";
+import type { FavouriteList } from "../../../types/FavouriteList";
 import useAccommodationsBatch from "../../../../accommodation/hooks/useAccommodationsBatch";
 
 type FavouriteDetailViewProps = {
