@@ -7,13 +7,16 @@ import { useNavigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import type { RootState } from "../../../../app/store";
 
+// Note: Ensure this relative path matches your folder structure
+import { useOwnerInfo } from "../../../owner/hooks/useOwnerInfo";
+
 const OwnerLandingHeader: React.FC = () => {
 	const [scrolled, setScrolled] = useState(false);
 	const navigate = useNavigate();
 	const { openModal, closeModal } = useModalContext();
 
-	// Fetch user authentication state from Redux
 	const user = useSelector((state: RootState) => state.auth.user);
+	const { data: ownerInfo } = useOwnerInfo();
 
 	useEffect(() => {
 		const onScroll = () => setScrolled(window.scrollY > 20);
@@ -23,10 +26,12 @@ const OwnerLandingHeader: React.FC = () => {
 
 	const handleGetStarted = () => {
 		if (user) {
-			// If authenticated, skip registration and go directly to the onboarding form
-			navigate("/owner/onboard");
+			if (user.role === "ACCOMMODATION_OWNER" && ownerInfo) {
+				navigate("/owner/home");
+			} else {
+				navigate("/owner/onboard");
+			}
 		} else {
-			// If guest, redirect to the registration flow
 			navigate("/owner/register");
 		}
 	};
@@ -35,7 +40,6 @@ const OwnerLandingHeader: React.FC = () => {
 		openModal(
 			<LoginModal
 				onLoginSuccess={() => {
-					// Once logged in via Header, redirect immediately to onboarding
 					closeModal();
 					navigate("/owner/onboard");
 				}}
@@ -62,14 +66,7 @@ const OwnerLandingHeader: React.FC = () => {
 			>
 				<Container maxWidth="lg">
 					<Stack direction="row" alignItems="center" justifyContent="space-between" sx={{ height: 72 }}>
-						{/* Brand Logo */}
-						<Stack
-							direction="row"
-							alignItems="center"
-							spacing={1.5}
-							sx={{ cursor: "pointer", userSelect: "none" }}
-							onClick={() => navigate("/")} // Navigate back to the main marketplace home
-						>
+						<Stack direction="row" alignItems="center" spacing={1.5} sx={{ cursor: "pointer", userSelect: "none" }} onClick={() => navigate("/")}>
 							<Box
 								sx={{
 									width: 36,
@@ -101,7 +98,6 @@ const OwnerLandingHeader: React.FC = () => {
 							</Typography>
 						</Stack>
 
-						{/* Navigation links — Desktop only */}
 						<Stack direction="row" spacing={1} alignItems="center" sx={{ display: { xs: "none", md: "flex" } }}>
 							{["Why host", "How it works", "FAQ"].map((label) => (
 								<Button
@@ -123,9 +119,7 @@ const OwnerLandingHeader: React.FC = () => {
 							))}
 						</Stack>
 
-						{/* Authentication Actions */}
 						<Stack direction="row" spacing={1.5} alignItems="center">
-							{/* Display Sign In only for unauthenticated users */}
 							{!user && (
 								<Button
 									onClick={handleSignIn}
@@ -166,8 +160,8 @@ const OwnerLandingHeader: React.FC = () => {
 									},
 								}}
 							>
-								{/* Dynamic CTA text based on auth status */}
-								{user ? "Continue Setup" : "Get started"}
+								{/* Dynamic text: Handles full owner, logged-in user, and guest states */}
+								{user ? (user.role === "ACCOMMODATION_OWNER" && ownerInfo ? "Go to Dashboard" : "Continue Setup") : "Get started"}
 							</Button>
 						</Stack>
 					</Stack>
