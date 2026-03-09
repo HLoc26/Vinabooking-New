@@ -46,12 +46,10 @@ const NavigationBar: React.FC = () => {
 
 	const handleLogout = () => {
 		logoutMutation.mutate(undefined, {
-			onSuccess: () => {
+			onSettled: () => {
+				// Close the menu and show success even if the API failed due to an expired token
 				pushNotification("Logged out successfully!", "success");
 				handleCloseProfileMenu();
-			},
-			onError: (error) => {
-				pushNotification(error.message || "Failed to logout", "error");
 			},
 		});
 	};
