@@ -96,6 +96,7 @@ class OAuthService {
 				email,
 				name,
 				phone: "",
+				role: "TRAVELLER",
 			});
 		}
 
@@ -115,12 +116,14 @@ class OAuthService {
 			}
 		});
 
+		const userRole = await this.#userRepository.getRoleById(userId);
+
 		if (!hasCredentials && !hasGoogle) {
 			console.log(`[OAuth] Linking Google provider for: ${email}`);
 			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
 		}
 
-		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name }));
+		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name, role: userRole?.role }));
 		const params = new URLSearchParams({
 			accessToken: tokens.accessToken,
 			idToken: tokens.idToken,
