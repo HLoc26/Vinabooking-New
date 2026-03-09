@@ -153,7 +153,7 @@ const NavigationBar: React.FC = () => {
 
 				{/* ================= RIGHT SIDE ================= */}
 				<Stack direction="row" alignItems="center" spacing={2} pr={{ xs: 0, md: 2 }}>
-					{/* Become a Host / Host Dashboard */}
+					{/* Become a Owner  Dashboard */}
 					<Button
 						variant="text"
 						onClick={() => navigate(isOwner ? "/owner/home" : "/owner/landing")}
@@ -163,7 +163,7 @@ const NavigationBar: React.FC = () => {
 							fontWeight: 600,
 						}}
 					>
-						{isOwner ? "Host Dashboard" : "Become a host"}
+						{isOwner ? "Owner Dashboard" : "Become an owner"}
 					</Button>
 
 					{userInfo ? (
@@ -214,7 +214,7 @@ const NavigationBar: React.FC = () => {
 									<ListItemIcon>
 										<AddHomeWorkRounded />
 									</ListItemIcon>
-									<ListItemText>{isOwner ? "Host Dashboard" : "Become a host"}</ListItemText>
+									<ListItemText>{isOwner ? "Owner Dashboard" : "Become an owner"}</ListItemText>
 								</MenuItem>
 
 								<MenuItem onClick={handleLogout}>
