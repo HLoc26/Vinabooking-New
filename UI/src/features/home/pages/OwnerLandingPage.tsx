@@ -14,6 +14,7 @@ import WhyHostSection from "../components/owner/sections/WhyHostSection";
 import ProcessSection from "../components/owner/sections/ProcessSection";
 import FaqSection from "../components/owner/sections/FaqSection";
 import BottomCtaSection from "../components/owner/sections/BottomCtaSection";
+import { useOwnerInfo } from "../../owner/hooks/useOwnerInfo";
 
 const OwnerLandingPage: React.FC = () => {
 	const [scrollY, setScrollY] = useState(0);
@@ -21,9 +22,16 @@ const OwnerLandingPage: React.FC = () => {
 
 	// Initialize navigation hook and retrieve user state
 	const navigate = useNavigate();
+
+	const { data: ownerInfo } = useOwnerInfo();
+
 	const user = useSelector((state: RootState) => state.auth.user);
 
 	useEffect(() => {
+		if (ownerInfo) {
+			navigate("/owner/home");
+			return;
+		}
 		// Inject Google Fonts for the landing page
 		const link = document.createElement("link");
 		link.href = "https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap";
@@ -34,7 +42,7 @@ const OwnerLandingPage: React.FC = () => {
 		window.addEventListener("scroll", onScroll);
 
 		return () => window.removeEventListener("scroll", onScroll);
-	}, []);
+	}, [navigate, ownerInfo]);
 
 	const handleGetStarted = () => {
 		if (user) {
