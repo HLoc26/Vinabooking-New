@@ -19,19 +19,18 @@ import { useOwnerInfo } from "../../owner/hooks/useOwnerInfo";
 const OwnerLandingPage: React.FC = () => {
 	const [scrollY, setScrollY] = useState(0);
 	const { openModal, closeModal } = useModalContext();
-
-	// Initialize navigation hook and retrieve user state
 	const navigate = useNavigate();
 
+	const user = useSelector((state: RootState) => state.auth.user);
 	const { data: ownerInfo } = useOwnerInfo();
 
-	const user = useSelector((state: RootState) => state.auth.user);
-
 	useEffect(() => {
-		if (ownerInfo) {
+		// Redirect fully onboarded owners directly to their dashboard
+		if (user?.role === "ACCOMMODATION_OWNER" && ownerInfo) {
 			navigate("/owner/home");
 			return;
 		}
+
 		// Inject Google Fonts for the landing page
 		const link = document.createElement("link");
 		link.href = "https://fonts.googleapis.com/css2?family=Sora:wght@300;400;600;700;800&family=DM+Sans:wght@300;400;500&display=swap";
@@ -42,18 +41,19 @@ const OwnerLandingPage: React.FC = () => {
 		window.addEventListener("scroll", onScroll);
 
 		return () => window.removeEventListener("scroll", onScroll);
-	}, [navigate, ownerInfo]);
+	}, [navigate, ownerInfo, user]);
 
 	const handleGetStarted = () => {
 		if (user) {
-			// 1. User is logged in (default role is Traveler) -> Redirect directly to business onboarding
-			navigate("/owner/onboard");
+			if (user.role === "ACCOMMODATION_OWNER" && ownerInfo) {
+				navigate("/owner/home");
+			} else {
+				navigate("/owner/onboard");
+			}
 		} else {
-			// 2. User is not logged in -> Open Login Modal
 			openModal(
 				<LoginModal
 					onLoginSuccess={() => {
-						// After successful login/registration, close modal and redirect to onboarding
 						closeModal();
 						navigate("/owner/onboard");
 					}}
@@ -81,15 +81,10 @@ const OwnerLandingPage: React.FC = () => {
 			}}
 		>
 			<OwnerLandingHeader />
-
 			<HeroSection scrollY={scrollY} onGetStarted={handleGetStarted} exampleImage={exampleImage} />
-
 			<WhyHostSection />
-
 			<ProcessSection />
-
 			<FaqSection />
-
 			<BottomCtaSection onGetStarted={handleGetStarted} />
 		</Box>
 	);
