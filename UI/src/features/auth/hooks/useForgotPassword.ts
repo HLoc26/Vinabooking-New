@@ -1,8 +1,8 @@
 import { useState } from "react";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-import { authApi } from "../../../services/authApi";
 import { useNavigate } from "react-router-dom";
 import { validatePassword } from "../utils/validatePassword";
+import { confirmForgotPassword, forgotPassword } from "../authApi";
 
 export const useForgotPassword = () => {
 	const [loading, setLoading] = useState(false);
@@ -16,7 +16,7 @@ export const useForgotPassword = () => {
 		}
 		try {
 			setLoading(true);
-			await authApi.forgotPassword(email);
+			await forgotPassword(email);
 			pushNotification("OTP has been sent to your email", "success");
 			navigate("/auth/forgot-password/verify", { state: { email } });
 		} catch (err: unknown) {
@@ -37,7 +37,7 @@ export const useForgotPassword = () => {
 
 		try {
 			setLoading(true);
-			await authApi.confirmForgotPassword({ email, code: otp, newPassword: password });
+			await confirmForgotPassword({ email, code: otp, newPassword: password });
 			pushNotification("Password updated successfully", "success");
 			navigate("/auth/login");
 		} catch (err: unknown) {

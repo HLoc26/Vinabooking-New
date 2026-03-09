@@ -1,6 +1,7 @@
 import { useQuery } from "@tanstack/react-query";
-import { getReviews, getReviewImages } from "../reviewApi";
-import type { Review, ReviewWithImages } from "../types/review.types";
+import { getReviewImages } from "../reviewApi";
+import type { Review, ReviewWithImages } from "../../review/types/review.types";
+import reviewApi from "../../review/services/reviewApi";
 
 export const useReviews = (accommodationId?: string) => {
 	return useQuery<ReviewWithImages[]>({
@@ -9,8 +10,8 @@ export const useReviews = (accommodationId?: string) => {
 		queryFn: async () => {
 			if (!accommodationId) return [];
 
-			const response = await getReviews(accommodationId);
-			const reviews: Review[] = response.data ?? [];
+			const response = await reviewApi.getByAccommodation(accommodationId);
+			const reviews: Review[] = response ?? [];
 
 			if (!reviews.length) return [];
 

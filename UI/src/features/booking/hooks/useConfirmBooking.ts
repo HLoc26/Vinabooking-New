@@ -2,7 +2,7 @@
 
 import { useState } from "react";
 import { bookingApi } from "../services/bookingApi";
-import type { BookingContextInfo } from "../../../types/BookingContextInfo";
+import type { BookingContextInfo } from "../types/BookingContextInfo";
 
 export function useConfirmBooking() {
 	const [loading, setLoading] = useState(false);

@@ -3,7 +3,7 @@ import FavouriteDetailView from "./FavouriteDetailView";
 import { Box, Button, Grid, Skeleton, Stack, Typography } from "@mui/material";
 import FolderCard from "./FolderCard";
 import useUserFavouriteList from "../../../../../features/user/hooks/useUserFavouriteList";
-import type { FavouriteList } from "../../../../../types/FavouriteList";
+import type { FavouriteList } from "../../../types/FavouriteList";
 import { CreateNewFolderOutlined } from "@mui/icons-material";
 import CreateFavouriteListModal from "./CreateFavouriteListModal";
 import useModalContext from "../../../../../context/ModalContext/hook";

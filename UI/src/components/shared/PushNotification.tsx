@@ -13,7 +13,7 @@ export const PushNotification: React.FC<PushNotificationProps> = ({ notification
 		<div
 			style={{
 				position: "fixed",
-				top: 16,
+				bottom: 16,
 				right: 16,
 				zIndex: 1500,
 				display: "flex",

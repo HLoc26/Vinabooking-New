@@ -7,21 +7,25 @@ import { useNavigate } from "react-router-dom";
 import { useRegister } from "../../auth/hooks/useRegister";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
-import UserSwitcher from "../../../components/shared/UserSwitcher";
 import PasswordToolbox from "../../../components/shared/PasswordToolbox";
-import type { EUserType } from "../../../types/UserDto";
+import type { EUserType } from "../../user/types/UserDto";
 
 import { validatePassword, getPasswordChecklist } from "../utils/validatePassword";
 import { GoogleAuthButton } from "../../../components/shared/GoogleAuthButton";
 
-const RegisterForm: React.FC = () => {
+interface RegisterFormProps {
+	defaultUserType: EUserType;
+	allowOAuth: boolean;
+}
+
+const RegisterForm: React.FC<RegisterFormProps> = ({ defaultUserType = "TRAVELLER", allowOAuth = true }) => {
 	const [values, setValues] = useState({
 		name: "",
 		email: "",
 		password: "",
 		phone: "",
 		confirmPassword: "",
-		userType: "TRAVELLER" as EUserType,
+		userType: defaultUserType,
 	});
 
 	const [checklist, setChecklist] = useState(getPasswordChecklist(""));
@@ -76,14 +80,19 @@ const RegisterForm: React.FC = () => {
 				userType: values.userType,
 			});
 			if (!response) throw new Error("");
-			navigate("/auth/otp", {
+			const state = {
 				state: {
 					destination: response.destination,
 					medium: response.medium,
 					email: values.email,
 					id: response.id,
 				},
-			});
+			};
+			if (defaultUserType == "ACCOMMODATION_OWNER") {
+				navigate("/owner/otp", state);
+			} else {
+				navigate("/auth/otp", state);
+			}
 		} catch (e) {
 			const error = e as Error;
 			console.log(error);
@@ -93,9 +102,6 @@ const RegisterForm: React.FC = () => {
 
 	return (
 		<Box component="form" onSubmit={handleSubmit}>
-			<Box display="flex" justifyContent="center">
-				<UserSwitcher value={values.userType} onChange={(v) => setValues((s) => ({ ...s, userType: v }))} />
-			</Box>
 			<TextField //
 				fullWidth
 				margin="normal"
@@ -159,21 +165,33 @@ const RegisterForm: React.FC = () => {
 			</Button>
 			<Typography variant="body2" textAlign="center" mt={2}>
 				Already have an account?{" "}
-				<Link component="button" onClick={() => navigate("/auth/login")} color="primary">
+				<Link
+					component="button"
+					onClick={() => {
+						if (defaultUserType == "ACCOMMODATION_OWNER") {
+							navigate("/owner/login");
+						} else {
+							navigate("/auth/login");
+						}
+					}}
+					color="primary"
+				>
 					Login
 				</Link>
 			</Typography>
-			<Box display="flex" flexDirection="column" alignItems="center" width="100%">
-				<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
-					<Divider sx={{ flexGrow: 1 }} />
-					<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
-						or
-					</Typography>
-					<Divider sx={{ flexGrow: 1 }} />
-				</Box>
+			{allowOAuth && (
+				<Box display="flex" flexDirection="column" alignItems="center" width="100%">
+					<Box display="flex" alignItems="center" width="100%" sx={{ my: 2 }}>
+						<Divider sx={{ flexGrow: 1 }} />
+						<Typography variant="body2" sx={{ mx: 2, color: "text.secondary", whiteSpace: "nowrap" }}>
+							or
+						</Typography>
+						<Divider sx={{ flexGrow: 1 }} />
+					</Box>
 
-				<GoogleAuthButton />
-			</Box>
+					<GoogleAuthButton />
+				</Box>
+			)}
 		</Box>
 	);
 };

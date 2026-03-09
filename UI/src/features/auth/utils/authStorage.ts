@@ -1,8 +1,10 @@
 import Cookies from "js-cookie";
-import type { UserDto } from "../../../types/UserDto";
+import type { UserDto } from "../../user/types/UserDto";
+import type { OwnerProfileData } from "../../owner/types/owner.types";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY || "access_token";
 const USER_KEY = import.meta.env.VITE_USER_KEY || "user_info";
+const OWNER_KEY = import.meta.env.VITE_OWNER_KEY || "owner_info";
 
 // Auth storage utility
 export const authStorage = {
@@ -38,5 +40,22 @@ export const authStorage = {
 
 	clearUser(): void {
 		localStorage.removeItem(USER_KEY);
+	},
+
+	// --- Owner Profile ---
+	getOwnerProfileSync<T = OwnerProfileData>(): T | null {
+		const raw = localStorage.getItem(OWNER_KEY);
+		if (!raw) return null;
+		try {
+			return JSON.parse(raw) as T;
+		} catch (error) {
+			console.error("Error parsing owner profile from local storage", error);
+			localStorage.removeItem(OWNER_KEY);
+			return null;
+		}
+	},
+
+	setOwnerProfile(ownerProfile: Partial<OwnerProfileData>): void {
+		localStorage.setItem(OWNER_KEY, JSON.stringify(ownerProfile));
 	},
 };
