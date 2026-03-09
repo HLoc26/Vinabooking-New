@@ -9,17 +9,12 @@ export const useLogoutMutation = () => {
 
 	return useMutation({
 		mutationFn: signOut,
-		onSuccess: () => {
-			// Clear Redux
+		onSettled: () => {
+			// Always clear Redux and Storage (via authSlice)
 			dispatch(logoutSuccess());
 
-			// Clear Cache React Query
-			queryClient.removeQueries({ queryKey: ["user"] });
-		},
-		onError: (error) => {
-			console.error("Logout failed", error);
-			// Dù API lỗi thì phía Client vẫn nên Force Logout để tránh kẹt
-			dispatch(logoutSuccess());
+			// Always clear React Query Cache
+			queryClient.clear();
 		},
 		retry: false,
 	});
