@@ -2,9 +2,9 @@ import React, { useState } from "react";
 import { Box, Container, Typography, TextField, Button, Paper, Stack, InputAdornment, CircularProgress } from "@mui/material";
 import { useNavigate } from "react-router-dom";
 import BusinessRoundedIcon from "@mui/icons-material/BusinessRounded";
-import PhoneRoundedIcon from "@mui/icons-material/PhoneRounded";
 import ReceiptRoundedIcon from "@mui/icons-material/ReceiptRounded";
 import CheckCircleOutlineRoundedIcon from "@mui/icons-material/CheckCircleOutlineRounded";
+import { MuiTelInput } from "mui-tel-input";
 import { useUpgradeToOwner } from "../hooks/useUpgradeToOwner";
 
 const OwnerOnboardPage: React.FC = () => {
@@ -17,7 +17,6 @@ const OwnerOnboardPage: React.FC = () => {
 		contactPhone: "",
 	});
 
-	// Mở rộng state lỗi cho cả 3 trường
 	const [errors, setErrors] = useState({
 		contactPhone: false,
 		businessName: false,
@@ -28,16 +27,21 @@ const OwnerOnboardPage: React.FC = () => {
 		const { name, value } = e.target;
 		setFormData((prev) => ({ ...prev, [name]: value }));
 
-		// Xóa lỗi tương ứng khi user bắt đầu gõ lại vào field đó
 		if (errors[name as keyof typeof errors]) {
 			setErrors((prev) => ({ ...prev, [name]: false }));
+		}
+	};
+
+	const handlePhoneChange = (newPhone: string) => {
+		setFormData((prev) => ({ ...prev, contactPhone: newPhone }));
+		if (errors.contactPhone) {
+			setErrors((prev) => ({ ...prev, contactPhone: false }));
 		}
 	};
 
 	const handleSubmit = (e: React.FormEvent) => {
 		e.preventDefault();
 
-		// Frontend Validation: Kiểm tra cả 3 trường
 		let hasError = false;
 		const newErrors = { contactPhone: false, businessName: false, taxId: false };
 
@@ -54,13 +58,11 @@ const OwnerOnboardPage: React.FC = () => {
 			hasError = true;
 		}
 
-		// Nếu có bất kỳ lỗi nào, cập nhật state và dừng submit
 		if (hasError) {
 			setErrors(newErrors);
 			return;
 		}
 
-		// Gọi Mutation (Không cần ép về undefined nữa vì chắc chắn đã có chữ)
 		upgradeToOwner(
 			{
 				contactPhone: formData.contactPhone.trim(),
@@ -121,24 +123,14 @@ const OwnerOnboardPage: React.FC = () => {
 
 					<form onSubmit={handleSubmit}>
 						<Stack spacing={3.5}>
-							<TextField
+							<MuiTelInput
 								fullWidth
+								defaultCountry="VN"
 								label="Contact Phone *"
-								name="contactPhone"
 								value={formData.contactPhone}
-								onChange={handleChange}
-								placeholder="e.g. 0901234567"
+								onChange={handlePhoneChange}
 								error={errors.contactPhone}
 								helperText={errors.contactPhone ? "Contact phone is required." : "We'll use this to contact you about bookings."}
-								slotProps={{
-									input: {
-										startAdornment: (
-											<InputAdornment position="start">
-												<PhoneRoundedIcon sx={{ color: errors.contactPhone ? "error.main" : "text.secondary" }} />
-											</InputAdornment>
-										),
-									},
-								}}
 							/>
 
 							<TextField

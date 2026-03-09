@@ -24,7 +24,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 
 	useEffect(() => {
 		// Redirect unauthorized users to the landing page immediately
-		if (isNotOwner) {
+		if (isNotOwner || !ownerInfo) {
 			navigate("/owner/landing", { replace: true });
 			return;
 		}
