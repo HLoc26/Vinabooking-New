@@ -224,6 +224,16 @@ class AccommodationService {
 		};
 	}
 
+	public async getOwnerAccommodations(ownerId: string): Promise<AccommodationFullInfo[]> {
+		const rawAccommodations = await this.#accommodationRepository.getByOwnerId(ownerId);
+		if (!rawAccommodations || rawAccommodations.length === 0) {
+			return [];
+		}
+
+		const ids = rawAccommodations.map((acc) => acc.id);
+		return await this.getAccommodationsBatch(ids);
+	}
+
 	// =================================================================
 	// PRIVATE HELPER METHODS FOR SEARCH
 	// =================================================================
