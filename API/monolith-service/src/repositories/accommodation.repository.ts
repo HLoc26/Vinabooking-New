@@ -148,6 +148,18 @@ class AccommodationRepository {
 
 		return { statsRows, total: totalMatches };
 	}
+
+	public async getByOwnerId(ownerId: string): Promise<AccommodationWithDetails[]> {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			include: {
+				address: true,
+				_count: { select: { rooms: true, reviews: true } },
+				facilities: { include: { facility: true } },
+			},
+			orderBy: { createdAt: Prisma.SortOrder.desc },
+		});
+	}
 }
 
 export default AccommodationRepository;
