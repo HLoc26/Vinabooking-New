@@ -114,7 +114,7 @@ const accommodationRouter = new AccommodationRouter(express.Router(), accommodat
 const bookingRouter = new BookingRouter(express.Router(), bookingController);
 const reviewRouter = new ReviewRouter(express.Router(), reviewController);
 const facilityRouter = new FacilityRouter(express.Router(), facilityController);
-const ownerRouter = new OwnerRouter(express.Router(), ownerController);
+const ownerRouter = new OwnerRouter(express.Router(), ownerController, accommodationController);
 const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];

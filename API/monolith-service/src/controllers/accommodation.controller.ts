@@ -79,6 +79,21 @@ class AccommodationController {
 
 		ResponseHelper.success(res, result);
 	}
+
+	/**
+	 * GET /accommodations/owner/me
+	 * Lấy danh sách chỗ ở dành riêng cho Dashboard của Owner
+	 */
+	public async getOwnerAccommodations(req: Request, res: Response) {
+		const ownerId = req.userId;
+
+		if (!ownerId) {
+			return ResponseHelper.error(res, "Unauthorized", 401);
+		}
+
+		const accommodations = await this.#accommodationService.getOwnerAccommodations(ownerId);
+		ResponseHelper.success(res, accommodations);
+	}
 }
 
 export default AccommodationController;
