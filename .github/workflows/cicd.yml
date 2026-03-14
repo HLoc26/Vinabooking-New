@@ -90,13 +90,17 @@ jobs:
       - name: Log in to GHCR on Home Server
         run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
 
-      - name: Deploy with Docker Compose (Không có chữ --build)
+      - name: Deploy with Docker Compose
         run: |
+          # Đăng nhập để kéo hàng cho chắc
+          echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
           # 1. Kéo "đồ ăn đã nấu chín" về (Cực nhẹ, đéo cần build C++)
           docker compose pull
 
           # 2. Úm ba la xì bùa, chạy lên!
-          MODE=prod docker compose --env-file ./API/monolith-service/.env.prod up -d
+          export MODE=prod
+          docker compose --env-file ./API/monolith-service/.env.prod up -d
 
       - name: Clean up rác
         run: docker image prune -a -f
