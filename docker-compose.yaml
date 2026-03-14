@@ -9,6 +9,8 @@ services:
             context: ./API/monolith-service
             dockerfile: Dockerfile
         container_name: "backend-express"
+        env_file:
+            - ./API/monolith-service/.env.${MODE:-local}
         environment:
             - NODE_ENV=${MODE:-local}
         restart: unless-stopped
