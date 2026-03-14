@@ -1,22 +1,33 @@
-FROM node:18-bullseye-slim
-
-RUN apt-get update && apt-get install -y python3 make g++ libvips-dev
-
+# --- GIAI ĐOẠN 1: THỢ XÂY (BUILDER) ---
+# Dùng Node 20/22 thoải mái để chiều lòng thằng Prisma
+FROM node:22-bullseye-slim AS builder
 WORKDIR /app
 
-COPY package*.json ./
-COPY prisma ./prisma/
-
-RUN npm ci
-COPY . .
-
-# Phase 1: Build Time (Fake URL just to create the TypeScript code)
+# Cài đồ nghề để biên dịch Sharp cho CPU đồ cổ
+RUN apt-get update && apt-get install -y python3 make g++ libvips-dev
 ENV npm_config_build_from_source=true
-RUN DATABASE_URL="mysql://fake:fake@localhost:3306/fake" npx prisma generate
-RUN npm run build
 
-EXPOSE 8080
+COPY package*.json ./
+# Cài sạch sẽ node_modules
+RUN npm install
 
-# Phase 2: Runtime (Real URL injected by docker-compose)
-# We run the migration, and IF it succeeds (&&), we start the server
-CMD ["sh", "-c", "npx prisma migrate deploy && npm run start"]
+COPY . .
+# Tạo Prisma Client ở Node 22 (GitHub Cloud gánh)
+RUN npx prisma generate
+
+# --- GIAI ĐOẠN 2: THẰNG THỰC THI (RUNTIME) ---
+# Quay về Node 18 để né lỗi x86_64-v2 trên Home Server
+FROM node:18-bullseye-slim
+WORKDIR /app
+
+# Cài library cần thiết để Prisma/Sharp chạy được (openssl, libvips)
+RUN apt-get update && apt-get install -y openssl libvips42 && rm -rf /var/lib/apt/lists/*
+
+# Bốc cái node_modules đã có Prisma Client (từ Node 22) sang Node 18
+COPY --from=builder /app/node_modules ./node_modules
+COPY --from=builder /app/package*.json ./
+COPY --from=builder /app/prisma ./prisma
+COPY --from=builder /app/src ./src
+
+EXPOSE 3000
+CMD ["npm", "start"]

@@ -29,7 +29,7 @@ services:
         image: ghcr.io/hloc26/vinabooking-new-frontend:latest
         # build:
         #     context: ./UI
-        #     dockerfile: Dockerfile.dev # dev mode
+        #     dockerfile: Dockerfile
         #     args:
         #         - VITE_MODE=${MODE}
         restart: unless-stopped
