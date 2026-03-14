@@ -4,8 +4,10 @@
 	"version": "0.0.0",
 	"type": "module",
 	"scripts": {
-		"dev": "vite",
+		"dev": "vite --mode local",
 		"build": "tsc --noEmit && vite build",
+		"build:docker": "vite build --mode docker",
+		"build:prod": "vite build --mode prod",
 		"preview": "vite preview",
 		"lint": "eslint src --report-unused-disable-directives --max-warnings 0",
 		"lint:fix": "eslint src --fix",

@@ -1,41 +1,51 @@
+# NOTE: Run `$env:MODE="xxx";` before the docker compose ...
+# with xxx in ["prod", "docker", "dev", "local"]
+
 version: "3.9"
 
 services:
-    monolith-service:
+    backend:
         build:
-            context: "./API/monolith-service"
-            dockerfile: "Dockerfile"
-        env_file:
-            - ./API/monolith-service/docker.env
+            context: ./API/monolith-service
+            dockerfile: Dockerfile
+        container_name: "backend-express"
+        environment:
+            - NODE_ENV=${MODE:-local}
+        restart: unless-stopped
         ports:
             - "8080:8080"
-        volumes:
-            - ./API/monolith-service:/app
-            - /app/node_modules
         depends_on:
             - redis
             - db
-    ui:
+    frontend:
+        container_name: "frontend-react"
         build:
             context: ./UI
             dockerfile: Dockerfile.dev # dev mode
+            args:
+                - VITE_MODE=${MODE}
+        restart: unless-stopped
         ports:
-            - "5173:5173"
-        volumes:
-            - ./UI:/app
-            - /app/node_modules
+            - "3000:80"
+        depends_on:
+            - backend
     db:
         image: mysql:8.4
-        env_file:
-            - ./API/common.env
+        container_name: mysql-db
+        restart: unless-stopped
+        environment:
+            MYSQL_ROOT_PASSWORD: ${MYSQL_ROOT_PASSWORD}
+            MYSQL_DATABASE: ${DB_NAME}
         ports:
-            - "3306:3306"
+            - "127.0.0.1:3306:3306"
         volumes:
             - mysql-data:/var/lib/mysql
     redis:
         image: redis:8.2.1-alpine
+        container_name: redis-cache
+        restart: unless-stopped
         ports:
-            - "6379:6379"
+            - "127.0.0.1:6379:6379"
         volumes:
             - redis-data:/data
 

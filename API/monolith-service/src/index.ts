@@ -1,5 +1,10 @@
 import dotenv from "dotenv";
-dotenv.config({ path: [".env"] });
+import path from "path";
+
+const envFile = `.env.${process.env.NODE_ENV || "local"}`;
+
+dotenv.config({ path: path.resolve(process.cwd(), envFile) });
+console.log(`App running in ${process.env.NODE_ENV} mode using ${envFile}`);
 
 import express from "express";
 import type { Express } from "express";
@@ -117,15 +122,26 @@ const facilityRouter = new FacilityRouter(express.Router(), facilityController);
 const ownerRouter = new OwnerRouter(express.Router(), ownerController);
 const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter);
 
-const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
+const clientUrl = process.env.CLIENT_URL;
 
+const allowedOrigins = [
+	"http://localhost:5173", // Local dev (Vite)
+	"http://localhost:3000", // Local Docker (UI port)
+];
+
+// Add the production URL if it exists
+if (clientUrl) {
+	allowedOrigins.push(clientUrl);
+}
 app.use(
 	cors({
 		origin: (origin, callback) => {
-			if (!origin || allowed.includes(origin)) {
-				return callback(null, true);
+			if (!origin || allowedOrigins.includes(origin)) {
+				callback(null, true);
+			} else {
+				console.error(`CORS Blocked: ${origin}`);
+				callback(new Error("Not allowed by CORS"));
 			}
-			return callback(new Error("Not allowed by CORS"));
 		},
 		credentials: true,
 	})
