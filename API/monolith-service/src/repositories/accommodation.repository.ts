@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, type EAccommodationType } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -158,6 +158,75 @@ class AccommodationRepository {
 				facilities: { include: { facility: true } },
 			},
 			orderBy: { createdAt: Prisma.SortOrder.desc },
+		});
+	}
+
+	public async create(data: Prisma.AccommodationCreateInput): Promise<AccommodationWithDetails> {
+		return await this.#prismaClient.accommodation.create({
+			data,
+			include: {
+				address: true,
+				facilities: { include: { facility: true } },
+			},
+		});
+	}
+
+	public async checkOwnership(id: string, ownerId: string): Promise<boolean> {
+		const count = await this.#prismaClient.accommodation.count({
+			where: { id, ownerId },
+		});
+		return count > 0;
+	}
+
+	public async syncFacilities(accommodationId: string, facilities: { facilityId: string; fee?: number; note?: string; isAvailable?: boolean }[]) {
+		// Dùng Transaction để xóa cũ, thêm mới an toàn
+		return await this.#prismaClient.$transaction(async (tx) => {
+			await tx.facilityConfig.deleteMany({ where: { accommodationId } });
+
+			if (facilities && facilities.length > 0) {
+				await tx.facilityConfig.createMany({
+					data: facilities.map((f) => ({
+						accommodationId,
+						facilityId: f.facilityId,
+						fee: f.fee || 0,
+						note: f.note,
+						isAvailable: f.isAvailable ?? true,
+					})),
+				});
+			}
+		});
+	}
+
+	public async updateBasicInfo(id: string, data: UpdateAccommodationDTO) {
+		return await this.#prismaClient.accommodation.update({
+			where: { id },
+			data: {
+				name: data.name,
+				description: data.description,
+				type: data.type,
+				rentalType: data.rentalType,
+			},
+		});
+	}
+
+	public async updateStatus(id: string, isActive: boolean) {
+		return await this.#prismaClient.accommodation.update({
+			where: { id },
+			data: { isActive },
+		});
+	}
+
+	public async updateAddress(accommodationId: string, data: UpdateAddressDTO) {
+		return await this.#prismaClient.accommodation.update({
+			where: { id: accommodationId },
+			data: {
+				address: {
+					upsert: {
+						create: data,
+						update: data,
+					},
+				},
+			},
 		});
 	}
 }
