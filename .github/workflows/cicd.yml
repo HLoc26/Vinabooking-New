@@ -56,7 +56,13 @@ jobs:
     steps:
       - name: Checkout code
         uses: actions/checkout@v4
+      - name: Generate .env files
+        run: |
+          # Write the backend secret to the exact folder Docker expects
+          echo "${{ secrets.ENV_PROD_BACKEND }}" > ./API/monolith-service/.env.prod
 
+          # Write the frontend secret
+          echo "${{ secrets.ENV_PROD_FRONTEND }}" > ./UI/.env.prod
       - name: Deploy with Docker Compose
         run: |
           # 1. Navigate to project root

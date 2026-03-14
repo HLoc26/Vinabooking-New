@@ -1,10 +1,12 @@
 import dotenv from "dotenv";
 import path from "path";
 
-const envFile = `.env.${process.env.NODE_ENV || "local"}`;
+const environment = process.env.NODE_ENV || "local";
+
+const envFile = `.env.${environment}`;
 
 dotenv.config({ path: path.resolve(process.cwd(), envFile) });
-console.log(`App running in ${process.env.NODE_ENV} mode using ${envFile}`);
+console.log(`App running in ${environment} mode using ${envFile}`);
 
 import express from "express";
 import type { Express } from "express";
@@ -159,6 +161,10 @@ app.use(appRouter.router);
 
 app.use(ErrorHandler.handle);
 
-app.listen(8080, () => {
+const portMapping = new Map<string, number>().set("local", 8080).set("dev", 8081).set("prod", 8082).set("docker", 8083);
+
+const port = portMapping.get(environment) || 8080;
+
+app.listen(port, () => {
 	console.log("Listening on port 8080");
 });
