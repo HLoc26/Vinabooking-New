@@ -1,4 +1,4 @@
-import { Prisma, type EAccommodationType } from "@/generated/client";
+import { Prisma, type EAccommodationType, type ERentalType } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 
@@ -74,4 +74,58 @@ export interface AccommodationStats {
 	minPrice: number | null;
 	avgStar: number | null;
 	reviewCount: number;
+}
+
+export interface CreateAccommodationDTO {
+	name: string;
+	description?: string;
+	type: EAccommodationType;
+	rentalType: ERentalType;
+	address: {
+		street: string;
+		ward?: string;
+		district?: string;
+		city: string;
+		country: string;
+		countryCode: string;
+		postalCode?: string;
+		latitude?: number;
+		longitude?: number;
+		fullAddress: string;
+		placeId?: string;
+	};
+}
+
+export interface UpdateFacilitiesDTO {
+	facilities: {
+		facilityId: string;
+		fee?: number;
+		note?: string;
+		isAvailable?: boolean;
+	}[];
+}
+
+export interface UpdateAccommodationDTO {
+	name?: string;
+	description?: string;
+	type?: EAccommodationType;
+	rentalType?: ERentalType;
+}
+
+export interface UpdateStatusDTO {
+	isActive: boolean;
+}
+
+export interface UpdateAddressDTO {
+	street: string;
+	ward?: string;
+	district?: string;
+	city: string;
+	country: string;
+	countryCode: string;
+	postalCode?: string;
+	latitude?: number;
+	longitude?: number;
+	fullAddress: string;
+	placeId?: string;
 }

@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { type EAccommodationType } from "@/generated/client";
-import { SearchQuery } from "@/types/accommodation.types";
+import { SearchQuery, CreateAccommodationDTO, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateStatusDTO, UpdateAddressDTO } from "@/types/accommodation.types";
 
 /**
  * GET /accommodations/:id?checkIn=...&checkOut=...
@@ -47,3 +47,12 @@ export interface GetAccommodationCountQuery {
 export type GetAccommodationCountRequest = Request<object, object, object, GetAccommodationCountQuery>;
 
 export type SearchAccommodationRequest = Request<object, object, object, SearchQuery>;
+
+// Create Accommodation
+export type CreateAccommodationRequest = Request<object, unknown, CreateAccommodationDTO>;
+export type UpdateFacilitiesRequest = Request<{ id: string }, unknown, UpdateFacilitiesDTO>;
+
+// Update Accommodation
+export type UpdateAccommodationRequest = Request<{ id: string }, unknown, UpdateAccommodationDTO>;
+export type UpdateStatusRequest = Request<{ id: string }, unknown, UpdateStatusDTO>;
+export type UpdateAddressRequest = Request<{ id: string }, unknown, UpdateAddressDTO>;
