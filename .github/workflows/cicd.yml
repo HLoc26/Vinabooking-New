@@ -6,7 +6,7 @@ on:
       - "main"
       - "develop"
       - "chore/test-cicd-pipeline"
-      # - "**" # Uncomment this if you want EVERY branch push to trigger  CI
+      # - "**" # Uncomment this if you want EVERY branch push to trigger CI
   pull_request:
     branches:
       - "main"
