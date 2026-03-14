@@ -43,6 +43,8 @@ jobs:
               working-directory: ./API/monolith-service
             - run: npx prisma generate
               working-directory: ./API/monolith-service
+              env:
+                  DATABASE_URL: "mysql://fake_user:fake_password@localhost:3306/fake_db"
 
     # --- CD JOB (Runs on your Home Server) ---
     deploy:
