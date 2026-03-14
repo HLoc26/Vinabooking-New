@@ -5,9 +5,10 @@ version: "3.9"
 
 services:
     backend:
-        build:
-            context: ./API/monolith-service
-            dockerfile: Dockerfile
+        image: ghcr.io/hloc26/vinabooking-new-backend:latest
+        # build:
+        #     context: ./API/monolith-service
+        #     dockerfile: Dockerfile
         container_name: "backend-express"
         env_file:
             - ./API/monolith-service/.env.${MODE:-local}
@@ -25,11 +26,12 @@ services:
                 condition: service_started
     frontend:
         container_name: "frontend-react"
-        build:
-            context: ./UI
-            dockerfile: Dockerfile.dev # dev mode
-            args:
-                - VITE_MODE=${MODE}
+        image: ghcr.io/hloc26/vinabooking-new-frontend:latest
+        # build:
+        #     context: ./UI
+        #     dockerfile: Dockerfile.dev # dev mode
+        #     args:
+        #         - VITE_MODE=${MODE}
         restart: unless-stopped
         ports:
             - "3000:80"

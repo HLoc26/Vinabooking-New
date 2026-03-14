@@ -1,4 +1,4 @@
-name: Full Stack CI/CD Pipeline
+name: Full Stack CI/CD Pipeline (GHCR Flow)
 
 on:
   push:
@@ -6,73 +6,92 @@ on:
       - "main"
       - "develop"
       - "chore/test-cicd-pipeline"
-      # - "**" # Uncomment this if you want EVERY branch push to trigger CI
-  pull_request:
-    branches:
-      - "main"
-      - "develop"
+
+env:
+  REGISTRY: ghcr.io
+  # Tự động lấy tên repo (vd: username/vinabooking) chuyển thành chữ thường
+  IMAGE_NAME: ${{ github.repository }}
 
 jobs:
-  # --- CI JOBS (Stay on GitHub Cloud for speed/cleanliness) ---
-  frontend-ci:
-    name: Frontend CI
+  # -------------------------------------------------------------
+  # JOB 1: THỢ XÂY BACKEND (Chạy trên Cloud xịn của GitHub)
+  # -------------------------------------------------------------
+  build-push-backend:
+    name: Build & Push Backend
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write # Cấp quyền cho nó đẩy Image lên GHCR
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: ./UI/package-lock.json
-      - run: npm ci
-        working-directory: ./UI
-      - run: npm run build
-        working-directory: ./UI
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }} # Token có sẵn, đéo cần setup
 
-  backend-ci:
-    name: Backend CI
+      - name: Build and Push Backend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./API/monolith-service
+          push: true
+          # Gắn mác cho cục hàng: ghcr.io/username/repo/backend:latest
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-backend:latest
+
+  # -------------------------------------------------------------
+  # JOB 2: THỢ XÂY FRONTEND (Chạy trên Cloud xịn của GitHub)
+  # -------------------------------------------------------------
+  build-push-frontend:
+    name: Build & Push Frontend
     runs-on: ubuntu-latest
+    permissions:
+      contents: read
+      packages: write
     steps:
       - uses: actions/checkout@v4
-      - uses: actions/setup-node@v4
+      - name: Log in to GitHub Container Registry
+        uses: docker/login-action@v3
         with:
-          node-version: "22"
-          cache: "npm"
-          cache-dependency-path: ./API/monolith-service/package-lock.json
-      - run: npm ci
-        working-directory: ./API/monolith-service
-      - run: npx prisma generate
-        working-directory: ./API/monolith-service
-        env:
-          DATABASE_URL: "mysql://fake_user:fake_password@localhost:3306/fake_db"
+          registry: ${{ env.REGISTRY }}
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
 
-  # --- CD JOB (Runs on your Home Server) ---
+      - name: Build and Push Frontend Image
+        uses: docker/build-push-action@v5
+        with:
+          context: ./UI
+          push: true
+          tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+
+  # -------------------------------------------------------------
+  # JOB 3: THẰNG HƯỞNG THỤ (Chạy trên Home Server mạng lag)
+  # -------------------------------------------------------------
   deploy:
     name: Deploy to Home Server
-    needs: [frontend-ci, backend-ci]
+    needs: [build-push-backend, build-push-frontend]
     if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/chore/test-cicd-pipeline') && github.event_name == 'push'
     runs-on: self-hosted
-
     steps:
-      - name: Checkout code
+      - name: Checkout code (Chỉ lấy docker-compose về)
         uses: actions/checkout@v4
+
       - name: Generate .env files
         run: |
-          # Write the backend secret to the exact folder Docker expects
           echo "${{ secrets.ENV_PROD_BACKEND }}" > ./API/monolith-service/.env.prod
-
-          # Write the frontend secret
           echo "${{ secrets.ENV_PROD_FRONTEND }}" > ./UI/.env.prod
-      - name: Deploy with Docker Compose
+
+      # Ép con Home Server đăng nhập vào kho chứa Image của GitHub
+      - name: Log in to GHCR on Home Server
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ${{ env.REGISTRY }} -u ${{ github.actor }} --password-stdin
+
+      - name: Deploy with Docker Compose (Không có chữ --build)
         run: |
-          # 1. Navigate to project root
-          # (Self-hosted runners keep the repo in a 'work' folder automatically )
+          # 1. Kéo "đồ ăn đã nấu chín" về (Cực nhẹ, đéo cần build C++)
+          docker compose pull
 
-          # 2. Run the deployment
-          # We pass MODE=prod to trigger .env.prod and Vite's --mode prod
-          # --build ensures Docker recreates the images with the new code
-          # -d runs it in the background
-          MODE=prod docker compose --env-file ./API/monolith-service/.env.prod up -d --build
+          # 2. Úm ba la xì bùa, chạy lên!
+          MODE=prod docker compose --env-file ./API/monolith-service/.env.prod up -d
 
-      - name: Clean up old images
-        run: docker image prune -f
+      - name: Clean up rác
+        run: docker image prune -a -f
