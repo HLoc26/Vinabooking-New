@@ -15,8 +15,12 @@ services:
         ports:
             - "8080:8080"
         depends_on:
-            - redis
-            - db
+            redis:
+                required: false
+                condition: service_started
+            db:
+                required: false
+                condition: service_started
     frontend:
         container_name: "frontend-react"
         build:
