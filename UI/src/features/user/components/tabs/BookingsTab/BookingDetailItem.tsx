@@ -13,7 +13,7 @@ import { useAccommodationReview } from "../../../../review/hooks/useAccommodatio
 import { type Review } from "../../../../review/types/review.types";
 import { authStorage } from "../../../../../features/auth/utils/authStorage";
 import { getThumbnailUrl } from "../../../../../utils/image";
-import { ACCOMMODATION_DEFAULT_IMAGES } from "../../../../accommodation/types/Const";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../../../accommodation/types/const";
 
 type BookingDetailItemProps = {
 	booking: Booking;

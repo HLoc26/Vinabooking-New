@@ -5,7 +5,7 @@ import type { AccommodationDetail } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
 import { standardize } from "../../../../utils/moneyConverter";
-import { ACCOMMODATION_DEFAULT_IMAGES } from "../../types/Const";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../types/const";
 
 interface Props {
 	accommodation: AccommodationDetail;
