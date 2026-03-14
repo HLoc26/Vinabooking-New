@@ -4,18 +4,31 @@ import { EEntityType, Prisma } from "@/generated/client";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
 import { ImageFullInfo } from "@/types/image.types";
-import { RoomFullDetail, RoomWithDetails } from "@/types/room.types";
+import { RoomFullDetail, CreateRoomDTO, UpdateRoomDTO, CreateBedDTO, UpdateBedDTO } from "@/types/room.types";
+import redisClient from "@/clients/redis.client";
 
 export class RoomService {
 	readonly #roomRepository: RoomRepository;
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
+	readonly CACHE_PREFIX = "acc:detail:";
 
 	constructor(roomRepository: RoomRepository, bookingService: BookingService, imageService: ImageService) {
 		this.#roomRepository = roomRepository;
 		this.#bookingService = bookingService;
 		this.#imageService = imageService;
 	}
+
+	// --- Helpers ---
+
+	private async _invalidateAccommodationCacheByRoomId(roomId: string) {
+		const room = await this.#roomRepository.findById(roomId);
+		if (room) {
+			await redisClient.del(`${this.CACHE_PREFIX}${room.accommodationId}`);
+		}
+	}
+
+	// --- Quản lý Rooms ---
 
 	/**
 	 * (R) Lấy thông tin chi tiết một phòng (gồm beds, amenities)
@@ -61,7 +74,7 @@ export class RoomService {
 				try {
 					const images = await this.#imageService.getImage(EEntityType.ROOM, room.id);
 					return { roomId: room.id, images };
-				} catch (error) {
+				} catch {
 					return { roomId: room.id, images: [] };
 				}
 			})
@@ -96,39 +109,52 @@ export class RoomService {
 	/**
 	 * (C) Tạo một phòng mới (bao gồm cả beds và amenities)
 	 */
-	async createRoom(data: Prisma.RoomCreateArgs["data"]) {
-		if (!data.accommodationId || !data.name) {
-			throw new BadRequestError("Missing required fields: accommodationId, name");
-		}
+	async createRoom(ownerId: string, accommodationId: string, data: CreateRoomDTO) {
+		// 1. Check Ownership
+		const isOwner = await this.#roomRepository.checkAccommodationOwnership(accommodationId, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
-		try {
-			const newRoom = await this.#roomRepository.create(data);
-			return newRoom;
-		} catch (error) {
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
-				if (error.code === "P2025") {
-					throw new BadRequestError("Invalid data: One or more amenities or the accommodation ID not found");
-				}
-			}
-			throw error;
-		}
+		// 2. Create
+		const newRoom = await this.#roomRepository.create(accommodationId, data);
+
+		// 3. Clear Cache
+		await redisClient.del(`${this.CACHE_PREFIX}${accommodationId}`);
+
+		return newRoom;
 	}
 
 	/**
 	 * (U) Cập nhật thông tin cơ bản của phòng
 	 */
-	async updateRoom(roomId: string, data: Prisma.RoomUpdateInput) {
-		await this.getRoomById(roomId);
+	async updateRoom(ownerId: string, roomId: string, data: UpdateRoomDTO) {
+		// 1. Check Ownership
+		const isOwner = await this.#roomRepository.checkRoomOwnership(roomId, ownerId);
+		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
+
+		// 2. Update
 		const updatedRoom = await this.#roomRepository.update(roomId, data);
+
+		// 3. Clear Cache
+		await redisClient.del(`${this.CACHE_PREFIX}${updatedRoom.accommodationId}`);
+
 		return updatedRoom;
 	}
 
 	/**
 	 * (D) Xóa một phòng
 	 */
-	async deleteRoom(roomId: string) {
-		await this.getRoomById(roomId);
+	async deleteRoom(ownerId: string, roomId: string) {
+		// 1. Check Ownership
+		const isOwner = await this.#roomRepository.checkRoomOwnership(roomId, ownerId);
+		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
+
+		// 2. Delete
+		const room = await this.getRoomById(roomId);
 		const deletedRoom = await this.#roomRepository.delete(roomId);
+
+		// 3. Clear Cache
+		await redisClient.del(`${this.CACHE_PREFIX}${room.accommodationId}`);
+
 		return deletedRoom;
 	}
 
@@ -150,44 +176,37 @@ export class RoomService {
 	/**
 	 * Thêm một giường mới vào phòng
 	 */
-	async addBedToRoom(roomId: string, bedData: Prisma.BedCreateWithoutRoomInput) {
-		await this.getRoomById(roomId);
+	async addBedToRoom(ownerId: string, roomId: string, bedData: CreateBedDTO) {
+		const isOwner = await this.#roomRepository.checkRoomOwnership(roomId, ownerId);
+		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
+
 		const newBed = await this.#roomRepository.addBed(roomId, bedData);
+		await this._invalidateAccommodationCacheByRoomId(roomId);
 		return newBed;
 	}
 
 	/**
 	 * Cập nhật thông tin giường
 	 */
-	async updateBed(bedId: string, bedData: Prisma.BedUpdateInput) {
-		try {
-			const updatedBed = await this.#roomRepository.updateBed(bedId, bedData);
-			return updatedBed;
-		} catch (error) {
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
-				if (error.code === "P2025") {
-					throw new NotFoundError(`Bed with ID ${bedId} not found`);
-				}
-			}
-			throw error;
-		}
+	async updateBed(ownerId: string, bedId: string, bedData: UpdateBedDTO) {
+		const isOwner = await this.#roomRepository.checkBedOwnership(bedId, ownerId);
+		if (!isOwner) throw new BadRequestError("Bed not found or unauthorized");
+
+		const updatedBed = await this.#roomRepository.updateBed(bedId, bedData);
+		await this._invalidateAccommodationCacheByRoomId(updatedBed.roomId);
+		return updatedBed;
 	}
 
 	/**
 	 * Xóa một giường khỏi phòng
 	 */
-	async removeBed(bedId: string) {
-		try {
-			const deletedBed = await this.#roomRepository.removeBed(bedId);
-			return deletedBed;
-		} catch (error) {
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
-				if (error.code === "P2025") {
-					throw new NotFoundError(`Bed with ID ${bedId} not found`);
-				}
-			}
-			throw error;
-		}
+	async removeBed(ownerId: string, bedId: string) {
+		const isOwner = await this.#roomRepository.checkBedOwnership(bedId, ownerId);
+		if (!isOwner) throw new BadRequestError("Bed not found or unauthorized");
+
+		const deletedBed = await this.#roomRepository.removeBed(bedId);
+		await this._invalidateAccommodationCacheByRoomId(deletedBed.roomId);
+		return deletedBed;
 	}
 
 	// --- Quản lý Amenities ---
@@ -195,11 +214,13 @@ export class RoomService {
 	/**
 	 * Thêm một tiện nghi vào phòng
 	 */
-	async addAmenityToRoom(roomId: string, amenityId: string, data: { note?: string | null }) {
-		await this.getRoomById(roomId);
+	async addAmenityToRoom(ownerId: string, roomId: string, amenityId: string, data: { note?: string | null }) {
+		const isOwner = await this.#roomRepository.checkRoomOwnership(roomId, ownerId);
+		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
 
 		try {
 			const newAmenityConfig = await this.#roomRepository.addAmenity(roomId, amenityId, data);
+			await this._invalidateAccommodationCacheByRoomId(roomId);
 			return newAmenityConfig;
 		} catch (error) {
 			if (error instanceof Prisma.PrismaClientKnownRequestError) {
@@ -217,18 +238,13 @@ export class RoomService {
 	/**
 	 * Xóa một tiện nghi khỏi phòng
 	 */
-	async removeAmenityFromRoom(roomId: string, amenityId: string) {
-		try {
-			const deletedConfig = await this.#roomRepository.removeAmenity(roomId, amenityId);
-			return deletedConfig;
-		} catch (error) {
-			if (error instanceof Prisma.PrismaClientKnownRequestError) {
-				if (error.code === "P2025") {
-					throw new NotFoundError(`Amenity with ID ${amenityId} not found in room ${roomId}`);
-				}
-			}
-			throw error;
-		}
+	async removeAmenityFromRoom(ownerId: string, roomId: string, amenityId: string) {
+		const isOwner = await this.#roomRepository.checkRoomOwnership(roomId, ownerId);
+		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
+
+		const deletedConfig = await this.#roomRepository.removeAmenity(roomId, amenityId);
+		await this._invalidateAccommodationCacheByRoomId(roomId);
+		return deletedConfig;
 	}
 }
 
