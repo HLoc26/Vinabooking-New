@@ -1,8 +1,19 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
-import { NotFoundError } from "../errors";
+import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
-import { EEntityType, type EAccommodationType } from "@/generated/client";
-import { SearchQuery, ESortOption, AccommodationFullInfo, SearchFilters, AccommodationWithDetails, AccommodationStats } from "@/types/accommodation.types";
+import { EEntityType, type EAccommodationType, Prisma } from "@/generated/client";
+import {
+	SearchQuery,
+	ESortOption,
+	AccommodationFullInfo,
+	SearchFilters,
+	AccommodationWithDetails,
+	AccommodationStats,
+	CreateAccommodationDTO,
+	UpdateFacilitiesDTO,
+	UpdateAccommodationDTO,
+	UpdateAddressDTO,
+} from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
 
@@ -232,6 +243,82 @@ class AccommodationService {
 
 		const ids = rawAccommodations.map((acc) => acc.id);
 		return await this.getAccommodationsBatch(ids);
+	}
+
+	async createAccommodation(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
+		const createInput: Prisma.AccommodationCreateInput = {
+			name: data.name,
+			description: data.description,
+			type: data.type,
+			rentalType: data.rentalType,
+			isActive: false, // Trạng thái nháp ban đầu
+			owner: {
+				connect: { id: ownerId },
+			},
+			address: {
+				create: {
+					street: data.address.street,
+					ward: data.address.ward,
+					district: data.address.district,
+					city: data.address.city,
+					country: data.address.country,
+					countryCode: data.address.countryCode,
+					postalCode: data.address.postalCode,
+					latitude: data.address.latitude,
+					longitude: data.address.longitude,
+					fullAddress: data.address.fullAddress,
+					placeId: data.address.placeId,
+				},
+			},
+		};
+
+		const newAccommodation = await this.#accommodationRepository.create(createInput);
+
+		return await this.getAccommodationById(newAccommodation.id);
+	}
+
+	async updateFacilities(ownerId: string, id: string, data: UpdateFacilitiesDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.syncFacilities(id, data.facilities);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async updateBasicInfo(ownerId: string, id: string, data: UpdateAccommodationDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.updateBasicInfo(id, data);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async updateStatus(ownerId: string, id: string, isActive: boolean): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.updateStatus(id, isActive);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async updateAddress(ownerId: string, id: string, addressData: UpdateAddressDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.updateAddress(id, addressData);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
 	}
 
 	// =================================================================
