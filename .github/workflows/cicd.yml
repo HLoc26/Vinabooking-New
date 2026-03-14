@@ -1,0 +1,70 @@
+name: Full Stack CI/CD Pipeline
+
+on:
+    push:
+        branches:
+            - "main"
+            - "develop"
+            - "chore/test-cicd-pipeline"
+            # - "**" # Uncomment this if you want EVERY branch push to trigger CI
+    pull_request:
+        branches:
+            - "main"
+            - "develop"
+
+jobs:
+    # --- CI JOBS (Stay on GitHub Cloud for speed/cleanliness) ---
+    frontend-ci:
+        name: Frontend CI
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+                  cache: "npm"
+                  cache-dependency-path: ./UI/package-lock.json
+            - run: npm ci
+              working-directory: ./UI
+            - run: npm run build
+              working-directory: ./UI
+
+    backend-ci:
+        name: Backend CI
+        runs-on: ubuntu-latest
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "22"
+                  cache: "npm"
+                  cache-dependency-path: ./API/monolith-service/package-lock.json
+            - run: npm ci
+              working-directory: ./API/monolith-service
+            - run: npx prisma generate
+              working-directory: ./API/monolith-service
+
+    # --- CD JOB (Runs on your Home Server) ---
+    deploy:
+        name: Deploy to Home Server
+        needs: [frontend-ci, backend-ci]
+        if: (github.ref == 'refs/heads/main' || github.ref == 'refs/heads/chore/test-cicd-pipeline') && github.event_name == 'push'
+        runs-on: self-hosted
+
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Deploy with Docker Compose
+              run: |
+                  # 1. Navigate to project root
+                  # (Self-hosted runners keep the repo in a 'work' folder automatically)
+
+                  # 2. Run the deployment
+                  # We pass MODE=prod to trigger .env.prod and Vite's --mode prod
+                  # --build ensures Docker recreates the images with the new code
+                  # -d runs it in the background
+                  MODE=prod docker compose --env-file ./API/monolith-service/.env.prod up -d --build
+
+            - name: Clean up old images
+              run: docker image prune -f
