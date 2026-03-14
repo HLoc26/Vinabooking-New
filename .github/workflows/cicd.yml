@@ -66,7 +66,7 @@ jobs:
       - name: Deploy with Docker Compose
         run: |
           # 1. Navigate to project root
-          # (Self-hosted runners keep the repo in a 'work' folder automatically)
+          # (Self-hosted runners keep the repo in a 'work' folder automatically )
 
           # 2. Run the deployment
           # We pass MODE=prod to trigger .env.prod and Vite's --mode prod
