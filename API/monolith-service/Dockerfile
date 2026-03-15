@@ -4,12 +4,14 @@ FROM node:22-bullseye-slim AS builder
 WORKDIR /app
 
 # Cài đồ nghề để biên dịch Sharp cho CPU đồ cổ
-RUN apt-get update && apt-get install -y python3 make g++ libvips-dev
+RUN apt-get update -qq && \
+    apt-get install -yqq python3 make g++ libvips-dev pkg-config libglib2.0-dev
+
 ENV npm_config_build_from_source=true
 
 COPY package*.json ./
 # Cài sạch sẽ node_modules
-RUN npm install
+RUN npm install --silent --no-audit --no-fund
 
 COPY . .
 # Tạo Prisma Client ở Node 22 (GitHub Cloud gánh)
