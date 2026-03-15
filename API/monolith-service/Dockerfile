@@ -1,28 +1,22 @@
-# --- GIAI ĐOẠN 1: THỢ XÂY (BUILDER) ---
-# Dùng bản alpine3.19 để có libvips đời mới nhất
-FROM node:22-alpine3.19 AS builder
+# --- GIAI ĐOẠN 1: THỢ XÂY ---
+# Xài Node 20 cho Prisma nó vui, đéo cần cài thêm bất cứ cái apk C++ nào hết!
+FROM node:20-alpine AS builder
 WORKDIR /app
 
-# Cài đồ nghề bằng apk của Alpine (Siêu nhẹ, siêu mới)
-RUN apk update && apk add --no-cache python3 make g++ vips-dev pkgconfig
-
-ENV npm_config_build_from_source=true
-
 COPY package*.json ./
-# Cài npm bình thường, nó sẽ nuốt trôi cục sharp nhờ có libvips xịn
-RUN npm install --no-audit --no-fund
+# Cài npm nhẹ nhàng như lông hồng, sharp 0.32.6 sẽ tự tải cục binary 1 giây là xong!
+RUN npm install
 
 COPY . .
 RUN npx prisma generate
 
 
-# --- GIAI ĐOẠN 2: THẰNG THỰC THI (RUNTIME) ---
-# Trở về Node 18, giữ nguyên alpine3.19 để né lỗi CPU server
-FROM node:18-alpine3.19
+# --- GIAI ĐOẠN 2: RUNTIME ---
+FROM node:20-alpine
 WORKDIR /app
 
-# Chỉ cài vips và openssl (cho Prisma) để chạy, không cần g++ nữa
-RUN apk update && apk add --no-cache vips openssl
+# Chỉ cài openssl cho Prisma connect Database
+RUN apk update && apk add --no-cache openssl
 
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
