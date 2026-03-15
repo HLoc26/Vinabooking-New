@@ -1,31 +1,29 @@
 # --- GIAI ĐOẠN 1: THỢ XÂY (BUILDER) ---
-# Dùng Node 20/22 thoải mái để chiều lòng thằng Prisma
-FROM node:22-bullseye-slim AS builder
+# Dùng bản alpine3.19 để có libvips đời mới nhất
+FROM node:22-alpine3.19 AS builder
 WORKDIR /app
 
-# Cài đồ nghề để biên dịch Sharp cho CPU đồ cổ
-RUN apt-get update -qq && \
-    apt-get install -yqq python3 make g++ libvips-dev pkg-config libglib2.0-dev
+# Cài đồ nghề bằng apk của Alpine (Siêu nhẹ, siêu mới)
+RUN apk update && apk add --no-cache python3 make g++ vips-dev pkgconfig
 
 ENV npm_config_build_from_source=true
 
 COPY package*.json ./
-# Cài sạch sẽ node_modules
-RUN npm install --loglevel=error --no-audit --no-fund
+# Cài npm bình thường, nó sẽ nuốt trôi cục sharp nhờ có libvips xịn
+RUN npm install --no-audit --no-fund
 
 COPY . .
-# Tạo Prisma Client ở Node 22 (GitHub Cloud gánh)
 RUN npx prisma generate
 
+
 # --- GIAI ĐOẠN 2: THẰNG THỰC THI (RUNTIME) ---
-# Quay về Node 18 để né lỗi x86_64-v2 trên Home Server
-FROM node:18-bullseye-slim
+# Trở về Node 18, giữ nguyên alpine3.19 để né lỗi CPU server
+FROM node:18-alpine3.19
 WORKDIR /app
 
-# Cài library cần thiết để Prisma/Sharp chạy được (openssl, libvips)
-RUN apt-get update && apt-get install -y openssl libvips42 && rm -rf /var/lib/apt/lists/*
+# Chỉ cài vips và openssl (cho Prisma) để chạy, không cần g++ nữa
+RUN apk update && apk add --no-cache vips openssl
 
-# Bốc cái node_modules đã có Prisma Client (từ Node 22) sang Node 18
 COPY --from=builder /app/node_modules ./node_modules
 COPY --from=builder /app/package*.json ./
 COPY --from=builder /app/prisma ./prisma
