@@ -68,6 +68,8 @@ jobs:
           dockerfile: Dockerfile.dev
           push: true
           tags: ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}-frontend:latest
+          build-args: |
+            VITE_MODE=prod
 
   # -------------------------------------------------------------
   # JOB 3: THẰNG HƯỞNG THỤ (Chạy trên Home Server mạng lag)
