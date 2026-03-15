@@ -8,7 +8,7 @@ COPY package*.json ./
 RUN npm install
 
 COPY . .
-RUN npx prisma generate
+RUN DATABASE_URL="mysql://fake:fake@localhost:3306/fake" npx prisma generate
 
 
 # --- GIAI ĐOẠN 2: RUNTIME ---
