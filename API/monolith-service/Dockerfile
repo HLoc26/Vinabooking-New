@@ -11,7 +11,7 @@ ENV npm_config_build_from_source=true
 
 COPY package*.json ./
 # Cài sạch sẽ node_modules
-RUN npm install --silent --no-audit --no-fund
+RUN npm install --loglevel=error --no-audit --no-fund
 
 COPY . .
 # Tạo Prisma Client ở Node 22 (GitHub Cloud gánh)
