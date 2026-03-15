@@ -23,6 +23,7 @@
 		"express": "^5.2.1",
 		"multer": "^2.0.2",
 		"node-addon-api": "^8.6.0",
+		"node-gyp": "^12.2.0",
 		"nodemailer": "^8.0.0",
 		"redis": "^5.10.0",
 		"sharp": "^0.34.5",
