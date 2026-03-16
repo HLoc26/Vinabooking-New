@@ -1,4 +1,4 @@
-import { Prisma, type EAccommodationType, type ERentalType } from "@/generated/client";
+import { Prisma, type EAccommodationType, type ERentalType, type EAccommodationStatus } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 
@@ -113,7 +113,7 @@ export interface UpdateAccommodationDTO {
 }
 
 export interface UpdateStatusDTO {
-	isActive: boolean;
+	status: EAccommodationStatus;
 }
 
 export interface UpdateAddressDTO {
