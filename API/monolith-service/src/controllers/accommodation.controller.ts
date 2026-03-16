@@ -174,16 +174,16 @@ class AccommodationController {
 	public async updateStatus(req: UpdateStatusRequest, res: Response) {
 		const ownerId = req.userId;
 		const { id } = req.params;
-		const { isActive } = req.body;
+		const { status } = req.body;
 
 		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
-		if (typeof isActive !== "boolean") {
-			return ResponseHelper.error(res, "isActive must be a boolean", 400);
+		if (!status || !["DRAFT", "PUBLISHED", "HIDDEN", "BANNED"].includes(status)) {
+			return ResponseHelper.error(res, "Invalid status value", 400);
 		}
 
 		try {
-			const data = await this.#accommodationService.updateStatus(ownerId, id, isActive);
-			ResponseHelper.success(res, data); // 200 OK mặc định
+			const data = await this.#accommodationService.updateStatus(ownerId, id, status);
+			ResponseHelper.success(res, data);
 		} catch (error) {
 			if (error instanceof Error) {
 				ResponseHelper.error(res, error.message, 400);
