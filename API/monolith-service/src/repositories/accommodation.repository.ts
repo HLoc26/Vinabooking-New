@@ -178,6 +178,18 @@ class AccommodationRepository {
 		return count > 0;
 	}
 
+	public async getForPublishValidation(id: string, ownerId: string) {
+		return await this.#prismaClient.accommodation.findFirst({
+			where: { id, ownerId },
+			include: {
+				address: true,
+				rooms: {
+					include: { beds: true },
+				},
+			},
+		});
+	}
+
 	public async syncFacilities(accommodationId: string, facilities: { facilityId: string; fee?: number; note?: string; isAvailable?: boolean }[]) {
 		// Dùng Transaction để xóa cũ, thêm mới an toàn
 		return await this.#prismaClient.$transaction(async (tx) => {
