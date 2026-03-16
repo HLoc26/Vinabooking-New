@@ -1,7 +1,7 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
-import { EEntityType, type EAccommodationType, Prisma } from "@/generated/client";
+import { EEntityType, type EAccommodationType, type EAccommodationStatus, Prisma } from "@/generated/client";
 import {
 	SearchQuery,
 	ESortOption,
@@ -251,7 +251,7 @@ class AccommodationService {
 			description: data.description,
 			type: data.type,
 			rentalType: data.rentalType,
-			isActive: false, // Trạng thái nháp ban đầu
+			status: "DRAFT",
 			owner: {
 				connect: { id: ownerId },
 			},
@@ -299,11 +299,11 @@ class AccommodationService {
 		return await this.getAccommodationById(id);
 	}
 
-	async updateStatus(ownerId: string, id: string, isActive: boolean): Promise<AccommodationFullInfo> {
+	async updateStatus(ownerId: string, id: string, status: EAccommodationStatus): Promise<AccommodationFullInfo> {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
-		await this.#accommodationRepository.updateStatus(id, isActive);
+		await this.#accommodationRepository.updateStatus(id, status);
 
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
