@@ -64,6 +64,10 @@ class OwnerRouter {
 			return this.accommodationController.updateStatus(req as UpdateStatusRequest, res);
 		});
 
+		this.router.patch("/accommodations/:id/publish", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.accommodationController.publish(req as Request<{ id: string }>, res);
+		});
+
 		this.router.put("/accommodations/:id/address", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.accommodationController.updateAddress(req as UpdateAddressRequest, res);
 		});
