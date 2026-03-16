@@ -193,6 +193,24 @@ class AccommodationController {
 		}
 	}
 
+	public async publish(req: Request<{ id: string }>, res: Response) {
+		const ownerId = req.userId;
+		const { id } = req.params;
+
+		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
+
+		try {
+			const data = await this.#accommodationService.publishAccommodation(ownerId, id);
+			ResponseHelper.success(res, data);
+		} catch (error) {
+			if (error instanceof Error) {
+				ResponseHelper.error(res, error.message, 400);
+			} else {
+				ResponseHelper.error(res, "An unknown error occurred", 500);
+			}
+		}
+	}
+
 	public async updateAddress(req: UpdateAddressRequest, res: Response) {
 		const ownerId = req.userId;
 		const { id } = req.params;
