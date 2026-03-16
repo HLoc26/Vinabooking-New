@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, type EAccommodationType } from "@/generated/client";
+import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
 import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/types/accommodation.types";
 
 class AccommodationRepository {
@@ -29,7 +29,7 @@ class AccommodationRepository {
 	public async countByType(): Promise<{ type: EAccommodationType; _count: { id: number } }[]> {
 		const result = await this.#prismaClient.accommodation.groupBy({
 			by: ["type"] as const,
-			where: { isActive: true },
+			where: { status: "PUBLISHED" },
 			_count: { id: true },
 			orderBy: { _count: { id: Prisma.SortOrder.desc } },
 		});
@@ -40,7 +40,7 @@ class AccommodationRepository {
 	public async countByCity(): Promise<{ city: string; _count: { id: number } }[]> {
 		const result = await this.#prismaClient.address.groupBy({
 			by: ["city"] as const,
-			where: { accommodation: { isActive: true } },
+			where: { accommodation: { status: "PUBLISHED" } },
 			_count: { id: true },
 			orderBy: { _count: { id: Prisma.SortOrder.desc } },
 			take: 20,
@@ -50,7 +50,7 @@ class AccommodationRepository {
 	}
 
 	public async count(filters: { city?: string; type?: EAccommodationType }): Promise<number> {
-		const where: Prisma.AccommodationWhereInput = { isActive: true };
+		const where: Prisma.AccommodationWhereInput = { status: "PUBLISHED" };
 		if (filters.type) where.type = filters.type;
 		if (filters.city) where.address = { city: { contains: filters.city } };
 
@@ -59,7 +59,7 @@ class AccommodationRepository {
 
 	public async getStatsRows(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST) {
 		const where: Prisma.AccommodationWhereInput = {
-			isActive: true,
+			status: "PUBLISHED",
 		};
 
 		// 1. Keyword
@@ -209,10 +209,10 @@ class AccommodationRepository {
 		});
 	}
 
-	public async updateStatus(id: string, isActive: boolean) {
+	public async updateStatus(id: string, status: EAccommodationStatus) {
 		return await this.#prismaClient.accommodation.update({
 			where: { id },
-			data: { isActive },
+			data: { status },
 		});
 	}
 
