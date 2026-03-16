@@ -35,7 +35,7 @@ export interface AccommodationDetail {
 	description: string;
 	type: EAccommodationType;
 	rentalType: string;
-	isActive: boolean;
+	status: string;
 	address: Address;
 	facilities: FacilityConfig[];
 	rooms: Room[];
