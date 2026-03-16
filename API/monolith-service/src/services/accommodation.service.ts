@@ -310,6 +310,55 @@ class AccommodationService {
 		return await this.getAccommodationById(id);
 	}
 
+	async publishAccommodation(ownerId: string, id: string): Promise<AccommodationFullInfo> {
+		// Lấy raw data từ DB kèm theo các bảng con
+		const acc = await this.#accommodationRepository.getForPublishValidation(id, ownerId);
+
+		if (!acc) {
+			throw new NotFoundError("Accommodation not found or unauthorized");
+		}
+
+		if (acc.status === "PUBLISHED") {
+			throw new BadRequestError("This accommodation is already published");
+		}
+
+		// ==========================================
+		// 🚨 VALIDATION RULES
+		// ==========================================
+
+		// 1. Phải có địa chỉ
+		if (!acc.address) {
+			throw new BadRequestError("Cannot publish: Missing address information.");
+		}
+
+		// 2. Phải có ít nhất 1 phòng
+		if (!acc.rooms || acc.rooms.length === 0) {
+			throw new BadRequestError("Cannot publish: You must add at least one room.");
+		}
+
+		// 3. Quét từng phòng để đảm bảo tính toàn vẹn dữ liệu
+		for (const room of acc.rooms) {
+			if (!room.price || Number(room.price) <= 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid price greater than 0.`);
+			}
+			if (!room.quantity || room.quantity <= 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid quantity.`);
+			}
+			if (!room.beds || room.beds.length === 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have at least one bed.`);
+			}
+		}
+
+		// ==========================================
+		// ✅ PASS VALIDATION
+		// ==========================================
+
+		await this.#accommodationRepository.updateStatus(id, "PUBLISHED");
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
 	async updateAddress(ownerId: string, id: string, addressData: UpdateAddressDTO): Promise<AccommodationFullInfo> {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
