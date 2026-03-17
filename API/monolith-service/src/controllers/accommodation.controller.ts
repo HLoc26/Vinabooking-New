@@ -14,6 +14,7 @@ import {
 	UpdateStatusRequest,
 	UpdateAddressRequest,
 } from "@/types/requests";
+import type { ApiResponse, AccommodationCardResponse } from "@/types/responses";
 
 class AccommodationController {
 	readonly #accommodationService: AccommodationService;
@@ -92,10 +93,10 @@ class AccommodationController {
 	}
 
 	/**
-	 * GET /accommodations/owner/me
+	 * GET /owner/accommodations
 	 * Lấy danh sách chỗ ở dành riêng cho Dashboard của Owner
 	 */
-	public async getOwnerAccommodations(req: Request, res: Response) {
+	public async getOwnerAccommodations(req: Request, res: Response<ApiResponse<AccommodationCardResponse[]>>) {
 		const ownerId = req.userId;
 
 		if (!ownerId) {
@@ -103,7 +104,7 @@ class AccommodationController {
 		}
 
 		const accommodations = await this.#accommodationService.getOwnerAccommodations(ownerId);
-		ResponseHelper.success(res, accommodations);
+		return ResponseHelper.success(res, accommodations);
 	}
 
 	public async create(req: CreateAccommodationRequest, res: Response) {
