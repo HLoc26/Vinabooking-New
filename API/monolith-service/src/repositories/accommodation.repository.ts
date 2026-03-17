@@ -161,6 +161,36 @@ class AccommodationRepository {
 		});
 	}
 
+	public async getDashboardCardsByOwnerId(ownerId: string) {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			select: {
+				id: true,
+				name: true,
+				type: true,
+				status: true,
+				updatedAt: true,
+				address: {
+					select: {
+						fullAddress: true,
+					},
+				},
+				_count: {
+					select: {
+						rooms: true,
+						reviews: true,
+					},
+				},
+				reviews: {
+					select: {
+						star: true, // Cái này tự tính trung bình in-memory
+					},
+				},
+			},
+			orderBy: { updatedAt: Prisma.SortOrder.desc },
+		});
+	}
+
 	public async create(data: Prisma.AccommodationCreateInput): Promise<AccommodationWithDetails> {
 		return await this.#prismaClient.accommodation.create({
 			data,
