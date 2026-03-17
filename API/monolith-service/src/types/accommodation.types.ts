@@ -76,6 +76,19 @@ export interface AccommodationStats {
 	reviewCount: number;
 }
 
+export interface OwnerAccommodationCard {
+	id: string;
+	name: string;
+	type: EAccommodationType;
+	status: EAccommodationStatus;
+	thumbnail: string | null;
+	address: string | null;
+	roomCount: number;
+	reviewCount: number;
+	avgStar: number | null;
+	updatedAt: Date;
+}
+
 export interface CreateAccommodationDTO {
 	name: string;
 	description?: string;
