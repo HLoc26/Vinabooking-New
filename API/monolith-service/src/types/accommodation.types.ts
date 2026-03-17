@@ -2,6 +2,8 @@ import { Prisma, type EAccommodationType, type ERentalType, type EAccommodationS
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 
+export { EAccommodationStatus } from "@/generated/client";
+
 export enum ESortOption {
 	NEWEST = "newest",
 	NAME_ASC = "name_asc",
