@@ -1,7 +1,7 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
-import { EEntityType, type EAccommodationType, type EAccommodationStatus, Prisma } from "@/generated/client";
+import { EEntityType, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
 import {
 	SearchQuery,
 	ESortOption,
