@@ -109,7 +109,6 @@ export interface UpdateAccommodationDTO {
 	name?: string;
 	description?: string;
 	type?: EAccommodationType;
-	rentalType?: ERentalType;
 }
 
 export interface UpdateStatusDTO {
