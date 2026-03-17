@@ -112,13 +112,13 @@ class AccommodationController {
 		const body = req.body;
 
 		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
-		if (!body.name || !body.type || !body.address) {
-			return ResponseHelper.error(res, "Missing required fields: name, type, address", 400);
+		if (!body.name || !body.type) {
+			return ResponseHelper.error(res, "Missing required fields: name, type", 400);
 		}
 
 		try {
 			const data = await this.#accommodationService.createAccommodation(ownerId, body);
-			ResponseHelper.success(res, data, 201); // 201 Created
+			ResponseHelper.success(res, data, 201);
 		} catch (error) {
 			if (error instanceof Error) {
 				ResponseHelper.error(res, error.message, 400);
