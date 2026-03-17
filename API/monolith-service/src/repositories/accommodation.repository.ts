@@ -255,7 +255,6 @@ class AccommodationRepository {
 				name: data.name,
 				description: data.description,
 				type: data.type,
-				rentalType: data.rentalType,
 			},
 		});
 	}
