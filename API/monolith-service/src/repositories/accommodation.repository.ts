@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO, CreateAccommodationDTO } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -191,9 +191,18 @@ class AccommodationRepository {
 		});
 	}
 
-	public async create(data: Prisma.AccommodationCreateInput): Promise<AccommodationWithDetails> {
+	public async create(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationWithDetails> {
 		return await this.#prismaClient.accommodation.create({
-			data,
+			data: {
+				name: data.name,
+				description: data.description,
+				type: data.type,
+				rentalType: data.rentalType,
+				status: "DRAFT",
+				owner: {
+					connect: { id: ownerId },
+				},
+			},
 			include: {
 				address: true,
 				facilities: { include: { facility: true } },
