@@ -289,21 +289,6 @@ class AccommodationService {
 			owner: {
 				connect: { id: ownerId },
 			},
-			address: {
-				create: {
-					street: data.address.street,
-					ward: data.address.ward,
-					district: data.address.district,
-					city: data.address.city,
-					country: data.address.country,
-					countryCode: data.address.countryCode,
-					postalCode: data.address.postalCode,
-					latitude: data.address.latitude,
-					longitude: data.address.longitude,
-					fullAddress: data.address.fullAddress,
-					placeId: data.address.placeId,
-				},
-			},
 		};
 
 		const newAccommodation = await this.#accommodationRepository.create(createInput);

@@ -94,19 +94,6 @@ export interface CreateAccommodationDTO {
 	description?: string;
 	type: EAccommodationType;
 	rentalType: ERentalType;
-	address: {
-		street: string;
-		ward?: string;
-		district?: string;
-		city: string;
-		country: string;
-		countryCode: string;
-		postalCode?: string;
-		latitude?: number;
-		longitude?: number;
-		fullAddress: string;
-		placeId?: string;
-	};
 }
 
 export interface UpdateFacilitiesDTO {
