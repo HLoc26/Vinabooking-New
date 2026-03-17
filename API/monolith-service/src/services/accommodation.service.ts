@@ -13,6 +13,7 @@ import {
 	UpdateFacilitiesDTO,
 	UpdateAccommodationDTO,
 	UpdateAddressDTO,
+	OwnerAccommodationCard,
 } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
@@ -235,14 +236,47 @@ class AccommodationService {
 		};
 	}
 
-	public async getOwnerAccommodations(ownerId: string): Promise<AccommodationFullInfo[]> {
-		const rawAccommodations = await this.#accommodationRepository.getByOwnerId(ownerId);
+	public async getOwnerAccommodations(ownerId: string): Promise<OwnerAccommodationCard[]> {
+		const rawAccommodations = await this.#accommodationRepository.getDashboardCardsByOwnerId(ownerId);
+
 		if (!rawAccommodations || rawAccommodations.length === 0) {
 			return [];
 		}
 
 		const ids = rawAccommodations.map((acc) => acc.id);
-		return await this.getAccommodationsBatch(ids);
+
+		// Get thubnail
+		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
+		const imageMap: Record<string, string> = {};
+
+		ids.forEach((id) => {
+			const accImages = imagesBatch.filter((img) => img.references.some((ref) => ref.entityId === id));
+
+			if (accImages.length > 0) {
+				const bestImage = accImages.find((img) => img.references.some((ref) => ref.entityId === id && ref.isPrimary)) ?? accImages[0];
+				const thumbnailVariant = bestImage.variants.find((v) => v.variant === "THUMBNAIL");
+				imageMap[id] = thumbnailVariant?.url ?? bestImage.url;
+			}
+		});
+
+		return rawAccommodations.map((acc) => {
+			// Tính sao trung bình in-memory
+			const validStars = acc.reviews.filter((r) => r.star !== null).map((r) => r.star as number);
+			const avgStar = validStars.length > 0 ? Number((validStars.reduce((a, b) => a + b, 0) / validStars.length).toFixed(1)) : null;
+
+			return {
+				id: acc.id,
+				name: acc.name,
+				type: acc.type,
+				status: acc.status,
+				thumbnail: imageMap[acc.id] ?? null,
+				address: acc.address?.fullAddress ?? null,
+				roomCount: acc._count.rooms,
+				reviewCount: acc._count.reviews,
+				avgStar: avgStar,
+				updatedAt: acc.updatedAt,
+			};
+		});
 	}
 
 	async createAccommodation(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
