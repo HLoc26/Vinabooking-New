@@ -280,18 +280,7 @@ class AccommodationService {
 	}
 
 	async createAccommodation(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
-		const createInput: Prisma.AccommodationCreateInput = {
-			name: data.name,
-			description: data.description,
-			type: data.type,
-			rentalType: data.rentalType,
-			status: "DRAFT",
-			owner: {
-				connect: { id: ownerId },
-			},
-		};
-
-		const newAccommodation = await this.#accommodationRepository.create(createInput);
+		const newAccommodation = await this.#accommodationRepository.create(ownerId, data);
 
 		return await this.getAccommodationById(newAccommodation.id);
 	}
