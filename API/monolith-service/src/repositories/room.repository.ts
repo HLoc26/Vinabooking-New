@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma, Room, Bed } from "@/generated/client";
-import type { RoomFilterOptions, RoomWithDetails, AmenityConfigWithDetails, CreateRoomDTO, UpdateRoomDTO, CreateBedDTO, UpdateBedDTO } from "@/types/room.types";
+import { PrismaClient, Prisma, Room } from "@/generated/client";
+import type { RoomFilterOptions, RoomWithDetails, CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
 
 class RoomRepository {
 	readonly #prismaClient: PrismaClient;
@@ -20,23 +20,12 @@ class RoomRepository {
 		return count > 0;
 	}
 
-	// 2. Room -> Accommodation -> Owner (Dùng khi Sửa/Xóa phòng, Thêm tiện ích/giường)
+	// 2. Room -> Accommodation -> Owner (Dùng khi Sửa/Xóa phòng)
 	public async checkRoomOwnership(roomId: string, ownerId: string): Promise<boolean> {
 		const count = await this.#prismaClient.room.count({
 			where: {
 				id: roomId,
 				accommodation: { ownerId: ownerId },
-			},
-		});
-		return count > 0;
-	}
-
-	// 3. Bed -> Room -> Accommodation -> Owner (Dùng khi Sửa/Xóa giường)
-	public async checkBedOwnership(bedId: string, ownerId: string): Promise<boolean> {
-		const count = await this.#prismaClient.bed.count({
-			where: {
-				id: bedId,
-				room: { accommodation: { ownerId: ownerId } },
 			},
 		});
 		return count > 0;
@@ -68,7 +57,6 @@ class RoomRepository {
 	 * (R) Tìm NHIỀU Rooms bằng danh sách IDs.
 	 * Bao gồm cả Beds và Amenities chi tiết.
 	 */
-
 	public async findManyByIds(ids: string[]) {
 		if (!ids || ids.length === 0) return [];
 
@@ -193,6 +181,19 @@ class RoomRepository {
 				price: data.price,
 				pricingType: data.pricingType,
 				isActive: data.isActive ?? true,
+				beds: {
+					create:
+						data.beds?.map((bed) => ({
+							name: bed.name,
+							bedType: bed.bedType,
+							description: bed.description,
+							size: bed.size,
+							price: bed.price,
+						})) || [],
+				},
+				amenities: {
+					create: data.amenityIds?.map((id) => ({ amenityId: id })) || [],
+				},
 			},
 			include: {
 				beds: true,
@@ -202,76 +203,44 @@ class RoomRepository {
 	}
 
 	public async update(roomId: string, data: UpdateRoomDTO): Promise<RoomWithDetails> {
-		return await this.#prismaClient.room.update({
-			where: { id: roomId },
-			data: data,
-			include: {
-				beds: true,
-				amenities: { include: { amenity: true } },
-			},
+		return await this.#prismaClient.$transaction(async (tx) => {
+			if (data.beds) {
+				await tx.bed.deleteMany({ where: { roomId } });
+			}
+			if (data.amenityIds) {
+				await tx.amenityConfig.deleteMany({ where: { roomId } });
+			}
+
+			return await tx.room.update({
+				where: { id: roomId },
+				data: {
+					name: data.name,
+					description: data.description,
+					quantity: data.quantity,
+					maxAdults: data.maxAdults,
+					maxChildren: data.maxChildren,
+					size: data.size,
+					bedroomCount: data.bedroomCount,
+					bathroomCount: data.bathroomCount,
+					viewType: data.viewType,
+					viewDescription: data.viewDescription,
+					price: data.price,
+					pricingType: data.pricingType,
+					isActive: data.isActive,
+					...(data.beds ? { beds: { create: data.beds } } : {}),
+					...(data.amenityIds ? { amenities: { create: data.amenityIds.map((id) => ({ amenityId: id })) } } : {}),
+				},
+				include: {
+					beds: true,
+					amenities: { include: { amenity: true } },
+				},
+			});
 		});
 	}
 
 	public async delete(roomId: string): Promise<Room> {
 		return await this.#prismaClient.room.delete({
 			where: { id: roomId },
-		});
-	}
-
-	// ==========================================
-	// 2 - BED CRUD
-	// ==========================================
-
-	public async addBed(roomId: string, data: CreateBedDTO): Promise<Bed> {
-		return await this.#prismaClient.bed.create({
-			data: {
-				roomId: roomId,
-				name: data.name,
-				description: data.description,
-				bedType: data.bedType,
-				size: data.size,
-				price: data.price,
-				isActive: data.isActive ?? true,
-			},
-		});
-	}
-
-	public async updateBed(bedId: string, data: UpdateBedDTO): Promise<Bed> {
-		return await this.#prismaClient.bed.update({
-			where: { id: bedId },
-			data: data,
-		});
-	}
-
-	public async removeBed(bedId: string): Promise<Bed> {
-		return await this.#prismaClient.bed.delete({
-			where: { id: bedId },
-		});
-	}
-
-	// ==========================================
-	// 3 - AMENITY CONFIG
-	// ==========================================
-
-	public async addAmenity(roomId: string, amenityId: string, data: { note?: string | null }): Promise<AmenityConfigWithDetails> {
-		return await this.#prismaClient.amenityConfig.create({
-			data: {
-				roomId: roomId,
-				amenityId: amenityId,
-				note: data.note,
-			},
-			include: {
-				amenity: true,
-			},
-		});
-	}
-
-	public async removeAmenity(roomId: string, amenityId: string): Promise<Prisma.BatchPayload> {
-		return await this.#prismaClient.amenityConfig.deleteMany({
-			where: {
-				roomId: roomId,
-				amenityId: amenityId,
-			},
 		});
 	}
 }
