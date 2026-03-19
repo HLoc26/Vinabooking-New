@@ -27,6 +27,14 @@ export type RoomFullDetail = RoomWithDetails & {
 	images: ImageFullInfo[];
 };
 
+export interface CreateBedBatchDTO {
+	name: string;
+	description?: string;
+	bedType: EBedType;
+	size?: string;
+	price?: number;
+}
+
 export interface CreateRoomDTO {
 	name: string;
 	description?: string;
@@ -41,22 +49,9 @@ export interface CreateRoomDTO {
 	price?: number;
 	pricingType?: EPricingType;
 	isActive?: boolean;
+
+	beds: CreateBedBatchDTO[];
+	amenityIds: string[];
 }
 
 export type UpdateRoomDTO = Partial<CreateRoomDTO>;
-
-export interface CreateBedDTO {
-	name: string;
-	description?: string;
-	bedType: EBedType;
-	size?: string;
-	price?: number;
-	isActive?: boolean;
-}
-
-export type UpdateBedDTO = Partial<CreateBedDTO>;
-
-export interface AddAmenityDTO {
-	amenityId: string;
-	note?: string;
-}

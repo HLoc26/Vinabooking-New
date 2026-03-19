@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { CreateRoomDTO, UpdateRoomDTO, CreateBedDTO, UpdateBedDTO, AddAmenityDTO } from "@/types/room.types";
+import { CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
 
 /* ------------------------------------------------------------------ */
 /* Room                                                               */
@@ -45,31 +45,3 @@ export interface FilterAccommodationIdsQuery {
 }
 
 export type FilterAccommodationIdsRequest = Request<object, object, object, FilterAccommodationIdsQuery>;
-
-/* ------------------------------------------------------------------ */
-/* Bed                                                                */
-/* ------------------------------------------------------------------ */
-
-// POST /rooms/:roomId/beds
-export type AddBedToRoomRequest = Request<{ roomId: string }, unknown, CreateBedDTO>;
-
-// PATCH /beds/:bedId
-export type UpdateBedRequest = Request<{ bedId: string }, unknown, UpdateBedDTO>;
-
-// DELETE /beds/:bedId
-export type RemoveBedRequest = Request<{
-	bedId: string;
-}>;
-
-/* ------------------------------------------------------------------ */
-/* Amenity                                                            */
-/* ------------------------------------------------------------------ */
-
-// POST /rooms/:roomId/amenities
-export type AddAmenityToRoomRequest = Request<{ roomId: string }, unknown, AddAmenityDTO>;
-
-// DELETE /rooms/:roomId/amenities/:amenityId
-export type RemoveAmenityFromRoomRequest = Request<{
-	roomId: string;
-	amenityId: string;
-}>;
