@@ -15,11 +15,6 @@ import {
 	CreateRoomRequest,
 	UpdateRoomRequest,
 	DeleteRoomRequest,
-	AddBedToRoomRequest,
-	UpdateBedRequest,
-	RemoveBedRequest,
-	AddAmenityToRoomRequest,
-	RemoveAmenityFromRoomRequest,
 } from "@/types/requests";
 
 class OwnerRouter {
@@ -87,28 +82,6 @@ class OwnerRouter {
 
 		this.router.delete("/rooms/:id", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.roomController.deleteRoom(req as DeleteRoomRequest, res);
-		});
-
-		// --- Beds ---
-		this.router.post("/rooms/:roomId/beds", onlyOwnerGuard, (req: Request, res: Response) => {
-			return this.roomController.addBedToRoom(req as AddBedToRoomRequest, res);
-		});
-
-		this.router.patch("/beds/:bedId", onlyOwnerGuard, (req: Request, res: Response) => {
-			return this.roomController.updateBed(req as UpdateBedRequest, res);
-		});
-
-		this.router.delete("/beds/:bedId", onlyOwnerGuard, (req: Request, res: Response) => {
-			return this.roomController.removeBed(req as RemoveBedRequest, res);
-		});
-
-		// --- Amenities ---
-		this.router.post("/rooms/:roomId/amenities", onlyOwnerGuard, (req: Request, res: Response) => {
-			return this.roomController.addAmenityToRoom(req as AddAmenityToRoomRequest, res);
-		});
-
-		this.router.delete("/rooms/:roomId/amenities/:amenityId", onlyOwnerGuard, (req: Request, res: Response) => {
-			return this.roomController.removeAmenityFromRoom(req as RemoveAmenityFromRoomRequest, res);
 		});
 	}
 }

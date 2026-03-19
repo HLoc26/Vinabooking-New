@@ -8,11 +8,6 @@ import type {
 	UpdateRoomRequest,
 	DeleteRoomRequest,
 	FilterAccommodationIdsRequest,
-	AddBedToRoomRequest,
-	UpdateBedRequest,
-	RemoveBedRequest,
-	AddAmenityToRoomRequest,
-	RemoveAmenityFromRoomRequest,
 } from "../types/requests";
 import ResponseHelper from "@/utils/response";
 
@@ -83,8 +78,12 @@ export class RoomController {
 			return ResponseHelper.error(res, "Unauthorized", 401);
 		}
 
-		if (!body.name) {
-			return ResponseHelper.error(res, "Missing required field: name", 400);
+		if (!body.name || !body.price || body.quantity === undefined) {
+			return ResponseHelper.error(res, "Missing required fields (name, price, quantity)", 400);
+		}
+
+		if (!body.beds || body.beds.length === 0) {
+			return ResponseHelper.error(res, "A room must have at least one bed", 400);
 		}
 
 		try {
@@ -143,107 +142,6 @@ export class RoomController {
 			const ids = await this.#roomService.filterAccommodationIds(minPrice, maxPrice, adults, children, sortBy);
 
 			ResponseHelper.success(res, ids);
-		} catch (error) {
-			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
-			else ResponseHelper.error(res, "Unknown error", 500);
-		}
-	}
-
-	// --- Bed management ---
-
-	async addBedToRoom(req: AddBedToRoomRequest, res: Response) {
-		const ownerId = req.userId;
-		const { roomId } = req.params;
-		const body = req.body;
-
-		if (!ownerId) {
-			return ResponseHelper.error(res, "Unauthorized", 401);
-		}
-
-		if (!body.name || !body.bedType) {
-			return ResponseHelper.error(res, "Missing required fields", 400);
-		}
-
-		try {
-			const bed = await this.#roomService.addBedToRoom(ownerId, roomId, body);
-
-			ResponseHelper.success(res, bed, 201);
-		} catch (error) {
-			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
-			else ResponseHelper.error(res, "Unknown error", 500);
-		}
-	}
-
-	async updateBed(req: UpdateBedRequest, res: Response) {
-		const ownerId = req.userId;
-		const { bedId } = req.params;
-		const body = req.body;
-
-		if (!ownerId) {
-			return ResponseHelper.error(res, "Unauthorized", 401);
-		}
-
-		try {
-			const bed = await this.#roomService.updateBed(ownerId, bedId, body);
-			ResponseHelper.success(res, bed);
-		} catch (error) {
-			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
-			else ResponseHelper.error(res, "Unknown error", 500);
-		}
-	}
-
-	async removeBed(req: RemoveBedRequest, res: Response) {
-		const ownerId = req.userId;
-		const { bedId } = req.params;
-
-		if (!ownerId) {
-			return ResponseHelper.error(res, "Unauthorized", 401);
-		}
-
-		try {
-			await this.#roomService.removeBed(ownerId, bedId);
-			res.status(204).send();
-		} catch (error) {
-			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
-			else ResponseHelper.error(res, "Unknown error", 500);
-		}
-	}
-
-	// --- Amenity management ---
-
-	async addAmenityToRoom(req: AddAmenityToRoomRequest, res: Response) {
-		const ownerId = req.userId;
-		const { roomId } = req.params;
-		const { amenityId, note } = req.body;
-
-		if (!ownerId) {
-			return ResponseHelper.error(res, "Unauthorized", 401);
-		}
-
-		if (!amenityId) {
-			return ResponseHelper.error(res, "amenityId is required", 400);
-		}
-
-		try {
-			const config = await this.#roomService.addAmenityToRoom(ownerId, roomId, amenityId, { note });
-			ResponseHelper.success(res, config, 201);
-		} catch (error) {
-			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
-			else ResponseHelper.error(res, "Unknown error", 500);
-		}
-	}
-
-	async removeAmenityFromRoom(req: RemoveAmenityFromRoomRequest, res: Response) {
-		const ownerId = req.userId;
-		const { roomId, amenityId } = req.params;
-
-		if (!ownerId) {
-			return ResponseHelper.error(res, "Unauthorized", 401);
-		}
-
-		try {
-			await this.#roomService.removeAmenityFromRoom(ownerId, roomId, amenityId);
-			res.status(204).send();
 		} catch (error) {
 			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
 			else ResponseHelper.error(res, "Unknown error", 500);
