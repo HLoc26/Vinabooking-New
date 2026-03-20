@@ -6,6 +6,7 @@ import PushNotificationProvider from "./context/PushNotification/provider.tsx";
 import { BrowserRouter } from "react-router-dom";
 import { PersistGate } from "redux-persist/integration/react";
 import { store, persistor } from "./app/store.ts";
+import "leaflet/dist/leaflet.css";
 
 import { Provider } from "react-redux";
 import { QueryClientProvider } from "@tanstack/react-query";
