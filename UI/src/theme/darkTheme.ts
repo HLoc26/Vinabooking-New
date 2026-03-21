@@ -16,7 +16,7 @@ const darkTheme = createTheme({
 		h3: { fontWeight: 700, letterSpacing: "-0.015em" },
 		h6: { fontWeight: 600 },
 	},
-	shape: { borderRadius: 16 },
+	shape: { borderRadius: 8 },
 	components: {
 		MuiButton: {
 			styleOverrides: {
