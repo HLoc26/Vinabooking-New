@@ -216,7 +216,7 @@ const OwnerCreateAccomPage = () => {
 					})}
 				</Stepper>
 
-				<Divider sx={{ mb: 4 }} />
+				<Divider sx={{ mb: 4, mt: 8 }} />
 
 				{/* Validation Error */}
 				{validationError && (
