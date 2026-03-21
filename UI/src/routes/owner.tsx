@@ -6,6 +6,9 @@ import LoginPage from "../features/auth/pages/LoginPage";
 import OwnerHomePage from "../features/owner/pages/OwnerHomePage";
 import { OwnerLayout } from "../components/layout/OwnerLayout";
 import OwnerOnboardPage from "../features/owner/pages/OwnerOnboardPage";
+import DashboardPage from "../features/owner/pages/DashboardPage";
+import ManageBookingPage from "../features/owner/pages/ManageBookingPage";
+import ManagePricePage from "../features/owner/pages/ManagePricePage";
 
 export const OwnerRouter = () => (
 	<Routes>
@@ -19,6 +22,30 @@ export const OwnerRouter = () => (
 			element={
 				<OwnerLayout>
 					<OwnerHomePage />
+				</OwnerLayout>
+			}
+		/>
+		<Route
+			path="/dashboard"
+			element={
+				<OwnerLayout>
+					<DashboardPage />
+				</OwnerLayout>
+			}
+		/>
+		<Route
+			path="/manage-booking"
+			element={
+				<OwnerLayout>
+					<ManageBookingPage />
+				</OwnerLayout>
+			}
+		/>
+		<Route
+			path="/manage-price"
+			element={
+				<OwnerLayout>
+					<ManagePricePage />
 				</OwnerLayout>
 			}
 		/>
