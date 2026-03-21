@@ -1,7 +1,5 @@
-import { Response, NextFunction } from "express";
+import { Response } from "express";
 import RoomService from "@/services/room.service";
-import { BadRequestError } from "../errors";
-
 import type {
 	GetRoomByIdRequest,
 	GetRoomsByAccommodationRequest,
@@ -10,11 +8,6 @@ import type {
 	UpdateRoomRequest,
 	DeleteRoomRequest,
 	FilterAccommodationIdsRequest,
-	AddBedToRoomRequest,
-	UpdateBedRequest,
-	RemoveBedRequest,
-	AddAmenityToRoomRequest,
-	RemoveAmenityFromRoomRequest,
 } from "../types/requests";
 import ResponseHelper from "@/utils/response";
 
@@ -29,8 +22,13 @@ export class RoomController {
 
 	async getRoomById(req: GetRoomByIdRequest, res: Response) {
 		const { id } = req.params;
-		const room = await this.#roomService.getRoomById(id);
-		ResponseHelper.success(res, room);
+		try {
+			const room = await this.#roomService.getRoomById(id);
+			ResponseHelper.success(res, room);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 404);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
 	}
 	async getRoomsByMultipleIds(req: GetRoomsByMultipleIdsRequest, res: Response) {
 		const { id } = req.query;
@@ -45,8 +43,13 @@ export class RoomController {
 			return ResponseHelper.success(res, []);
 		}
 
-		const rooms = await this.#roomService.getRoomsByMultipleIds(ids);
-		return ResponseHelper.success(res, rooms);
+		try {
+			const rooms = await this.#roomService.getRoomsByMultipleIds(ids);
+			return ResponseHelper.success(res, rooms);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
 	}
 
 	async getRoomsByAccommodationId(req: GetRoomsByAccommodationRequest, res: Response) {
@@ -56,78 +59,93 @@ export class RoomController {
 		const start = startDate ? new Date(startDate) : undefined;
 		const end = endDate ? new Date(endDate) : undefined;
 
-		const rooms = await this.#roomService.getRoomsByAccommodationId(accommodationId, start, end);
+		try {
+			const rooms = await this.#roomService.getRoomsByAccommodationId(accommodationId, start, end);
 
-		ResponseHelper.success(res, rooms);
+			ResponseHelper.success(res, rooms);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
 	}
 
 	async createRoom(req: CreateRoomRequest, res: Response) {
-		const room = await this.#roomService.createRoom(req.body);
-		ResponseHelper.success(res, room);
+		const ownerId = req.userId;
+		const { accommodationId } = req.params;
+		const body = req.body;
+
+		if (!ownerId) {
+			return ResponseHelper.error(res, "Unauthorized", 401);
+		}
+
+		if (!body.name || !body.price || body.quantity === undefined) {
+			return ResponseHelper.error(res, "Missing required fields (name, price, quantity)", 400);
+		}
+
+		if (!body.beds || body.beds.length === 0) {
+			return ResponseHelper.error(res, "A room must have at least one bed", 400);
+		}
+
+		try {
+			const room = await this.#roomService.createRoom(ownerId, accommodationId, body);
+			ResponseHelper.success(res, room, 201);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
 	}
 
 	async updateRoom(req: UpdateRoomRequest, res: Response) {
+		const ownerId = req.userId;
 		const { id } = req.params;
-		const updatedRoom = await this.#roomService.updateRoom(id, req.body);
-		ResponseHelper.success(res, updatedRoom);
+		const body = req.body;
+
+		if (!ownerId) {
+			return ResponseHelper.error(res, "Unauthorized", 401);
+		}
+
+		if (Object.keys(body).length === 0) {
+			return ResponseHelper.error(res, "Empty update body", 400);
+		}
+
+		try {
+			const updatedRoom = await this.#roomService.updateRoom(ownerId, id, body);
+			ResponseHelper.success(res, updatedRoom);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
 	}
 
 	async deleteRoom(req: DeleteRoomRequest, res: Response) {
+		const ownerId = req.userId;
 		const { id } = req.params;
-		await this.#roomService.deleteRoom(id);
-		res.status(204).send();
+
+		if (!ownerId) {
+			return ResponseHelper.error(res, "Unauthorized", 401);
+		}
+
+		try {
+			await this.#roomService.deleteRoom(ownerId, id);
+			res.status(204).send();
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
 	}
 
 	// --- Internal filter API ---
 
 	async getFilteredAccommodationIds(req: FilterAccommodationIdsRequest, res: Response) {
 		const { minPrice, maxPrice, adults, children, sortBy } = req.query;
+		try {
+			const ids = await this.#roomService.filterAccommodationIds(minPrice, maxPrice, adults, children, sortBy);
 
-		const ids = await this.#roomService.filterAccommodationIds(minPrice, maxPrice, adults, children, sortBy);
-
-		ResponseHelper.success(res, ids);
-	}
-
-	// --- Bed management ---
-
-	async addBedToRoom(req: AddBedToRoomRequest, res: Response) {
-		const { roomId } = req.params;
-
-		const bed = await this.#roomService.addBedToRoom(roomId, req.body);
-
-		ResponseHelper.success(res, bed);
-	}
-
-	async updateBed(req: UpdateBedRequest, res: Response) {
-		const { bedId } = req.params;
-		const bed = await this.#roomService.updateBed(bedId, req.body);
-		ResponseHelper.success(res.status(201), bed);
-	}
-
-	async removeBed(req: RemoveBedRequest, res: Response) {
-		const { bedId } = req.params;
-		await this.#roomService.removeBed(bedId);
-		res.status(204).send();
-	}
-
-	// --- Amenity management ---
-
-	async addAmenityToRoom(req: AddAmenityToRoomRequest, res: Response) {
-		const { roomId } = req.params;
-		const { amenityId, note } = req.body;
-
-		if (!amenityId) {
-			throw new BadRequestError("amenityId is required");
+			ResponseHelper.success(res, ids);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 400);
+			else ResponseHelper.error(res, "Unknown error", 500);
 		}
-
-		const config = await this.#roomService.addAmenityToRoom(roomId, amenityId, { note });
-		ResponseHelper.success(res.status(201), config);
-	}
-
-	async removeAmenityFromRoom(req: RemoveAmenityFromRoomRequest, res: Response) {
-		const { roomId, amenityId } = req.params;
-		await this.#roomService.removeAmenityFromRoom(roomId, amenityId);
-		res.status(204).send();
 	}
 }
 

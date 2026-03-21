@@ -1,5 +1,5 @@
 import { Request } from "express";
-import type { Prisma } from "@/generated/client";
+import { CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
 
 /* ------------------------------------------------------------------ */
 /* Room                                                               */
@@ -20,11 +20,11 @@ export type GetRoomsByAccommodationRequest = Request<{ accommodationId: string }
 
 export type GetRoomsByMultipleIdsRequest = Request<object, object, object, { id?: string }>;
 
-// POST /rooms
-export type CreateRoomRequest = Request<object, object, Prisma.RoomCreateInput>;
+// POST /accommodations/:accommodationId/rooms
+export type CreateRoomRequest = Request<{ accommodationId: string }, unknown, CreateRoomDTO>;
 
 // PATCH /rooms/:id
-export type UpdateRoomRequest = Request<{ id: string }, object, Prisma.RoomUpdateInput>;
+export type UpdateRoomRequest = Request<{ id: string }, unknown, UpdateRoomDTO>;
 
 // DELETE /rooms/:id
 export type DeleteRoomRequest = Request<{
@@ -45,36 +45,3 @@ export interface FilterAccommodationIdsQuery {
 }
 
 export type FilterAccommodationIdsRequest = Request<object, object, object, FilterAccommodationIdsQuery>;
-
-/* ------------------------------------------------------------------ */
-/* Bed                                                                */
-/* ------------------------------------------------------------------ */
-
-// POST /rooms/:roomId/beds
-export type AddBedToRoomRequest = Request<{ roomId: string }, object, Prisma.BedCreateWithoutRoomInput>;
-
-// PATCH /beds/:bedId
-export type UpdateBedRequest = Request<{ bedId: string }, object, Prisma.BedUpdateInput>;
-
-// DELETE /beds/:bedId
-export type RemoveBedRequest = Request<{
-	bedId: string;
-}>;
-
-/* ------------------------------------------------------------------ */
-/* Amenity                                                            */
-/* ------------------------------------------------------------------ */
-
-// POST /rooms/:roomId/amenities
-export interface AddAmenityToRoomBody {
-	amenityId: string;
-	note?: string | null;
-}
-
-export type AddAmenityToRoomRequest = Request<{ roomId: string }, object, AddAmenityToRoomBody>;
-
-// DELETE /rooms/:roomId/amenities/:amenityId
-export type RemoveAmenityFromRoomRequest = Request<{
-	roomId: string;
-	amenityId: string;
-}>;

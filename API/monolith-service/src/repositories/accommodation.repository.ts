@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma, type EAccommodationType } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption } from "@/types/accommodation.types";
+import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
+import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO, CreateAccommodationDTO } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -29,7 +29,7 @@ class AccommodationRepository {
 	public async countByType(): Promise<{ type: EAccommodationType; _count: { id: number } }[]> {
 		const result = await this.#prismaClient.accommodation.groupBy({
 			by: ["type"] as const,
-			where: { isActive: true },
+			where: { status: "PUBLISHED" },
 			_count: { id: true },
 			orderBy: { _count: { id: Prisma.SortOrder.desc } },
 		});
@@ -40,7 +40,7 @@ class AccommodationRepository {
 	public async countByCity(): Promise<{ city: string; _count: { id: number } }[]> {
 		const result = await this.#prismaClient.address.groupBy({
 			by: ["city"] as const,
-			where: { accommodation: { isActive: true } },
+			where: { accommodation: { status: "PUBLISHED" } },
 			_count: { id: true },
 			orderBy: { _count: { id: Prisma.SortOrder.desc } },
 			take: 20,
@@ -50,7 +50,7 @@ class AccommodationRepository {
 	}
 
 	public async count(filters: { city?: string; type?: EAccommodationType }): Promise<number> {
-		const where: Prisma.AccommodationWhereInput = { isActive: true };
+		const where: Prisma.AccommodationWhereInput = { status: "PUBLISHED" };
 		if (filters.type) where.type = filters.type;
 		if (filters.city) where.address = { city: { contains: filters.city } };
 
@@ -59,7 +59,7 @@ class AccommodationRepository {
 
 	public async getStatsRows(filters: SearchFilters, offset: number, limit: number, sortBy: ESortOption = ESortOption.NEWEST) {
 		const where: Prisma.AccommodationWhereInput = {
-			isActive: true,
+			status: "PUBLISHED",
 		};
 
 		// 1. Keyword
@@ -147,6 +147,137 @@ class AccommodationRepository {
         `;
 
 		return { statsRows, total: totalMatches };
+	}
+
+	public async getByOwnerId(ownerId: string): Promise<AccommodationWithDetails[]> {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			include: {
+				address: true,
+				_count: { select: { rooms: true, reviews: true } },
+				facilities: { include: { facility: true } },
+			},
+			orderBy: { createdAt: Prisma.SortOrder.desc },
+		});
+	}
+
+	public async getDashboardCardsByOwnerId(ownerId: string) {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			select: {
+				id: true,
+				name: true,
+				type: true,
+				status: true,
+				updatedAt: true,
+				address: {
+					select: {
+						fullAddress: true,
+					},
+				},
+				_count: {
+					select: {
+						rooms: true,
+						reviews: true,
+					},
+				},
+				reviews: {
+					select: {
+						star: true, // Cái này tự tính trung bình in-memory
+					},
+				},
+			},
+			orderBy: { updatedAt: Prisma.SortOrder.desc },
+		});
+	}
+
+	public async create(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationWithDetails> {
+		return await this.#prismaClient.accommodation.create({
+			data: {
+				name: data.name,
+				description: data.description,
+				type: data.type,
+				rentalType: data.rentalType,
+				status: "DRAFT",
+				owner: {
+					connect: { id: ownerId },
+				},
+			},
+			include: {
+				address: true,
+				facilities: { include: { facility: true } },
+			},
+		});
+	}
+
+	public async checkOwnership(id: string, ownerId: string): Promise<boolean> {
+		const count = await this.#prismaClient.accommodation.count({
+			where: { id, ownerId },
+		});
+		return count > 0;
+	}
+
+	public async getForPublishValidation(id: string, ownerId: string) {
+		return await this.#prismaClient.accommodation.findFirst({
+			where: { id, ownerId },
+			include: {
+				address: true,
+				rooms: {
+					include: { beds: true },
+				},
+			},
+		});
+	}
+
+	public async syncFacilities(accommodationId: string, facilities: { facilityId: string; fee?: number; note?: string; isAvailable?: boolean }[]) {
+		// Dùng Transaction để xóa cũ, thêm mới an toàn
+		return await this.#prismaClient.$transaction(async (tx) => {
+			await tx.facilityConfig.deleteMany({ where: { accommodationId } });
+
+			if (facilities && facilities.length > 0) {
+				await tx.facilityConfig.createMany({
+					data: facilities.map((f) => ({
+						accommodationId,
+						facilityId: f.facilityId,
+						fee: f.fee || 0,
+						note: f.note,
+						isAvailable: f.isAvailable ?? true,
+					})),
+				});
+			}
+		});
+	}
+
+	public async updateBasicInfo(id: string, data: UpdateAccommodationDTO) {
+		return await this.#prismaClient.accommodation.update({
+			where: { id },
+			data: {
+				name: data.name,
+				description: data.description,
+				type: data.type,
+			},
+		});
+	}
+
+	public async updateStatus(id: string, status: EAccommodationStatus) {
+		return await this.#prismaClient.accommodation.update({
+			where: { id },
+			data: { status },
+		});
+	}
+
+	public async updateAddress(accommodationId: string, data: UpdateAddressDTO) {
+		return await this.#prismaClient.accommodation.update({
+			where: { id: accommodationId },
+			data: {
+				address: {
+					upsert: {
+						create: data,
+						update: data,
+					},
+				},
+			},
+		});
 	}
 }
 
