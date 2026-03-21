@@ -12,8 +12,6 @@ import { ERentalType, EAccommodationType } from "../../accommodation/types/accom
 
 const STEPS = ["Rental Type", "Property Type", "Location", "Facilities", "Rooms"];
 
-// Navigating forward validates the current step before proceeding.
-// Navigating backward or to a completed step is always free.
 function validateStep(step: number, form: WizardForm): string | null {
 	switch (step) {
 		case 0:
@@ -64,9 +62,6 @@ const OwnerCreateAccomPage = () => {
 
 	// ── Navigation ──────────────────────────────────────────────────────────────
 
-	// Clicking a stepper label or the Next button both go through here.
-	// Going backward / to an already-completed step: always allowed.
-	// Going forward: validate every step between current and target.
 	const goToStep = (target: number) => {
 		if (target < step || completed.has(target)) {
 			setValidationError(null);
@@ -78,7 +73,7 @@ const OwnerCreateAccomPage = () => {
 			const error = validateStep(s, form);
 			if (error) {
 				setValidationError(error);
-				setStep(s); // land on the failing step
+				setStep(s);
 				return;
 			}
 			setCompleted((prev) => new Set(prev).add(s));
@@ -96,15 +91,9 @@ const OwnerCreateAccomPage = () => {
 
 	// ── Form handlers ───────────────────────────────────────────────────────────
 
-	// When rental type changes, reset accommodation type so step 2 is always
-	// consistent with the AccommodationToRentalMap grouping.
 	const handleRentalChange = (val: ERentalType) => {
 		setValidationError(null);
-		setForm((prev) => ({
-			...prev,
-			rentalType: val,
-			accommodationType: "",
-		}));
+		setForm((prev) => ({ ...prev, rentalType: val, accommodationType: "" }));
 	};
 
 	const handleAccommodationChange = (val: EAccommodationType) => {
@@ -144,15 +133,87 @@ const OwnerCreateAccomPage = () => {
 					Fill in the details below to publish your accommodation.
 				</Typography>
 
-				{/* Clickable Stepper — completed steps and backward navigation are always free */}
-				<Stepper nonLinear activeStep={step} sx={{ mb: 4 }} alternativeLabel>
-					{STEPS.map((label, i) => (
-						<Step key={label} completed={completed.has(i)}>
-							<StepButton onClick={() => goToStep(i)} sx={{ borderRadius: 2 }}>
-								{label}
-							</StepButton>
-						</Step>
-					))}
+				{/* ── Stepper ──────────────────────────────────────────────────────── */}
+				<Stepper
+					nonLinear
+					activeStep={step}
+					alternativeLabel
+					sx={{
+						mb: 0,
+						// Connector line colors
+						"& .MuiStepConnector-line": {
+							borderColor: "divider",
+							transition: "border-color 0.3s ease",
+						},
+						"& .Mui-completed .MuiStepConnector-line": {
+							borderColor: "primary.main",
+						},
+						// Step icon colors via global override
+						"& .MuiStepIcon-root": {
+							color: "text.disabled",
+							transition: "color 0.2s ease",
+						},
+						"& .MuiStepIcon-root.Mui-active": {
+							color: "primary.main",
+						},
+						"& .MuiStepIcon-root.Mui-completed": {
+							color: "primary.main",
+						},
+					}}
+				>
+					{STEPS.map((label, i) => {
+						const isActive = step === i;
+						const isCompleted = completed.has(i);
+						const isClickable = i < step || isCompleted;
+
+						return (
+							<Step key={label} completed={isCompleted}>
+								<StepButton
+									onClick={() => goToStep(i)}
+									disableRipple={!isClickable}
+									sx={{
+										cursor: isClickable ? "pointer" : "default",
+										borderRadius: 2,
+										px: 1,
+										pt: 0.5,
+										pb: 1.5,
+										transition: "background-color 0.2s ease",
+
+										...(isClickable &&
+											!isActive && {
+												"&:hover": {
+													bgcolor: "action.hover",
+													"& .MuiStepLabel-label": { color: "primary.main" },
+													"& .step-underline": { opacity: 0.4 },
+												},
+											}),
+
+										"& .MuiStepLabel-label": {
+											fontWeight: isActive ? 700 : 500,
+											color: isActive ? "primary.main" : isCompleted ? "text.primary" : "text.disabled",
+											transition: "color 0.2s ease",
+										},
+
+										"& .step-underline": {
+											position: "absolute",
+											bottom: 0,
+											left: "50%",
+											transform: "translateX(-50%)",
+											height: 3,
+											width: isActive ? "70%" : "0%",
+											borderRadius: "3px 3px 0 0",
+											bgcolor: "primary.main",
+											opacity: isActive ? 1 : 0,
+											transition: "width 0.3s ease, opacity 0.3s ease",
+										},
+									}}
+								>
+									{label}
+									<Box className="step-underline" />
+								</StepButton>
+							</Step>
+						);
+					})}
 				</Stepper>
 
 				<Divider sx={{ mb: 4 }} />
