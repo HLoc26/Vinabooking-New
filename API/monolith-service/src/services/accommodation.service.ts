@@ -1,8 +1,20 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
-import { NotFoundError } from "../errors";
+import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
-import { EEntityType, type EAccommodationType } from "@/generated/client";
-import { SearchQuery, ESortOption, AccommodationFullInfo, SearchFilters, AccommodationWithDetails, AccommodationStats } from "@/types/accommodation.types";
+import { EEntityType, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
+import {
+	SearchQuery,
+	ESortOption,
+	AccommodationFullInfo,
+	SearchFilters,
+	AccommodationWithDetails,
+	AccommodationStats,
+	CreateAccommodationDTO,
+	UpdateFacilitiesDTO,
+	UpdateAccommodationDTO,
+	UpdateAddressDTO,
+	OwnerAccommodationCard,
+} from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
 
@@ -222,6 +234,148 @@ class AccommodationService {
 				totalPages: Math.ceil(total / limitNum) || 1,
 			},
 		};
+	}
+
+	public async getOwnerAccommodations(ownerId: string): Promise<OwnerAccommodationCard[]> {
+		const rawAccommodations = await this.#accommodationRepository.getDashboardCardsByOwnerId(ownerId);
+
+		if (!rawAccommodations || rawAccommodations.length === 0) {
+			return [];
+		}
+
+		const ids = rawAccommodations.map((acc) => acc.id);
+
+		// Get thubnail
+		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
+		const imageMap: Record<string, string> = {};
+
+		ids.forEach((id) => {
+			const accImages = imagesBatch.filter((img) => img.references.some((ref) => ref.entityId === id));
+
+			if (accImages.length > 0) {
+				const bestImage = accImages.find((img) => img.references.some((ref) => ref.entityId === id && ref.isPrimary)) ?? accImages[0];
+				const thumbnailVariant = bestImage.variants.find((v) => v.variant === "THUMBNAIL");
+				imageMap[id] = thumbnailVariant?.url ?? bestImage.url;
+			}
+		});
+
+		return rawAccommodations.map((acc) => {
+			// Tính sao trung bình in-memory
+			const validStars = acc.reviews.filter((r) => r.star !== null).map((r) => r.star as number);
+			const avgStar = validStars.length > 0 ? Number((validStars.reduce((a, b) => a + b, 0) / validStars.length).toFixed(1)) : null;
+
+			return {
+				id: acc.id,
+				name: acc.name,
+				type: acc.type,
+				status: acc.status,
+				thumbnail: imageMap[acc.id] ?? null,
+				address: acc.address?.fullAddress ?? null,
+				roomCount: acc._count.rooms,
+				reviewCount: acc._count.reviews,
+				avgStar: avgStar,
+				updatedAt: acc.updatedAt,
+			};
+		});
+	}
+
+	async createAccommodation(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
+		const newAccommodation = await this.#accommodationRepository.create(ownerId, data);
+
+		return await this.getAccommodationById(newAccommodation.id);
+	}
+
+	async updateFacilities(ownerId: string, id: string, data: UpdateFacilitiesDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.syncFacilities(id, data.facilities);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async updateBasicInfo(ownerId: string, id: string, data: UpdateAccommodationDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.updateBasicInfo(id, data);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async updateStatus(ownerId: string, id: string, status: EAccommodationStatus): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.updateStatus(id, status);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async publishAccommodation(ownerId: string, id: string): Promise<AccommodationFullInfo> {
+		// Lấy raw data từ DB kèm theo các bảng con
+		const acc = await this.#accommodationRepository.getForPublishValidation(id, ownerId);
+
+		if (!acc) {
+			throw new NotFoundError("Accommodation not found or unauthorized");
+		}
+
+		if (acc.status === "PUBLISHED") {
+			throw new BadRequestError("This accommodation is already published");
+		}
+
+		// ==========================================
+		// 🚨 VALIDATION RULES
+		// ==========================================
+
+		// 1. Phải có địa chỉ
+		if (!acc.address) {
+			throw new BadRequestError("Cannot publish: Missing address information.");
+		}
+
+		// 2. Phải có ít nhất 1 phòng
+		if (!acc.rooms || acc.rooms.length === 0) {
+			throw new BadRequestError("Cannot publish: You must add at least one room.");
+		}
+
+		// 3. Quét từng phòng để đảm bảo tính toàn vẹn dữ liệu
+		for (const room of acc.rooms) {
+			if (!room.price || Number(room.price) <= 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid price greater than 0.`);
+			}
+			if (!room.quantity || room.quantity <= 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid quantity.`);
+			}
+			if (!room.beds || room.beds.length === 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have at least one bed.`);
+			}
+		}
+
+		// ==========================================
+		// ✅ PASS VALIDATION
+		// ==========================================
+
+		await this.#accommodationRepository.updateStatus(id, "PUBLISHED");
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
+	}
+
+	async updateAddress(ownerId: string, id: string, addressData: UpdateAddressDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		await this.#accommodationRepository.updateAddress(id, addressData);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
 	}
 
 	// =================================================================

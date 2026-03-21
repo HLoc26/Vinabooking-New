@@ -175,6 +175,13 @@ enum ERentalType {
     SHARED_ROOM
 }
 
+enum EAccommodationStatus {
+    DRAFT
+    PUBLISHED
+    HIDDEN
+    BANNED
+}
+
 enum EFacilityType {
     GENERAL
     FOOD_AND_DRINK
@@ -192,12 +199,12 @@ enum EFacilityType {
 }
 
 model Accommodation {
-    id          String             @id @default(uuid())
-    name        String             @db.VarChar(255)
-    description String?            @db.Text
+    id          String               @id @default(uuid())
+    name        String               @db.VarChar(255)
+    description String?              @db.Text
     type        EAccommodationType
-    rentalType  ERentalType?       @default(ENTIRE_PLACE)
-    isActive    Boolean            @default(true)
+    rentalType  ERentalType?         @default(ENTIRE_PLACE)
+    status      EAccommodationStatus @default(DRAFT)
 
     // Relation to User (Owner)
     ownerId String
