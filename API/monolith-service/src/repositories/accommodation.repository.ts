@@ -161,6 +161,18 @@ class AccommodationRepository {
 		});
 	}
 
+	public async findDraftByOwnerId(ownerId: string): Promise<AccommodationWithDetails[]> {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId, status: "DRAFT" },
+			include: {
+				address: true,
+				facilities: { include: { facility: true } },
+				rooms: true,
+			},
+			orderBy: { createdAt: Prisma.SortOrder.desc },
+		});
+	}
+
 	public async getDashboardCardsByOwnerId(ownerId: string) {
 		return await this.#prismaClient.accommodation.findMany({
 			where: { ownerId },
