@@ -18,14 +18,6 @@ export const OwnerRouter = () => (
 		<Route path="/otp" element={<ConfirmOTPPage />} />
 		<Route path="/onboard" element={<OwnerOnboardPage />} />
 		<Route
-			path="/home"
-			element={
-				<OwnerLayout>
-					<OwnerHomePage />
-				</OwnerLayout>
-			}
-		/>
-		<Route
 			path="/dashboard"
 			element={
 				<OwnerLayout>
