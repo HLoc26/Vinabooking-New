@@ -2,8 +2,24 @@ import { useQuery } from "@tanstack/react-query";
 import { getDraftAccommodations } from "../services/ownerApi";
 import { type DraftAccommodation } from "../../accommodation/types/accommodation.types";
 import { type ApiResponse } from "../../../types/Response";
-import { Box, Button, Chip, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
+import {
+	Box,
+	Button,
+	Chip,
+	LinearProgress,
+	Paper,
+	Skeleton,
+	Table,
+	TableBody,
+	TableCell,
+	TableContainer,
+	TableHead,
+	TableRow,
+	Typography,
+} from "@mui/material";
 import { Add, ChevronRight } from "@mui/icons-material";
+import { usePushNotification } from "../../../hooks/usePushNotification";
+import { useEffect } from "react";
 
 const getStepLabel = (step: number) => {
 	switch (step) {
@@ -68,10 +84,13 @@ const DraftsPage = () => {
 		queryKey: ["draftAccommodations"],
 		queryFn: getDraftAccommodations,
 	});
+	const { pushNotification } = usePushNotification();
 
-	if (isError) {
-		return <Typography color="error">Error fetching drafts. Please try again later.</Typography>;
-	}
+	useEffect(() => {
+		if (isError) {
+			pushNotification("Error fetching drafts. Please try again later.", "error");
+		}
+	}, [isError, pushNotification]);
 
 	const accommodations = data?.data || [];
 
@@ -88,7 +107,7 @@ const DraftsPage = () => {
 
 			{isLoading ? (
 				<TableSkeleton />
-			) : accommodations.length > 0 ? (
+			) : (
 				<TableContainer component={Paper}>
 					<Table sx={{ minWidth: 650 }} aria-label="drafts table">
 						<TableHead sx={{ backgroundColor: "rgba(255, 255, 255, 0.05)" }}>
@@ -103,40 +122,48 @@ const DraftsPage = () => {
 							</TableRow>
 						</TableHead>
 						<TableBody>
-							{accommodations.map((accommodation) => {
-								const progressValue = ((accommodation.currentWizardStep - 1) / 5) * 100;
-								return (
-									<TableRow key={accommodation.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
-										<TableCell component="th" scope="row">
-											{accommodation.name}
-										</TableCell>
-										<TableCell>
-											<Chip label={accommodation.status} size="small" />
-										</TableCell>
-										<TableCell>
-											<Box sx={{ display: "flex", alignItems: "center" }}>
-												<Box sx={{ width: "100%", mr: 1 }}>
-													<LinearProgress variant="determinate" value={progressValue} />
+							{accommodations.length > 0 ? (
+								accommodations.map((accommodation) => {
+									const progressValue = ((accommodation.currentWizardStep - 1) / 5) * 100;
+									return (
+										<TableRow key={accommodation.id} sx={{ "&:last-child td, &:last-child th": { border: 0 } }}>
+											<TableCell component="th" scope="row">
+												{accommodation.name}
+											</TableCell>
+											<TableCell>
+												<Chip label={accommodation.status} size="small" />
+											</TableCell>
+											<TableCell>
+												<Box sx={{ display: "flex", alignItems: "center" }}>
+													<Box sx={{ width: "100%", mr: 1 }}>
+														<LinearProgress variant="determinate" value={progressValue} />
+													</Box>
+													<Box sx={{ minWidth: 35 }}>
+														<Typography variant="body2" color="text.secondary">{`${Math.round(
+															progressValue,
+														)}%`}</Typography>
+													</Box>
 												</Box>
-												<Box sx={{ minWidth: 35 }}>
-													<Typography variant="body2" color="text.secondary">{`${Math.round(progressValue)}%`}</Typography>
-												</Box>
-											</Box>
-										</TableCell>
-										<TableCell>{getStepLabel(accommodation.currentWizardStep)}</TableCell>
-										<TableCell align="right">
-											<Button variant="contained" endIcon={<ChevronRight />} disabled>
-												Continue
-											</Button>
-										</TableCell>
-									</TableRow>
-								);
-							})}
+											</TableCell>
+											<TableCell>{getStepLabel(accommodation.currentWizardStep)}</TableCell>
+											<TableCell align="right">
+												<Button variant="contained" endIcon={<ChevronRight />} disabled>
+													Continue
+												</Button>
+											</TableCell>
+										</TableRow>
+									);
+								})
+							) : (
+								<TableRow>
+									<TableCell colSpan={5} align="center">
+										You have no draft accommodations at the moment.
+									</TableCell>
+								</TableRow>
+							)}
 						</TableBody>
 					</Table>
 				</TableContainer>
-			) : (
-				<Typography>You have no draft accommodations at the moment.</Typography>
 			)}
 		</Box>
 	);
