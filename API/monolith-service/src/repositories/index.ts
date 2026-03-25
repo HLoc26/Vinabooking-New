@@ -8,3 +8,4 @@ export { default as ReviewRepository } from "./review.repository";
 export { default as RoomRepository } from "./room.repository";
 export { default as UserRepository } from "./user.repository";
 export { default as OwnerRepository } from "./owner.repository";
+export { default as ImageRepository } from "./image.repository";
