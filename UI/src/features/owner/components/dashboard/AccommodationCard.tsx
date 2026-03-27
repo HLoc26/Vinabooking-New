@@ -9,11 +9,13 @@ import { ACCOMMODATION_DEFAULT_IMAGES } from "../../../accommodation/types/const
 
 interface AccommodationCardProps {
 	data: OwnerAccommodationCard;
+	viewMode?: "grid" | "list";
 }
 
-export const AccommodationCard = ({ data }: AccommodationCardProps) => {
+export const AccommodationCard = ({ data, viewMode = "grid" }: AccommodationCardProps) => {
 	const navigate = useNavigate();
 	const formattedDate = formatDate(data.updatedAt);
+	const isList = viewMode === "list"; // Cờ kiểm tra chế độ
 
 	const imageUrl = data.thumbnail || ACCOMMODATION_DEFAULT_IMAGES[data.type] || ACCOMMODATION_DEFAULT_IMAGES["ALL"];
 	const displayType = ACCOMMODATION_LABELS[data.type] || data.type.replaceAll("_", " ");
@@ -28,16 +30,31 @@ export const AccommodationCard = ({ data }: AccommodationCardProps) => {
 				border: "1px solid rgba(255,255,255,0.05)",
 				height: "100%",
 				display: "flex",
-				flexDirection: "column",
+				flexDirection: { xs: "column", sm: isList ? "row" : "column" },
 				"&:hover": {
-					transform: "translateY(-6px)",
+					transform: "translateY(-4px)",
 					boxShadow: "0 12px 24px -10px rgba(0,0,0,0.5)",
 					borderColor: "primary.main",
 				},
 			}}
 		>
-			<Box sx={{ position: "relative" }}>
-				<CardMedia component="img" height="200" image={imageUrl} alt={data.name} sx={{ objectFit: "cover" }} />
+			<Box
+				sx={{
+					position: "relative",
+					width: { xs: "100%", sm: isList ? 280 : "100%" }, // Cố định chiều rộng ảnh nếu nằm ngang
+					flexShrink: 0,
+				}}
+			>
+				<CardMedia
+					component="img"
+					image={imageUrl}
+					alt={data.name}
+					sx={{
+						objectFit: "cover",
+						height: { xs: 200, sm: isList ? "100%" : 200 }, // Ảnh full viền dọc nếu nằm ngang
+						minHeight: isList ? 200 : "auto",
+					}}
+				/>
 
 				{data.status !== EAccommodationStatus.PUBLISHED && (
 					<Chip
@@ -55,7 +72,7 @@ export const AccommodationCard = ({ data }: AccommodationCardProps) => {
 				)}
 			</Box>
 
-			<CardContent sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column" }}>
+			<CardContent sx={{ p: 3, flexGrow: 1, display: "flex", flexDirection: "column", minWidth: 0 }}>
 				<Typography variant="caption" color="primary.main" sx={{ fontWeight: 700, letterSpacing: 1, textTransform: "uppercase" }}>
 					{displayType}
 				</Typography>
