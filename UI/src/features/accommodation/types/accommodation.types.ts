@@ -61,6 +61,21 @@ export const EAccommodationType = {
 	TOWNHOUSE: "TOWNHOUSE",
 	OTHER: "OTHER",
 } as const;
+
+export const EAmenityType = {
+	COMFORT: "COMFORT",
+	ENTERTAINMENT: "ENTERTAINMENT",
+	BATHROOM: "BATHROOM",
+	KITCHEN: "KITCHEN",
+	SAFETY: "SAFETY",
+	ACCESSIBILITY: "ACCESSIBILITY",
+	WORKSPACE: "WORKSPACE",
+	OUTDOOR: "OUTDOOR",
+	OTHER: "OTHER",
+} as const;
+
+export type EAmenityType = (typeof EAmenityType)[keyof typeof EAmenityType];
+
 export type EAccommodationType = (typeof EAccommodationType)[keyof typeof EAccommodationType];
 
 /* =========================================================================
