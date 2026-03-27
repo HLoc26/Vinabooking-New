@@ -12,6 +12,8 @@ interface Props {
 }
 
 export default function RoomCard({ room, onEdit, onDelete }: Props) {
+	const hasAmenities = room.amenities.length > 0;
+
 	return (
 		<Paper
 			elevation={0}
@@ -19,8 +21,9 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 				p: 2.5,
 				borderRadius: 3,
 				border: "1.5px solid",
-				borderColor: "divider",
-				transition: "box-shadow 0.2s",
+				borderColor: hasAmenities ? "primary.main" : "divider",
+				transition: "box-shadow 0.2s, transform 0.3s cubic-bezier(0.34, 1.56, 0.64, 1), border-color 0.3s",
+				transform: hasAmenities ? "translateX(12px)" : "translateX(0px)",
 				"&:hover": { boxShadow: 3 },
 			}}
 		>
@@ -49,17 +52,11 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 			</Box>
 
 			{/* Summary block */}
-			<Box
-				sx={{
-					p: 1.5,
-					borderRadius: 2,
-					bgcolor: "action.hover",
-					lineHeight: 1.8,
-				}}
-			>
+			<Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "action.hover", lineHeight: 1.8 }}>
 				<Typography variant="caption" display="block">
-					👥 Up to {room.maxAdults} adults, {room.maxChildren} children &nbsp;·&nbsp; 🛏 {room.bedroomCount} bedroom{room.bedroomCount !== 1 ? "s" : ""} &nbsp;·&nbsp; 🚿 {room.bathroomCount}{" "}
-					bath{room.bathroomCount !== 1 ? "s" : ""}
+					👥 Up to {room.maxAdults} adults, {room.maxChildren} children &nbsp;·&nbsp; 🛏 {room.bedroomCount} bedroom
+					{room.bedroomCount !== 1 ? "s" : ""} &nbsp;·&nbsp; 🚿 {room.bathroomCount} bath
+					{room.bathroomCount !== 1 ? "s" : ""}
 					{room.size ? ` · 📐 ${room.size}m²` : ""}
 					{room.viewType !== "NONE" ? ` · 🌅 ${room.viewType.replace(/_/g, " ")} view` : ""}
 				</Typography>

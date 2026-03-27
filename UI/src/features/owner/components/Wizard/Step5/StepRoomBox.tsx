@@ -2,10 +2,11 @@ import { useState } from "react";
 import { Box, Typography, Button, Paper, Stack } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import KingBedOutlinedIcon from "@mui/icons-material/KingBedOutlined";
-import type { RoomForm, WizardForm } from "../../../types/owner.types";
+import type { RoomForm, AmenityConfigForm, WizardForm } from "../../../types/owner.types";
 import { makeRoom } from "../../../const/RoomConst";
 import RoomCard from "./RoomCard";
 import RoomEditModal from "./RoomEditModal";
+import AmenityPanel from "./AmenityPanel";
 
 interface Props {
 	form: WizardForm;
@@ -14,29 +15,58 @@ interface Props {
 
 export default function StepRoomsBox({ form, setForm }: Props) {
 	const rooms: RoomForm[] = form.rooms ?? [];
+
 	const [editingRoom, setEditingRoom] = useState<RoomForm | null>(null);
 	const [isNew, setIsNew] = useState(false);
+	const [amenityPanelOpen, setAmenityPanelOpen] = useState(false);
+
+	// Single source of truth for amenities while editing
+	const [draftAmenities, setDraftAmenities] = useState<AmenityConfigForm[]>([]);
 
 	const openNew = () => {
 		setIsNew(true);
-		setEditingRoom(makeRoom());
+		const room = makeRoom();
+		setEditingRoom(room);
+		setDraftAmenities(room.amenities);
 	};
 
 	const openEdit = (room: RoomForm) => {
 		setIsNew(false);
 		setEditingRoom({ ...room, beds: [...room.beds], amenities: [...room.amenities] });
+		setDraftAmenities([...room.amenities]);
 	};
 
 	const handleSave = (updated: RoomForm) => {
+		// Merge the authoritative draftAmenities back in before saving
+		const final = { ...updated, amenities: draftAmenities };
 		setForm((prev) => ({
 			...prev,
-			rooms: isNew ? [...prev.rooms, updated] : prev.rooms.map((r) => (r.id === updated.id ? updated : r)),
+			rooms: isNew ? [...prev.rooms, final] : prev.rooms.map((r) => (r.id === final.id ? final : r)),
 		}));
 		setEditingRoom(null);
+		setAmenityPanelOpen(false);
+		setDraftAmenities([]);
 	};
 
 	const handleDelete = (id: string) => {
 		setForm((prev) => ({ ...prev, rooms: prev.rooms.filter((r) => r.id !== id) }));
+	};
+
+	// Called from AmenityPicker chip toggle inside RoomEditModal
+	const handleAmenityToggle = (a: AmenityConfigForm) => {
+		const exists = draftAmenities.some((x) => x.amenityId === a.amenityId);
+		setDraftAmenities((prev) => (exists ? prev.filter((x) => x.amenityId !== a.amenityId) : [...prev, a]));
+		setAmenityPanelOpen(true);
+	};
+
+	// Called from AmenityPanel remove button
+	const handleAmenityRemove = (amenityId: string) => {
+		setDraftAmenities((prev) => prev.filter((a) => a.amenityId !== amenityId));
+	};
+
+	// Called from AmenityPanel note update
+	const handleAmenityUpdate = (amenityId: string, patch: Partial<AmenityConfigForm>) => {
+		setDraftAmenities((prev) => prev.map((a) => (a.amenityId === amenityId ? { ...a, ...patch } : a)));
 	};
 
 	return (
@@ -87,8 +117,27 @@ export default function StepRoomsBox({ form, setForm }: Props) {
 				</Stack>
 			)}
 
-			{/* Edit / Create modal */}
-			{editingRoom && <RoomEditModal open room={editingRoom} onClose={() => setEditingRoom(null)} onSave={handleSave} />}
+			{/* RoomEditModal — sibling #1 */}
+			{editingRoom && (
+				<RoomEditModal
+					open
+					room={editingRoom}
+					draftAmenities={draftAmenities}
+					onAmenityToggle={handleAmenityToggle}
+					isPanelOpen={amenityPanelOpen}
+					onClose={() => {
+						setEditingRoom(null);
+						setAmenityPanelOpen(false);
+						setDraftAmenities([]);
+					}}
+					onSave={handleSave}
+				/>
+			)}
+
+			{/* AmenityPanel — sibling #2 */}
+			{editingRoom && amenityPanelOpen && (
+				<AmenityPanel open amenities={draftAmenities} onClose={() => setAmenityPanelOpen(false)} onUpdate={handleAmenityUpdate} onRemove={handleAmenityRemove} />
+			)}
 		</Box>
 	);
 }

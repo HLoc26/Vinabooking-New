@@ -1,4 +1,4 @@
-import { Box, Grid, TextField, MenuItem, Typography } from "@mui/material";
+import { Box, TextField, MenuItem, Typography } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import { VIEW_TYPES, PRICING_TYPES } from "../../../const/RoomConst";
 
@@ -14,9 +14,9 @@ export default function RoomInfoFields({ draft, set }: Props) {
 				Room Info
 			</Typography>
 
-			<Grid container spacing={2}>
-				{/* Name + Quantity */}
-				<Grid item xs={12} sm={8}>
+			<Box display="flex" flexDirection="column" gap={2}>
+				{/* Name (3/4) + Quantity (1/4) */}
+				<Box display="flex" gap={2}>
 					<TextField
 						fullWidth
 						required
@@ -25,52 +25,26 @@ export default function RoomInfoFields({ draft, set }: Props) {
 						onChange={(e) => set("name", e.target.value)}
 						error={!draft.name.trim()}
 						helperText={!draft.name.trim() ? "Required" : ""}
+						sx={{ flex: 3 }}
 					/>
-				</Grid>
-				<Grid item xs={12} sm={4}>
-					<TextField fullWidth type="number" label="Quantity" value={draft.quantity} onChange={(e) => set("quantity", Number(e.target.value))} inputProps={{ min: 1 }} />
-				</Grid>
+					<TextField label="Quantity" type="number" value={draft.quantity} onChange={(e) => set("quantity", Number(e.target.value))} inputProps={{ min: 1 }} sx={{ flex: 1 }} />
+				</Box>
 
-				{/* Description */}
-				<Grid item xs={12}>
-					<TextField fullWidth multiline rows={2} label="Description (optional)" value={draft.description || ""} onChange={(e) => set("description", e.target.value)} />
-				</Grid>
+				{/* Adults / Children */}
+				<Box display="flex" gap={2}>
+					<TextField fullWidth label="Max Adults" type="number" value={draft.maxAdults} onChange={(e) => set("maxAdults", Number(e.target.value))} />
+					<TextField fullWidth label="Max Children" type="number" value={draft.maxChildren} onChange={(e) => set("maxChildren", Number(e.target.value))} />
+				</Box>
 
-				{/* Guests */}
-				<Grid item xs={6} sm={3}>
-					<TextField fullWidth type="number" label="Max Adults" value={draft.maxAdults} onChange={(e) => set("maxAdults", Number(e.target.value))} inputProps={{ min: 1 }} />
-				</Grid>
-				<Grid item xs={6} sm={3}>
-					<TextField fullWidth type="number" label="Max Children" value={draft.maxChildren} onChange={(e) => set("maxChildren", Number(e.target.value))} inputProps={{ min: 0 }} />
-				</Grid>
+				{/* Bedrooms / Bathrooms */}
+				<Box display="flex" gap={2}>
+					<TextField fullWidth label="Bedrooms" type="number" value={draft.bedroomCount} onChange={(e) => set("bedroomCount", Number(e.target.value))} />
+					<TextField fullWidth label="Bathrooms" type="number" value={draft.bathroomCount} onChange={(e) => set("bathroomCount", Number(e.target.value))} />
+				</Box>
 
-				{/* Rooms */}
-				<Grid item xs={6} sm={3}>
-					<TextField fullWidth type="number" label="Bedrooms" value={draft.bedroomCount} onChange={(e) => set("bedroomCount", Number(e.target.value))} inputProps={{ min: 0 }} />
-				</Grid>
-				<Grid item xs={6} sm={3}>
-					<TextField fullWidth type="number" label="Bathrooms" value={draft.bathroomCount} onChange={(e) => set("bathroomCount", Number(e.target.value))} inputProps={{ min: 0 }} />
-				</Grid>
-
-				{/* Size + Price + Pricing */}
-				<Grid item xs={6} sm={4}>
-					<TextField fullWidth type="number" label="Size (m²)" value={draft.size ?? ""} onChange={(e) => set("size", e.target.value ? Number(e.target.value) : undefined)} />
-				</Grid>
-				<Grid item xs={6} sm={4}>
-					<TextField fullWidth type="number" label="Price" value={draft.price ?? ""} onChange={(e) => set("price", e.target.value ? Number(e.target.value) : undefined)} />
-				</Grid>
-				<Grid item xs={12} sm={4}>
-					<TextField fullWidth select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
-						{PRICING_TYPES.map((t) => (
-							<MenuItem key={t} value={t}>
-								{t.replace(/_/g, " ")}
-							</MenuItem>
-						))}
-					</TextField>
-				</Grid>
-
-				{/* View */}
-				<Grid item xs={12} sm={draft.viewType !== "NONE" ? 6 : 12}>
+				{/* Size / View Type */}
+				<Box display="flex" gap={2}>
+					<TextField fullWidth label="Size (m²)" type="number" value={draft.size ?? ""} onChange={(e) => set("size", e.target.value ? Number(e.target.value) : undefined)} />
 					<TextField fullWidth select label="View Type" value={draft.viewType} onChange={(e) => set("viewType", e.target.value)}>
 						{VIEW_TYPES.map((t) => (
 							<MenuItem key={t} value={t}>
@@ -78,13 +52,26 @@ export default function RoomInfoFields({ draft, set }: Props) {
 							</MenuItem>
 						))}
 					</TextField>
-				</Grid>
-				{draft.viewType !== "NONE" && (
-					<Grid item xs={12} sm={6}>
-						<TextField fullWidth label="View Description" value={draft.viewDescription || ""} onChange={(e) => set("viewDescription", e.target.value)} />
-					</Grid>
-				)}
-			</Grid>
+				</Box>
+
+				{/* View Description (conditional full width) */}
+				{draft.viewType !== "NONE" && <TextField fullWidth label="View Description" value={draft.viewDescription || ""} onChange={(e) => set("viewDescription", e.target.value)} />}
+
+				{/* Price / Pricing Type */}
+				<Box display="flex" gap={2}>
+					<TextField fullWidth label="Price" type="number" value={draft.price ?? ""} onChange={(e) => set("price", e.target.value ? Number(e.target.value) : undefined)} />
+					<TextField fullWidth select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
+						{PRICING_TYPES.map((t) => (
+							<MenuItem key={t} value={t}>
+								{t.replace(/_/g, " ")}
+							</MenuItem>
+						))}
+					</TextField>
+				</Box>
+
+				{/* Description FULL WIDTH */}
+				<TextField fullWidth label="Description" multiline minRows={3} value={draft.description || ""} onChange={(e) => set("description", e.target.value)} />
+			</Box>
 		</Box>
 	);
 }

@@ -1,8 +1,10 @@
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Box } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
+
 import type { RoomForm, BedForm, AmenityConfigForm } from "../../../types/owner.types";
 import { makeBed } from "../../../const/RoomConst";
+
 import RoomInfoFields from "./RoomInfoField";
 import BedList from "./BedList";
 import AmenityPicker from "./AmenityPicker";
@@ -12,22 +14,27 @@ interface Props {
 	open: boolean;
 	onClose: () => void;
 	onSave: (room: RoomForm) => void;
+	draftAmenities: AmenityConfigForm[];
+	onAmenityToggle: (a: AmenityConfigForm) => void;
+	isPanelOpen: boolean;
 }
 
-export default function RoomEditModal({ room, open, onClose, onSave }: Props) {
+export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, isPanelOpen }: Props) {
 	const [draft, setDraft] = useState<RoomForm>({
 		...room,
 		beds: [...room.beds],
-		amenities: [...room.amenities],
+		amenities: [], // controlled by parent
 	});
 
-	// Generic field setter passed down to RoomInfoFields
 	const set = (field: keyof RoomForm, value: any) => setDraft((prev) => ({ ...prev, [field]: value }));
 
-	// Bed handlers passed down to BedList
 	const addBed = () => setDraft((prev) => ({ ...prev, beds: [...prev.beds, makeBed()] }));
 
-	const removeBed = (id: string) => setDraft((prev) => ({ ...prev, beds: prev.beds.filter((b) => b.id !== id) }));
+	const removeBed = (id: string) =>
+		setDraft((prev) => ({
+			...prev,
+			beds: prev.beds.filter((b) => b.id !== id),
+		}));
 
 	const updateBed = (id: string, field: keyof BedForm, value: any) =>
 		setDraft((prev) => ({
@@ -35,57 +42,75 @@ export default function RoomEditModal({ room, open, onClose, onSave }: Props) {
 			beds: prev.beds.map((b) => (b.id === id ? { ...b, [field]: value } : b)),
 		}));
 
-	// Amenity toggle passed down to AmenityPicker
-	const toggleAmenity = (amenity: AmenityConfigForm) => {
-		setDraft((prev) => {
-			const exists = prev.amenities.find((a) => a.amenityId === amenity.amenityId);
-			return {
-				...prev,
-				amenities: exists ? prev.amenities.filter((a) => a.amenityId !== amenity.amenityId) : [...prev.amenities, { ...amenity }],
-			};
-		});
-	};
-
 	const handleSave = () => {
 		if (!draft.name.trim()) return;
 		onSave(draft);
 	};
 
 	return (
-		<Dialog open={open} onClose={onClose} maxWidth="md" fullWidth PaperProps={{ sx: { borderRadius: 3 } }}>
+		<Dialog
+			open={open}
+			onClose={onClose}
+			fullWidth
+			maxWidth="lg"
+			disableEnforceFocus
+			PaperProps={{
+				sx: {
+					borderRadius: 3,
+
+					// 👇 shrink when AmenityPanel is open (space on right)
+					width: isPanelOpen ? "calc(100% - 320px)" : "100%",
+					transition: "width 0.25s ease",
+				},
+			}}
+		>
+			{/* HEADER */}
 			<DialogTitle
 				sx={{
 					display: "flex",
 					justifyContent: "space-between",
 					alignItems: "center",
-					pb: 1,
 				}}
 			>
 				<Typography variant="h6" fontWeight={700}>
 					{draft.name || "Edit Room"}
 				</Typography>
-				<IconButton onClick={onClose} size="small">
+				<IconButton onClick={onClose}>
 					<CloseIcon />
 				</IconButton>
 			</DialogTitle>
 
-			<DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+			{/* CONTENT */}
+			<DialogContent
+				dividers
+				sx={{
+					display: "flex",
+					flexDirection: "column",
+					gap: 3,
+				}}
+			>
+				{/* ─── ROOM INFO (CHILD COMPONENT) ───────────────── */}
 				<RoomInfoFields draft={draft} set={set} />
 
 				<Divider />
 
+				{/* ─── BEDS ───────────────── */}
 				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} />
 
 				<Divider />
 
-				<AmenityPicker selected={draft.amenities} onToggle={toggleAmenity} />
+				{/* ─── AMENITIES ───────────────── */}
+				<Box>
+					<AmenityPicker selected={draftAmenities} onToggle={onAmenityToggle} />
+				</Box>
 			</DialogContent>
 
-			<DialogActions sx={{ px: 3, py: 2, gap: 1 }}>
-				<Button onClick={onClose} variant="outlined" sx={{ borderRadius: 2 }}>
+			{/* FOOTER */}
+			<DialogActions sx={{ px: 3, py: 2 }}>
+				<Button onClick={onClose} variant="outlined">
 					Cancel
 				</Button>
-				<Button onClick={handleSave} variant="contained" disabled={!draft.name.trim()} sx={{ borderRadius: 2, fontWeight: 700 }}>
+				<Button onClick={handleSave} variant="contained" disabled={!draft.name.trim()}>
 					Save Room
 				</Button>
 			</DialogActions>
