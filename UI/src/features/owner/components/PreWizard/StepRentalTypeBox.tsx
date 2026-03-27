@@ -2,7 +2,7 @@ import { Box, Typography, Paper, Stack } from "@mui/material";
 import HomeOutlinedIcon from "@mui/icons-material/HomeOutlined";
 import ApartmentOutlinedIcon from "@mui/icons-material/ApartmentOutlined";
 import CabinOutlinedIcon from "@mui/icons-material/CabinOutlined";
-import { ERentalType } from "../../../../accommodation/types/accommodation.types";
+import { ERentalType } from "../../../accommodation/types/accommodation.types";
 
 const options = [
 	{
