@@ -1,54 +1,104 @@
-import { Box, Typography, Grid, Paper, Divider } from "@mui/material";
-import { ALL_FACILITIES, type FacilityConfig } from "../../../const/FacilityConst";
+import { Box, Typography, Grid, Paper, Divider, Chip, CircularProgress, Alert } from "@mui/material";
 import CheckCircleIcon from "@mui/icons-material/CheckCircle";
+import HomeIcon from "@mui/icons-material/Home";
+import WifiIcon from "@mui/icons-material/Wifi";
+import PoolIcon from "@mui/icons-material/Pool";
+import LocalParkingIcon from "@mui/icons-material/LocalParking";
 
-export default function StepFacilityBox({ form, setForm }: any) {
-	const selectedFacilities = form.facilities || [];
-	const selectedIds = selectedFacilities.map((f: any) => f.id);
+import { useOwnerFacilities } from "../../../hooks/useOwnerFacility";
+import type { WizardForm, FacilityDto } from "../../../types/owner.types";
 
-	const toggleFacility = (facility: FacilityConfig) => {
-		const isSelected = selectedIds.includes(facility.id);
-		const newFacilities = isSelected
-			? selectedFacilities.filter((f: any) => f.id !== facility.id)
-			: [
-					...selectedFacilities,
-					{
-						id: facility.id,
-						fee: "0",
-						note: null,
-						name: facility.name,
-						type: facility.type,
-					},
-				];
+// ─── Icon mapper ──────────────────────────────────────────────────────────────
 
-		setForm((prev: any) => ({ ...prev, facilities: newFacilities }));
+const getFacilityIcon = (name: string) => {
+	const key = name.toLowerCase();
+	if (key.includes("wifi")) return WifiIcon;
+	if (key.includes("pool")) return PoolIcon;
+	if (key.includes("parking")) return LocalParkingIcon;
+	return HomeIcon;
+};
+
+// ─── Props ────────────────────────────────────────────────────────────────────
+
+interface Props {
+	form: WizardForm;
+	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
+	// Called after a new facility is added so the page can auto-expand it in the panel
+	onSelect: (id: string) => void;
+}
+
+// ─── Component ────────────────────────────────────────────────────────────────
+
+export default function StepFacilityBox({ form, setForm, onSelect }: Props) {
+	const { groupedByType, isLoading, isError } = useOwnerFacilities();
+
+	const selectedIds = new Set(form.facilities.map((f) => f.id));
+
+	const handleTileClick = (dto: FacilityDto) => {
+		if (selectedIds.has(dto.id)) {
+			// Already selected — tell the page to expand/focus it in the panel
+			onSelect(dto.id);
+			return;
+		}
+
+		// Add with defaults
+		const newEntry: FacilityConfig = {
+			id: dto.id,
+			name: dto.name,
+			accommodationId: "",
+			facilityId: dto.id,
+			fee: 0,
+			note: undefined,
+		};
+
+		setForm((prev) => ({ ...prev, facilities: [...prev.facilities, newEntry] }));
+		// Tell the page to auto-expand this new row in the panel
+		onSelect(dto.id);
 	};
 
-	const grouped = ALL_FACILITIES.reduce(
-		(acc, curr) => {
-			(acc[curr.type] = acc[curr.type] || []).push(curr);
-			return acc;
-		},
-		{} as Record<string, FacilityConfig[]>
-	);
+	// ── Loading / error ───────────────────────────────────────────────────────
+
+	if (isLoading) {
+		return (
+			<Box display="flex" justifyContent="center" py={6}>
+				<CircularProgress />
+			</Box>
+		);
+	}
+
+	if (isError) {
+		return (
+			<Alert severity="error" sx={{ borderRadius: 2 }}>
+				Failed to load facilities. Please refresh and try again.
+			</Alert>
+		);
+	}
+
+	// ── Render ────────────────────────────────────────────────────────────────
 
 	return (
-		<Box sx={{ p: 1 }}>
-			<Typography variant="h5" fontWeight={800} mb={1} sx={{ color: "#c4b921" }}>
-				Select Facilities & Amenities
-			</Typography>
-			<Typography variant="body2" color="text.secondary" mb={4}>
-				Click the tiles below to add them to your property.
-			</Typography>
+		<Box>
+			{/* Header */}
+			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
+				<Box>
+					<Typography variant="h5" fontWeight={800} mb={1} sx={{ color: "#c4b921" }}>
+						Select Facilities & Amenities
+					</Typography>
+					<Typography variant="body2" color="text.secondary" mb={4}>
+						Click the tiles to add them to your property. Configure fees and notes in the panel on the right.
+					</Typography>
+				</Box>
+				{form.facilities.length > 0 && <Chip label={`${form.facilities.length} selected`} color="primary" size="small" sx={{ ml: 2, mt: 0.5, flexShrink: 0 }} />}
+			</Box>
 
-			{Object.entries(grouped).map(([type, items]) => (
+			{/* Grouped tiles */}
+			{Object.entries(groupedByType).map(([type, items]) => (
 				<Box key={type} mb={5}>
-					{/* ✅ Section Header: Deep Indigo Color */}
 					<Typography
 						variant="subtitle2"
 						sx={{
 							fontWeight: 800,
-							color: "#ffffff", // Indigo accent for headers
+							color: "#ffffff",
 							letterSpacing: 1.5,
 							textTransform: "uppercase",
 							mb: 1,
@@ -56,34 +106,36 @@ export default function StepFacilityBox({ form, setForm }: any) {
 					>
 						{type.replace(/_/g, " ")}
 					</Typography>
+
 					<Divider sx={{ mb: 3, borderColor: "#3f51b5", opacity: 0.2 }} />
 
 					<Grid container spacing={2}>
 						{items.map((facility) => {
-							const isSelected = selectedIds.includes(facility.id);
-							const Icon = facility.icon;
+							const isSelected = selectedIds.has(facility.id);
+							const Icon = getFacilityIcon(facility.name);
+							const entry = form.facilities.find((f) => f.id === facility.id);
+							const hasMeta = !!entry && ((entry.fee ?? 0) > 0 || !!entry.note);
 
 							return (
-								<Grid item xs={6} sm={4} md={3} key={facility.id}>
+								<Grid size={{ xs: 6, sm: 4, md: 3 }} key={facility.id}>
 									<Paper
-										onClick={() => toggleFacility(facility)}
+										onClick={() => handleTileClick(facility)}
 										elevation={0}
 										sx={{
 											p: 3,
+											height: 120,
 											display: "flex",
 											flexDirection: "column",
+											justifyContent: "center",
 											alignItems: "center",
 											cursor: "pointer",
 											borderRadius: 3,
 											position: "relative",
-											transition: "all 0.3s cubic-bezier(0.4, 0, 0.2, 1)",
-
-											// Charcoal Theme Logic
+											transition: "all 0.3s",
 											border: "2px solid",
 											borderColor: isSelected ? "#1a1a1a" : "#eeeeee",
 											bgcolor: isSelected ? "#1a1a1a" : "#fdfdfd",
 											color: isSelected ? "#ffffff" : "#424242",
-
 											"&:hover": {
 												transform: "translateY(-6px)",
 												boxShadow: isSelected ? "0 10px 20px rgba(0,0,0,0.3)" : "0 10px 20px rgba(0,0,0,0.05)",
@@ -92,7 +144,6 @@ export default function StepFacilityBox({ form, setForm }: any) {
 											},
 										}}
 									>
-										{/* Success Checkmark */}
 										{isSelected && (
 											<CheckCircleIcon
 												sx={{
@@ -100,7 +151,21 @@ export default function StepFacilityBox({ form, setForm }: any) {
 													top: 10,
 													right: 10,
 													fontSize: 18,
-													color: "#ffffff", // Green success pop
+													color: "#ffffff",
+												}}
+											/>
+										)}
+
+										{hasMeta && (
+											<Box
+												sx={{
+													position: "absolute",
+													top: 10,
+													left: 10,
+													width: 8,
+													height: 8,
+													borderRadius: "50%",
+													bgcolor: "warning.main",
 												}}
 											/>
 										)}
@@ -119,10 +184,20 @@ export default function StepFacilityBox({ form, setForm }: any) {
 												fontWeight: isSelected ? 800 : 600,
 												textAlign: "center",
 												fontSize: "0.85rem",
+												display: "-webkit-box",
+												WebkitLineClamp: 2,
+												WebkitBoxOrient: "vertical",
+												overflow: "hidden",
 											}}
 										>
 											{facility.name}
 										</Typography>
+
+										{entry && (entry.fee ?? 0) > 0 && (
+											<Typography variant="caption" sx={{ mt: 0.5, color: "#ffffff99", fontSize: "0.7rem" }}>
+												{entry.fee!.toLocaleString()}₫
+											</Typography>
+										)}
 									</Paper>
 								</Grid>
 							);
