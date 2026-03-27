@@ -27,3 +27,9 @@ export interface OwnerAccommodationCard {
 	avgStar: number | null;
 	updatedAt: string;
 }
+
+export interface DashboardStats {
+	revenue: number;
+	occupancyRate: number;
+	pendingBookings: number;
+}
