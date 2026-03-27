@@ -4,6 +4,7 @@ import { useOwnerAccommodations } from "../hooks/useOwnerAccommodations";
 import { DashboardHeader } from "../components/dashboard/DashboardHeader";
 import { EmptyState } from "../components/dashboard/EmptyState";
 import { AccommodationCard } from "../components/dashboard/AccommodationCard";
+import { DashboardStatsRow } from "../components/dashboard/DashboardStatsRow";
 
 const DashboardPage = () => {
 	const { data: accommodations, isLoading, isError, refetch } = useOwnerAccommodations();
@@ -82,6 +83,7 @@ const DashboardPage = () => {
 	return (
 		<Box sx={{ pb: 4 }}>
 			<DashboardHeader />
+			<DashboardStatsRow />
 			{content}
 		</Box>
 	);
