@@ -207,4 +207,31 @@ export default class BookingService {
 
 		return { success: true };
 	}
+
+	public async getDashboardStatsByRoomIds(roomIds: string[], startOfMonth: Date) {
+		const bookings = await this.#bookingRepository.getDashboardBookings(roomIds, startOfMonth);
+
+		let revenue = 0;
+		let pendingBookings = 0;
+		let nightsSold = 0;
+
+		bookings.forEach((b) => {
+			if (b.status === "PENDING") {
+				pendingBookings++;
+			} else if (b.status === "BOOKED" || b.status === "COMPLETED") {
+				revenue += Number(b.totalPrice || 0);
+
+				const nights = Math.max(1, Math.ceil((b.endDate.getTime() - b.startDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+				// Số đêm bán được = Số đêm * Số lượng phòng
+				b.details.forEach((d) => {
+					if (d.itemType === "ROOM" && roomIds.includes(d.itemId)) {
+						nightsSold += nights * d.count;
+					}
+				});
+			}
+		});
+
+		return { revenue, pendingBookings, nightsSold };
+	}
 }
