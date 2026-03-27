@@ -22,8 +22,8 @@ import GroupIcon from "@mui/icons-material/Group";
 import ForestIcon from "@mui/icons-material/Forest";
 import CategoryIcon from "@mui/icons-material/Category";
 
-import { ERentalType, EAccommodationType } from "../../../../accommodation/types/accommodation.types";
-import { AccommodationToRentalMap } from "../../../../accommodation/types/const";
+import { ERentalType, EAccommodationType } from "../../../accommodation/types/accommodation.types";
+import { AccommodationToRentalMap } from "../../../accommodation/types/const";
 
 // ─── Option map: rental type → list of accommodation options ─────────────────
 

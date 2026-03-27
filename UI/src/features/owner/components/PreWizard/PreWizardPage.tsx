@@ -1,9 +1,9 @@
 // components/Wizard/PreWizard/PreWizardPage.tsx
 import { useState } from "react";
 import { Box, Button, Typography, Paper, MobileStepper } from "@mui/material";
-import StepRentalTypeBox from "../Step0/StepRentalTypeBox";
-import StepAccommodationTypeBox from "../Step1/StepAccommodationTypeBox";
-import { ERentalType, EAccommodationType } from "../../../../accommodation/types/accommodation.types";
+import StepRentalTypeBox from "./StepRentalTypeBox";
+import StepAccommodationTypeBox from "./StepAccommodationTypeBox";
+import { ERentalType, EAccommodationType } from "../../../accommodation/types/accommodation.types";
 
 interface Props {
 	onComplete: (rentalType: ERentalType, accommodationType: EAccommodationType) => void;
