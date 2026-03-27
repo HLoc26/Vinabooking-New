@@ -143,6 +143,16 @@ class BookingRepository {
 
 		return counts;
 	}
+
+	public async getDashboardBookings(roomIds: string[], startOfMonth: Date) {
+		return await this.#prismaClient.booking.findMany({
+			where: {
+				details: { some: { itemType: "ROOM", itemId: { in: roomIds } } },
+				OR: [{ status: "PENDING" }, { status: { in: ["BOOKED", "COMPLETED"] }, createdAt: { gte: startOfMonth } }],
+			},
+			include: { details: true },
+		});
+	}
 }
 
 export default BookingRepository;
