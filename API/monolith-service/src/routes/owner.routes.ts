@@ -67,6 +67,11 @@ class OwnerRouter {
 			return this.accommodationController.updateAddress(req as UpdateAddressRequest, res);
 		});
 
+		// Dashboard Stats
+		this.router.get("/dashboard/stats", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.getDashboardStats(req, res);
+		});
+
 		// ==========================================
 		// 🛏️ ROOM MANAGEMENT API
 		// ==========================================
