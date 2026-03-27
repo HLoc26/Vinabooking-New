@@ -279,6 +279,21 @@ class AccommodationRepository {
 			},
 		});
 	}
+
+	public async getRoomsCapacityByOwnerId(ownerId: string) {
+		const accommodations = await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			select: {
+				rooms: { select: { id: true, quantity: true } },
+			},
+		});
+
+		const rooms = accommodations.flatMap((a) => a.rooms);
+		return {
+			roomIds: rooms.map((r) => r.id),
+			totalRooms: rooms.reduce((sum, r) => sum + r.quantity, 0),
+		};
+	}
 }
 
 export default AccommodationRepository;
