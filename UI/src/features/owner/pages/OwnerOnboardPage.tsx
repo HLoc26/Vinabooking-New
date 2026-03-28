@@ -71,7 +71,7 @@ const OwnerOnboardPage: React.FC = () => {
 			},
 			{
 				onSuccess: () => {
-					navigate("/owner/home", { replace: true });
+					navigate("/owner/dashboard", { replace: true });
 				},
 			}
 		);
