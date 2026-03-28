@@ -1,5 +1,6 @@
 import BadRequestError from "@/errors/BadRequestError";
 import { AccommodationRepository, ImageRepository, OwnerRepository } from "@/repositories";
+import { AccommodationService, BookingService } from "@/services";
 import { AccommodationWithDetails, DraftAccommodation } from "@/types/accommodation.types";
 import { EEntityType } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
@@ -8,11 +9,15 @@ class OwnerService {
 	readonly #ownerRepo: OwnerRepository;
 	readonly #accommodationRepo: AccommodationRepository;
 	readonly #imageRepo: ImageRepository;
+	readonly #accommodationService: AccommodationService;
+	readonly #bookingService: BookingService;
 
-	constructor(ownerRepo: OwnerRepository, accommodationRepo: AccommodationRepository, imageRepo: ImageRepository) {
+	constructor(ownerRepo: OwnerRepository, accommodationRepo: AccommodationRepository, imageRepo: ImageRepository, accommodationService: AccommodationService, bookingService: BookingService) {
 		this.#ownerRepo = ownerRepo;
 		this.#accommodationRepo = accommodationRepo;
 		this.#imageRepo = imageRepo;
+		this.#accommodationService = accommodationService;
+		this.#bookingService = bookingService;
 	}
 
 	public async getOwnerProfile(userId: string) {
@@ -73,6 +78,32 @@ class OwnerService {
 		}
 
 		return result;
+	}
+
+	public async getDashboardStats(ownerId: string) {
+		const now = new Date();
+		const startOfMonth = new Date(now.getFullYear(), now.getMonth(), 1);
+		const passedDays = now.getDate() || 1;
+
+		// 1. Fetch capacity from Accommodation
+		const capacity = await this.#accommodationService.getCapacityByOwnerId(ownerId);
+		if (!capacity || capacity.roomIds.length === 0) {
+			return { revenue: 0, occupancyRate: 0, pendingBookings: 0 };
+		}
+
+		// 2. Fetch statistics from Booking
+		const stats = await this.#bookingService.getDashboardStatsByRoomIds(capacity.roomIds, startOfMonth);
+
+		// 3. Calculate Occupancy Rate
+		const totalCapacity = capacity.totalRooms * passedDays;
+		let occupancyRate = totalCapacity > 0 ? (stats.nightsSold / totalCapacity) * 100 : 0;
+		if (occupancyRate > 100) occupancyRate = 100;
+
+		return {
+			revenue: stats.revenue,
+			occupancyRate: Number(occupancyRate.toFixed(1)),
+			pendingBookings: stats.pendingBookings,
+		};
 	}
 }
 

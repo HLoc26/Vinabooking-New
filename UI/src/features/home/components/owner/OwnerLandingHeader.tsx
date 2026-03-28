@@ -27,7 +27,7 @@ const OwnerLandingHeader: React.FC = () => {
 	const handleGetStarted = () => {
 		if (user) {
 			if (user.role === "ACCOMMODATION_OWNER" && ownerInfo) {
-				navigate("/owner/home");
+				navigate("/owner/dashboard");
 			} else {
 				navigate("/owner/onboard");
 			}

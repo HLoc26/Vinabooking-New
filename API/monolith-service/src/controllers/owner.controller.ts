@@ -3,7 +3,7 @@ import ResponseHelper from "@/utils/response";
 import BadRequestError from "@/errors/BadRequestError";
 import { OwnerService } from "@/services";
 import { UpgradeOwnerRequest } from "@/types/requests";
-import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse } from "@/types/responses";
+import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/types/responses";
 import { DraftAccommodation } from "@/types/accommodation.types";
 
 class OwnerController {
@@ -53,6 +53,14 @@ class OwnerController {
 			},
 			profile: result.profile,
 		});
+	}
+
+	public async getDashboardStats(req: Request, res: Response<ApiResponse<DashboardStatsResponse>>) {
+		const userId = req.userId;
+		if (!userId) throw new BadRequestError("Missing user identity");
+
+		const stats = await this.#ownerService.getDashboardStats(userId);
+		return ResponseHelper.success<DashboardStatsResponse>(res, stats);
 	}
 }
 
