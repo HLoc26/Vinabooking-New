@@ -1,5 +1,6 @@
 import apiClient from "../../../services/apiClient";
 import type { ApiResponse } from "../../../types/Response";
+import type { DraftAccommodation } from "../../accommodation/types/accommodation.types";
 import type { UserDto } from "../../user/types/UserDto";
 import type { UpgradeOwnerPayload, OwnerProfileData, OwnerAccommodationCard, DashboardStats } from "../types/owner.types";
 
@@ -10,3 +11,8 @@ export const upgradeToOwner = async (info: UpgradeOwnerPayload) => apiClient.pos
 export const getOwnerAccommodations = async () => apiClient.get<ApiResponse<OwnerAccommodationCard[]>>("/owners/accommodations").then((res) => res.data.data);
 
 export const getDashboardStats = async () => apiClient.get<ApiResponse<DashboardStats>>("/owners/dashboard/stats").then((res) => res.data.data);
+
+export const getDraftAccommodations = async (): Promise<ApiResponse<DraftAccommodation[]>> => {
+	const response = await apiClient.get<ApiResponse<DraftAccommodation[]>>("/owners/accommodations/drafts");
+	return response.data;
+};

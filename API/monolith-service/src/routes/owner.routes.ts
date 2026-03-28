@@ -39,6 +39,10 @@ class OwnerRouter {
 			return this.ownerController.upgradeRole(req as UpgradeOwnerRequest, res);
 		});
 
+		this.router.get("/accommodations/drafts", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.getDraftAccommodations(req, res);
+		});
+
 		this.router.get("/accommodations", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.accommodationController.getOwnerAccommodations(req, res);
 		});
