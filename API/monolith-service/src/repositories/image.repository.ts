@@ -43,6 +43,15 @@ export default class ImageRepository {
 		return variants;
 	}
 
+	public async countByEntity(entityId: string, entityType: EEntityType): Promise<number> {
+		return await this.#prisma.imageReference.count({
+			where: {
+				entityId: entityId,
+				entityType: entityType,
+			},
+		});
+	}
+
 	private async removePrimary(userId: string) {
 		// Make other images not primary
 		await this.#prisma.imageReference.updateMany({

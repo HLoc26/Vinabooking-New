@@ -25,6 +25,10 @@ export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
 	};
 }>;
 
+export type DraftAccommodation = AccommodationWithDetails & {
+	currentWizardStep: number;
+};
+
 export type AccommodationFullInfo = AccommodationWithDetails & {
 	rooms?: RoomWithDetails[];
 	images?: ImageFullInfo[];

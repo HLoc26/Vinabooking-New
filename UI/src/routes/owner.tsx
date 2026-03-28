@@ -8,6 +8,7 @@ import OwnerOnboardPage from "../features/owner/pages/OwnerOnboardPage";
 import DashboardPage from "../features/owner/pages/DashboardPage";
 import ManageBookingPage from "../features/owner/pages/ManageBookingPage";
 import ManagePricePage from "../features/owner/pages/ManagePricePage";
+import DraftsPage from "../features/owner/pages/DraftsPage";
 
 export const OwnerRouter = () => (
 	<Routes>
@@ -37,6 +38,14 @@ export const OwnerRouter = () => (
 			element={
 				<OwnerLayout>
 					<ManagePricePage />
+				</OwnerLayout>
+			}
+		/>
+		<Route
+			path="/drafts"
+			element={
+				<OwnerLayout>
+					<DraftsPage />
 				</OwnerLayout>
 			}
 		/>
