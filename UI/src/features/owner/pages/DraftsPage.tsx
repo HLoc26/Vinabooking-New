@@ -2,24 +2,11 @@ import { useQuery } from "@tanstack/react-query";
 import { getDraftAccommodations } from "../services/ownerApi";
 import { type DraftAccommodation } from "../../accommodation/types/accommodation.types";
 import { type ApiResponse } from "../../../types/Response";
-import {
-	Box,
-	Button,
-	Chip,
-	LinearProgress,
-	Paper,
-	Skeleton,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	Typography,
-} from "@mui/material";
+import { Box, Button, Chip, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Add, ChevronRight } from "@mui/icons-material";
 import { usePushNotification } from "../../../hooks/usePushNotification";
 import { useEffect } from "react";
+import { PageTitleText } from "../components/PageTitleText";
 
 const getStepLabel = (step: number) => {
 	switch (step) {
@@ -97,9 +84,7 @@ const DraftsPage = () => {
 	return (
 		<Box>
 			<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
-				<Typography variant="h4" component="h1" color="text.primary">
-					My Draft Accommodations
-				</Typography>
+				<PageTitleText>My Draft Accommodations</PageTitleText>
 				<Button variant="contained" startIcon={<Add />} disabled>
 					Create New
 				</Button>
@@ -139,9 +124,7 @@ const DraftsPage = () => {
 														<LinearProgress variant="determinate" value={progressValue} />
 													</Box>
 													<Box sx={{ minWidth: 35 }}>
-														<Typography variant="body2" color="text.secondary">{`${Math.round(
-															progressValue,
-														)}%`}</Typography>
+														<Typography variant="body2" color="text.secondary">{`${Math.round(progressValue)}%`}</Typography>
 													</Box>
 												</Box>
 											</TableCell>
