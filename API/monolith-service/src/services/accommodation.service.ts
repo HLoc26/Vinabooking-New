@@ -100,7 +100,7 @@ class AccommodationService {
 						name: f.facility.name,
 						type: f.facility.type,
 						description: f.facility.description,
-						fee: f.fee,
+						fee: Number(f.fee),
 						note: f.note,
 					})),
 			} as unknown as AccommodationFullInfo;
