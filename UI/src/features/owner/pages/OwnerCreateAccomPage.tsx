@@ -136,6 +136,15 @@ const OwnerCreateAccomPage = () => {
 			setTriggerSubmit(true); // always trigger — StepBasicInfoBox handles POST/PATCH/skip
 			return;
 		}
+		if (step === 1) {
+			const error = validateStep(1, form);
+			if (error) {
+				setValidationError(error);
+				return;
+			}
+			setTriggerSubmit(true);
+			return;
+		}
 		goToStep(step + 1);
 	};
 
@@ -144,7 +153,7 @@ const OwnerCreateAccomPage = () => {
 		setStep((s) => Math.max(s - 1, 0));
 	};
 
-	// ── Step content ─────────────────────────────────────────────────────────────
+	// ── Step content
 
 	const renderStep = () => {
 		switch (step) {
@@ -162,7 +171,19 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 1:
-				return <StepAddressBox form={form} setForm={setForm} onFieldChange={() => setValidationError(null)} />;
+				return (
+					<StepAddressBox
+						form={form}
+						setForm={setForm}
+						onFieldChange={() => setValidationError(null)}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(1));
+							setStep(2);
+						}}
+					/>
+				);
 			case 2:
 				return <StepFacilityBox form={form} setForm={setForm} onSelect={(id) => setFacilityExpandedId((prev) => (prev === id ? null : id))} />;
 			case 3:
