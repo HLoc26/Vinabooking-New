@@ -32,8 +32,8 @@ function ClickHandler({ onChange }: { onChange: (data: any) => void }) {
 					fullAddress: data.display_name || "",
 					// Nominatim has slightly different address keys than LocationIQ
 					street: addr.road || addr.pedestrian || addr.house_number || "",
-					ward: addr.suburb || addr.village || addr.neighbourhood || "",
-					district: addr.city_district || addr.county || "",
+					ward: addr.suburb || addr.village || addr.neighbourhood || addr.hamlet || "",
+					district: addr.city_district || addr.county || addr.state_district || "",
 					city: addr.city || addr.town || addr.state || "",
 					country: addr.country || "",
 				});
