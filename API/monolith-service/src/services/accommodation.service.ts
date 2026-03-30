@@ -404,6 +404,10 @@ class AccommodationService {
 		const result = await this.#roomService.filterAccommodationIds(minPrice ? Number(minPrice) : undefined, maxPrice ? Number(maxPrice) : undefined, adultsPerRoom, childrenPerRoom, sortBy);
 		return result || undefined;
 	}
+
+	public async getCapacityByOwnerId(ownerId: string) {
+		return await this.#accommodationRepository.getRoomsCapacityByOwnerId(ownerId);
+	}
 }
 
 export default AccommodationService;

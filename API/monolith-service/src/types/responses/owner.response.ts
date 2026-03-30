@@ -17,3 +17,9 @@ export interface UpgradeOwnerResponse {
 	};
 	profile: OwnerProfileResponse;
 }
+
+export interface DashboardStatsResponse {
+	revenue: number;
+	occupancyRate: number;
+	pendingBookings: number;
+}

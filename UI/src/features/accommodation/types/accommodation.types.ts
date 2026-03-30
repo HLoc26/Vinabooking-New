@@ -126,6 +126,10 @@ export interface AccommodationDetail {
 	reviewCount: number;
 }
 
+export type DraftAccommodation = AccommodationDetail & {
+	currentWizardStep: number;
+};
+
 export type FacilityIconMap = Record<string, ReactNode>;
 
 /* =========================================================================
