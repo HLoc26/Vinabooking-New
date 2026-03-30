@@ -7,7 +7,7 @@ import StepAddressBox from "../components/Wizard/Step3/StepAddressBox";
 import StepFacilityBox from "../components/Wizard/Step4/StepFacilityBox";
 import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
 // import StepImageBox from "../components/Wizard/Step6/StepImageBox";
-import FacilityPanel from "../components/Wizard/Step4/FacilityPanel";
+import FacilityDetailPanel from "../components/Wizard/Step4/FacilityDetailPanel";
 
 import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
@@ -234,7 +234,7 @@ const OwnerCreateAccomPage = () => {
 				</Box>
 
 				{/* ── Far right: facility panel — only on step 2 ──────────────── */}
-				{step === 2 && <FacilityPanel form={form} setForm={setForm} expandedId={facilityExpandedId} setExpandedId={setFacilityExpandedId} />}
+				{step === 2 && <FacilityDetailPanel form={form} setForm={setForm} expandedId={facilityExpandedId} setExpandedId={setFacilityExpandedId} />}
 			</Box>
 		</Box>
 	);
