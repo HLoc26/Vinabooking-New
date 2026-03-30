@@ -11,7 +11,7 @@ const LoginPage: React.FC = () => {
 	const isOwnerPage = location.pathname.startsWith("/owner");
 	const handleSuccessLogin = () => {
 		if (isOwnerPage) {
-			navigate("/owner/home");
+			navigate("/owner/dashboard");
 		} else {
 			navigate("/");
 		}

@@ -3,7 +3,8 @@ import ResponseHelper from "@/utils/response";
 import BadRequestError from "@/errors/BadRequestError";
 import { OwnerService } from "@/services";
 import { UpgradeOwnerRequest } from "@/types/requests";
-import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse } from "@/types/responses";
+import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/types/responses";
+import { DraftAccommodation } from "@/types/accommodation.types";
 
 class OwnerController {
 	readonly #ownerService: OwnerService;
@@ -19,6 +20,15 @@ class OwnerController {
 
 		const profile = await this.#ownerService.getOwnerProfile(userId);
 		return ResponseHelper.success<OwnerProfileResponse | null>(res, profile);
+	}
+
+	public async getDraftAccommodations(req: Request, res: Response<ApiResponse<DraftAccommodation[] | null>>) {
+		const userId = req.userId;
+
+		if (!userId) throw new BadRequestError("Missing user identity");
+
+		const accommodations = await this.#ownerService.getDraftAccommodations(userId);
+		return ResponseHelper.success<DraftAccommodation[] | null>(res, accommodations);
 	}
 
 	public async upgradeRole(req: UpgradeOwnerRequest, res: Response<ApiResponse<UpgradeOwnerResponse>>) {
@@ -43,6 +53,14 @@ class OwnerController {
 			},
 			profile: result.profile,
 		});
+	}
+
+	public async getDashboardStats(req: Request, res: Response<ApiResponse<DashboardStatsResponse>>) {
+		const userId = req.userId;
+		if (!userId) throw new BadRequestError("Missing user identity");
+
+		const stats = await this.#ownerService.getDashboardStats(userId);
+		return ResponseHelper.success<DashboardStatsResponse>(res, stats);
 	}
 }
 

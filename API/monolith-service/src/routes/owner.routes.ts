@@ -39,6 +39,10 @@ class OwnerRouter {
 			return this.ownerController.upgradeRole(req as UpgradeOwnerRequest, res);
 		});
 
+		this.router.get("/accommodations/drafts", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.getDraftAccommodations(req, res);
+		});
+
 		this.router.get("/accommodations", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.accommodationController.getOwnerAccommodations(req, res);
 		});
@@ -65,6 +69,11 @@ class OwnerRouter {
 
 		this.router.put("/accommodations/:id/address", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.accommodationController.updateAddress(req as UpdateAddressRequest, res);
+		});
+
+		// Dashboard Stats
+		this.router.get("/dashboard/stats", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.getDashboardStats(req, res);
 		});
 
 		// ==========================================

@@ -3,12 +3,12 @@ import OwnerLandingPage from "../features/home/pages/OwnerLandingPage";
 import RegisterPage from "../features/auth/pages/RegisterPage";
 import ConfirmOTPPage from "../features/auth/pages/ConfirmOTPPage";
 import LoginPage from "../features/auth/pages/LoginPage";
-import OwnerHomePage from "../features/owner/pages/OwnerHomePage";
 import { OwnerLayout } from "../components/layout/OwnerLayout";
 import OwnerOnboardPage from "../features/owner/pages/OwnerOnboardPage";
 import DashboardPage from "../features/owner/pages/DashboardPage";
 import ManageBookingPage from "../features/owner/pages/ManageBookingPage";
 import ManagePricePage from "../features/owner/pages/ManagePricePage";
+import DraftsPage from "../features/owner/pages/DraftsPage";
 import OwnerCreateAccomPage from "../features/owner/pages/OwnerCreateAccomPage";
 
 export const OwnerRouter = () => (
@@ -19,14 +19,6 @@ export const OwnerRouter = () => (
 		<Route path="/otp" element={<ConfirmOTPPage />} />
 		<Route path="/onboard" element={<OwnerOnboardPage />} />
 		<Route path="/create" element={<OwnerCreateAccomPage />} />
-		<Route
-			path="/home"
-			element={
-				<OwnerLayout>
-					<OwnerHomePage />
-				</OwnerLayout>
-			}
-		/>
 		<Route
 			path="/dashboard"
 			element={
@@ -48,6 +40,14 @@ export const OwnerRouter = () => (
 			element={
 				<OwnerLayout>
 					<ManagePricePage />
+				</OwnerLayout>
+			}
+		/>
+		<Route
+			path="/drafts"
+			element={
+				<OwnerLayout>
+					<DraftsPage />
 				</OwnerLayout>
 			}
 		/>
