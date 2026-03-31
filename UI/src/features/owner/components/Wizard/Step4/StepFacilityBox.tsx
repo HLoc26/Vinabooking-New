@@ -2,7 +2,7 @@ import { Box, Typography, Grid, Chip, CircularProgress, Alert } from "@mui/mater
 import { useOwnerFacilities } from "../../../hooks/useOwnerFacility";
 import type { WizardForm, FacilityDto } from "../../../types/owner.types";
 import { EFacilityType, type FacilityConfig } from "../../../../accommodation/types/accommodation.types";
-import { useState, useMemo } from "react";
+import { useState, useMemo, useRef } from "react";
 import type React from "react";
 
 // Sub-components
@@ -23,6 +23,10 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 		return Object.values(groupedByType).flat();
 	}, [groupedByType]);
 
+	// Keeps track of user edits without triggering re-renders.
+	// If a user removes a facility and re-adds it, we restore from here.
+	const facilityHistoryRef = useRef<Record<string, { fee: number; note: string }>>({});
+
 	// Inline editing state management
 	const [editFacilityId, setEditFacilityId] = useState<string | null>(null);
 	const [editFee, setEditFee] = useState<number>(0);
@@ -40,7 +44,19 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 
 	const handleSelect = (dto: FacilityDto) => {
 		if (selectedIds.has(dto.id)) return;
-		const newEntry: FacilityConfig = { id: dto.id, name: dto.name, fee: 0, note: "", type: EFacilityType.GENERAL, description: "" };
+
+		// Check the memory bank for previously saved edits for this specific facility
+		const pastEdits = facilityHistoryRef.current[dto.id];
+
+		const newEntry: FacilityConfig = {
+			id: dto.id,
+			name: dto.name,
+			// Restore past edits if they exist, otherwise default to 0 and ""
+			fee: pastEdits?.fee ?? 0,
+			note: pastEdits?.note ?? "",
+			type: EFacilityType.GENERAL,
+			description: "",
+		};
 		setForm((prev) => ({ ...prev, facilities: [...prev.facilities, newEntry] }));
 	};
 
@@ -51,6 +67,10 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 
 	const handleSaveInline = () => {
 		if (editFacilityId) {
+			// 1. Save to Memory Bank so it survives accidental deletions
+			facilityHistoryRef.current[editFacilityId] = { fee: editFee, note: editNote };
+
+			// 2. Commit to the actual form state
 			setForm((prev) => ({
 				...prev,
 				facilities: prev.facilities.map((f) => (f.id === editFacilityId ? { ...f, fee: editFee, note: editNote } : f)),
