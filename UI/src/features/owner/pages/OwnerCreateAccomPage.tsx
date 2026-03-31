@@ -42,16 +42,23 @@ function validateStep(step: number, form: WizardForm): string | null {
 			if (!form.name) return "Property name is required.";
 			if (!form.description) return "Description is required.";
 			return null;
+
 		case 1: {
 			const a = form.address;
+
 			if (!a.fullAddress) return "Please select a location.";
 			if (!a.street) return "Street is required.";
 			if (!a.district) return "District is required.";
 			if (!a.city) return "City is required.";
 			if (!a.country) return "Country is required.";
-			if (!a.latitude || !a.longitude) return "Please confirm map location.";
+
+			if (a.latitude == null || a.longitude == null) {
+				return "Please confirm map location.";
+			}
+
 			return null;
 		}
+
 		default:
 			return null;
 	}
@@ -84,6 +91,9 @@ const OwnerCreateAccomPage = () => {
 			country: "",
 			latitude: null,
 			longitude: null,
+			countryCode: "",
+			placeId: "",
+			postalCode: "",
 		},
 
 		facilities: [],
@@ -107,36 +117,40 @@ const OwnerCreateAccomPage = () => {
 	// ── Navigation ──────────────────────────────────────────────────────────────
 
 	const goToStep = (target: number) => {
-		if (target < step || completed.has(target)) {
+		if (target < step) {
 			setValidationError(null);
 			setStep(target);
 			return;
 		}
-		for (let s = step; s < target; s++) {
-			const error = validateStep(s, form);
-			if (error) {
-				setValidationError(error);
-				setStep(s);
-				return;
+
+		for (let s = 0; s < target; s++) {
+			if (!completed.has(s)) {
+				const error = validateStep(s, form);
+				if (error) {
+					setValidationError(error);
+					setStep(s);
+					return;
+				}
 			}
-			setCompleted((prev) => new Set(prev).add(s));
 		}
+
 		setValidationError(null);
 		setStep(target);
 	};
-
 	const next = () => {
-		if (step === 0) {
-			const error = validateStep(0, form);
-			if (error) {
-				setValidationError(error);
-				return;
-			}
-
-			setTriggerSubmit(true); // always trigger — StepBasicInfoBox handles POST/PATCH/skip
+		const error = validateStep(step, form);
+		if (error) {
+			setValidationError(error);
 			return;
 		}
-		goToStep(step + 1);
+
+		// Step 0 & 1 → API steps
+		if (step === 0 || step === 1) {
+			setTriggerSubmit(true);
+			return;
+		}
+		setCompleted((prev) => new Set(prev).add(step));
+		setStep((prev) => prev + 1);
 	};
 
 	const back = () => {
@@ -144,7 +158,7 @@ const OwnerCreateAccomPage = () => {
 		setStep((s) => Math.max(s - 1, 0));
 	};
 
-	// ── Step content ─────────────────────────────────────────────────────────────
+	// ── Step content
 
 	const renderStep = () => {
 		switch (step) {
@@ -162,7 +176,19 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 1:
-				return <StepAddressBox form={form} setForm={setForm} onFieldChange={() => setValidationError(null)} />;
+				return (
+					<StepAddressBox
+						form={form}
+						setForm={setForm}
+						onFieldChange={() => setValidationError(null)}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(1));
+							setStep(2);
+						}}
+					/>
+				);
 			case 2:
 				return <StepFacilityBox form={form} setForm={setForm} onSelect={(id) => setFacilityExpandedId((prev) => (prev === id ? null : id))} />;
 			case 3:
