@@ -103,7 +103,7 @@ export type UpdateFacilitiesPayload = {
 	facilities: {
 		facilityId: string;
 		fee: number;
-		note?: string;
+		note: string | null;
 	}[];
 };
 
