@@ -1,8 +1,9 @@
 import { Box, Typography, Grid, Chip, CircularProgress, Alert } from "@mui/material";
 import { useOwnerFacilities } from "../../../hooks/useOwnerFacility";
-import type { WizardForm, FacilityDto } from "../../../types/owner.types";
+import { useUpdateFacilities } from "../../../hooks/useUpdateFacilities";
+import type { WizardForm } from "../../../types/owner.types";
 import { EFacilityType, type FacilityConfig } from "../../../../accommodation/types/accommodation.types";
-import { useState, useMemo, useRef } from "react";
+import { useState, useMemo, useRef, useEffect } from "react";
 import type React from "react";
 
 // Sub-components
@@ -12,10 +13,19 @@ import FacilityEditPopout from "./FacilityEditPopout";
 interface StepFacilityBoxProps {
 	form: WizardForm;
 	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
+	triggerSubmit: boolean;
+	resetTrigger: () => void;
+	onSuccess: () => void;
 }
 
-const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
+const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm, triggerSubmit, resetTrigger, onSuccess }) => {
 	const { groupedByType, isLoading, isError } = useOwnerFacilities();
+
+	// API Hook for saving
+	const { mutate, isPending } = useUpdateFacilities(form.accommodationId ?? "");
+
+	// Track if the user actually made changes to avoid unnecessary API calls
+	const [hasChanged, setHasChanged] = useState(false);
 
 	// Flatten the grouped facilities into a single continuous array
 	const allFacilities = useMemo(() => {
@@ -23,8 +33,7 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 		return Object.values(groupedByType).flat();
 	}, [groupedByType]);
 
-	// Keeps track of user edits without triggering re-renders.
-	// If a user removes a facility and re-adds it, we restore from here.
+	// MEMORY BANK
 	const facilityHistoryRef = useRef<Record<string, { fee: number; note: string }>>({});
 
 	// Inline editing state management
@@ -42,42 +51,65 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 
 	const closeEditInline = () => setEditFacilityId(null);
 
-	const handleSelect = (dto: FacilityDto) => {
+	const handleSelect = (dto: { id: string; name: string }) => {
 		if (selectedIds.has(dto.id)) return;
 
-		// Check the memory bank for previously saved edits for this specific facility
 		const pastEdits = facilityHistoryRef.current[dto.id];
-
 		const newEntry: FacilityConfig = {
 			id: dto.id,
 			name: dto.name,
-			// Restore past edits if they exist, otherwise default to 0 and ""
 			fee: pastEdits?.fee ?? 0,
 			note: pastEdits?.note ?? "",
 			type: EFacilityType.GENERAL,
 			description: "",
 		};
+
 		setForm((prev) => ({ ...prev, facilities: [...prev.facilities, newEntry] }));
+		setHasChanged(true); // Mark as dirty
 	};
 
 	const handleDeselect = (id: string) => {
 		setForm((prev) => ({ ...prev, facilities: prev.facilities.filter((f) => f.id !== id) }));
+		setHasChanged(true); // Mark as dirty
 		if (editFacilityId === id) closeEditInline();
 	};
 
 	const handleSaveInline = () => {
 		if (editFacilityId) {
-			// 1. Save to Memory Bank so it survives accidental deletions
 			facilityHistoryRef.current[editFacilityId] = { fee: editFee, note: editNote };
 
-			// 2. Commit to the actual form state
 			setForm((prev) => ({
 				...prev,
 				facilities: prev.facilities.map((f) => (f.id === editFacilityId ? { ...f, fee: editFee, note: editNote } : f)),
 			}));
+			setHasChanged(true); // Mark as dirty
 		}
 		closeEditInline();
 	};
+
+	// Submit logic (Triggered by parent component)
+	useEffect(() => {
+		if (!triggerSubmit) return;
+
+		// Skip API call if nothing changed
+		if (!hasChanged && form.accommodationId) {
+			resetTrigger();
+			onSuccess();
+			return;
+		}
+
+		// Execute Mutation
+		mutate(
+			{ facilities: form.facilities.map((f) => ({ facilityId: f.id, fee: f.fee, note: f.note })) }, // UpdateFacilitiesPayload format
+			{
+				onSuccess: () => {
+					setHasChanged(false); // Reset dirty state
+					onSuccess();
+				},
+				onSettled: resetTrigger,
+			}
+		);
+	}, [triggerSubmit]);
 
 	if (isLoading)
 		return (
@@ -103,7 +135,12 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 						Click a tile to select it. Hover selected items to configure fees and notes.
 					</Typography>
 				</Box>
-				{form.facilities.length > 0 && <Chip label={`${form.facilities.length} selected`} color="primary" size="small" sx={{ ml: 2, mt: 0.5, flexShrink: 0 }} />}
+
+				<Box display="flex" alignItems="center" gap={2}>
+					{/* Show saving spinner in the header while API is processing */}
+					{isPending && <CircularProgress size={20} />}
+					{form.facilities.length > 0 && <Chip label={`${form.facilities.length} selected`} color="primary" size="small" />}
+				</Box>
 			</Box>
 
 			{/* Render all facilities continuously in a single Grid */}
