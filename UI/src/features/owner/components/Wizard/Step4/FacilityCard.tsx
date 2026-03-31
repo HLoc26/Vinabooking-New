@@ -56,6 +56,8 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, entry, isSelected
 			}}
 			onClick={!isSelected ? onSelect : undefined}
 		>
+			{hasMeta && <Box sx={{ position: "absolute", top: 10, right: 12, width: 7, height: 7, borderRadius: "50%", bgcolor: "warning.main" }} />}
+
 			<Box
 				className="content-wrapper"
 				sx={{
@@ -71,7 +73,6 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, entry, isSelected
 					transformOrigin: "top center",
 				}}
 			>
-				{hasMeta && <Box sx={{ position: "absolute", bottom: 8, left: 10, width: 7, height: 7, borderRadius: "50%", bgcolor: "warning.main" }} />}
 				<Icon sx={{ fontSize: 34, mb: 1, color: isEditing ? EDIT_BORDER : isSelected ? "primary.main" : "text.secondary", transition: "color 0.2s" }} />
 				<Typography
 					variant="body2"
