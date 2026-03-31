@@ -33,7 +33,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, entry, isSelected
 							background-color 0.75s cubic-bezier(0.23, 1, 0.32, 1),
 							border-color 0.75s cubic-bezier(0.23, 1, 0.32, 1),
 							box-shadow 0.25s cubic-bezier(0.23, 1, 0.32, 1),
-							border-radius 0.25s cubic-bezier(0.23, 1, 0.32, 1)`,
+							border-radius 1s cubic-bezier(0.23, 1, 0.32, 1)`,
 				border: "2px solid",
 				mb: "20px",
 				borderColor: isEditing ? EDIT_BORDER : isSelected ? "primary.main" : "divider",

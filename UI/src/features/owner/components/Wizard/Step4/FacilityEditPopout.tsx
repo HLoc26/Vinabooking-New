@@ -26,13 +26,8 @@ const FacilityEditPopout: React.FC<FacilityEditPopoutProps> = ({ fee, onFeeChang
 				borderBottomLeftRadius: 12,
 				borderBottomRightRadius: 12,
 				p: { xs: 2, md: 2.5 },
-				boxShadow: `0px 16px 32px -4px ${EDIT_SHADOW}`,
+				boxShadow: `0px 20px 20px 30px ${EDIT_SHADOW}`,
 				transformOrigin: "top center",
-				animation: "popoutDrop 0.75s cubic-bezier(0.2, 0.8, 0.2, 1) forwards",
-				"@keyframes popoutDrop": {
-					"0%": { opacity: 0, transform: "scaleY(0.95) translateY(-8px)" },
-					"100%": { opacity: 1, transform: "scaleY(1) translateY(0)" },
-				},
 			}}
 			onClick={(e) => e.stopPropagation()}
 		>
