@@ -12,6 +12,7 @@ import type {
 	CreateAccommodationPayload,
 	AccommodationSummary,
 	UpdateAccommodationPayload,
+	UpdateAddressPayload,
 } from "../types/owner.types";
 
 export const getOwnerInfo = async () => apiClient.get<ApiResponse<OwnerProfileData>>("/owners/profile/me").then((res) => res.data.data);
@@ -59,8 +60,8 @@ export const getBasicInfo = async (id: string): Promise<AccommodationSummary> =>
 	});
 // // ─── Step 3: Address ──────────────────────────────────────────────────────────
 
-// export const updateAccommodationAddress = async (accommodationId: string, payload: UpdateAddressPayload): Promise<void> =>
-// 	apiClient.put(`/owners/accommodations/${accommodationId}/address`, payload).then(() => undefined);
+export const updateAccommodationAddress = async (accommodationId: string, payload: UpdateAddressPayload): Promise<void> =>
+	apiClient.put(`/owners/accommodations/${accommodationId}/address`, payload).then(() => undefined);
 
 // // ─── Step 4: Facilities ───────────────────────────────────────────────────────
 

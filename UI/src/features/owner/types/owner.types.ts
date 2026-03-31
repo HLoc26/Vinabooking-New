@@ -133,6 +133,9 @@ export type AddressForm = {
 	country: string;
 	latitude: number | null;
 	longitude: number | null;
+	countryCode: string;
+	postalCode: string;
+	placeId: string;
 };
 
 /* ────────────────────────────────────────────────────────
