@@ -1,204 +1,143 @@
-import { Box, Typography, Grid, Paper, Divider, Chip, CircularProgress, Alert } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
-import HomeIcon from "@mui/icons-material/Home";
-import WifiIcon from "@mui/icons-material/Wifi";
-import PoolIcon from "@mui/icons-material/Pool";
-import LocalParkingIcon from "@mui/icons-material/LocalParking";
-
+import { Box, Typography, Grid, Divider, Chip, CircularProgress, Alert } from "@mui/material";
 import { useOwnerFacilities } from "../../../hooks/useOwnerFacility";
 import type { WizardForm, FacilityDto } from "../../../types/owner.types";
+import { EFacilityType, type FacilityConfig } from "../../../../accommodation/types/accommodation.types";
+import { useState } from "react";
+import type React from "react";
 
-// ─── Icon mapper ──────────────────────────────────────────────────────────────
+// Sub-components
+import FacilityCard from "./FacilityCard";
+import FacilityEditPopout from "./FacilityEditPopout";
 
-const getFacilityIcon = (name: string) => {
-	const key = name.toLowerCase();
-	if (key.includes("wifi")) return WifiIcon;
-	if (key.includes("pool")) return PoolIcon;
-	if (key.includes("parking")) return LocalParkingIcon;
-	return HomeIcon;
-};
-
-// ─── Props ────────────────────────────────────────────────────────────────────
-
-interface Props {
+interface StepFacilityBoxProps {
 	form: WizardForm;
 	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
-	// Called after a new facility is added so the page can auto-expand it in the panel
-	onSelect: (id: string) => void;
 }
 
-// ─── Component ────────────────────────────────────────────────────────────────
-
-export default function StepFacilityBox({ form, setForm, onSelect }: Props) {
+const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm }) => {
 	const { groupedByType, isLoading, isError } = useOwnerFacilities();
+
+	// Inline editing state management
+	const [editFacilityId, setEditFacilityId] = useState<string | null>(null);
+	const [editFee, setEditFee] = useState<number>(0);
+	const [editNote, setEditNote] = useState<string>("");
 
 	const selectedIds = new Set(form.facilities.map((f) => f.id));
 
-	const handleTileClick = (dto: FacilityDto) => {
-		if (selectedIds.has(dto.id)) {
-			// Already selected — tell the page to expand/focus it in the panel
-			onSelect(dto.id);
-			return;
-		}
-
-		// Add with defaults
-		const newEntry: FacilityConfig = {
-			id: dto.id,
-			name: dto.name,
-			accommodationId: "",
-			facilityId: dto.id,
-			fee: 0,
-			note: undefined,
-		};
-
-		setForm((prev) => ({ ...prev, facilities: [...prev.facilities, newEntry] }));
-		// Tell the page to auto-expand this new row in the panel
-		onSelect(dto.id);
+	const openEditInline = (facility: FacilityConfig) => {
+		setEditFacilityId(facility.id);
+		setEditFee(facility.fee ?? 0);
+		setEditNote(facility.note ?? "");
 	};
 
-	// ── Loading / error ───────────────────────────────────────────────────────
+	const closeEditInline = () => setEditFacilityId(null);
 
-	if (isLoading) {
+	const handleSelect = (dto: FacilityDto) => {
+		if (selectedIds.has(dto.id)) return;
+		const newEntry: FacilityConfig = { id: dto.id, name: dto.name, fee: 0, note: "", type: EFacilityType.GENERAL, description: "" };
+		setForm((prev) => ({ ...prev, facilities: [...prev.facilities, newEntry] }));
+	};
+
+	const handleDeselect = (id: string) => {
+		setForm((prev) => ({ ...prev, facilities: prev.facilities.filter((f) => f.id !== id) }));
+		if (editFacilityId === id) closeEditInline();
+	};
+
+	const handleSaveInline = () => {
+		if (editFacilityId) {
+			setForm((prev) => ({
+				...prev,
+				facilities: prev.facilities.map((f) => (f.id === editFacilityId ? { ...f, fee: editFee, note: editNote } : f)),
+			}));
+		}
+		closeEditInline();
+	};
+
+	if (isLoading)
 		return (
 			<Box display="flex" justifyContent="center" py={6}>
 				<CircularProgress />
 			</Box>
 		);
-	}
-
-	if (isError) {
+	if (isError)
 		return (
 			<Alert severity="error" sx={{ borderRadius: 2 }}>
-				Failed to load facilities. Please refresh and try again.
+				Failed to load facilities.
 			</Alert>
 		);
-	}
-
-	// ── Render ────────────────────────────────────────────────────────────────
 
 	return (
 		<Box>
-			{/* Header */}
 			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={1}>
 				<Box>
-					<Typography variant="h5" fontWeight={800} mb={1} sx={{ color: "#c4b921" }}>
+					<Typography variant="h5" fontWeight={800} mb={1} color="primary">
 						Select Facilities & Amenities
 					</Typography>
 					<Typography variant="body2" color="text.secondary" mb={4}>
-						Click the tiles to add them to your property. Configure fees and notes in the panel on the right.
+						Click a tile to select it. Hover selected items to configure fees and notes.
 					</Typography>
 				</Box>
 				{form.facilities.length > 0 && <Chip label={`${form.facilities.length} selected`} color="primary" size="small" sx={{ ml: 2, mt: 0.5, flexShrink: 0 }} />}
 			</Box>
 
-			{/* Grouped tiles */}
 			{Object.entries(groupedByType).map(([type, items]) => (
 				<Box key={type} mb={5}>
-					<Typography
-						variant="subtitle2"
-						sx={{
-							fontWeight: 800,
-							color: "#ffffff",
-							letterSpacing: 1.5,
-							textTransform: "uppercase",
-							mb: 1,
-						}}
-					>
+					<Typography variant="subtitle2" sx={{ fontWeight: 800, letterSpacing: 1.5, textTransform: "uppercase", mb: 1 }}>
 						{type.replace(/_/g, " ")}
 					</Typography>
+					<Divider sx={{ mb: 3, opacity: 0.2 }} />
 
-					<Divider sx={{ mb: 3, borderColor: "#3f51b5", opacity: 0.2 }} />
-
-					<Grid container spacing={2}>
+					<Grid
+						container
+						spacing={2}
+						sx={{
+							// Megamenu positioning logic
+							"@media (max-width: 599px)": {
+								"& > div:nth-of-type(2n+1) .facility-popout": { left: 0, width: "calc(200% + 16px)", borderTopLeftRadius: 0, borderTopRightRadius: 12 },
+								"& > div:nth-of-type(2n) .facility-popout": { left: "calc(-100% - 16px)", width: "calc(200% + 16px)", borderTopLeftRadius: 12, borderTopRightRadius: 0 },
+							},
+							"@media (min-width: 600px) and (max-width: 899px)": {
+								"& > div:nth-of-type(3n+1) .facility-popout": { left: 0, width: "calc(300% + 32px)", borderTopLeftRadius: 0, borderTopRightRadius: 12 },
+								"& > div:nth-of-type(3n+2) .facility-popout": { left: "calc(-100% - 16px)", width: "calc(300% + 32px)", borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+								"& > div:nth-of-type(3n) .facility-popout": { left: "calc(-200% - 32px)", width: "calc(300% + 32px)", borderTopLeftRadius: 12, borderTopRightRadius: 0 },
+							},
+							"@media (min-width: 900px)": {
+								"& > div:nth-of-type(4n+1) .facility-popout": { left: 0, width: "calc(400% + 48px)", borderTopLeftRadius: 0, borderTopRightRadius: 12 },
+								"& > div:nth-of-type(4n+2) .facility-popout": { left: "calc(-100% - 16px)", width: "calc(400% + 48px)", borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+								"& > div:nth-of-type(4n+3) .facility-popout": { left: "calc(-200% - 32px)", width: "calc(400% + 48px)", borderTopLeftRadius: 12, borderTopRightRadius: 12 },
+								"& > div:nth-of-type(4n) .facility-popout": { left: "calc(-300% - 48px)", width: "calc(400% + 48px)", borderTopLeftRadius: 12, borderTopRightRadius: 0 },
+							},
+						}}
+					>
 						{items.map((facility) => {
 							const isSelected = selectedIds.has(facility.id);
-							const Icon = getFacilityIcon(facility.name);
+							const isEditing = editFacilityId === facility.id;
 							const entry = form.facilities.find((f) => f.id === facility.id);
-							const hasMeta = !!entry && ((entry.fee ?? 0) > 0 || !!entry.note);
 
 							return (
-								<Grid size={{ xs: 6, sm: 4, md: 3 }} key={facility.id}>
-									<Paper
-										onClick={() => handleTileClick(facility)}
-										elevation={0}
-										sx={{
-											p: 3,
-											height: 120,
-											display: "flex",
-											flexDirection: "column",
-											justifyContent: "center",
-											alignItems: "center",
-											cursor: "pointer",
-											borderRadius: 3,
-											position: "relative",
-											transition: "all 0.3s",
-											border: "2px solid",
-											borderColor: isSelected ? "#1a1a1a" : "#eeeeee",
-											bgcolor: isSelected ? "#1a1a1a" : "#fdfdfd",
-											color: isSelected ? "#ffffff" : "#424242",
-											"&:hover": {
-												transform: "translateY(-6px)",
-												boxShadow: isSelected ? "0 10px 20px rgba(0,0,0,0.3)" : "0 10px 20px rgba(0,0,0,0.05)",
-												borderColor: "#1a1a1a",
-												bgcolor: isSelected ? "#333333" : "#ffffff",
-											},
-										}}
-									>
-										{isSelected && (
-											<CheckCircleIcon
-												sx={{
-													position: "absolute",
-													top: 10,
-													right: 10,
-													fontSize: 18,
-													color: "#ffffff",
-												}}
-											/>
-										)}
-
-										{hasMeta && (
-											<Box
-												sx={{
-													position: "absolute",
-													top: 10,
-													left: 10,
-													width: 8,
-													height: 8,
-													borderRadius: "50%",
-													bgcolor: "warning.main",
-												}}
-											/>
-										)}
-
-										<Icon
-											sx={{
-												fontSize: 38,
-												mb: 1.5,
-												color: isSelected ? "#ffffff" : "#757575",
-											}}
+								<Grid size={{ xs: 6, sm: 4, md: 3 }} key={facility.id} sx={{ zIndex: isEditing ? 10 : 1 }}>
+									<Box sx={{ position: "relative" }}>
+										<FacilityCard
+											facility={facility}
+											entry={entry}
+											isSelected={isSelected}
+											isEditing={isEditing}
+											onSelect={() => handleSelect(facility)}
+											onDeselect={() => handleDeselect(facility.id)}
+											onEdit={() => entry && openEditInline(entry)}
 										/>
 
-										<Typography
-											variant="body2"
-											sx={{
-												fontWeight: isSelected ? 800 : 600,
-												textAlign: "center",
-												fontSize: "0.85rem",
-												display: "-webkit-box",
-												WebkitLineClamp: 2,
-												WebkitBoxOrient: "vertical",
-												overflow: "hidden",
-											}}
-										>
-											{facility.name}
-										</Typography>
-
-										{entry && (entry.fee ?? 0) > 0 && (
-											<Typography variant="caption" sx={{ mt: 0.5, color: "#ffffff99", fontSize: "0.7rem" }}>
-												{entry.fee!.toLocaleString()}₫
-											</Typography>
+										{isEditing && (
+											<FacilityEditPopout
+												fee={editFee}
+												onFeeChange={setEditFee}
+												note={editNote}
+												onNoteChange={setEditNote}
+												onSave={handleSaveInline}
+												onCancel={closeEditInline}
+											/>
 										)}
-									</Paper>
+									</Box>
 								</Grid>
 							);
 						})}
@@ -207,4 +146,6 @@ export default function StepFacilityBox({ form, setForm, onSelect }: Props) {
 			))}
 		</Box>
 	);
-}
+};
+
+export default StepFacilityBox;
