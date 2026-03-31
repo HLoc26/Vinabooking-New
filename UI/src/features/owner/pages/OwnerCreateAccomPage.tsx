@@ -122,11 +122,13 @@ const OwnerCreateAccomPage = () => {
 			return;
 		}
 
-		// Step 0 & 1 → API steps
-		if (step === 0 || step === 1) {
+		// Step 0, 1, & 2 → API steps (Basic Info, Address, Facilities)
+		if (step === 0 || step === 1 || step === 2) {
 			setTriggerSubmit(true);
 			return;
 		}
+
+		// For steps without API calls (just local state transition)
 		setCompleted((prev) => new Set(prev).add(step));
 		setStep((prev) => prev + 1);
 	};
@@ -168,7 +170,18 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 2:
-				return <StepFacilityBox form={form} setForm={setForm} />;
+				return (
+					<StepFacilityBox
+						form={form}
+						setForm={setForm}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(2));
+							setStep(3);
+						}}
+					/>
+				);
 			case 3:
 				return <StepRoomsBox form={form} setForm={setForm} />;
 			// case 4:
