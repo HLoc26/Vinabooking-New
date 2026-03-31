@@ -7,7 +7,6 @@ import StepAddressBox from "../components/Wizard/Step3/StepAddressBox";
 import StepFacilityBox from "../components/Wizard/Step4/StepFacilityBox";
 import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
 // import StepImageBox from "../components/Wizard/Step6/StepImageBox";
-import FacilityDetailPanel from "../components/Wizard/Step4/FacilityDetailPanel";
 
 import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
@@ -51,7 +50,6 @@ const OwnerCreateAccomPage = () => {
 	const [step, setStep] = useState(0);
 	const [completed, setCompleted] = useState<Set<number>>(new Set());
 	const [validationError, setValidationError] = useState<string | null>(null);
-	const [facilityExpandedId, setFacilityExpandedId] = useState<string | null>(null);
 	const [triggerSubmit, setTriggerSubmit] = useState(false);
 
 	const [form, setForm] = useState<WizardForm>({
@@ -170,7 +168,7 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 2:
-				return <StepFacilityBox form={form} setForm={setForm} onSelect={(id) => setFacilityExpandedId((prev) => (prev === id ? null : id))} />;
+				return <StepFacilityBox form={form} setForm={setForm} />;
 			case 3:
 				return <StepRoomsBox form={form} setForm={setForm} />;
 			// case 4:
@@ -185,7 +183,7 @@ const OwnerCreateAccomPage = () => {
 	// ── Layout ───────────────────────────────────────────────────────────────────
 
 	return (
-		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1600, pb: 8 }}>
+		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1200, pb: 8 }}>
 			<Typography variant="h5" fontWeight={700} mb={0.5} px={0.5}>
 				List Your Property
 			</Typography>
@@ -193,7 +191,7 @@ const OwnerCreateAccomPage = () => {
 				Fill in the details below to publish your accommodation.
 			</Typography>
 
-			<Box display="flex" gap={3} alignItems="flex-start">
+			<Box display="flex" gap={2} alignItems="flex-start">
 				{/* ── Left sidebar: vertical stepper ─────────────────────────── */}
 				<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} />
 
@@ -232,9 +230,6 @@ const OwnerCreateAccomPage = () => {
 						</Box>
 					</Paper>
 				</Box>
-
-				{/* ── Far right: facility panel — only on step 2 ──────────────── */}
-				{step === 2 && <FacilityDetailPanel form={form} setForm={setForm} expandedId={facilityExpandedId} setExpandedId={setFacilityExpandedId} />}
 			</Box>
 		</Box>
 	);
