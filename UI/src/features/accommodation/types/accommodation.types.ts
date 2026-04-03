@@ -99,7 +99,7 @@ export type Address = {
 
 export type FacilityConfig = {
 	id: string;
-	fee: string;
+	fee: number;
 	note: string | null;
 	name: string;
 	type: EFacilityType;
