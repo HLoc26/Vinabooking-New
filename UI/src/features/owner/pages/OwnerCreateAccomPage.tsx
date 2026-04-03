@@ -1,38 +1,17 @@
 import { useState } from "react";
-import { Box, Button, Typography, Paper, Stepper, Step, StepLabel, StepButton, Alert } from "@mui/material";
-import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
-import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
-import KingBedOutlinedIcon from "@mui/icons-material/KingBedOutlined";
-import PhotoLibraryOutlinedIcon from "@mui/icons-material/PhotoLibraryOutlined";
-import DescriptionOutlinedIcon from "@mui/icons-material/DescriptionOutlined";
-import type { SvgIconComponent } from "@mui/icons-material";
+import { Box, Button, Typography, Paper, Alert } from "@mui/material";
 
 import PreWizardPage from "../components/PreWizard/PreWizardPage";
 import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
 import StepAddressBox from "../components/Wizard/Step3/StepAddressBox";
 import StepFacilityBox from "../components/Wizard/Step4/StepFacilityBox";
 import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
-import StepImageBox from "../components/Wizard/Step6/StepImageBox";
-import FacilityPanel from "../components/Wizard/Step4/FacilityPanel";
+// import StepImageBox from "../components/Wizard/Step6/StepImageBox";
 
 import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
-
-// ─── Step config ──────────────────────────────────────────────────────────────
-
-interface StepMeta {
-	label: string;
-	subtitle: string;
-	icon: SvgIconComponent;
-}
-
-const STEP_META: StepMeta[] = [
-	{ label: "Basic Info", subtitle: "Name & description", icon: DescriptionOutlinedIcon },
-	{ label: "Location", subtitle: "Where it is", icon: LocationOnOutlinedIcon },
-	{ label: "Facilities", subtitle: "What you offer", icon: MeetingRoomOutlinedIcon },
-	{ label: "Rooms", subtitle: "Rooms & beds", icon: KingBedOutlinedIcon },
-	{ label: "Photos", subtitle: "Images & cover", icon: PhotoLibraryOutlinedIcon },
-];
+import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
+import { STEP_META } from "../const/StepperMetaConst";
 
 // ─── Validation ───────────────────────────────────────────────────────────────
 
@@ -71,7 +50,6 @@ const OwnerCreateAccomPage = () => {
 	const [step, setStep] = useState(0);
 	const [completed, setCompleted] = useState<Set<number>>(new Set());
 	const [validationError, setValidationError] = useState<string | null>(null);
-	const [facilityExpandedId, setFacilityExpandedId] = useState<string | null>(null);
 	const [triggerSubmit, setTriggerSubmit] = useState(false);
 
 	const [form, setForm] = useState<WizardForm>({
@@ -144,11 +122,13 @@ const OwnerCreateAccomPage = () => {
 			return;
 		}
 
-		// Step 0 & 1 → API steps
-		if (step === 0 || step === 1) {
+		// Step 0, 1, & 2 → API steps (Basic Info, Address, Facilities)
+		if (step === 0 || step === 1 || step === 2) {
 			setTriggerSubmit(true);
 			return;
 		}
+
+		// For steps without API calls (just local state transition)
 		setCompleted((prev) => new Set(prev).add(step));
 		setStep((prev) => prev + 1);
 	};
@@ -190,11 +170,22 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 2:
-				return <StepFacilityBox form={form} setForm={setForm} onSelect={(id) => setFacilityExpandedId((prev) => (prev === id ? null : id))} />;
+				return (
+					<StepFacilityBox
+						form={form}
+						setForm={setForm}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(2));
+							setStep(3);
+						}}
+					/>
+				);
 			case 3:
 				return <StepRoomsBox form={form} setForm={setForm} />;
-			case 4:
-				return <StepImageBox form={form} setForm={setForm} />;
+			// case 4:
+			// 	return <StepImageBox form={form} setForm={setForm} />;
 			default:
 				return null;
 		}
@@ -205,7 +196,7 @@ const OwnerCreateAccomPage = () => {
 	// ── Layout ───────────────────────────────────────────────────────────────────
 
 	return (
-		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1600, pb: 8 }}>
+		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1200, pb: 8 }}>
 			<Typography variant="h5" fontWeight={700} mb={0.5} px={0.5}>
 				List Your Property
 			</Typography>
@@ -213,124 +204,9 @@ const OwnerCreateAccomPage = () => {
 				Fill in the details below to publish your accommodation.
 			</Typography>
 
-			<Box display="flex" gap={3} alignItems="flex-start">
+			<Box display="flex" gap={2} alignItems="flex-start">
 				{/* ── Left sidebar: vertical stepper ─────────────────────────── */}
-				<Paper
-					elevation={0}
-					sx={{
-						width: 220,
-						flexShrink: 0,
-						p: 2,
-						borderRadius: 3,
-						border: "1px solid",
-						borderColor: "divider",
-						position: "sticky",
-						top: 24,
-					}}
-				>
-					<Stepper
-						nonLinear
-						activeStep={step}
-						orientation="vertical"
-						sx={{
-							"& .MuiStepConnector-line": {
-								borderColor: "divider",
-								minHeight: 20,
-								transition: "border-color 0.3s ease",
-							},
-							"& .Mui-completed .MuiStepConnector-line": {
-								borderColor: "primary.main",
-							},
-							"& .MuiStepIcon-root": {
-								color: "text.disabled",
-								transition: "color 0.2s ease",
-							},
-							"& .MuiStepIcon-root.Mui-active": { color: "primary.main" },
-							"& .MuiStepIcon-root.Mui-completed": { color: "primary.main" },
-						}}
-					>
-						{STEP_META.map((meta, i) => {
-							const isActive = step === i;
-							const isCompleted = completed.has(i);
-							const isClickable = i < step || isCompleted;
-							const Icon = meta.icon;
-
-							return (
-								<Step key={meta.label} completed={isCompleted}>
-									<StepButton
-										onClick={() => goToStep(i)}
-										disableRipple={!isClickable}
-										sx={{
-											cursor: isClickable ? "pointer" : "default",
-											borderRadius: 2,
-											py: 0.75,
-											px: 1,
-											textAlign: "left",
-											transition: "background-color 0.2s ease",
-
-											...(isClickable &&
-												!isActive && {
-													"&:hover": {
-														bgcolor: "action.hover",
-														"& .MuiStepLabel-label": { color: "primary.main" },
-														"& .step-subtitle": { color: "primary.light" },
-													},
-												}),
-
-											...(isActive && {
-												bgcolor: "primary.50",
-												borderLeft: "3px solid",
-												borderColor: "primary.main",
-												pl: "calc(8px - 3px)",
-											}),
-
-											"& .MuiStepLabel-root": { alignItems: "flex-start" },
-
-											"& .MuiStepLabel-label": {
-												fontWeight: isActive ? 700 : 500,
-												color: isActive ? "primary.main" : isCompleted ? "text.primary" : "text.disabled",
-												lineHeight: 1.2,
-												transition: "color 0.2s ease",
-											},
-
-											"& .MuiStepLabel-iconContainer": {
-												pr: 1.5,
-											},
-										}}
-									>
-										<StepLabel
-											icon={
-												<Icon
-													sx={{
-														fontSize: 20,
-														color: isActive ? "primary.main" : isCompleted ? "primary.main" : "text.disabled",
-														transition: "color 0.2s ease",
-													}}
-												/>
-											}
-										>
-											{meta.label}
-											<Typography
-												component="span"
-												className="step-subtitle"
-												variant="caption"
-												display="block"
-												sx={{
-													color: isActive ? "primary.light" : "text.disabled",
-													lineHeight: 1.2,
-													fontWeight: 400,
-													transition: "color 0.2s ease",
-												}}
-											>
-												{meta.subtitle}
-											</Typography>
-										</StepLabel>
-									</StepButton>
-								</Step>
-							);
-						})}
-					</Stepper>
-				</Paper>
+				<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} />
 
 				{/* ── Right: step content ─────────────────────────────────────── */}
 				<Box flex={1} minWidth={0}>
@@ -367,9 +243,6 @@ const OwnerCreateAccomPage = () => {
 						</Box>
 					</Paper>
 				</Box>
-
-				{/* ── Far right: facility panel — only on step 2 ──────────────── */}
-				{step === 2 && <FacilityPanel form={form} setForm={setForm} expandedId={facilityExpandedId} setExpandedId={setFacilityExpandedId} />}
 			</Box>
 		</Box>
 	);

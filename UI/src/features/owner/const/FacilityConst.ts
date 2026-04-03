@@ -1,62 +1,58 @@
-import * as Icons from "@mui/icons-material";
-import { EFacilityType } from "../../accommodation/types/accommodation.types";
+import HomeIcon from "@mui/icons-material/Home";
+import WifiIcon from "@mui/icons-material/Wifi";
+import PoolIcon from "@mui/icons-material/Pool";
+import LocalParkingIcon from "@mui/icons-material/LocalParking";
+import AcUnitIcon from "@mui/icons-material/AcUnit";
+import SmokeFreeIcon from "@mui/icons-material/SmokeFree";
+import ElevatorIcon from "@mui/icons-material/Elevator";
+import AccessibleIcon from "@mui/icons-material/Accessible";
+import FreeBreakfastIcon from "@mui/icons-material/FreeBreakfast";
+import RestaurantIcon from "@mui/icons-material/Restaurant";
+import RoomServiceIcon from "@mui/icons-material/RoomService";
+import SupportAgentIcon from "@mui/icons-material/SupportAgent";
+import LocalLaundryServiceIcon from "@mui/icons-material/LocalLaundryService";
+import LuggageIcon from "@mui/icons-material/Luggage";
+import FitnessCenterIcon from "@mui/icons-material/FitnessCenter";
+import SpaIcon from "@mui/icons-material/Spa";
+import AirportShuttleIcon from "@mui/icons-material/AirportShuttle";
+import PetsIcon from "@mui/icons-material/Pets";
 
-export type FacilityConfig = {
-	id: string;
-	name: string;
-	type: keyof typeof EFacilityType;
-	icon: React.ElementType;
-	description: string;
+export const EDIT_BG = "#261a0d";
+export const EDIT_BORDER = "#f5a623";
+export const EDIT_HOVER = "#362512";
+export const EDIT_SHADOW = "rgba(0, 0, 0, 0.6)";
+
+export const getFacilityIcon = (name: string) => {
+	if (!name) return HomeIcon;
+	const key = name.toLowerCase();
+
+	// General & Accessibility
+	if (key.includes("wifi")) return WifiIcon;
+	if (key.includes("air conditioning")) return AcUnitIcon;
+	if (key.includes("non-smoking")) return SmokeFreeIcon;
+	if (key.includes("elevator")) return ElevatorIcon;
+	if (key.includes("wheelchair")) return AccessibleIcon;
+
+	// Food & Drink
+	if (key.includes("breakfast")) return FreeBreakfastIcon;
+	if (key.includes("restaurant")) return RestaurantIcon;
+	if (key.includes("room service")) return RoomServiceIcon;
+
+	// Services
+	if (key.includes("24-hour") || key.includes("front desk")) return SupportAgentIcon;
+	if (key.includes("laundry")) return LocalLaundryServiceIcon;
+	if (key.includes("luggage")) return LuggageIcon;
+
+	// Wellness & Recreation
+	if (key.includes("pool")) return PoolIcon;
+	if (key.includes("fitness")) return FitnessCenterIcon;
+	if (key.includes("spa") || key.includes("wellness")) return SpaIcon;
+
+	// Transport & Special Amenities
+	if (key.includes("parking")) return LocalParkingIcon;
+	if (key.includes("airport") || key.includes("shuttle")) return AirportShuttleIcon;
+	if (key.includes("pet")) return PetsIcon;
+
+	// Fallback
+	return HomeIcon;
 };
-
-export const ALL_FACILITIES: FacilityConfig[] = [
-	// GENERAL
-	{ id: "wifi", name: "Free Wi-Fi", type: "GENERAL", icon: Icons.Wifi, description: "High-speed internet access" },
-	{ id: "ac", name: "Air Conditioning", type: "GENERAL", icon: Icons.AcUnit, description: "Climate control in rooms" },
-	{ id: "parking", name: "Parking", type: "GENERAL", icon: Icons.LocalParking, description: "On-site parking for guests" },
-
-	// FOOD_AND_DRINK
-	{ id: "restaurant", name: "Restaurant", type: "FOOD_AND_DRINK", icon: Icons.Restaurant, description: "In-house dining options" },
-	{ id: "bar", name: "Bar/Lounge", type: "FOOD_AND_DRINK", icon: Icons.LocalBar, description: "Drinks and social area" },
-	{ id: "kitchen", name: "Kitchen", type: "FOOD_AND_DRINK", icon: Icons.Kitchen, description: "Private or shared cooking facilities" },
-
-	// PUBLIC_FACILITIES
-	{ id: "elevator", name: "Elevator", type: "PUBLIC_FACILITIES", icon: Icons.Elevator, description: "Lift access to all floors" },
-	{ id: "lobby", name: "Lobby", type: "PUBLIC_FACILITIES", icon: Icons.MeetingRoom, description: "Waiting and reception area" },
-
-	// SERVICES
-	{ id: "reception", name: "24h Reception", type: "SERVICES", icon: Icons.SupportAgent, description: "Staff available around the clock" },
-	{ id: "laundry", name: "Laundry", type: "SERVICES", icon: Icons.LocalLaundryService, description: "Washing and drying services" },
-
-	// SAFETY
-	{ id: "security", name: "24h Security", type: "SAFETY", icon: Icons.Security, description: "Professional security monitoring" },
-	{ id: "fire", name: "Fire Alarm", type: "SAFETY", icon: Icons.FireExtinguisher, description: "Safety smoke and fire systems" },
-
-	// ACCESSIBILITY
-	{ id: "wheelchair", name: "Wheelchair Access", type: "ACCESSIBILITY", icon: Icons.WheelchairPickup, description: "Facilities for guests with disabilities" },
-
-	// ENTERTAINMENT
-	{ id: "tv", name: "Flat-screen TV", type: "ENTERTAINMENT", icon: Icons.Tv, description: "In-room entertainment" },
-	{ id: "games", name: "Game Room", type: "ENTERTAINMENT", icon: Icons.SportsEsports, description: "Recreational gaming area" },
-
-	// OUTDOOR
-	{ id: "pool", name: "Swimming Pool", type: "OUTDOOR", icon: Icons.Pool, description: "Outdoor or indoor pool" },
-	{ id: "garden", name: "Garden", type: "OUTDOOR", icon: Icons.OutdoorGrill, description: "Green space or garden area" },
-
-	// TRANSPORTATION
-	{ id: "shuttle", name: "Airport Shuttle", type: "TRANSPORTATION", icon: Icons.AirportShuttle, description: "Transport to/from airport" },
-	{ id: "bike", name: "Bicycle Rental", type: "TRANSPORTATION", icon: Icons.PedalBike, description: "Bikes available for hire" },
-
-	// WELLNESS
-	{ id: "gym", name: "Fitness Center", type: "WELLNESS", icon: Icons.FitnessCenter, description: "Gym and exercise equipment" },
-	{ id: "spa", name: "Spa & Massage", type: "WELLNESS", icon: Icons.Spa, description: "Wellness and relaxation treatments" },
-
-	// SPECIAL_AMENITIES
-	{ id: "pet", name: "Pet Friendly", type: "SPECIAL_AMENITIES", icon: Icons.Pets, description: "Pets are allowed on property" },
-
-	// SUSTAINABILITY
-	{ id: "solar", name: "Solar Power", type: "SUSTAINABILITY", icon: Icons.SolarPower, description: "Renewable energy source" },
-
-	// OTHER
-	{ id: "other", name: "Other", type: "OTHER", icon: Icons.MoreHoriz, description: "Additional facilities" },
-];

@@ -13,6 +13,7 @@ import type {
 	AccommodationSummary,
 	UpdateAccommodationPayload,
 	UpdateAddressPayload,
+	UpdateFacilitiesPayload,
 } from "../types/owner.types";
 
 export const getOwnerInfo = async () => apiClient.get<ApiResponse<OwnerProfileData>>("/owners/profile/me").then((res) => res.data.data);
@@ -65,8 +66,8 @@ export const updateAccommodationAddress = async (accommodationId: string, payloa
 
 // // ─── Step 4: Facilities ───────────────────────────────────────────────────────
 
-// export const updateAccommodationFacilities = async (accommodationId: string, payload: UpdateFacilitiesPayload): Promise<void> =>
-// 	apiClient.put(`/owners/accommodations/${accommodationId}/facilities`, payload).then(() => undefined);
+export const updateAccommodationFacilities = async (accommodationId: string, payload: UpdateFacilitiesPayload): Promise<void> =>
+	apiClient.put(`/owners/accommodations/${accommodationId}/facilities`, payload).then(() => undefined);
 
 // // ─── Step 5: Rooms ────────────────────────────────────────────────────────────
 

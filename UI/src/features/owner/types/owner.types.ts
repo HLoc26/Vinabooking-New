@@ -1,4 +1,11 @@
-import type { ERentalType, EAmenityType, EFacilityType, EAccommodationType, EAccommodationStatus } from "../../accommodation/types/accommodation.types";
+import type {
+	ERentalType,
+	EAmenityType,
+	EFacilityType,
+	EAccommodationType,
+	EAccommodationStatus,
+	FacilityConfig as FacilityConfigFromAccommodation,
+} from "../../accommodation/types/accommodation.types";
 
 /* ────────────────────────────────────────────────────────
    Owner
@@ -96,7 +103,7 @@ export type UpdateFacilitiesPayload = {
 	facilities: {
 		facilityId: string;
 		fee: number;
-		note?: string;
+		note: string | null;
 	}[];
 };
 
@@ -142,12 +149,7 @@ export type AddressForm = {
    Facility (Step 4)
 ──────────────────────────────────────────────────────── */
 
-export type FacilityConfigForm = {
-	facilityId: string;
-	name: string;
-	fee: number;
-	note?: string;
-};
+export type FacilityConfig = FacilityConfigFromAccommodation;
 
 /* ────────────────────────────────────────────────────────
    Amenity
@@ -265,7 +267,7 @@ export type WizardForm = {
 	address: AddressForm;
 
 	// Step 4
-	facilities: FacilityConfigForm[];
+	facilities: FacilityConfig[];
 
 	// Step 5
 	rooms: RoomForm[];
