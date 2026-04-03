@@ -14,6 +14,8 @@ import type {
 	UpdateAccommodationPayload,
 	UpdateAddressPayload,
 	UpdateFacilitiesPayload,
+	CreateRoomDTO,
+	RoomSummary,
 } from "../types/owner.types";
 
 export const getOwnerInfo = async () => apiClient.get<ApiResponse<OwnerProfileData>>("/owners/profile/me").then((res) => res.data.data);
@@ -71,13 +73,28 @@ export const updateAccommodationFacilities = async (accommodationId: string, pay
 
 // // ─── Step 5: Rooms ────────────────────────────────────────────────────────────
 
-// export const createRoom = async (accommodationId: string, payload: CreateRoomPayload): Promise<{ id: string }> =>
-// 	apiClient.post<ApiResponse<{ id: string }>>(`/owners/accommodations/${accommodationId}/rooms`, payload).then((res) => res.data.data);
+/**
+ * POST /owners/accommodations/:accommodationId/rooms
+ * Creates a single room (with beds + amenities) under an accommodation.
+ * Returns the persisted room summary including the server-assigned id.
+ */
+export const createRoom = async (accommodationId: string, payload: CreateRoomDTO): Promise<RoomSummary> =>
+	apiClient.post<ApiResponse<RoomSummary>>(`/owners/accommodations/${accommodationId}/rooms`, payload).then((res) => {
+		const { success, data, error } = res.data;
+		if (!success || !data) throw new Error(error || "Failed to create room");
+		return data;
+	});
 
-// export const updateRoom = async (
-// 	roomId: string,
-// 	payload: CreateRoomPayload // same shape — backend does full replacement
-// ): Promise<void> => apiClient.patch(`/owners/rooms/${roomId}`, payload).then(() => undefined);
+/**
+ * PATCH /owners/rooms/:roomId
+ * Full replacement update of an existing room.
+ */
+export const updateRoom = async (roomId: string, payload: CreateRoomDTO): Promise<RoomSummary> =>
+	apiClient.patch<ApiResponse<RoomSummary>>(`/owners/rooms/${roomId}`, payload).then((res) => {
+		const { success, data, error } = res.data;
+		if (!success || !data) throw new Error(error || "Failed to update room");
+		return data;
+	});
 
 // // ─── Step 6: Images ───────────────────────────────────────────────────────────
 // // Max 10 files per request. Use uploadAccommodationImages/uploadRoomImages
