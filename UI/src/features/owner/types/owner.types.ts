@@ -1,3 +1,4 @@
+import type { EViewType } from "../../accommodation/constants/viewTypes";
 import type {
 	ERentalType,
 	EAmenityType,
@@ -6,6 +7,7 @@ import type {
 	EAccommodationStatus,
 	FacilityConfig as FacilityConfigFromAccommodation,
 } from "../../accommodation/types/accommodation.types";
+import type { EPricingType, EBedType, EBedSize } from "../const/RoomConst";
 
 /* ────────────────────────────────────────────────────────
    Owner
@@ -231,6 +233,86 @@ export type RoomForm = {
 	// Backend expects amenityIds → keep full objects for UI
 	amenities: AmenityConfigForm[];
 };
+export interface CreateBedBatchDTO {
+	name?: string;
+	bedType: EBedType;
+	size?: EBedSize;
+	/** Only relevant when accommodationType === "SHARED_ROOM" */
+	price?: number;
+}
+export interface CreateRoomDTO {
+	name: string;
+	description?: string;
+	quantity?: number;
+	maxAdults?: number;
+	maxChildren?: number;
+	size?: number;
+	bedroomCount?: number;
+	bathroomCount?: number;
+	viewType?: EViewType;
+	viewDescription?: string;
+	price?: number;
+	pricingType?: EPricingType;
+	isActive?: boolean;
+
+	beds: CreateBedBatchDTO[];
+	/** Array of amenity UUIDs */
+	amenityIds: string[];
+}
+export interface BedSummary {
+	id: string;
+	name: string | null;
+	description: string | null;
+	bedType: EBedType;
+	size: EBedSize | null;
+	/** null when accommodation is not SHARED_ROOM */
+	price: string | null;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+	roomId: string;
+}
+
+export interface AmenitySummaryEntry {
+	id: string;
+	note: string | null;
+	createdAt: string;
+	updatedAt: string;
+	roomId: string;
+	amenityId: string;
+	amenity: {
+		id: string;
+		name: string;
+		type: string;
+		description: string;
+		createdAt: string;
+		updatedAt: string;
+	};
+}
+// ---------- response shape ----------
+
+export interface RoomSummary {
+	id: string;
+	accommodationId: string;
+	name: string;
+	description: string | null;
+	quantity: number;
+	maxAdults: number;
+	maxChildren: number;
+	size: number | null;
+	bedroomCount: number;
+	bathroomCount: number;
+	viewType: EViewType;
+	viewDescription: string | null;
+	/** Server returns price as a string (decimal column) */
+	price: string | null;
+	pricingType: EPricingType;
+	isActive: boolean;
+	createdAt: string;
+	updatedAt: string;
+	beds: BedSummary[];
+	amenities: AmenitySummaryEntry[];
+}
 
 /* ────────────────────────────────────────────────────────
    Images (Step 6)
