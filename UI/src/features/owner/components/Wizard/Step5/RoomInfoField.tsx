@@ -1,4 +1,5 @@
-import { Box, TextField, MenuItem, Typography } from "@mui/material";
+import { useState } from "react";
+import { Box, TextField, MenuItem, Typography, InputAdornment, alpha } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import { VIEW_TYPES, PRICING_TYPES } from "../../../const/RoomConst";
 
@@ -7,59 +8,229 @@ interface Props {
 	set: (field: keyof RoomForm, value: any) => void;
 }
 
+function StepperField({
+	label,
+	value,
+	onChange,
+	allowDecimal = false,
+	min = 0,
+	max,
+}: {
+	label: string;
+	value: number | undefined;
+	onChange: (v: number) => void;
+	allowDecimal?: boolean;
+	min?: number;
+	max?: number;
+}) {
+	const [raw, setRaw] = useState<string>(String(value ?? 0));
+	const [focused, setFocused] = useState(false);
+
+	const current = value ?? 0;
+
+	// Keep raw synced when external value changes while not focused
+	if (!focused && raw !== String(value ?? 0)) {
+		setRaw(String(value ?? 0));
+	}
+
+	const clamp = (n: number) => {
+		let v = Math.max(min, n);
+		if (max !== undefined) v = Math.min(max, v);
+		return v;
+	};
+
+	const commit = (str: string) => {
+		setFocused(false);
+		const parsed = parseFloat(str);
+		if (!isNaN(parsed)) {
+			const clamped = clamp(parsed);
+			onChange(clamped);
+			setRaw(String(clamped));
+		} else {
+			setRaw(String(current));
+		}
+	};
+
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const v = e.target.value;
+		if (allowDecimal) {
+			if (/^\d*\.?\d*$/.test(v)) setRaw(v);
+		} else {
+			if (/^\d*$/.test(v)) setRaw(v);
+		}
+	};
+
+	const step = (delta: number) => {
+		const next = clamp(current + delta);
+		onChange(next);
+		setRaw(String(next));
+	};
+
+	const btnSx = {
+		width: 30,
+		height: 30,
+		borderRadius: "50%",
+		border: "1.5px solid",
+		borderColor: "divider",
+		bgcolor: "background.paper",
+		cursor: "pointer",
+		fontSize: 18,
+		fontWeight: 700,
+		color: "text.secondary",
+		display: "flex",
+		alignItems: "center",
+		justifyContent: "center",
+		flexShrink: 0,
+		"&:hover": { bgcolor: "action.hover", borderColor: "primary.main", color: "primary.main" },
+		transition: "all 0.15s",
+	} as const;
+
+	return (
+		<Box display="flex" alignItems="center" gap={0.75} width="100%">
+			{/* Label */}
+			<Typography variant="body2" color="text.secondary" fontWeight={600} noWrap sx={{ flexShrink: 0, fontSize: 13, mr: 0.25 }}>
+				{label}:
+			</Typography>
+
+			{/* Spacer pushes − [n] + to the right so each cell looks balanced */}
+			<Box flex={1} />
+
+			{/* − */}
+			<Box component="button" onClick={() => step(-1)} sx={btnSx}>
+				−
+			</Box>
+
+			{/* Editable input */}
+			<Box
+				component="input"
+				value={raw}
+				onChange={handleChange}
+				onFocus={() => {
+					setFocused(true);
+					setRaw(String(current));
+				}}
+				onBlur={(e: React.FocusEvent<HTMLInputElement>) => commit(e.target.value)}
+				onKeyDown={(e: React.KeyboardEvent<HTMLInputElement>) => {
+					if (e.key === "Enter") commit((e.target as HTMLInputElement).value);
+				}}
+				sx={{
+					width: 52,
+					height: 34,
+					border: "1px solid",
+					borderColor: "divider",
+					borderRadius: 1.5,
+					textAlign: "center",
+					fontSize: 14,
+					fontWeight: 600,
+					color: "text.primary",
+					bgcolor: "background.paper",
+					outline: "none",
+					flexShrink: 0,
+					"&:focus": { borderColor: "primary.main", boxShadow: "0 0 0 2px rgba(25,118,210,0.15)" },
+					"&::-webkit-inner-spin-button, &::-webkit-outer-spin-button": { appearance: "none" },
+					MozAppearance: "textfield",
+				}}
+			/>
+
+			{/* + */}
+			<Box component="button" onClick={() => step(1)} sx={btnSx}>
+				+
+			</Box>
+		</Box>
+	);
+}
+
 export default function RoomInfoFields({ draft, set }: Props) {
+	const descLen = (draft.description || "").length;
+	const viewDescLen = (draft.viewDescription || "").length;
+	const viewDisabled = draft.viewType === "NONE";
+
 	return (
 		<Box>
 			<Typography variant="subtitle2" fontWeight={700} color="text.secondary" mb={1.5} sx={{ textTransform: "uppercase", letterSpacing: 1 }}>
 				Room Info
 			</Typography>
 
-			<Box display="flex" flexDirection="column" gap={2}>
-				{/* Name (3/4) + Quantity (1/4) */}
-				<Box display="flex" gap={2}>
+			<Box display="flex" flexDirection="column" gap={2.5}>
+				{/* Row 1: Room Name */}
+				<TextField
+					fullWidth
+					required
+					label="Room Name"
+					value={draft.name}
+					onChange={(e) => set("name", e.target.value.slice(0, 50))}
+					error={!draft.name.trim()}
+					helperText={!draft.name.trim() ? "Required" : `${draft.name.length}/50`}
+				/>
+
+				{/* Row 2: Quantity | Max Adults | Max Children — 3 equal columns */}
+				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3}>
+					<StepperField label="Quantity" value={draft.quantity} onChange={(v) => set("quantity", v)} min={1} max={99} />
+					<StepperField label="Max Adults" value={draft.maxAdults} onChange={(v) => set("maxAdults", v)} min={1} max={99} />
+					<StepperField label="Max Children" value={draft.maxChildren} onChange={(v) => set("maxChildren", v)} min={0} max={99} />
+				</Box>
+
+				{/* Row 3: Bedrooms | Bathrooms | Size — 3 equal columns */}
+				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3}>
+					<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} min={0} max={99} />
+					<StepperField label="Bathrooms" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} min={0} max={99} />
+					<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} min={0} allowDecimal />
+				</Box>
+
+				{/* Row 4: View Type + View Description */}
+				<Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} alignItems="flex-start">
 					<TextField
 						fullWidth
-						required
-						label="Room Name"
-						value={draft.name}
-						onChange={(e) => set("name", e.target.value)}
-						error={!draft.name.trim()}
-						helperText={!draft.name.trim() ? "Required" : ""}
-						sx={{ flex: 3 }}
-					/>
-					<TextField label="Quantity" type="number" value={draft.quantity} onChange={(e) => set("quantity", Number(e.target.value))} inputProps={{ min: 1 }} sx={{ flex: 1 }} />
-				</Box>
-
-				{/* Adults / Children */}
-				<Box display="flex" gap={2}>
-					<TextField fullWidth label="Max Adults" type="number" value={draft.maxAdults} onChange={(e) => set("maxAdults", Number(e.target.value))} />
-					<TextField fullWidth label="Max Children" type="number" value={draft.maxChildren} onChange={(e) => set("maxChildren", Number(e.target.value))} />
-				</Box>
-
-				{/* Bedrooms / Bathrooms */}
-				<Box display="flex" gap={2}>
-					<TextField fullWidth label="Bedrooms" type="number" value={draft.bedroomCount} onChange={(e) => set("bedroomCount", Number(e.target.value))} />
-					<TextField fullWidth label="Bathrooms" type="number" value={draft.bathroomCount} onChange={(e) => set("bathroomCount", Number(e.target.value))} />
-				</Box>
-
-				{/* Size / View Type */}
-				<Box display="flex" gap={2}>
-					<TextField fullWidth label="Size (m²)" type="number" value={draft.size ?? ""} onChange={(e) => set("size", e.target.value ? Number(e.target.value) : undefined)} />
-					<TextField fullWidth select label="View Type" value={draft.viewType} onChange={(e) => set("viewType", e.target.value)}>
+						select
+						label="View Type"
+						value={draft.viewType}
+						onChange={(e) => {
+							set("viewType", e.target.value);
+							if (e.target.value === "NONE") set("viewDescription", "");
+						}}
+					>
 						{VIEW_TYPES.map((t) => (
 							<MenuItem key={t} value={t}>
 								{t.replace(/_/g, " ")}
 							</MenuItem>
 						))}
 					</TextField>
+
+					<TextField
+						fullWidth
+						label="View Description"
+						value={draft.viewDescription || ""}
+						onChange={(e) => set("viewDescription", e.target.value.slice(0, 100))}
+						disabled={viewDisabled}
+						placeholder={viewDisabled ? "Select a view type first" : "Describe the view…"}
+						helperText={!viewDisabled ? `${viewDescLen}/100` : " "}
+						sx={{
+							"& .MuiOutlinedInput-root": viewDisabled
+								? {
+										bgcolor: (theme) => alpha(theme.palette.action.disabledBackground, 0.5),
+										"& fieldset": { borderColor: "divider", borderStyle: "dashed" },
+									}
+								: {
+										bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
+										"& fieldset": { borderColor: "primary.light" },
+										"&:hover fieldset": { borderColor: "primary.main" },
+									},
+							"& .MuiInputLabel-root": viewDisabled ? { color: "text.disabled" } : { color: "primary.main" },
+						}}
+					/>
 				</Box>
 
-				{/* View Description (conditional full width) */}
-				{draft.viewType !== "NONE" && <TextField fullWidth label="View Description" value={draft.viewDescription || ""} onChange={(e) => set("viewDescription", e.target.value)} />}
-
-				{/* Price / Pricing Type */}
-				<Box display="flex" gap={2}>
-					<TextField fullWidth label="Price" type="number" value={draft.price ?? ""} onChange={(e) => set("price", e.target.value ? Number(e.target.value) : undefined)} />
+				{/* Row 5: Price + Pricing Type */}
+				<Box display="grid" gridTemplateColumns="1fr 1fr" gap={2}>
+					<TextField
+						fullWidth
+						label="Price"
+						type="number"
+						value={draft.price ?? ""}
+						onChange={(e) => set("price", e.target.value ? Math.max(0, Number(e.target.value)) : undefined)}
+						inputProps={{ min: 0 }}
+						InputProps={{ endAdornment: <InputAdornment position="end">VND</InputAdornment> }}
+					/>
 					<TextField fullWidth select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
 						{PRICING_TYPES.map((t) => (
 							<MenuItem key={t} value={t}>
@@ -69,8 +240,17 @@ export default function RoomInfoFields({ draft, set }: Props) {
 					</TextField>
 				</Box>
 
-				{/* Description FULL WIDTH */}
-				<TextField fullWidth label="Description" multiline minRows={3} value={draft.description || ""} onChange={(e) => set("description", e.target.value)} />
+				{/* Row 6: Description */}
+				<TextField
+					fullWidth
+					label="Description"
+					multiline
+					minRows={3}
+					value={draft.description || ""}
+					onChange={(e) => set("description", e.target.value.slice(0, 150))}
+					helperText={`${descLen}/150`}
+					FormHelperTextProps={{ sx: { textAlign: "right" } }}
+				/>
 			</Box>
 		</Box>
 	);
