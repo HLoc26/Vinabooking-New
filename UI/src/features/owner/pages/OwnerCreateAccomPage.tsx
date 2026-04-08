@@ -1,5 +1,6 @@
 import { useState } from "react";
 import { Box, Button, Typography, Paper, Alert } from "@mui/material";
+import { Box, Button, Typography, Paper, Alert } from "@mui/material";
 
 import PreWizardPage from "../components/PreWizard/PreWizardPage";
 import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
@@ -12,8 +13,10 @@ import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
 import { STEP_META } from "../const/StepperMetaConst";
+import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
+import { STEP_META } from "../const/StepperMetaConst";
 
-// ─── Validation ───────────────────────────────────────────────────────────────
+// ─── VALIDATION (Merged from V1) ──────────────────────────────────────────────
 
 function validateStep(step: number, form: WizardForm): string | null {
 	switch (step) {
@@ -34,9 +37,8 @@ function validateStep(step: number, form: WizardForm): string | null {
 		}
 
 		case 3: {
-			// ENTIRE_PLACE: save is triggered via triggerSave prop — skip client validation here
+			// Entire Place skips client-side list validation because it saves inline
 			if (form.rentalType === "ENTIRE_PLACE") return null;
-
 			if (form.rooms.length === 0) return "Please add at least one room.";
 
 			if (form.rentalType === "SHARED_ROOM") {
@@ -49,30 +51,29 @@ function validateStep(step: number, form: WizardForm): string | null {
 			}
 			return null;
 		}
-
 		default:
 			return null;
 	}
 }
 
-// ─── Page ─────────────────────────────────────────────────────────────────────
+// ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 const OwnerCreateAccomPage = () => {
 	const [preWizardDone, setPreWizardDone] = useState(false);
 	const [step, setStep] = useState(0);
 	const [completed, setCompleted] = useState<Set<number>>(new Set());
 	const [validationError, setValidationError] = useState<string | null>(null);
+
+	// V2 triger for Step 0, 1, 2
 	const [triggerSubmit, setTriggerSubmit] = useState(false);
 
-	/**
-	 * ENTIRE_PLACE: "Next" on step 3 sets this true → StepRoomsBox saves inline
-	 * and calls onSaveComplete → we advance the step.
-	 */
+	// V1 trigger for Step 3 (Rooms)
 	const [triggerRoomSave, setTriggerRoomSave] = useState(false);
+	const [facilityExpandedId, setFacilityExpandedId] = useState<string | null>(null);
 
 	const [form, setForm] = useState<WizardForm>({
-		rentalType: "",
-		accommodationType: "",
+		rentalType: "" as ERentalType,
+		accommodationType: "" as EAccommodationType,
 		accommodationId: undefined,
 		name: "",
 		description: "",
@@ -94,16 +95,20 @@ const OwnerCreateAccomPage = () => {
 		images: [],
 	});
 
+	// ── Pre-wizard gate ──────────────────────────────────────────────────────────
+
 	if (!preWizardDone) {
 		return (
 			<PreWizardPage
-				onComplete={(rentalType: ERentalType, accommodationType: EAccommodationType) => {
+				onComplete={(rentalType, accommodationType) => {
 					setForm((prev) => ({ ...prev, rentalType, accommodationType }));
 					setPreWizardDone(true);
 				}}
 			/>
 		);
 	}
+
+	// ── Navigation ──────────────────────────────────────────────────────────────
 
 	const goToStep = (target: number) => {
 		if (target < step) {
@@ -138,7 +143,7 @@ const OwnerCreateAccomPage = () => {
 			return;
 		}
 
-		// Step 3 (Rooms) with ENTIRE_PLACE: delegate save to StepRoomsBox
+		// Step 3: Entire Place API save (From V1)
 		if (step === 3 && form.rentalType === "ENTIRE_PLACE") {
 			setTriggerRoomSave(true);
 			return;
@@ -153,6 +158,8 @@ const OwnerCreateAccomPage = () => {
 		setValidationError(null);
 		setStep((s) => Math.max(s - 1, 0));
 	};
+
+	// ── Step Content ─────────────────────────────────────────────────────────────
 
 	const renderStep = () => {
 		switch (step) {
@@ -197,6 +204,7 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 3:
+				// Using V1 Logic for StepRoomsBox
 				return (
 					<StepRoomsBox
 						form={form}
@@ -219,6 +227,8 @@ const OwnerCreateAccomPage = () => {
 
 	const isLastStep = step === STEP_META.length - 1;
 
+	// ── Layout (V2 Style) ───────────────────────────────────────────────────────
+
 	return (
 		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1200, pb: 8 }}>
 			<Typography variant="h5" fontWeight={700} mb={0.5} px={0.5}>
@@ -228,11 +238,9 @@ const OwnerCreateAccomPage = () => {
 				Fill in the details below to publish your accommodation.
 			</Typography>
 
-			<Box display="flex" gap={2} alignItems="flex-start">
-				{/* ── Left sidebar: vertical stepper ─────────────────────────── */}
+			<Box display="flex" gap={3} alignItems="flex-start">
 				<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} />
 
-				{/* ── Main content ── */}
 				<Box flex={1} minWidth={0}>
 					<Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
 						{validationError && (
@@ -247,9 +255,11 @@ const OwnerCreateAccomPage = () => {
 							<Button variant="outlined" disabled={step === 0} onClick={back} sx={{ minWidth: 100, borderRadius: 2 }}>
 								Back
 							</Button>
+
 							<Typography variant="caption" color="text.disabled">
 								Step {step + 1} of {STEP_META.length}
 							</Typography>
+
 							{isLastStep ? (
 								<Button variant="contained" color="success" sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }} onClick={() => alert("Submit form!")}>
 									Publish Listing
@@ -263,7 +273,7 @@ const OwnerCreateAccomPage = () => {
 					</Paper>
 				</Box>
 
-				{/* ── Facility side panel (step 2 only) ── */}
+				{/* Sidebar Panel for Facilities (from V1) */}
 				{step === 2 && <FacilityPanel form={form} setForm={setForm} expandedId={facilityExpandedId} setExpandedId={setFacilityExpandedId} />}
 			</Box>
 		</Box>
