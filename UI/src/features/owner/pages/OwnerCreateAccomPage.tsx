@@ -1,6 +1,5 @@
 import { useState } from "react";
 import { Box, Button, Typography, Paper, Alert } from "@mui/material";
-import { Box, Button, Typography, Paper, Alert } from "@mui/material";
 
 import PreWizardPage from "../components/PreWizard/PreWizardPage";
 import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
@@ -11,8 +10,6 @@ import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
 
 import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
-import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
-import { STEP_META } from "../const/StepperMetaConst";
 import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
 import { STEP_META } from "../const/StepperMetaConst";
 
@@ -218,8 +215,8 @@ const OwnerCreateAccomPage = () => {
 						onSaveFailed={() => setTriggerRoomSave(false)}
 					/>
 				);
-			case 4:
-				return <StepImageBox form={form} setForm={setForm} />;
+			// case 4:
+			// 	return <StepImageBox form={form} setForm={setForm} />;
 			default:
 				return null;
 		}
