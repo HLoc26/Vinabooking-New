@@ -16,15 +16,15 @@ interface Props {
 	onSave: (room: RoomForm) => void;
 	draftAmenities: AmenityConfigForm[];
 	onAmenityToggle: (a: AmenityConfigForm) => void;
-	/** Passed from wizard — controls bed price visibility */
-	accommodationType?: string;
+	/** Controls bed price / quantity visibility and bedroom/bathroom visibility */
+	rentalType?: string;
 	/** True while the create/update mutation is in-flight */
 	isSaving?: boolean;
 	/** Validation error from parent (e.g. missing bed prices) */
 	validationError?: string | null;
 }
 
-export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, accommodationType, isSaving = false, validationError }: Props) {
+export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, rentalType, isSaving = false, validationError }: Props) {
 	const [draft, setDraft] = useState<RoomForm>({
 		...room,
 		beds: [...room.beds],
@@ -88,11 +88,12 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 
 			{/* CONTENT */}
 			<DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 3, bgcolor: "background.paper" }}>
-				<RoomInfoFields draft={draft} set={set} />
+				{/* Pass rentalType so bedroom/bathroom can be hidden for PRIVATE_ROOM */}
+				<RoomInfoFields draft={draft} set={set} rentalType={rentalType} />
 
 				<Divider />
 
-				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} accommodationType={accommodationType} />
+				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} rentalType={rentalType} />
 
 				<Divider />
 
@@ -100,7 +101,16 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 			</DialogContent>
 
 			{/* FOOTER */}
-			<DialogActions sx={{ px: 3, py: 2, bgcolor: "background.paper", flexDirection: "column", alignItems: "stretch", gap: 1 }}>
+			<DialogActions
+				sx={{
+					px: 3,
+					py: 2,
+					bgcolor: "background.paper",
+					flexDirection: "column",
+					alignItems: "stretch",
+					gap: 1,
+				}}
+			>
 				{validationError && (
 					<Alert severity="error" sx={{ borderRadius: 2 }}>
 						{validationError}
