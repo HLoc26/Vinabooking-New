@@ -6,6 +6,8 @@ import { VIEW_TYPES, PRICING_TYPES } from "../../../const/RoomConst";
 interface Props {
 	draft: RoomForm;
 	set: (field: keyof RoomForm, value: any) => void;
+	/** Controls visibility of bedroom/bathroom fields */
+	rentalType?: string;
 }
 
 function StepperField({
@@ -28,7 +30,6 @@ function StepperField({
 
 	const current = value ?? 0;
 
-	// Keep raw synced when external value changes while not focused
 	if (!focused && raw !== String(value ?? 0)) {
 		setRaw(String(value ?? 0));
 	}
@@ -87,20 +88,13 @@ function StepperField({
 
 	return (
 		<Box display="flex" alignItems="center" gap={0.75} width="100%">
-			{/* Label */}
 			<Typography variant="body2" color="text.secondary" fontWeight={600} noWrap sx={{ flexShrink: 0, fontSize: 13, mr: 0.25 }}>
 				{label}:
 			</Typography>
-
-			{/* Spacer pushes − [n] + to the right so each cell looks balanced */}
 			<Box flex={1} />
-
-			{/* − */}
 			<Box component="button" onClick={() => step(-1)} sx={btnSx}>
 				−
 			</Box>
-
-			{/* Editable input */}
 			<Box
 				component="input"
 				value={raw}
@@ -131,8 +125,6 @@ function StepperField({
 					MozAppearance: "textfield",
 				}}
 			/>
-
-			{/* + */}
 			<Box component="button" onClick={() => step(1)} sx={btnSx}>
 				+
 			</Box>
@@ -140,10 +132,13 @@ function StepperField({
 	);
 }
 
-export default function RoomInfoFields({ draft, set }: Props) {
+export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 	const descLen = (draft.description || "").length;
 	const viewDescLen = (draft.viewDescription || "").length;
 	const viewDisabled = draft.viewType === "NONE";
+
+	// PRIVATE_ROOM has no bedroom/bathroom concept
+	const showBedroomBathroom = rentalType?.toUpperCase() !== "PRIVATE_ROOM";
 
 	return (
 		<Box>
@@ -163,19 +158,26 @@ export default function RoomInfoFields({ draft, set }: Props) {
 					helperText={!draft.name.trim() ? "Required" : `${draft.name.length}/50`}
 				/>
 
-				{/* Row 2: Quantity | Max Adults | Max Children — 3 equal columns */}
+				{/* Row 2: Quantity | Max Adults | Max Children */}
 				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3}>
 					<StepperField label="Quantity" value={draft.quantity} onChange={(v) => set("quantity", v)} min={1} max={99} />
 					<StepperField label="Max Adults" value={draft.maxAdults} onChange={(v) => set("maxAdults", v)} min={1} max={99} />
 					<StepperField label="Max Children" value={draft.maxChildren} onChange={(v) => set("maxChildren", v)} min={0} max={99} />
 				</Box>
 
-				{/* Row 3: Bedrooms | Bathrooms | Size — 3 equal columns */}
-				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3}>
-					<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} min={0} max={99} />
-					<StepperField label="Bathrooms" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} min={0} max={99} />
-					<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} min={0} allowDecimal />
-				</Box>
+				{/* Row 3: Bedrooms | Bathrooms | Size — hidden for PRIVATE_ROOM */}
+				{showBedroomBathroom ? (
+					<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3}>
+						<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} min={0} max={99} />
+						<StepperField label="Bathrooms" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} min={0} max={99} />
+						<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} min={0} allowDecimal />
+					</Box>
+				) : (
+					/* PRIVATE_ROOM: just size */
+					<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3}>
+						<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} min={0} allowDecimal />
+					</Box>
+				)}
 
 				{/* Row 4: View Type + View Description */}
 				<Box display="grid" gridTemplateColumns="1fr 1fr" gap={2} alignItems="flex-start">
@@ -199,23 +201,32 @@ export default function RoomInfoFields({ draft, set }: Props) {
 					<TextField
 						fullWidth
 						label="View Description"
-						value={draft.viewDescription || ""}
-						onChange={(e) => set("viewDescription", e.target.value.slice(0, 100))}
+						multiline
+						rows={2}
+						value={draft.viewDescription ?? ""}
+						onChange={(e) => set("viewDescription", e.target.value)}
 						disabled={viewDisabled}
-						placeholder={viewDisabled ? "Select a view type first" : "Describe the view…"}
-						helperText={!viewDisabled ? `${viewDescLen}/100` : " "}
 						sx={{
-							"& .MuiOutlinedInput-root": viewDisabled
-								? {
-										bgcolor: (theme) => alpha(theme.palette.action.disabledBackground, 0.5),
-										"& fieldset": { borderColor: "divider", borderStyle: "dashed" },
-									}
-								: {
-										bgcolor: (theme) => alpha(theme.palette.primary.main, 0.04),
-										"& fieldset": { borderColor: "primary.light" },
-										"&:hover fieldset": { borderColor: "primary.main" },
-									},
-							"& .MuiInputLabel-root": viewDisabled ? { color: "text.disabled" } : { color: "primary.main" },
+							// 1. Give the background a very light primary tint
+							// 0.04 is usually the standard "hover/selected" opacity in MUI
+							bgcolor: (theme) => alpha(theme.palette.primary.main, 0.05),
+
+							// 2. Style the border to be primary but lighter
+							"& .MuiOutlinedInput-notchedOutline": {
+								borderColor: (theme) => alpha(theme.palette.primary.main, 0.3),
+							},
+
+							// 3. Ensure the border turns full primary on hover
+							"&:hover .MuiOutlinedInput-notchedOutline": {
+								borderColor: "primary.main",
+							},
+
+							// 4. Style the Label color
+							"& .MuiInputLabel-root": {
+								color: viewDisabled ? "text.disabled" : "primary.main",
+							},
+
+							borderRadius: 1,
 						}}
 					/>
 				</Box>
