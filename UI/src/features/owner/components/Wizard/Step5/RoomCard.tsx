@@ -13,6 +13,7 @@ import type { RoomForm } from "../../../types/owner.types";
 
 interface Props {
 	room: RoomForm;
+	rentalType?: string;
 	onEdit: () => void;
 	onDelete: () => void;
 }
@@ -28,7 +29,7 @@ function SummaryItem({ icon, label }: { icon: React.ReactNode; label: string }) 
 	);
 }
 
-export default function RoomCard({ room, onEdit, onDelete }: Props) {
+export default function RoomCard({ room, rentalType, onEdit, onDelete }: Props) {
 	const hasAmenities = room.amenities.length > 0;
 
 	return (
@@ -73,8 +74,8 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 				<Box display="flex" flexWrap="wrap" gap={1.5}>
 					<SummaryItem icon={<PeopleOutlineIcon />} label={`Up to ${room.maxAdults} adults`} />
 					<SummaryItem icon={<ChildCareOutlinedIcon />} label={`${room.maxChildren} children`} />
-					<SummaryItem icon={<KingBedOutlinedIcon />} label={`${room.bedroomCount} bedroom${room.bedroomCount !== 1 ? "s" : ""}`} />
-					<SummaryItem icon={<BathtubOutlinedIcon />} label={`${room.bathroomCount} bath${room.bathroomCount !== 1 ? "s" : ""}`} />
+					{rentalType !== "PRIVATE_ROOM" && <SummaryItem icon={<KingBedOutlinedIcon />} label={`${room.bedroomCount} bedroom${room.bedroomCount !== 1 ? "s" : ""}`} />}
+					{rentalType !== "PRIVATE_ROOM" && <SummaryItem icon={<BathtubOutlinedIcon />} label={`${room.bathroomCount} bath${room.bathroomCount !== 1 ? "s" : ""}`} />}
 					{room.size ? <SummaryItem icon={<AspectRatioOutlinedIcon />} label={`${room.size} m²`} /> : null}
 					{room.viewType !== "NONE" ? <SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replace(/_/g, " ")} view`} /> : null}
 					{room.price ? <SummaryItem icon={<SellOutlinedIcon />} label={`${room.price.toLocaleString("vi-VN")} VND / ${room.pricingType.replace(/_/g, " ").toLowerCase()}`} /> : null}
