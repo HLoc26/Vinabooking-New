@@ -31,6 +31,7 @@ export interface CreateBedBatchDTO {
 	name: string;
 	description?: string;
 	bedType: EBedType;
+	quantity?: number;
 	size?: string;
 	price?: number;
 }
