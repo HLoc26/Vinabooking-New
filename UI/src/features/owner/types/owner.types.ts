@@ -197,6 +197,7 @@ export type BedForm = {
 	bedType: string;
 	size?: string;
 	price?: number;
+	quantity?: number;
 };
 
 /* ────────────────────────────────────────────────────────
