@@ -66,7 +66,6 @@ const OwnerCreateAccomPage = () => {
 
 	// V1 trigger for Step 3 (Rooms)
 	const [triggerRoomSave, setTriggerRoomSave] = useState(false);
-	const [facilityExpandedId, setFacilityExpandedId] = useState<string | null>(null);
 
 	const [form, setForm] = useState<WizardForm>({
 		rentalType: "" as ERentalType,
@@ -269,9 +268,6 @@ const OwnerCreateAccomPage = () => {
 						</Box>
 					</Paper>
 				</Box>
-
-				{/* Sidebar Panel for Facilities (from V1) */}
-				{step === 2 && <FacilityPanel form={form} setForm={setForm} expandedId={facilityExpandedId} setExpandedId={setFacilityExpandedId} />}
 			</Box>
 		</Box>
 	);
