@@ -183,13 +183,22 @@ class RoomRepository {
 				isActive: data.isActive ?? true,
 				beds: {
 					create:
-						data.beds?.map((bed) => ({
-							name: bed.name,
-							bedType: bed.bedType,
-							description: bed.description,
-							size: bed.size,
-							price: bed.price,
-						})) || [],
+						data.beds?.map((bed) => {
+							// 1. Kiểm tra nếu giá trị là BUNK thì chuyển thành BUNK_BED để khớp với Schema
+							const rawType = String(bed.bedType).toUpperCase();
+							const isBunk = rawType === "BUNK" || rawType === "BUNK_BED";
+							const finalBedType = isBunk ? "BUNK_BED" : bed.bedType;
+
+							return {
+								name: bed.name,
+								bedType: finalBedType as any, // Ép kiểu để khớp với Enum của Prisma
+								description: bed.description,
+								size: bed.size,
+								price: bed.price,
+								// 2. Logic: Nếu là giường tầng thì lưu quantity gấp đôi (x2)
+								quantity: isBunk ? (bed.quantity ?? 1) * 2 : (bed.quantity ?? 1),
+							};
+						}) || [],
 				},
 				amenities: {
 					create: data.amenityIds?.map((id) => ({ amenityId: id })) || [],
@@ -204,6 +213,7 @@ class RoomRepository {
 
 	public async update(roomId: string, data: UpdateRoomDTO): Promise<RoomWithDetails> {
 		return await this.#prismaClient.$transaction(async (tx) => {
+			// Xóa các bản ghi cũ để tạo lại (tránh trùng lặp logic x2)
 			if (data.beds) {
 				await tx.bed.deleteMany({ where: { roomId } });
 			}
@@ -227,8 +237,33 @@ class RoomRepository {
 					price: data.price,
 					pricingType: data.pricingType,
 					isActive: data.isActive,
-					...(data.beds ? { beds: { create: data.beds } } : {}),
-					...(data.amenityIds ? { amenities: { create: data.amenityIds.map((id) => ({ amenityId: id })) } } : {}),
+					...(data.beds
+						? {
+								beds: {
+									create: data.beds.map((bed) => {
+										const rawType = String(bed.bedType).toUpperCase();
+										const isBunk = rawType === "BUNK" || rawType === "BUNK_BED";
+										const finalBedType = isBunk ? "BUNK_BED" : bed.bedType;
+
+										return {
+											name: bed.name,
+											bedType: finalBedType as any,
+											description: bed.description,
+											size: bed.size,
+											price: bed.price,
+											quantity: isBunk ? (bed.quantity ?? 1) * 2 : (bed.quantity ?? 1),
+										};
+									}),
+								},
+							}
+						: {}),
+					...(data.amenityIds
+						? {
+								amenities: {
+									create: data.amenityIds.map((id) => ({ amenityId: id })),
+								},
+							}
+						: {}),
 				},
 				include: {
 					beds: true,
