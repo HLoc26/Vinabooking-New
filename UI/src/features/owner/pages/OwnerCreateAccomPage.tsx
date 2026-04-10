@@ -133,19 +133,30 @@ const OwnerCreateAccomPage = () => {
 			return;
 		}
 
-		// Steps 0, 1, and 2 delegate save to their own child component (Basic Info, Address, Facilities)
+		setValidationError(null); // Xóa lỗi cũ trước khi tiến hành
+
+		// Các bước 0, 1, 2 dùng triggerSubmit chung
 		if (step === 0 || step === 1 || step === 2) {
 			setTriggerSubmit(true);
 			return;
 		}
 
-		// Step 3: Entire Place API save (From V1)
-		if (step === 3 && form.rentalType === "ENTIRE_PLACE") {
-			setTriggerRoomSave(true);
-			return;
+		// Bước 3 (Rooms)
+		if (step === 3) {
+			if (form.rentalType === "ENTIRE_PLACE") {
+				// Chỉ Entire Place mới cần trigger gọi API từ bên trong StepRoomsBox
+				setTriggerRoomSave(true);
+				return;
+			} else {
+				// Shared/Private Room: Dữ liệu đã được lưu vào form.rooms qua Modal rồi
+				// Chỉ cần chuyển bước nếu validateStep ở trên đã pass
+				setCompleted((prev) => new Set(prev).add(3));
+				setStep(4);
+				return;
+			}
 		}
 
-		// For steps without API calls (just local state transition)
+		// Các bước còn lại
 		setCompleted((prev) => new Set(prev).add(step));
 		setStep((prev) => prev + 1);
 	};
