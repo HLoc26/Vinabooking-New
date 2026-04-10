@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Box, TextField, MenuItem, Typography, InputAdornment, alpha } from "@mui/material";
+import { Box, TextField, MenuItem, Typography, InputAdornment } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import { VIEW_TYPES, PRICING_TYPES } from "../../../const/RoomConst";
 import AccommodationInfoField from "./AccommodationInfoField";
@@ -10,7 +10,7 @@ interface Props {
 	rentalType?: string;
 }
 
-// ─── STEPPER FIELD (Dùng cho các chỉ số nhỏ như Adults, Bedrooms...) ───────────
+// ─── STEPPER FIELD (Dùng cho Adults, Bedrooms, Size...) ──────────────────────
 export function StepperField({
 	label,
 	value,
@@ -71,7 +71,6 @@ export function StepperField({
 				{label}:
 			</Typography>
 			<Box display="flex" alignItems="center" gap={0.5}>
-				{" "}
 				<Box component="button" type="button" onClick={() => step(-1)} sx={btnSx}>
 					−
 				</Box>
@@ -118,13 +117,26 @@ export function StepperField({
 	);
 }
 
-// ─── COMMON FIELDS (Xử lý Price định dạng 1.000 và nút tăng giảm) ──────────────
+// ─── COMMON FIELDS (Xử lý Price với định dạng 1.000 và con lăn 1.000) ──────────
 export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; set: any; viewDisabled: boolean }) {
+	// Format hiển thị: 1000 -> 1.000
+	const formatNumber = (val: number) => {
+		return val.toLocaleString("vi-VN");
+	};
+
+	// Lưu số nguyên (xóa dấu chấm)
+	const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const rawValue = e.target.value.replace(/\./g, "");
+		const numValue = parseInt(rawValue, 10);
+		set("price", isNaN(numValue) ? 0 : numValue);
+	};
+	const stepPrice = (delta: number) => {
+		const current = draft.price || 0;
+		const next = Math.max(0, current + delta);
+		set("price", next);
+	};
 	return (
 		<Box display="flex" flexDirection="column" gap={4}>
-			{" "}
-			{/* Tăng khoảng cách giữa các hàng info */}
-			{/* Hàng View: Để 1fr 2fr để Description rộng hơn, nhìn đỡ bị chụm */}
 			<Box display="grid" gridTemplateColumns="1.2fr 1.8fr" gap={3}>
 				<TextField select label="View Type" value={draft.viewType} onChange={(e) => set("viewType", e.target.value)}>
 					{VIEW_TYPES.map((t) => (
@@ -135,26 +147,66 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 				</TextField>
 				<TextField label="View Description" multiline rows={1} value={draft.viewDescription ?? ""} onChange={(e) => set("viewDescription", e.target.value)} disabled={viewDisabled} />
 			</Box>
-			{/* Hàng Price: Giữ 1fr 1fr nhưng tăng gap */}
+
 			<Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
 				<TextField
 					label="Price"
-					value={new Intl.NumberFormat("vi-VN").format(draft.price || 0)}
-					onChange={(e) => {
-						const raw = e.target.value.replace(/\./g, "");
-						set("price", parseInt(raw, 10) || 0);
+					value={formatNumber(draft.price || 0)}
+					onChange={handlePriceChange}
+					onWheel={(e) => {
+						if (document.activeElement === e.target) {
+							e.preventDefault();
+							const delta = e.deltaY < 0 ? 1000 : -1000;
+							stepPrice(delta);
+						}
 					}}
-					InputLabelProps={{ shrink: true }}
 					InputProps={{
 						endAdornment: (
 							<InputAdornment position="end">
-								<Typography variant="caption" fontWeight={700}>
+								<Typography variant="caption" fontWeight={700} sx={{ mr: 1, color: "text.disabled" }}>
 									VND
 								</Typography>
+								{/* Cấu trúc con lăn bấm tăng/giảm 1.000 */}
+								<Box display="flex" flexDirection="column" sx={{ borderLeft: "1px solid", borderColor: "divider", ml: 1 }}>
+									<Box
+										component="button"
+										type="button"
+										onClick={() => stepPrice(1000)}
+										sx={{
+											border: "none",
+											background: "none",
+											cursor: "pointer",
+											px: 0.5,
+											lineHeight: 1,
+											"&:hover": { color: "primary.main" },
+											color: "text.secondary",
+										}}
+									>
+										▴
+									</Box>
+									<Box
+										component="button"
+										type="button"
+										onClick={() => stepPrice(-1000)}
+										sx={{
+											border: "none",
+											background: "none",
+											cursor: "pointer",
+											px: 0.5,
+											lineHeight: 1,
+											"&:hover": { color: "primary.main" },
+											color: "text.secondary",
+										}}
+									>
+										▾
+									</Box>
+								</Box>
 							</InputAdornment>
 						),
 					}}
+					sx={{ "& input": { textAlign: "left", fontWeight: 700 } }}
 				/>
+
 				<TextField select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
 					{PRICING_TYPES.map((t) => (
 						<MenuItem key={t} value={t}>
@@ -163,7 +215,7 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 					))}
 				</TextField>
 			</Box>
-			{/* Description: Cho xuống dưới cùng một mình một hàng */}
+
 			<TextField
 				fullWidth
 				label="Description"
@@ -176,7 +228,7 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 		</Box>
 	);
 }
-// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 	if (rentalType === "ENTIRE_PLACE") return <AccommodationInfoField draft={draft} set={set} />;
@@ -191,10 +243,8 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 			</Typography>
 
 			<Box display="flex" flexDirection="column" gap={4}>
-				{/* Trường nhập tên */}
 				<TextField fullWidth required label="Room Name" value={draft.name} onChange={(e) => set("name", e.target.value.slice(0, 50))} />
 
-				{/* Hàng Stepper 1: Quantity - Adults - Children */}
 				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" alignItems="center">
 					<Box display="flex" justifyContent="flex-start">
 						<StepperField label="Quantity" value={draft.quantity} onChange={(v) => set("quantity", v)} min={1} />
@@ -207,11 +257,9 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 					</Box>
 				</Box>
 
-				{/* Hàng Stepper 2: Xử lý linh hoạt Bedrooms/Baths/Size */}
 				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" alignItems="center">
 					{!isShared ? (
 						<>
-							{/* Case PRIVATE: Bedrooms - Baths - Size */}
 							<Box display="flex" justifyContent="flex-start">
 								<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} />
 							</Box>
@@ -224,21 +272,17 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 						</>
 					) : (
 						<>
-							{/* Case SHARED: Baths - Size - Mock */}
 							<Box display="flex" justifyContent="flex-start">
 								<StepperField label="Baths" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
 							</Box>
 							<Box display="flex" justifyContent="center">
 								<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
 							</Box>
-							<Box display="flex" justifyContent="flex-end">
-								{/* Ô Mock trống để giữ cấu trúc 3 cột cho thẳng hàng trên */}
-							</Box>
+							<Box display="flex" justifyContent="flex-end" />
 						</>
 					)}
 				</Box>
 
-				{/* PHẢI CÓ DÒNG NÀY: Gọi các trường View, Price, Description */}
 				<CommonFields draft={draft} set={set} viewDisabled={viewDisabled} />
 			</Box>
 		</Box>
