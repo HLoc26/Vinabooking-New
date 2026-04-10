@@ -18,13 +18,14 @@ interface Props {
 	onAmenityToggle: (a: AmenityConfigForm) => void;
 	/** Controls bed price / quantity visibility and bedroom/bathroom visibility */
 	rentalType?: string;
+	accommodationType?: string;
 	/** True while the create/update mutation is in-flight */
 	isSaving?: boolean;
 	/** Validation error from parent (e.g. missing bed prices) */
 	validationError?: string | null;
 }
 
-export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, rentalType, isSaving = false, validationError }: Props) {
+export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, rentalType, accommodationType, isSaving = false, validationError }: Props) {
 	const [draft, setDraft] = useState<RoomForm>({
 		...room,
 		beds: [...room.beds],
@@ -44,8 +45,13 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 		}));
 
 	const handleSave = () => {
-		if (!draft.name.trim() || isSaving) return;
-		onSave(draft);
+		const isEntirePlace = rentalType === "ENTIRE_PLACE";
+		const finalName = isEntirePlace ? accommodationType : draft.name;
+		if (!isEntirePlace && !draft.name.trim()) return;
+		if (isSaving) return;
+
+		// Truyền draft đã được gán tên đúng lên cho StepRoomsBox xử lý
+		onSave({ ...draft, name: finalName || draft.name });
 	};
 
 	return (

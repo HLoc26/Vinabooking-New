@@ -1,5 +1,5 @@
 import { useState, useEffect, useRef } from "react";
-import { Box, Typography, Button, Stack, Alert, Divider } from "@mui/material";
+import { Box, Typography, Button, Stack, Alert, Divider, Paper } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 
 import type { RoomForm, AmenityConfigForm, WizardForm, CreateRoomDTO, RoomSummary } from "../../../types/owner.types";
@@ -21,27 +21,33 @@ interface Props {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-function toCreateRoomDTO(room: RoomForm, amenities: AmenityConfigForm[]): CreateRoomDTO {
+function toCreateRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardForm): CreateRoomDTO {
+	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
+
+	// Format lại tên: VILLA -> Villa
+	const rawType = form.accommodationType || "Accommodation";
+	const formattedName = rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase();
+
 	return {
-		name: room.name, // Uses the Room's specific name (e.g. "Entire Villa")
+		name: isEntirePlace ? formattedName : room.name,
 		description: room.description || undefined,
-		quantity: room.quantity,
-		maxAdults: room.maxAdults,
-		maxChildren: room.maxChildren,
+		quantity: room.quantity || 1,
+		maxAdults: room.maxAdults || 1,
+		maxChildren: room.maxChildren || 0,
 		size: room.size,
-		bedroomCount: room.bedroomCount,
-		bathroomCount: room.bathroomCount,
+		bedroomCount: room.bedroomCount || 0,
+		bathroomCount: room.bathroomCount || 0,
 		viewType: toEViewType(room.viewType),
 		viewDescription: room.viewDescription || undefined,
-		price: room.price,
+		price: Number(room.price) || 0,
 		pricingType: toEPricingType(room.pricingType),
 		isActive: true,
 		beds: room.beds.map((b) => ({
 			name: b.name || undefined,
-			bedType: (toEBedType(b.bedType) as any) === "BUNK" ? "BUNK_BED" : (toEBedType(b.bedType) as any),
+			bedType: toEBedType(b.bedType) as any,
 			size: toEBedSize(b.size),
-			price: b.price ?? 0,
-			quantity: b.bedType === "BUNK_BED" ? (b.quantity ?? 1) * 2 : (b.quantity ?? 1),
+			price: Number(b.price) || 0,
+			quantity: b.quantity ?? 1,
 		})),
 		amenityIds: amenities.map((a) => a.amenityId),
 	};
@@ -86,37 +92,47 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 
 	// ── ENTIRE PLACE AUTO-SAVE EFFECT ──
 	useEffect(() => {
+		// 1.  Entire Place and only after trigger
 		if (!isEntirePlace || !triggerSave) return;
 
 		const { inlineRoom: currentRoom, inlineAmenities: currentAmenities } = stateRef.current;
 
-		// Validate
-		if (!currentRoom.name.trim()) {
+		// 2. Validate data before calling API
+		// Nếu LÀ Entire Place -> Bỏ qua check tên (vì đã lấy từ accommodationType).
+		// Nếu KHÔNG PHẢI Entire Place -> Phải check currentRoom.name
+		if (!isEntirePlace && !currentRoom.name?.trim()) {
 			onSaveFailed?.();
 			return;
 		}
 
-		const payload = toCreateRoomDTO(currentRoom, currentAmenities);
+		const payload = toCreateRoomDTO(currentRoom, currentAmenities, form);
 		const currentlySaved = isRealServerId(currentRoom.id);
 
+		// 3. Xử lý khi thành công
 		const onSuccess = (saved: RoomSummary) => {
 			const updatedRoom: RoomForm = {
 				...currentRoom,
-				id: saved.id, // Update state with the real DB UUID
+				id: saved.id,
 				amenities: currentAmenities,
 			};
 			setInlineRoom(updatedRoom);
 			setForm((prev) => ({ ...prev, rooms: [updatedRoom] }));
+
+			// Quan trọng: Gọi hàm này để cha chuyển sang Step 4
 			onSaveComplete?.();
 		};
 
+		// 4. Xử lý khi lỗi API
+		const onError = () => {
+			onSaveFailed?.(); // Reset trigger để có thể bấm Next lại lần sau
+		};
+
 		if (currentlySaved) {
-			updateMutation.mutate(payload, { onSuccess });
+			updateMutation.mutate(payload, { onSuccess, onError });
 		} else {
-			// First time: POST /owners/accommodations/{accommodationId}/rooms
-			createMutation.mutate(payload, { onSuccess });
+			createMutation.mutate(payload, { onSuccess, onError });
 		}
-	}, [triggerSave, isEntirePlace]);
+	}, [triggerSave, isEntirePlace]); // Giữ nguyên deps
 
 	// ── HANDLERS ──
 	const handleToggleAmenity = (setter: React.Dispatch<React.SetStateAction<AmenityConfigForm[]>>) => (a: AmenityConfigForm) => {
@@ -153,37 +169,87 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		);
 	}
 
+	// ── RENDER FOR SHARED/PRIVATE ROOMS ──
 	return (
 		<Box>
-			<Box display="flex" justifyContent="space-between" mb={3}>
-				<Typography variant="h6" fontWeight={700}>
-					Manage Rooms
-				</Typography>
-				<Button
-					variant="contained"
-					startIcon={<AddIcon />}
-					onClick={() => {
-						setEditingRoom(makeRoom());
-						setDraftAmenities([]);
-					}}
-				>
-					Add Room
-				</Button>
+			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
+				<Box>
+					<Typography variant="h6" fontWeight={700} mb={0.5}>
+						Manage Rooms
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						Add the rooms available in your property. Each room can have its own beds and amenities.
+					</Typography>
+				</Box>
+				{/* Only show top button if there are already rooms */}
+				{rooms.length > 0 && (
+					<Button
+						variant="contained"
+						startIcon={<AddIcon />}
+						onClick={() => {
+							setEditingRoom(makeRoom());
+							setDraftAmenities([]);
+						}}
+						sx={{ borderRadius: 2, fontWeight: 700, whiteSpace: "nowrap", ml: 2 }}
+					>
+						Add Room
+					</Button>
+				)}
 			</Box>
 
-			<Stack spacing={2}>
-				{rooms.map((room) => (
-					<RoomCard
-						key={room.id}
-						room={room}
-						onEdit={() => {
-							setEditingRoom(room);
-							setDraftAmenities(room.amenities);
+			{apiError && (
+				<Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+					{apiError}
+				</Alert>
+			)}
+
+			{/* ── Room List or Empty State ────────────────────────────────────────── */}
+			{rooms.length === 0 ? (
+				<Paper
+					elevation={0}
+					sx={{
+						p: 6,
+						borderRadius: 3,
+						border: "2px dashed",
+						borderColor: "divider",
+						display: "flex",
+						flexDirection: "column",
+						alignItems: "center",
+						gap: 2,
+						backgroundColor: "background.paper",
+					}}
+				>
+					{/* You can use KingBedOutlinedIcon here if imported */}
+					<Typography color="text.primary" variant="body1">
+						No rooms added yet
+					</Typography>
+					<Button
+						variant="outlined"
+						startIcon={<AddIcon />}
+						onClick={() => {
+							setEditingRoom(makeRoom());
+							setDraftAmenities([]);
 						}}
-						onDelete={() => setForm((p) => ({ ...p, rooms: p.rooms.filter((r) => r.id !== room.id) }))}
-					/>
-				))}
-			</Stack>
+						sx={{ borderRadius: 2 }}
+					>
+						Add Your First Room
+					</Button>
+				</Paper>
+			) : (
+				<Stack spacing={2}>
+					{rooms.map((room) => (
+						<RoomCard
+							key={room.id}
+							room={room}
+							onEdit={() => {
+								setEditingRoom(room);
+								setDraftAmenities(room.amenities);
+							}}
+							onDelete={() => setForm((p) => ({ ...p, rooms: p.rooms.filter((r) => r.id !== room.id) }))}
+						/>
+					))}
+				</Stack>
+			)}
 
 			{editingRoom && (
 				<RoomEditModal
@@ -195,7 +261,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					isSaving={createMutation.isPending || updateMutation.isPending}
 					onClose={() => setEditingRoom(null)}
 					onSave={(updated) => {
-						const payload = toCreateRoomDTO(updated, draftAmenities);
+						const payload = toCreateRoomDTO(updated, draftAmenities, form);
 						const persisted = isRealServerId(updated.id);
 
 						const onSuccess = (saved: RoomSummary) => {
