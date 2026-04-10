@@ -177,6 +177,7 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 	);
 }
 // ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
+// ─── MAIN COMPONENT ──────────────────────────────────────────────────────────
 export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 	if (rentalType === "ENTIRE_PLACE") return <AccommodationInfoField draft={draft} set={set} />;
 
@@ -190,10 +191,10 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 			</Typography>
 
 			<Box display="flex" flexDirection="column" gap={4}>
-				{/* Trường nhập tên: Giữ nguyên căn trái, fullWidth */}
+				{/* Trường nhập tên */}
 				<TextField fullWidth required label="Room Name" value={draft.name} onChange={(e) => set("name", e.target.value.slice(0, 50))} />
 
-				{/* Hàng Stepper 1: Luôn 3 cột - Căn trái/giữa/phải */}
+				{/* Hàng Stepper 1: Quantity - Adults - Children */}
 				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" alignItems="center">
 					<Box display="flex" justifyContent="flex-start">
 						<StepperField label="Quantity" value={draft.quantity} onChange={(v) => set("quantity", v)} min={1} />
@@ -206,23 +207,39 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 					</Box>
 				</Box>
 
-				{/* Hàng Stepper 2: Baths - Size - Mock */}
+				{/* Hàng Stepper 2: Xử lý linh hoạt Bedrooms/Baths/Size */}
 				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" alignItems="center">
-					{/* Cột 1: Hiển thị Baths thay vì Bedrooms */}
-					<Box display="flex" justifyContent="flex-start">
-						<StepperField label="Baths" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
-					</Box>
-
-					{/* Cột 2: Hiển thị Size ra vị trí giữa (thẳng hàng với Adults ở trên) */}
-					<Box display="flex" justifyContent="center">
-						<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
-					</Box>
-
-					{/* Cột 3: Ô trống hoàn toàn để giữ layout */}
-					<Box display="flex" justifyContent="flex-end">
-						{/* Để trống để cột 3 ở trên (Children) không bị ảnh hưởng */}
-					</Box>
+					{!isShared ? (
+						<>
+							{/* Case PRIVATE: Bedrooms - Baths - Size */}
+							<Box display="flex" justifyContent="flex-start">
+								<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} />
+							</Box>
+							<Box display="flex" justifyContent="center">
+								<StepperField label="Baths" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
+							</Box>
+							<Box display="flex" justifyContent="flex-end">
+								<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+							</Box>
+						</>
+					) : (
+						<>
+							{/* Case SHARED: Baths - Size - Mock */}
+							<Box display="flex" justifyContent="flex-start">
+								<StepperField label="Baths" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
+							</Box>
+							<Box display="flex" justifyContent="center">
+								<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+							</Box>
+							<Box display="flex" justifyContent="flex-end">
+								{/* Ô Mock trống để giữ cấu trúc 3 cột cho thẳng hàng trên */}
+							</Box>
+						</>
+					)}
 				</Box>
+
+				{/* PHẢI CÓ DÒNG NÀY: Gọi các trường View, Price, Description */}
+				<CommonFields draft={draft} set={set} viewDisabled={viewDisabled} />
 			</Box>
 		</Box>
 	);
