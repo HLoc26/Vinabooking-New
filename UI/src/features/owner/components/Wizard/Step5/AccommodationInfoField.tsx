@@ -16,18 +16,30 @@ export default function AccommodationInfoField({ draft, set }: Props) {
 				Accommodation Info
 			</Typography>
 
-			<Box display="flex" flexDirection="column" gap={5}>
-				{/* Max Adults/Children căn giữa, khoảng cách xa nhau */}
-				<Box display="flex" justifyContent="center" gap={12} py={1}>
-					<StepperField label="Max Adults" value={draft.maxAdults} onChange={(v) => set("maxAdults", v)} min={1} />
-					<StepperField label="Max Children" value={draft.maxChildren} onChange={(v) => set("maxChildren", v)} min={0} />
+			<Box display="flex" flexDirection="column" gap={4}>
+				{/* Hàng 1: Max Adults/Children - Sử dụng Grid 3 cột để giữ alignment với hàng dưới */}
+				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" alignItems="center">
+					<Box display="flex" justifyContent="flex-start">
+						<StepperField label="Adults" value={draft.maxAdults} onChange={(v) => set("maxAdults", v)} min={1} />
+					</Box>
+					<Box display="flex" justifyContent="center">
+						<StepperField label="Children" value={draft.maxChildren} onChange={(v) => set("maxChildren", v)} min={0} />
+					</Box>
+					{/* Cột thứ 3 để trống để "Adults" nằm trái, "Children" nằm giữa giống SHARED_ROOM */}
+					<Box display="flex" justifyContent="flex-end" />
 				</Box>
 
-				{/* Grid 3 cột: Bedrooms, Bathrooms, Size */}
-				<Box display="grid" gridTemplateColumns="repeat(3, auto)" justifyContent="center" gap={10}>
-					<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} />
-					<StepperField label="Bathrooms" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
-					<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+				{/* Hàng 2: Grid 3 cột đầy đủ: Bedrooms, Bathrooms, Size */}
+				<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" alignItems="center">
+					<Box display="flex" justifyContent="flex-start">
+						<StepperField label="Bedrooms" value={draft.bedroomCount} onChange={(v) => set("bedroomCount", v)} />
+					</Box>
+					<Box display="flex" justifyContent="center">
+						<StepperField label="Bathrooms" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
+					</Box>
+					<Box display="flex" justifyContent="flex-end">
+						<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+					</Box>
 				</Box>
 
 				<CommonFields draft={draft} set={set} viewDisabled={viewDisabled} />
