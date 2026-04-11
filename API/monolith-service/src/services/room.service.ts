@@ -132,7 +132,7 @@ export class RoomService {
 		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
 
 		// 2. Update
-		const updatedRoom = await this.#roomRepository.update(roomId, data);
+		const updatedRoom = await this.#roomRepository.updateRoomAtCreate(roomId, data);
 
 		// 3. Clear Cache
 		await redisClient.del(`${this.CACHE_PREFIX}${updatedRoom.accommodationId}`);

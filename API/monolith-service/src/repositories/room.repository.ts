@@ -191,7 +191,7 @@ class RoomRepository {
 
 							return {
 								name: bed.name,
-								bedType: finalBedType as any, // Ép kiểu để khớp với Enum của Prisma
+								bedType: finalBedType,
 								description: bed.description,
 								size: bed.size,
 								price: bed.price,
@@ -211,7 +211,7 @@ class RoomRepository {
 		});
 	}
 
-	public async update(roomId: string, data: UpdateRoomDTO): Promise<RoomWithDetails> {
+	public async updateRoomAtCreate(roomId: string, data: UpdateRoomDTO): Promise<RoomWithDetails> {
 		return await this.#prismaClient.$transaction(async (tx) => {
 			// Xóa các bản ghi cũ để tạo lại (tránh trùng lặp logic x2)
 			if (data.beds) {
