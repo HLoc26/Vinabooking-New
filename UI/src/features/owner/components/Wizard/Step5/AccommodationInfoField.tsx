@@ -1,6 +1,7 @@
 import { Box, Typography } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
-import { StepperField, CommonFields } from "./RoomInfoField";
+import { CommonFields } from "./CommonFields";
+import { StepperField } from "./StepperField";
 
 interface Props {
 	draft: RoomForm;
