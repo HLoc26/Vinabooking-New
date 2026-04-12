@@ -96,34 +96,34 @@ export const updateRoom = async (roomId: string, payload: UpdateRoomDTO): Promis
 		return data;
 	});
 
+export const deleteRoomApi = async (roomId: string): Promise<void> => apiClient.delete(`/owners/rooms/${roomId}`).then(() => undefined);
+
 // // ─── Step 6: Images ───────────────────────────────────────────────────────────
-// // Max 10 files per request. Use uploadAccommodationImages/uploadRoomImages
-// // which handle chunking automatically.
 
-// const CHUNK_SIZE = 10;
+export const getEntityImages = async (type: "accommodation" | "room", id: string) => apiClient.get<ApiResponse<{ id: string; url: string }[]>>(`/images/${type}/${id}`).then((res) => res.data.data);
 
-// const uploadChunk = (url: string, files: File[]): Promise<void> => {
-// 	const formData = new FormData();
-// 	files.forEach((file) => formData.append("files", file));
-// 	return apiClient
-// 		.post(url, formData, {
-// 			headers: { "Content-Type": "multipart/form-data" },
-// 		})
-// 		.then(() => undefined);
-// };
+// Splits files into chunks of 10 and fires sequential requests.
+const uploadInChunks = async (url: string, files: File[]): Promise<void> => {
+	// Max 10 files per request.
+	const CHUNK_SIZE = 10;
 
-// // Splits files into chunks of 10 and fires sequential requests.
-// const uploadInChunks = async (url: string, files: File[]): Promise<void> => {
-// 	for (let i = 0; i < files.length; i += CHUNK_SIZE) {
-// 		await uploadChunk(url, files.slice(i, i + CHUNK_SIZE));
-// 	}
-// };
+	const uploadChunk = async (url: string, files: File[]): Promise<void> => {
+		const formData = new FormData();
+		files.forEach((file) => formData.append("files", file));
+		return apiClient
+			.post(url, formData, {
+				headers: { "Content-Type": "multipart/form-data" },
+			})
+			.then(() => undefined);
+	};
+	for (let i = 0; i < files.length; i += CHUNK_SIZE) {
+		await uploadChunk(url, files.slice(i, i + CHUNK_SIZE));
+	}
+};
 
-// export const uploadAccommodationImages = (accommodationId: string, files: File[]): Promise<void> => uploadInChunks(`/images/accommodation/${accommodationId}`, files);
+export const uploadAccommodationImages = (accommodationId: string, files: File[]): Promise<void> => uploadInChunks(`/images/accommodation/${accommodationId}`, files);
 
-// export const uploadRoomImages = (roomId: string, files: File[]): Promise<void> => uploadInChunks(`/images/room/${roomId}`, files);
-
-// // ─── Lookups ──────────────────────────────────────────────────────────────────
+export const uploadRoomImages = (roomId: string, files: File[]): Promise<void> => uploadInChunks(`/images/room/${roomId}`, files);
 
 // export const getAmenities = async (): Promise<AmenityDto[]> => apiClient.get<ApiResponse<AmenityDto[]>>("/amenities").then((res) => res.data.data);
 
