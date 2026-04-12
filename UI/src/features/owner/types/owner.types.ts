@@ -235,13 +235,14 @@ export type RoomForm = {
 	amenities: AmenityConfigForm[];
 };
 export interface CreateBedBatchDTO {
+	id?: string;
 	name?: string;
 	bedType: EBedType;
 	size?: EBedSize;
 	/** Only relevant when accommodationType === "SHARED_ROOM" */
 	price?: number;
 }
-export interface CreateRoomDTO {
+export interface UpdateRoomDTO {
 	name: string;
 	description?: string;
 	quantity?: number;
