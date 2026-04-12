@@ -3,12 +3,29 @@ import KingBedOutlinedIcon from "@mui/icons-material/KingBedOutlined";
 import WifiOutlinedIcon from "@mui/icons-material/WifiOutlined";
 import EditOutlinedIcon from "@mui/icons-material/EditOutlined";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
+import PeopleOutlineIcon from "@mui/icons-material/PeopleOutline";
+import ChildCareOutlinedIcon from "@mui/icons-material/ChildCareOutlined";
+import BathtubOutlinedIcon from "@mui/icons-material/BathtubOutlined";
+import AspectRatioOutlinedIcon from "@mui/icons-material/AspectRatioOutlined";
+import LandscapeOutlinedIcon from "@mui/icons-material/LandscapeOutlined";
+import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import type { RoomForm } from "../../../types/owner.types";
 
 interface Props {
 	room: RoomForm;
 	onEdit: () => void;
 	onDelete: () => void;
+}
+
+function SummaryItem({ icon, label }: { icon: React.ReactNode; label: string }) {
+	return (
+		<Box display="flex" alignItems="center" gap={0.5}>
+			<Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", "& svg": { fontSize: 14 } }}>{icon}</Box>
+			<Typography variant="caption" color="text.secondary">
+				{label}
+			</Typography>
+		</Box>
+	);
 }
 
 export default function RoomCard({ room, onEdit, onDelete }: Props) {
@@ -51,20 +68,17 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 				</Box>
 			</Box>
 
-			{/* Summary block */}
-			<Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "action.hover", lineHeight: 1.8 }}>
-				<Typography variant="caption" display="block">
-					👥 Up to {room.maxAdults} adults, {room.maxChildren} children &nbsp;·&nbsp; 🛏 {room.bedroomCount} bedroom
-					{room.bedroomCount !== 1 ? "s" : ""} &nbsp;·&nbsp; 🚿 {room.bathroomCount} bath
-					{room.bathroomCount !== 1 ? "s" : ""}
-					{room.size ? ` · 📐 ${room.size}m²` : ""}
-					{room.viewType !== "NONE" ? ` · 🌅 ${room.viewType.replace(/_/g, " ")} view` : ""}
-				</Typography>
-				{room.price && (
-					<Typography variant="caption" display="block">
-						💰 {room.price} / {room.pricingType.replace(/_/g, " ").toLowerCase()}
-					</Typography>
-				)}
+			{/* Summary block — MUI icon rows */}
+			<Box sx={{ p: 1.5, borderRadius: 2, bgcolor: "action.hover" }}>
+				<Box display="flex" flexWrap="wrap" gap={1.5}>
+					<SummaryItem icon={<PeopleOutlineIcon />} label={`Up to ${room.maxAdults} adults`} />
+					<SummaryItem icon={<ChildCareOutlinedIcon />} label={`${room.maxChildren} children`} />
+					<SummaryItem icon={<KingBedOutlinedIcon />} label={`${room.bedroomCount} bedroom${room.bedroomCount !== 1 ? "s" : ""}`} />
+					<SummaryItem icon={<BathtubOutlinedIcon />} label={`${room.bathroomCount} bath${room.bathroomCount !== 1 ? "s" : ""}`} />
+					{room.size ? <SummaryItem icon={<AspectRatioOutlinedIcon />} label={`${room.size} m²`} /> : null}
+					{room.viewType !== "NONE" ? <SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replace(/_/g, " ")} view`} /> : null}
+					{room.price ? <SummaryItem icon={<SellOutlinedIcon />} label={`${room.price.toLocaleString("vi-VN")} VND / ${room.pricingType.replace(/_/g, " ").toLowerCase()}`} /> : null}
+				</Box>
 			</Box>
 
 			{/* Beds & Amenities chips */}
