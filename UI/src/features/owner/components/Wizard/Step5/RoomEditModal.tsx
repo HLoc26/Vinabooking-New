@@ -16,12 +16,9 @@ interface Props {
 	onSave: (room: RoomForm) => void;
 	draftAmenities: AmenityConfigForm[];
 	onAmenityToggle: (a: AmenityConfigForm) => void;
-	/** Controls bed price / quantity visibility and bedroom/bathroom visibility */
 	rentalType?: string;
 	accommodationType?: string;
-	/** True while the create/update mutation is in-flight */
 	isSaving?: boolean;
-	/** Validation error from parent (e.g. missing bed prices) */
 	validationError?: string | null;
 }
 
@@ -32,12 +29,20 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 		amenities: [],
 	});
 
-	const set = (field: keyof RoomForm, value: any) => setDraft((prev) => ({ ...prev, [field]: value }));
+	// Thêm state để quản lý lỗi validation tại chỗ
+	const [internalError, setInternalError] = useState<string | null>(null);
+
+	const set = (field: keyof RoomForm, value: any) => {
+		setInternalError(null);
+		setDraft((prev) => {
+			// Nếu giá trị không đổi thì không set lại để tránh re-render thừa gây mất focus/nhảy số
+			if (prev[field] === value) return prev;
+			return { ...prev, [field]: value };
+		});
+	};
 
 	const addBed = () => setDraft((prev) => ({ ...prev, beds: [...prev.beds, makeBed()] }));
-
 	const removeBed = (id: string) => setDraft((prev) => ({ ...prev, beds: prev.beds.filter((b) => b.id !== id) }));
-
 	const updateBed = (id: string, field: keyof BedForm, value: any) =>
 		setDraft((prev) => ({
 			...prev,
@@ -46,22 +51,47 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 
 	const handleSave = () => {
 		const isEntirePlace = rentalType === "ENTIRE_PLACE";
-		const finalName = isEntirePlace ? accommodationType : draft.name;
-		if (!isEntirePlace && !draft.name.trim()) return;
+		const finalName = (isEntirePlace ? accommodationType : draft.name)?.trim();
+
+		// --- VALIDATION LOGIC ---
+		if (!isEntirePlace && !finalName) {
+			setInternalError("Room name cannot be empty.");
+			return;
+		}
+
+		if (draft.price <= 0) {
+			setInternalError("Price must be greater than 0.");
+			return;
+		}
+
+		if (draft.beds.length === 0) {
+			setInternalError("At least one bed is required.");
+			return;
+		}
+
 		if (isSaving) return;
 
-		// Truyền draft đã được gán tên đúng lên cho StepRoomsBox xử lý
-		onSave({ ...draft, name: finalName || draft.name });
+		// Ép kiểu dữ liệu chuẩn xác trước khi gửi lên API
+		const finalPayload: RoomForm = {
+			...draft,
+			name: finalName || draft.name,
+			price: Number(draft.price), // Fix bug price bị trim/string
+			beds: draft.beds.map((b) => ({
+				...b,
+				price: Number(b.price || 0),
+				quantity: Number(b.quantity || 1),
+			})),
+		};
+
+		onSave(finalPayload);
 	};
 
 	return (
 		<Dialog
 			open={open}
-			onClose={() => {
-				if (!isSaving) onClose();
-			}}
+			onClose={() => !isSaving && onClose()}
 			fullWidth
-			maxWidth="lg"
+			maxWidth="md" // 2. GIẢM WIDTH XUỐNG MD
 			disableEnforceFocus
 			PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}
 		>
@@ -80,29 +110,17 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 				<Typography variant="h6" fontWeight={700} color="inherit">
 					{draft.name || "Edit Room"}
 				</Typography>
-				<IconButton
-					onClick={() => {
-						if (!isSaving) onClose();
-					}}
-					size="small"
-					sx={{ color: "primary.contrastText" }}
-					disabled={isSaving}
-				>
+				<IconButton onClick={onClose} size="small" sx={{ color: "primary.contrastText" }} disabled={isSaving}>
 					<CloseIcon />
 				</IconButton>
 			</DialogTitle>
 
 			{/* CONTENT */}
 			<DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 3, bgcolor: "background.paper" }}>
-				{/* Pass rentalType so bedroom/bathroom can be hidden for PRIVATE_ROOM */}
 				<RoomInfoFields draft={draft} set={set} rentalType={rentalType} />
-
 				<Divider />
-
 				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} rentalType={rentalType} />
-
 				<Divider />
-
 				<AmenityPicker selected={draftAmenities} onToggle={onAmenityToggle} />
 			</DialogContent>
 
@@ -117,16 +135,18 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 					gap: 1,
 				}}
 			>
-				{validationError && (
+				{/* 3. HIỂN THỊ VALIDATION ERROR (Cả BE lẫn FE) */}
+				{(validationError || internalError) && (
 					<Alert severity="error" sx={{ borderRadius: 2 }}>
-						{validationError}
+						{internalError || validationError}
 					</Alert>
 				)}
+
 				<Box display="flex" justifyContent="flex-end" gap={1}>
 					<Button onClick={onClose} variant="outlined" disabled={isSaving}>
 						Cancel
 					</Button>
-					<Button onClick={handleSave} variant="contained" disabled={!draft.name.trim() || isSaving} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
+					<Button onClick={handleSave} variant="contained" disabled={isSaving} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
 						{isSaving ? "Saving…" : "Save Room"}
 					</Button>
 				</Box>
