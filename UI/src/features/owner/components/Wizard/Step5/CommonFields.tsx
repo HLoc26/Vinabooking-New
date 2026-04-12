@@ -1,44 +1,10 @@
-import { Box, InputAdornment, MenuItem, TextField, Typography } from "@mui/material";
+import { Box, MenuItem, TextField } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import { PRICING_TYPES, VIEW_TYPES } from "../../../const/RoomConst";
+import NumberField from "../../../../../components/shared/NumberField";
 
 // ─── COMMON FIELDS ──────────────────────────────────────────────────────────
 export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; set: any; viewDisabled: boolean }) {
-	// Helper: 1000 -> 1.000
-	const formatNumber = (val: number) => {
-		if (!val) return "0";
-		return val.toLocaleString("vi-VN");
-	};
-
-	const handlePriceChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		// Chỉ lấy các chữ số từ input (loại bỏ dấu chấm và ký tự lạ)
-		const rawValue = e.target.value.replace(/\D/g, "");
-
-		// Chuyển về số nguyên để lưu vào state
-		const numValue = parseInt(rawValue, 10);
-		set("price", isNaN(numValue) ? 0 : numValue);
-	};
-
-	const stepPrice = (delta: number) => {
-		const current = draft.price || 0;
-		const next = Math.max(0, current + delta);
-		set("price", next);
-	};
-
-	const stepperBtnSx = {
-		border: "none",
-		background: "none",
-		cursor: "pointer",
-		px: 0.5,
-		lineHeight: 1,
-		color: "text.secondary",
-		display: "flex",
-		alignItems: "center",
-		justifyContent: "center",
-		"&:hover": { color: "primary.main", bgcolor: "action.hover" },
-		transition: "all 0.2s",
-	};
-
 	return (
 		<Box display="flex" flexDirection="column" gap={4}>
 			{/* Hàng 1: View Type & Description */}
@@ -55,39 +21,15 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 
 			{/* Hàng 2: Price & Pricing Type */}
 			<Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
-				<TextField
+				<NumberField
 					label="Price"
-					// Hiển thị dạng text đã format dấu chấm
-					value={formatNumber(draft.price || 0)}
-					onChange={handlePriceChange}
-					onWheel={(e) => {
-						// Chỉ tăng giảm khi ô input đang được focus
-						if (document.activeElement === e.target) {
-							e.preventDefault();
-							const delta = e.deltaY < 0 ? 1000 : -1000;
-							stepPrice(delta);
-						}
-					}}
-					slotProps={{
-						input: {
-							endAdornment: (
-								<InputAdornment position="end">
-									<Typography variant="caption" fontWeight={700} sx={{ mr: 1, color: "text.disabled" }}>
-										VND
-									</Typography>
-									<Box display="flex" flexDirection="column" sx={{ borderLeft: "1px solid", borderColor: "divider", ml: 1 }}>
-										<Box component="button" type="button" onClick={() => stepPrice(1000)} sx={stepperBtnSx}>
-											▴
-										</Box>
-										<Box component="button" type="button" onClick={() => stepPrice(-1000)} sx={stepperBtnSx}>
-											▾
-										</Box>
-									</Box>
-								</InputAdornment>
-							),
-							sx: { fontWeight: 700 },
-						},
-					}}
+					suffix="VND"
+					value={draft.price}
+					// Thay vì tự handle logic chuỗi, NumberField sẽ trả về giá trị số (Number)
+					onValueChange={(val: number | null) => set("price", val ?? 0)}
+					step={1000}
+					// Tận dụng prop 'error' nếu có validation logic
+					error={draft.price === 0}
 				/>
 
 				<TextField select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
