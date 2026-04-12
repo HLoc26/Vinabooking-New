@@ -1,8 +1,19 @@
-import { Box, Typography, Paper, Container, Accordion, AccordionSummary, AccordionDetails, Divider } from "@mui/material";
+import { Box, Typography, Paper, Container, Accordion, AccordionSummary, AccordionDetails, Divider, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
-import type { WizardForm } from "../../../types/owner.types";
+import type { WizardForm, ImageItem } from "../../../types/owner.types";
 import { ExpandMore as ExpandMoreIcon, PhotoLibrary as PhotoLibraryIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
 import ImageUploader from "./ImageUploader";
+import { useUploadImages } from "../../../hooks/useUploadImages";
+import { useGetImages } from "../../../hooks/useGetImages";
+
+interface Props {
+	form: WizardForm;
+	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
+	onFieldChange?: () => void;
+	triggerSubmit: boolean;
+	resetTrigger: () => void;
+	onSuccess: () => void;
+}
 
 interface Props {
 	form: WizardForm;
@@ -14,87 +25,198 @@ interface Props {
 }
 
 const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
-	const rooms = form.rooms;
-
+	const [isUploading, setIsUploading] = useState(false);
 	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
+	const { mutateAsync: uploadImages } = useUploadImages();
 
-	const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+	const roomIds = form.rooms.map((r) => r.id).filter(Boolean) as string[];
+	const { data: dbImages, isLoading: isFetching } = useGetImages(form.accommodationId, roomIds);
+
+	// 1. FIXED MERGE LOGIC
+	useEffect(() => {
+		if (!dbImages) return;
+
+		setForm((prev) => {
+			// Get only the local files that haven't been uploaded to the DB yet
+			const localOnly = prev.images.filter((img) => !!img.file);
+
+			// Combine DB images with local files.
+			// We don't need to check IDs because DB images won't have the 'file' property
+			return {
+				...prev,
+				images: [...dbImages, ...localOnly],
+			};
+		});
+	}, [dbImages, setForm]);
+
+	const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
 		setExpandedAccordion(isExpanded ? panel : false);
 	};
 
-	// Handle submission trigger to advance to the next step
+	const handleAddImages = (target: "accommodation" | "room", roomId?: string, roomTempId?: string) => (files: File[]) => {
+		const newImages: ImageItem[] = files.map((file) => ({
+			id: crypto.randomUUID(), // This is fine for local tracking
+			file,
+			target,
+			roomId,
+			roomTempId,
+		}));
+
+		setForm((prev) => ({
+			...prev,
+			images: [...prev.images, ...newImages],
+		}));
+		onFieldChange?.();
+	};
+
+	const handleRemoveImage = (id: string) => {
+		// NOTE: If the user removes a DB image, you might need a separate API call to delete it from the server!
+		setForm((prev) => ({
+			...prev,
+			images: prev.images.filter((img) => img.id !== id),
+		}));
+		onFieldChange?.();
+	};
+
+	// 2. FIXED UPLOAD LOGIC
 	useEffect(() => {
 		if (triggerSubmit) {
-			// TODO: Implement actual image upload logic using ownerApi here
-			resetTrigger();
-			onSuccess();
+			const performUpload = async () => {
+				setIsUploading(true);
+				try {
+					// Filter out DB images so we only upload new files
+					const imagesToUpload = form.images.filter((img) => !!img.file);
+
+					if (form.accommodationId && imagesToUpload.length > 0) {
+						await uploadImages({
+							accommodationId: form.accommodationId,
+							images: imagesToUpload,
+						});
+					}
+					onSuccess();
+				} catch (error) {
+					console.error("Upload failed", error);
+				} finally {
+					setIsUploading(false);
+					resetTrigger();
+				}
+			};
+
+			performUpload();
 		}
-	}, [triggerSubmit, resetTrigger, onSuccess]);
+	}, [triggerSubmit]); // Removed aggressive dependencies that could cause multi-renders
+
+	if (isFetching && form.images.length === 0) {
+		return (
+			<Box display="flex" justifyContent="center" py={6}>
+				<CircularProgress />
+			</Box>
+		);
+	}
 
 	return (
-		<Container maxWidth="md" sx={{ py: 6 }}>
-			<Paper
-				elevation={0}
-				sx={{
-					p: { xs: 3, md: 5 },
-					borderRadius: 4,
-					backgroundColor: "background.paper",
-					border: "1px solid rgba(255,255,255,0.08)",
-					boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
-				}}
-			>
-				<Box sx={{ mb: 6 }}>
-					<Typography variant="h4" component="h1" gutterBottom>
+		<Box sx={{ position: "relative" }}>
+			{isUploading && (
+				<Box
+					sx={{
+						position: "absolute",
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						bgcolor: "rgba(0,0,0,0.5)",
+						zIndex: 10,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						borderRadius: 4,
+					}}
+				>
+					<CircularProgress />
+				</Box>
+			)}
+
+			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
+				<Box>
+					<Typography variant="h5" fontWeight={800} mb={1} color="primary">
 						Property Photos
 					</Typography>
-					<Typography variant="body1" color="text.secondary">
+					<Typography variant="body2" color="text.secondary">
 						Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
 					</Typography>
 				</Box>
+			</Box>
 
-				{/* Section 1: General Accommodation Gallery */}
-				<Box sx={{ mb: 6 }}>
-					<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-						<PhotoLibraryIcon sx={{ mr: 1.5, color: "primary.main" }} />
-						<Typography variant="h5" component="h2">
-							General Property Photos
-						</Typography>
-					</Box>
-
-					<Box sx={{ p: 3, backgroundColor: "rgba(0,0,0,0.2)", borderRadius: 3, border: "1px solid rgba(255,255,255,0.03)" }}>
-						<ImageUploader title="Facade, Lobby & Amenities" description="Upload photos of the building exterior, reception, pool, gym, or restaurant." />
-					</Box>
-				</Box>
-
-				<Divider sx={{ my: 6, borderColor: "rgba(255,255,255,0.1)" }} />
-
-				{/* Section 2: Room-Specific Galleries */}
-				<Box sx={{ mb: 2 }}>
-					<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
-						<MeetingRoomIcon sx={{ mr: 1.5, color: "secondary.main" }} />
-						<Typography variant="h5" component="h2">
-							Room-Specific Photos
-						</Typography>
-					</Box>
-					<Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
-						Upload photos for each room type you offer. Guests want to see exactly where they will be sleeping.
+			{/* Section 1: General Accommodation Gallery */}
+			<Box sx={{ mb: 4 }}>
+				<Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+					<PhotoLibraryIcon sx={{ mr: 1, color: "primary.main" }} />
+					<Typography variant="subtitle1" fontWeight={700}>
+						General Property Photos
 					</Typography>
-
-					{rooms.map((room, idx) => (
-						<Accordion key={room.id} expanded={expandedAccordion === room.id} onChange={handleAccordionChange(idx.toString())} disableGutters elevation={0}>
-							<AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />} sx={{ px: 3, py: 1 }}>
-								<Typography variant="h6" sx={{ fontSize: "1.1rem" }}>
-									{room.name}
-								</Typography>
-							</AccordionSummary>
-							<AccordionDetails sx={{ px: 3, pb: 4, pt: 1 }}>
-								<ImageUploader description={room.description} />
-							</AccordionDetails>
-						</Accordion>
-					))}
 				</Box>
-			</Paper>
-		</Container>
+
+				<Box sx={{ p: 2, backgroundColor: "action.hover", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+					<ImageUploader
+						title="Facade, Lobby & Amenities"
+						description="Upload photos of the building exterior, reception, pool, gym, or restaurant."
+						images={form.images.filter((img) => img.target === "accommodation")}
+						onAdd={handleAddImages("accommodation")}
+						onRemove={handleRemoveImage}
+					/>
+				</Box>
+			</Box>
+
+			<Divider sx={{ my: 4 }} />
+
+			{/* Section 2: Room-Specific Galleries */}
+			<Box>
+				<Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+					<MeetingRoomIcon sx={{ mr: 1, color: "secondary.main" }} />
+					<Typography variant="subtitle1" fontWeight={700}>
+						Room-Specific Photos
+					</Typography>
+				</Box>
+				<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+					Upload photos for each room type you offer. Guests want to see exactly where they will be sleeping.
+				</Typography>
+
+				{form.rooms.map((room) => (
+					<Accordion
+						key={room.id || room.tempId}
+						expanded={expandedAccordion === (room.id || room.tempId)}
+						onChange={handleAccordionChange(room.id || room.tempId)}
+						disableGutters
+						elevation={0}
+						sx={{
+							mb: 1.5,
+							border: "1px solid",
+							borderColor: "divider",
+							borderRadius: "8px !important",
+							overflow: "hidden",
+							"&:before": { display: "none" },
+						}}
+					>
+						<AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />} sx={{ px: 2, py: 0.5, bgcolor: "action.hover" }}>
+							<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+								{room.name}
+							</Typography>
+							<Typography variant="caption" sx={{ ml: 2, color: "text.secondary", alignSelf: "center" }}>
+								{form.images.filter((img) => img.target === "room" && (img.roomId === room.id || img.roomTempId === room.tempId)).length} photos
+							</Typography>
+						</AccordionSummary>
+						<AccordionDetails sx={{ p: 2 }}>
+							<ImageUploader
+								description={room.description}
+								images={form.images.filter((img) => img.target === "room" && (img.roomId === room.id || img.roomTempId === room.tempId))}
+								onAdd={handleAddImages("room", room.id, room.tempId)}
+								onRemove={handleRemoveImage}
+							/>
+						</AccordionDetails>
+					</Accordion>
+				))}
+			</Box>
+		</Box>
 	);
 };
 
