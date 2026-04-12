@@ -14,7 +14,7 @@ import type {
 	UpdateAccommodationPayload,
 	UpdateAddressPayload,
 	UpdateFacilitiesPayload,
-	CreateRoomDTO,
+	UpdateRoomDTO,
 	RoomSummary,
 } from "../types/owner.types";
 
@@ -78,7 +78,7 @@ export const updateAccommodationFacilities = async (accommodationId: string, pay
  * Creates a single room (with beds + amenities) under an accommodation.
  * Returns the persisted room summary including the server-assigned id.
  */
-export const createRoom = async (accommodationId: string, payload: CreateRoomDTO): Promise<RoomSummary> =>
+export const createRoom = async (accommodationId: string, payload: UpdateRoomDTO): Promise<RoomSummary> =>
 	apiClient.post<ApiResponse<RoomSummary>>(`/owners/accommodations/${accommodationId}/rooms`, payload).then((res) => {
 		const { success, data, error } = res.data;
 		if (!success || !data) throw new Error(error || "Failed to create room");
@@ -89,7 +89,7 @@ export const createRoom = async (accommodationId: string, payload: CreateRoomDTO
  * PATCH /owners/rooms/:roomId
  * Full replacement update of an existing room.
  */
-export const updateRoom = async (roomId: string, payload: CreateRoomDTO): Promise<RoomSummary> =>
+export const updateRoom = async (roomId: string, payload: UpdateRoomDTO): Promise<RoomSummary> =>
 	apiClient.patch<ApiResponse<RoomSummary>>(`/owners/rooms/${roomId}`, payload).then((res) => {
 		const { success, data, error } = res.data;
 		if (!success || !data) throw new Error(error || "Failed to update room");
