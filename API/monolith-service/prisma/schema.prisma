@@ -391,8 +391,9 @@ model Bed {
     name        String  @db.VarChar(191)
     description String? @db.Text
 
-    bedType EBedType
-    size    String?  @db.VarChar(50)
+    bedType  EBedType
+    size     String?  @db.VarChar(50)
+    quantity Int      @default(1) @db.UnsignedInt
 
     price Decimal? @db.Decimal(10, 2)
 

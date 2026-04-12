@@ -1,5 +1,5 @@
 import { useState } from "react";
-import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Box } from "@mui/material";
+import { Dialog, DialogTitle, DialogContent, DialogActions, Button, Typography, IconButton, Divider, Box, CircularProgress, Alert } from "@mui/material";
 import CloseIcon from "@mui/icons-material/Close";
 
 import type { RoomForm, BedForm, AmenityConfigForm } from "../../../types/owner.types";
@@ -16,25 +16,27 @@ interface Props {
 	onSave: (room: RoomForm) => void;
 	draftAmenities: AmenityConfigForm[];
 	onAmenityToggle: (a: AmenityConfigForm) => void;
-	isPanelOpen: boolean;
+	/** Controls bed price / quantity visibility and bedroom/bathroom visibility */
+	rentalType?: string;
+	accommodationType?: string;
+	/** True while the create/update mutation is in-flight */
+	isSaving?: boolean;
+	/** Validation error from parent (e.g. missing bed prices) */
+	validationError?: string | null;
 }
 
-export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, isPanelOpen }: Props) {
+export default function RoomEditModal({ room, open, onClose, onSave, draftAmenities, onAmenityToggle, rentalType, accommodationType, isSaving = false, validationError }: Props) {
 	const [draft, setDraft] = useState<RoomForm>({
 		...room,
 		beds: [...room.beds],
-		amenities: [], // controlled by parent
+		amenities: [],
 	});
 
 	const set = (field: keyof RoomForm, value: any) => setDraft((prev) => ({ ...prev, [field]: value }));
 
 	const addBed = () => setDraft((prev) => ({ ...prev, beds: [...prev.beds, makeBed()] }));
 
-	const removeBed = (id: string) =>
-		setDraft((prev) => ({
-			...prev,
-			beds: prev.beds.filter((b) => b.id !== id),
-		}));
+	const removeBed = (id: string) => setDraft((prev) => ({ ...prev, beds: prev.beds.filter((b) => b.id !== id) }));
 
 	const updateBed = (id: string, field: keyof BedForm, value: any) =>
 		setDraft((prev) => ({
@@ -43,26 +45,25 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 		}));
 
 	const handleSave = () => {
-		if (!draft.name.trim()) return;
-		onSave(draft);
+		const isEntirePlace = rentalType === "ENTIRE_PLACE";
+		const finalName = isEntirePlace ? accommodationType : draft.name;
+		if (!isEntirePlace && !draft.name.trim()) return;
+		if (isSaving) return;
+
+		// Truyền draft đã được gán tên đúng lên cho StepRoomsBox xử lý
+		onSave({ ...draft, name: finalName || draft.name });
 	};
 
 	return (
 		<Dialog
 			open={open}
-			onClose={onClose}
+			onClose={() => {
+				if (!isSaving) onClose();
+			}}
 			fullWidth
 			maxWidth="lg"
 			disableEnforceFocus
-			PaperProps={{
-				sx: {
-					borderRadius: 3,
-
-					// 👇 shrink when AmenityPanel is open (space on right)
-					width: isPanelOpen ? "calc(100% - 320px)" : "100%",
-					transition: "width 0.25s ease",
-				},
-			}}
+			PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}
 		>
 			{/* HEADER */}
 			<DialogTitle
@@ -70,49 +71,65 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 					display: "flex",
 					justifyContent: "space-between",
 					alignItems: "center",
+					bgcolor: "primary.main",
+					color: "primary.contrastText",
+					py: 1.5,
+					px: 3,
 				}}
 			>
-				<Typography variant="h6" fontWeight={700}>
+				<Typography variant="h6" fontWeight={700} color="inherit">
 					{draft.name || "Edit Room"}
 				</Typography>
-				<IconButton onClick={onClose}>
+				<IconButton
+					onClick={() => {
+						if (!isSaving) onClose();
+					}}
+					size="small"
+					sx={{ color: "primary.contrastText" }}
+					disabled={isSaving}
+				>
 					<CloseIcon />
 				</IconButton>
 			</DialogTitle>
 
 			{/* CONTENT */}
-			<DialogContent
-				dividers
-				sx={{
-					display: "flex",
-					flexDirection: "column",
-					gap: 3,
-				}}
-			>
-				{/* ─── ROOM INFO (CHILD COMPONENT) ───────────────── */}
-				<RoomInfoFields draft={draft} set={set} />
+			<DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 3, bgcolor: "background.paper" }}>
+				{/* Pass rentalType so bedroom/bathroom can be hidden for PRIVATE_ROOM */}
+				<RoomInfoFields draft={draft} set={set} rentalType={rentalType} />
 
 				<Divider />
 
-				{/* ─── BEDS ───────────────── */}
-				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} />
+				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} rentalType={rentalType} />
 
 				<Divider />
 
-				{/* ─── AMENITIES ───────────────── */}
-				<Box>
-					<AmenityPicker selected={draftAmenities} onToggle={onAmenityToggle} />
-				</Box>
+				<AmenityPicker selected={draftAmenities} onToggle={onAmenityToggle} />
 			</DialogContent>
 
 			{/* FOOTER */}
-			<DialogActions sx={{ px: 3, py: 2 }}>
-				<Button onClick={onClose} variant="outlined">
-					Cancel
-				</Button>
-				<Button onClick={handleSave} variant="contained" disabled={!draft.name.trim()}>
-					Save Room
-				</Button>
+			<DialogActions
+				sx={{
+					px: 3,
+					py: 2,
+					bgcolor: "background.paper",
+					flexDirection: "column",
+					alignItems: "stretch",
+					gap: 1,
+				}}
+			>
+				{validationError && (
+					<Alert severity="error" sx={{ borderRadius: 2 }}>
+						{validationError}
+					</Alert>
+				)}
+				<Box display="flex" justifyContent="flex-end" gap={1}>
+					<Button onClick={onClose} variant="outlined" disabled={isSaving}>
+						Cancel
+					</Button>
+					<Button onClick={handleSave} variant="contained" disabled={!draft.name.trim() || isSaving} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
+						{isSaving ? "Saving…" : "Save Room"}
+					</Button>
+				</Box>
 			</DialogActions>
 		</Dialog>
 	);

@@ -1,5 +1,4 @@
 import { Box, Typography, Chip } from "@mui/material";
-import CheckCircleIcon from "@mui/icons-material/CheckCircle";
 import { useOwnerAmenities } from "../../../hooks/useOwnerAmenities";
 import type { AmenityDto, AmenityConfigForm } from "../../../types/owner.types";
 
@@ -35,7 +34,6 @@ export default function AmenityPicker({ selected, onToggle }: Props) {
 							key={a.id}
 							label={a.name}
 							onClick={() => onToggle(mapAmenityToForm(a))}
-							icon={isSelected ? <CheckCircleIcon /> : undefined}
 							color={isSelected ? "primary" : "default"}
 							variant={isSelected ? "filled" : "outlined"}
 							sx={{ cursor: "pointer", transition: "all 0.2s" }}
