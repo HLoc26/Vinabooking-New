@@ -24,12 +24,17 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 				<NumberField
 					label="Price"
 					suffix="VND"
+					// Sử dụng value từ draft
 					value={draft.price}
-					// Thay vì tự handle logic chuỗi, NumberField sẽ trả về giá trị số (Number)
-					onValueChange={(val: number | null) => set("price", val ?? 0)}
+					// Quan trọng: NumberField của Base UI trả về số thực (number)
+					onValueChange={(val) => {
+						// Chỉ set khi val là số hợp lệ
+						if (val !== null && !isNaN(val)) {
+							set("price", val);
+						}
+					}}
+					min={0}
 					step={1000}
-					// Tận dụng prop 'error' nếu có validation logic
-					error={draft.price === 0}
 				/>
 
 				<TextField select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
