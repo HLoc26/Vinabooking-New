@@ -20,24 +20,27 @@ export function CommonFields({ draft, set, viewDisabled }: { draft: RoomForm; se
 			</Box>
 
 			{/* Hàng 2: Price & Pricing Type */}
-			<Box display="grid" gridTemplateColumns="1fr 1fr" gap={3}>
+			<Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} alignItems="end">
 				<NumberField
 					label="Price"
 					suffix="VND"
-					// Sử dụng value từ draft
 					value={draft.price}
-					// Quan trọng: NumberField của Base UI trả về số thực (number)
-					onValueChange={(val) => {
-						// Chỉ set khi val là số hợp lệ
-						if (val !== null && !isNaN(val)) {
-							set("price", val);
-						}
-					}}
-					min={0}
-					step={1000}
+					onValueChange={(val: number | null) => set("price", val ?? 0)}
+					// Đảm bảo không truyền size="small" ở đây nếu thằng kia là medium
 				/>
 
-				<TextField select label="Pricing Type" value={draft.pricingType} onChange={(e) => set("pricingType", e.target.value)}>
+				<TextField
+					select
+					label="Pricing Type"
+					value={draft.pricingType}
+					onChange={(e) => set("pricingType", e.target.value)}
+					fullWidth
+					slotProps={{
+						input: {
+							sx: { height: 56 }, // Ép chiều cao 56px chuẩn MUI Medium
+						},
+					}}
+				>
 					{PRICING_TYPES.map((t) => (
 						<MenuItem key={t} value={t}>
 							{t.replace(/_/g, " ")}
