@@ -1,111 +1,100 @@
-import { Box, Typography, Paper } from "@mui/material";
-import { useCallback } from "react";
+import { Box, Typography, Paper, Container, Accordion, AccordionSummary, AccordionDetails, Divider } from "@mui/material";
+import { useState, useEffect } from "react";
+import type { WizardForm } from "../../../types/owner.types";
+import { ExpandMore as ExpandMoreIcon, PhotoLibrary as PhotoLibraryIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
+import ImageUploader from "./ImageUploader";
 
-type Props = {
-	form: any;
-};
+interface Props {
+	form: WizardForm;
+	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
+	onFieldChange?: () => void;
+	triggerSubmit: boolean;
+	resetTrigger: () => void;
+	onSuccess: () => void;
+}
 
-const StepImageBox = ({ form }: Props) => {
-	// ─── Utils ─────────────────────────────────────────────
+const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
+	const rooms = form.rooms;
 
-	const chunkFiles = (files: File[], size = 10) => {
-		const chunks: File[][] = [];
-		for (let i = 0; i < files.length; i += size) {
-			chunks.push(files.slice(i, i + size));
-		}
-		return chunks;
+	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
+
+	const handleAccordionChange = (panel: string) => (event: React.SyntheticEvent, isExpanded: boolean) => {
+		setExpandedAccordion(isExpanded ? panel : false);
 	};
 
-	const uploadImages = async (url: string, files: File[]) => {
-		const chunks = chunkFiles(files, 10);
-
-		for (const chunk of chunks) {
-			const formData = new FormData();
-
-			chunk.forEach((file) => {
-				formData.append("files", file);
-			});
-
-			await fetch(url, {
-				method: "POST",
-				body: formData,
-			});
+	// Handle submission trigger to advance to the next step
+	useEffect(() => {
+		if (triggerSubmit) {
+			// TODO: Implement actual image upload logic using ownerApi here
+			resetTrigger();
+			onSuccess();
 		}
-	};
-
-	// ─── Drop handlers ─────────────────────────────────────
-
-	const handleAccommodationDrop = useCallback(
-		async (e: React.DragEvent) => {
-			e.preventDefault();
-
-			const files = Array.from(e.dataTransfer.files);
-
-			if (!form.accommodationId) {
-				alert("Accommodation must be created first.");
-				return;
-			}
-
-			await uploadImages(`/images/accommodation/${form.accommodationId}`, files);
-		},
-		[form.accommodationId]
-	);
-
-	const handleRoomDrop = useCallback(async (e: React.DragEvent, roomId: string) => {
-		e.preventDefault();
-
-		const files = Array.from(e.dataTransfer.files);
-
-		await uploadImages(`/images/room/${roomId}`, files);
-	}, []);
-
-	// ─── UI ────────────────────────────────────────────────
+	}, [triggerSubmit, resetTrigger, onSuccess]);
 
 	return (
-		<Box>
-			<Typography variant="h6" fontWeight={700} mb={2}>
-				Upload Images
-			</Typography>
-
-			{/* ── Accommodation Upload ───────────────── */}
+		<Container maxWidth="md" sx={{ py: 6 }}>
 			<Paper
-				onDrop={handleAccommodationDrop}
-				onDragOver={(e) => e.preventDefault()}
+				elevation={0}
 				sx={{
-					p: 4,
-					border: "2px dashed",
-					borderColor: "primary.main",
-					borderRadius: 3,
-					textAlign: "center",
-					mb: 4,
-					cursor: "pointer",
+					p: { xs: 3, md: 5 },
+					borderRadius: 4,
+					backgroundColor: "background.paper",
+					border: "1px solid rgba(255,255,255,0.08)",
+					boxShadow: "0 8px 32px rgba(0,0,0,0.2)",
 				}}
 			>
-				<Typography fontWeight={600}>Drop images for main property here</Typography>
-				<Typography variant="caption">(Max 10 per request — auto chunked)</Typography>
-			</Paper>
+				<Box sx={{ mb: 6 }}>
+					<Typography variant="h4" component="h1" gutterBottom>
+						Property Photos
+					</Typography>
+					<Typography variant="body1" color="text.secondary">
+						Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
+					</Typography>
+				</Box>
 
-			{/* ── Room Uploads ───────────────────────── */}
-			{form.rooms.map((room: any) => (
-				<Paper
-					key={room.id}
-					onDrop={(e) => handleRoomDrop(e, room.id)}
-					onDragOver={(e) => e.preventDefault()}
-					sx={{
-						p: 3,
-						border: "2px dashed",
-						borderColor: "divider",
-						borderRadius: 3,
-						textAlign: "center",
-						mb: 2,
-						cursor: "pointer",
-					}}
-				>
-					<Typography fontWeight={600}>Room: {room.name || room.id}</Typography>
-					<Typography variant="caption">Drop room images here</Typography>
-				</Paper>
-			))}
-		</Box>
+				{/* Section 1: General Accommodation Gallery */}
+				<Box sx={{ mb: 6 }}>
+					<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+						<PhotoLibraryIcon sx={{ mr: 1.5, color: "primary.main" }} />
+						<Typography variant="h5" component="h2">
+							General Property Photos
+						</Typography>
+					</Box>
+
+					<Box sx={{ p: 3, backgroundColor: "rgba(0,0,0,0.2)", borderRadius: 3, border: "1px solid rgba(255,255,255,0.03)" }}>
+						<ImageUploader title="Facade, Lobby & Amenities" description="Upload photos of the building exterior, reception, pool, gym, or restaurant." />
+					</Box>
+				</Box>
+
+				<Divider sx={{ my: 6, borderColor: "rgba(255,255,255,0.1)" }} />
+
+				{/* Section 2: Room-Specific Galleries */}
+				<Box sx={{ mb: 2 }}>
+					<Box sx={{ display: "flex", alignItems: "center", mb: 3 }}>
+						<MeetingRoomIcon sx={{ mr: 1.5, color: "secondary.main" }} />
+						<Typography variant="h5" component="h2">
+							Room-Specific Photos
+						</Typography>
+					</Box>
+					<Typography variant="body2" color="text.secondary" sx={{ mb: 3 }}>
+						Upload photos for each room type you offer. Guests want to see exactly where they will be sleeping.
+					</Typography>
+
+					{rooms.map((room, idx) => (
+						<Accordion key={room.id} expanded={expandedAccordion === room.id} onChange={handleAccordionChange(idx.toString())} disableGutters elevation={0}>
+							<AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />} sx={{ px: 3, py: 1 }}>
+								<Typography variant="h6" sx={{ fontSize: "1.1rem" }}>
+									{room.name}
+								</Typography>
+							</AccordionSummary>
+							<AccordionDetails sx={{ px: 3, pb: 4, pt: 1 }}>
+								<ImageUploader description={room.description} />
+							</AccordionDetails>
+						</Accordion>
+					))}
+				</Box>
+			</Paper>
+		</Container>
 	);
 };
 
