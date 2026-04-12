@@ -7,14 +7,11 @@ import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
 export default function NumberField({ id: idProp, label, error, size = "medium", suffix, step = 1000, value, onValueChange, ...other }: any) {
 	const generatedId = React.useId();
 	const id = idProp || generatedId;
-
-	// Formatter chuẩn VN
 	const formatter = React.useMemo(() => new Intl.NumberFormat("vi-VN"), []);
 
-	// --- CHIÊU QUYẾT ĐỊNH: Dùng state tạm để không bị nhảy số khi gõ ---
 	const [tempValue, setTempValue] = React.useState("");
 
-	// Cập nhật tempValue khi props value từ ngoài thay đổi (ví dụ khi nhấn nút tăng/giảm)
+	// Đồng bộ giá trị từ ngoài vào (khi bấm nút tăng giảm hoặc reset form)
 	React.useEffect(() => {
 		if (value !== undefined) {
 			setTempValue(value === 0 ? "" : formatter.format(value));
@@ -22,9 +19,8 @@ export default function NumberField({ id: idProp, label, error, size = "medium",
 	}, [value, formatter]);
 
 	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const raw = e.target.value.replace(/\./g, ""); // Xóa hết dấu chấm để lấy số thuần
+		const raw = e.target.value.replace(/\./g, ""); // Xóa dấu chấm để tính toán
 		if (/^\d*$/.test(raw)) {
-			// Chỉ cho phép nhập số
 			const numeric = Number(raw);
 			setTempValue(raw === "" ? "" : formatter.format(numeric));
 			onValueChange(numeric);
@@ -34,20 +30,30 @@ export default function NumberField({ id: idProp, label, error, size = "medium",
 	return (
 		<BaseNumberField.Root id={id} step={step} value={value} onValueChange={onValueChange} {...other}>
 			<FormControl size={size} error={error} variant="outlined" fullWidth>
+				{/* 1. Label phải khớp với id của Input */}
 				<InputLabel htmlFor={id}>{label}</InputLabel>
+
 				<OutlinedInput
 					id={id}
+					// 2. Phải có label ở đây thì cái rãnh (notch) trên border mới xuất hiện
 					label={label}
 					value={tempValue}
 					onChange={handleInputChange}
-					// Chặn các phím không phải số ở tầng bàn phím cho chắc
 					onKeyDown={(e) => {
 						if (["e", "E", "+", "-", ","].includes(e.key)) e.preventDefault();
 					}}
 					endAdornment={
-						<InputAdornment position="end" sx={{ height: "100%", ml: 0 }}>
+						<InputAdornment
+							position="end"
+							sx={{
+								height: "100%",
+								ml: 0,
+								// Ép cụm nút lùi sát về bên phải để không chiếm chỗ của Input
+								marginRight: "-14px",
+							}}
+						>
 							{suffix && (
-								<Typography variant="caption" fontWeight={700} sx={{ mr: 1, color: "text.disabled" }}>
+								<Typography variant="caption" fontWeight={700} sx={{ mr: 1, color: "text.disabled", userSelect: "none" }}>
 									{suffix}
 								</Typography>
 							)}
@@ -57,22 +63,25 @@ export default function NumberField({ id: idProp, label, error, size = "medium",
 								sx={{
 									borderLeft: "1px solid",
 									borderColor: "divider",
-									height: "calc(100% - 12px)",
-									my: 0.75,
+									height: "calc(100% + 2px)", // Khít viền
 								}}
 							>
-								<BaseNumberField.Increment render={<IconButton size="small" sx={{ p: 0, width: 28, flex: 1 }} />}>
-									<KeyboardArrowUpIcon sx={{ fontSize: "1rem" }} />
+								<BaseNumberField.Increment render={<IconButton size="small" sx={{ p: 0, width: 32, flex: 1, borderRadius: 0 }} />}>
+									<KeyboardArrowUpIcon sx={{ fontSize: "1.1rem" }} />
 								</BaseNumberField.Increment>
-								<BaseNumberField.Decrement render={<IconButton size="small" sx={{ p: 0, width: 28, flex: 1, borderTop: "1px solid", borderColor: "divider" }} />}>
-									<KeyboardArrowDownIcon sx={{ fontSize: "1rem" }} />
+								<BaseNumberField.Decrement render={<IconButton size="small" sx={{ p: 0, width: 32, flex: 1, borderRadius: 0, borderTop: "1px solid", borderColor: "divider" }} />}>
+									<KeyboardArrowDownIcon sx={{ fontSize: "1.1rem" }} />
 								</BaseNumberField.Decrement>
 							</Box>
 						</InputAdornment>
 					}
 					sx={{
 						fontWeight: 700,
-						"& .MuiOutlinedInput-input": { py: size === "small" ? 1 : 1.5 },
+						// 3. Ép height chuẩn 56px của MUI Medium
+						height: 56,
+						"& .MuiOutlinedInput-input": {
+							boxSizing: "border-box",
+						},
 					}}
 				/>
 			</FormControl>
