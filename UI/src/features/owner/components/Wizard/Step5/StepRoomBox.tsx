@@ -1,8 +1,7 @@
 import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Stack, Alert, Divider, Paper } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
-
-import type { RoomForm, AmenityConfigForm, WizardForm, CreateRoomDTO, RoomSummary } from "../../../types/owner.types";
+import type { RoomForm, AmenityConfigForm, WizardForm, UpdateRoomDTO, RoomSummary } from "../../../types/owner.types";
 import { makeRoom, makeBed, toEViewType, toEPricingType, toEBedType, toEBedSize } from "../../../const/RoomConst";
 import { useCreateRoom, useUpdateRoom } from "../../../hooks/useCreateAndUpdateRoom";
 import RoomCard from "./RoomCard";
@@ -21,10 +20,8 @@ interface Props {
 
 // ─── HELPERS ──────────────────────────────────────────────────────────────────
 
-function toCreateRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardForm): CreateRoomDTO {
+function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardForm): UpdateRoomDTO {
 	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
-
-	// Format lại tên: VILLA -> Villa
 	const rawType = form.accommodationType || "Accommodation";
 	const formattedName = rawType.charAt(0).toUpperCase() + rawType.slice(1).toLowerCase();
 
@@ -34,7 +31,7 @@ function toCreateRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: W
 		quantity: room.quantity || 1,
 		maxAdults: room.maxAdults || 1,
 		maxChildren: room.maxChildren || 0,
-		size: room.size,
+		size: room.size || undefined,
 		bedroomCount: room.bedroomCount || 0,
 		bathroomCount: room.bathroomCount || 0,
 		viewType: toEViewType(room.viewType),
@@ -43,6 +40,8 @@ function toCreateRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: W
 		pricingType: toEPricingType(room.pricingType),
 		isActive: true,
 		beds: room.beds.map((b) => ({
+			// Gửi ID nếu là UUID thật, gửi undefined nếu là local-id
+			id: b.id && b.id.length > 25 && !b.id.startsWith("local-") ? b.id : undefined,
 			name: b.name || undefined,
 			bedType: toEBedType(b.bedType) as any,
 			size: toEBedSize(b.size),
@@ -53,9 +52,6 @@ function toCreateRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: W
 	};
 }
 
-/** * Logic to distinguish between a Frontend Random String (Nanoid) and a Backend UUID.
- * Backend UUIDs are 36 chars; Nanoids are ~21.
- */
 const isRealServerId = (id?: string) => !!id && id.length > 25 && !id.startsWith("local-");
 
 // ─── COMPONENT ───────────────────────────────────────────────────────────────
@@ -65,81 +61,58 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
 	const rooms = form.rooms ?? [];
 
-	// ── STATE ──
-	// For Entire Place, we work directly on this "inline" room
 	const [inlineRoom, setInlineRoom] = useState<RoomForm>(() => (rooms.length > 0 ? rooms[0] : makeRoom()));
 	const [inlineAmenities, setInlineAmenities] = useState<AmenityConfigForm[]>(rooms.length > 0 ? rooms[0].amenities : []);
 
-	// For Shared/Private rooms, we use a modal
 	const [editingRoom, setEditingRoom] = useState<RoomForm | null>(null);
 	const [draftAmenities, setDraftAmenities] = useState<AmenityConfigForm[]>([]);
 
-	// ── MUTATIONS ──
 	const createMutation = useCreateRoom(accommodationId);
 
-	// Determine which ID to target for the PATCH request
 	const activeId = isEntirePlace ? inlineRoom.id : editingRoom?.id;
 	const hasPersisted = isRealServerId(activeId);
 	const updateMutation = useUpdateRoom(accommodationId, hasPersisted ? activeId! : "");
 
 	const apiError = createMutation.error?.message ?? updateMutation.error?.message ?? null;
 
-	// Keep refs to prevent the useEffect from seeing stale state during the save trigger
 	const stateRef = useRef({ inlineRoom, inlineAmenities });
 	useEffect(() => {
 		stateRef.current = { inlineRoom, inlineAmenities };
 	}, [inlineRoom, inlineAmenities]);
 
-	// ── ENTIRE PLACE AUTO-SAVE EFFECT ──
+	// ── AUTO-SAVE EFFECT (ENTIRE PLACE) ──
 	useEffect(() => {
-		// 1.  Entire Place and only after trigger
 		if (!isEntirePlace || !triggerSave) return;
 
 		const { inlineRoom: currentRoom, inlineAmenities: currentAmenities } = stateRef.current;
-
-		// 2. Validate data before calling API
-		// Nếu LÀ Entire Place -> Bỏ qua check tên (vì đã lấy từ accommodationType).
-		// Nếu KHÔNG PHẢI Entire Place -> Phải check currentRoom.name
-		if (!isEntirePlace && !currentRoom.name?.trim()) {
-			onSaveFailed?.();
-			return;
-		}
-
-		const payload = toCreateRoomDTO(currentRoom, currentAmenities, form);
+		const payload = toRoomDTO(currentRoom, currentAmenities, form);
 		const currentlySaved = isRealServerId(currentRoom.id);
 
-		// 3. Xử lý khi thành công
 		const onSuccess = (saved: RoomSummary) => {
 			const updatedRoom: RoomForm = {
 				...currentRoom,
 				id: saved.id,
+				beds: currentRoom.beds.map((localBed, index) => ({
+					...localBed,
+					id: saved.beds[index]?.id || localBed.id,
+					price: saved.beds[index] ? Number(saved.beds[index].price) : localBed.price,
+				})),
 				amenities: currentAmenities,
 			};
+
 			setInlineRoom(updatedRoom);
 			setForm((prev) => ({ ...prev, rooms: [updatedRoom] }));
-
-			// Quan trọng: Gọi hàm này để cha chuyển sang Step 4
 			onSaveComplete?.();
 		};
 
-		// 4. Xử lý khi lỗi API
-		const onError = () => {
-			onSaveFailed?.(); // Reset trigger để có thể bấm Next lại lần sau
-		};
+		if (currentlySaved) updateMutation.mutate(payload, { onSuccess, onError: onSaveFailed });
+		else createMutation.mutate(payload, { onSuccess, onError: onSaveFailed });
+	}, [triggerSave, isEntirePlace]);
 
-		if (currentlySaved) {
-			updateMutation.mutate(payload, { onSuccess, onError });
-		} else {
-			createMutation.mutate(payload, { onSuccess, onError });
-		}
-	}, [triggerSave, isEntirePlace]); // Giữ nguyên deps
-
-	// ── HANDLERS ──
 	const handleToggleAmenity = (setter: React.Dispatch<React.SetStateAction<AmenityConfigForm[]>>) => (a: AmenityConfigForm) => {
 		setter((prev) => (prev.some((x) => x.amenityId === a.amenityId) ? prev.filter((x) => x.amenityId !== a.amenityId) : [...prev, a]));
 	};
 
-	// ── RENDER ──
 	if (isEntirePlace) {
 		return (
 			<Box>
@@ -151,10 +124,8 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 						{apiError}
 					</Alert>
 				)}
-
 				<RoomInfoFields draft={inlineRoom} set={(f, v) => setInlineRoom((p) => ({ ...p, [f]: v }))} rentalType={form.rentalType} />
 				<Divider sx={{ my: 3 }} />
-
 				<BedList
 					beds={inlineRoom.beds}
 					onAdd={() => setInlineRoom((p) => ({ ...p, beds: [...p.beds, makeBed()] }))}
@@ -163,25 +134,22 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					rentalType={form.rentalType}
 				/>
 				<Divider sx={{ my: 3 }} />
-
 				<AmenityPicker selected={inlineAmenities} onToggle={handleToggleAmenity(setInlineAmenities)} />
 			</Box>
 		);
 	}
 
-	// ── RENDER FOR SHARED/PRIVATE ROOMS ──
 	return (
 		<Box>
-			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={3}>
+			<Box display="flex" justifyContent="space-between" mb={3}>
 				<Box>
-					<Typography variant="h6" fontWeight={700} mb={0.5}>
+					<Typography variant="h6" fontWeight={700}>
 						Manage Rooms
 					</Typography>
 					<Typography variant="body2" color="text.secondary">
-						Add the rooms available in your property. Each room can have its own beds and amenities.
+						Add rooms and their specific features.
 					</Typography>
 				</Box>
-				{/* Only show top button if there are already rooms */}
 				{rooms.length > 0 && (
 					<Button
 						variant="contained"
@@ -190,7 +158,6 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 							setEditingRoom(makeRoom());
 							setDraftAmenities([]);
 						}}
-						sx={{ borderRadius: 2, fontWeight: 700, whiteSpace: "nowrap", ml: 2 }}
 					>
 						Add Room
 					</Button>
@@ -198,31 +165,14 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 			</Box>
 
 			{apiError && (
-				<Alert severity="error" sx={{ mb: 2, borderRadius: 2 }}>
+				<Alert severity="error" sx={{ mb: 2 }}>
 					{apiError}
 				</Alert>
 			)}
 
-			{/* ── Room List or Empty State ────────────────────────────────────────── */}
 			{rooms.length === 0 ? (
-				<Paper
-					elevation={0}
-					sx={{
-						p: 6,
-						borderRadius: 3,
-						border: "2px dashed",
-						borderColor: "divider",
-						display: "flex",
-						flexDirection: "column",
-						alignItems: "center",
-						gap: 2,
-						backgroundColor: "background.paper",
-					}}
-				>
-					{/* You can use KingBedOutlinedIcon here if imported */}
-					<Typography color="text.primary" variant="body1">
-						No rooms added yet
-					</Typography>
+				<Paper elevation={0} sx={{ p: 6, textAlign: "center", border: "2px dashed", borderColor: "divider" }}>
+					<Typography mb={2}>No rooms added yet</Typography>
 					<Button
 						variant="outlined"
 						startIcon={<AddIcon />}
@@ -230,7 +180,6 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 							setEditingRoom(makeRoom());
 							setDraftAmenities([]);
 						}}
-						sx={{ borderRadius: 2 }}
 					>
 						Add Your First Room
 					</Button>
@@ -239,7 +188,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 				<Stack spacing={2}>
 					{rooms.map((room) => (
 						<RoomCard
-							key={room.id}
+							key={room.tempId || room.id}
 							room={room}
 							onEdit={() => {
 								setEditingRoom(room);
@@ -261,11 +210,21 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					isSaving={createMutation.isPending || updateMutation.isPending}
 					onClose={() => setEditingRoom(null)}
 					onSave={(updated) => {
-						const payload = toCreateRoomDTO(updated, draftAmenities, form);
+						const payload = toRoomDTO(updated, draftAmenities, form);
 						const persisted = isRealServerId(updated.id);
 
 						const onSuccess = (saved: RoomSummary) => {
-							const savedRoom = { ...updated, id: saved.id, amenities: draftAmenities };
+							const savedRoom: RoomForm = {
+								...updated,
+								id: saved.id,
+								amenities: draftAmenities,
+								// Đồng bộ ID giường để lần sau nhấn Save sẽ là Update thay vì Create
+								beds: updated.beds.map((localBed, index) => ({
+									...localBed,
+									id: saved.beds[index]?.id || localBed.id,
+									price: saved.beds[index] ? Number(saved.beds[index].price) : localBed.price,
+								})),
+							};
 							setForm((prev) => ({
 								...prev,
 								rooms: persisted ? prev.rooms.map((r) => (r.id === updated.id ? savedRoom : r)) : [...prev.rooms, savedRoom],
