@@ -6,7 +6,8 @@ import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
 import StepAddressBox from "../components/Wizard/Step3/StepAddressBox";
 import StepFacilityBox from "../components/Wizard/Step4/StepFacilityBox";
 import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
-// import StepImageBox from "../components/Wizard/Step6/StepImageBox";
+import StepImageBox from "../components/Wizard/Step6/StepImageBox";
+import StepPreviewBox from "../components/Wizard/Step7/StepPreviewBox";
 
 import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
@@ -48,6 +49,13 @@ function validateStep(step: number, form: WizardForm): string | null {
 			}
 			return null;
 		}
+		case 4: {
+			if (form.images.length === 0) return "Please upload at least one image.";
+			return null;
+		}
+		case 5: {
+			return null;
+		}
 		default:
 			return null;
 	}
@@ -61,7 +69,7 @@ const OwnerCreateAccomPage = () => {
 	const [completed, setCompleted] = useState<Set<number>>(new Set());
 	const [validationError, setValidationError] = useState<string | null>(null);
 
-	// V2 triger for Step 0, 1, 2
+	// V2 triger for Step 0, 1, 2, 4
 	const [triggerSubmit, setTriggerSubmit] = useState(false);
 
 	// V1 trigger for Step 3 (Rooms)
@@ -135,9 +143,15 @@ const OwnerCreateAccomPage = () => {
 
 		setValidationError(null); // Xóa lỗi cũ trước khi tiến hành
 
-		// Các bước 0, 1, 2 dùng triggerSubmit chung
-		if (step === 0 || step === 1 || step === 2) {
+		// Các bước 0, 1, 2, 4 dùng triggerSubmit chung
+		if (step === 0 || step === 1 || step === 2 || step === 4) {
 			setTriggerSubmit(true);
+			return;
+		}
+
+		if (step === 5) {
+			// TODO: actually call API
+			alert("Accommodation published successfully!");
 			return;
 		}
 
@@ -225,8 +239,22 @@ const OwnerCreateAccomPage = () => {
 						onSaveFailed={() => setTriggerRoomSave(false)}
 					/>
 				);
-			// case 4:
-			// 	return <StepImageBox form={form} setForm={setForm} />;
+			case 4:
+				return (
+					<StepImageBox
+						form={form}
+						setForm={setForm}
+						onFieldChange={() => setValidationError(null)}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(4));
+							setStep(5);
+						}}
+					/>
+				);
+			case 5:
+				return <StepPreviewBox form={form} />;
 			default:
 				return null;
 		}
@@ -268,7 +296,7 @@ const OwnerCreateAccomPage = () => {
 							</Typography>
 
 							{isLastStep ? (
-								<Button variant="contained" color="success" sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }} onClick={() => alert("Submit form!")}>
+								<Button variant="contained" color="success" sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }} onClick={next}>
 									Publish Listing
 								</Button>
 							) : (
