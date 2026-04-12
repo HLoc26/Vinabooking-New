@@ -1,13 +1,13 @@
 import { useMutation, useQueryClient } from "@tanstack/react-query";
 import { createRoom, updateRoom } from "../services/ownerApi";
-import type { CreateRoomDTO, RoomSummary } from "../types/owner.types";
+import type { UpdateRoomDTO, RoomSummary } from "../types/owner.types";
 
 // ─── useCreateRoom ────────────────────────────────────────────────────────────
 
 export const useCreateRoom = (accommodationId: string) => {
 	const queryClient = useQueryClient();
 
-	return useMutation<RoomSummary, Error, CreateRoomDTO>({
+	return useMutation<RoomSummary, Error, UpdateRoomDTO>({
 		mutationFn: (payload) => createRoom(accommodationId, payload),
 
 		onSuccess: (data) => {
@@ -26,7 +26,7 @@ export const useCreateRoom = (accommodationId: string) => {
 export const useUpdateRoom = (accommodationId: string, roomId: string) => {
 	const queryClient = useQueryClient();
 
-	return useMutation<RoomSummary, Error, CreateRoomDTO>({
+	return useMutation<RoomSummary, Error, UpdateRoomDTO>({
 		mutationFn: (payload) => updateRoom(roomId, payload),
 
 		onSuccess: (data) => {
