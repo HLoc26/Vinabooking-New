@@ -4,6 +4,7 @@ import AddIcon from "@mui/icons-material/Add";
 import type { RoomForm, AmenityConfigForm, WizardForm, UpdateRoomDTO, RoomSummary } from "../../../types/owner.types";
 import { makeRoom, makeBed, toEViewType, toEPricingType, toEBedType, toEBedSize } from "../../../const/RoomConst";
 import { useCreateRoom, useUpdateRoom } from "../../../hooks/useCreateAndUpdateRoom";
+import { useDeleteRoom } from "../../../hooks/useDeleteRoom";
 import RoomCard from "./RoomCard";
 import RoomEditModal from "./RoomEditModal";
 import RoomInfoFields from "./RoomInfoField";
@@ -68,17 +69,39 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 	const [draftAmenities, setDraftAmenities] = useState<AmenityConfigForm[]>([]);
 
 	const createMutation = useCreateRoom(accommodationId);
+	const deleteMutation = useDeleteRoom(accommodationId);
 
 	const activeId = isEntirePlace ? inlineRoom.id : editingRoom?.id;
 	const hasPersisted = isRealServerId(activeId);
 	const updateMutation = useUpdateRoom(accommodationId, hasPersisted ? activeId! : "");
 
-	const apiError = createMutation.error?.message ?? updateMutation.error?.message ?? null;
+	const apiError = createMutation.error?.message ?? updateMutation.error?.message ?? deleteMutation.error?.message ?? null;
 
 	const stateRef = useRef({ inlineRoom, inlineAmenities });
 	useEffect(() => {
 		stateRef.current = { inlineRoom, inlineAmenities };
 	}, [inlineRoom, inlineAmenities]);
+
+	const handleDeleteRoom = (roomId?: string) => {
+		if (!roomId) return;
+
+		const removeLocal = () => {
+			setForm((p) => ({
+				...p,
+				rooms: p.rooms.filter((r) => r.id !== roomId),
+				// Also remove associated images from local state
+				images: p.images.filter((img) => img.roomId !== roomId),
+			}));
+		};
+
+		if (isRealServerId(roomId)) {
+			deleteMutation.mutate(roomId, {
+				onSuccess: removeLocal,
+			});
+		} else {
+			removeLocal();
+		}
+	};
 
 	// ── AUTO-SAVE EFFECT (ENTIRE PLACE) ──
 	useEffect(() => {
@@ -194,7 +217,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 								setEditingRoom(room);
 								setDraftAmenities(room.amenities);
 							}}
-							onDelete={() => setForm((p) => ({ ...p, rooms: p.rooms.filter((r) => r.id !== room.id) }))}
+							onDelete={() => handleDeleteRoom(room.id)}
 						/>
 					))}
 				</Stack>
