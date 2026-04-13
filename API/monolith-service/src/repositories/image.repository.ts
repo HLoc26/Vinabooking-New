@@ -93,6 +93,28 @@ export default class ImageRepository {
 		});
 	}
 
+	public async deleteImage(imageId: string): Promise<string[]> {
+		const image = await this.#prisma.image.findUnique({
+			where: { id: imageId },
+			include: { variants: true },
+		});
+
+		if (!image) return [];
+
+		const s3Keys: string[] = [image.s3Key];
+		for (const variant of image.variants) {
+			s3Keys.push(variant.s3Key);
+		}
+
+		await this.#prisma.$transaction([
+			this.#prisma.imageVariant.deleteMany({ where: { imageId } }),
+			this.#prisma.imageReference.deleteMany({ where: { imageId } }),
+			this.#prisma.image.delete({ where: { id: imageId } }),
+		]);
+
+		return s3Keys;
+	}
+
 	public async deleteEntityImages(entityType: EEntityType, entityId: string): Promise<string[]> {
 		const images = await this.#prisma.image.findMany({
 			where: {
