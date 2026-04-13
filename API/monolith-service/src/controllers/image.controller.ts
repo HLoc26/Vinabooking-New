@@ -1,6 +1,6 @@
-import { GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/types/requests";
+import { DeleteImageRequest, GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/types/requests";
 import type { ApiResponse, UploadResponse } from "@/types/responses";
-import type { Response } from "express";
+import type { Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
 import type { FileType, ImageFullInfo } from "@/types/image.types";
 import UploadService from "@/services/upload.service";
@@ -37,6 +37,12 @@ class ImageController {
 
 		const images = await this.#imageService.getImage(entityType, id);
 		return ResponseHelper.success(res, images);
+	}
+
+	public async delete(req: DeleteImageRequest, res: Response<ApiResponse<null>>) {
+		const id = req.params.id;
+		await this.#imageService.deleteImage(id);
+		return ResponseHelper.success(res, null);
 	}
 }
 
