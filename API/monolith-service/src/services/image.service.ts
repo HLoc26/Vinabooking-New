@@ -26,6 +26,13 @@ class ImageService {
 		return this._sanitizeImage(images);
 	}
 
+	async deleteImage(id: string) {
+		const keys = await this.#imageRepository.deleteImage(id);
+		if (keys.length > 0) {
+			await this.#s3Service.deleteFiles(keys);
+		}
+	}
+
 	async deleteImagesByEntity(type: EEntityType, id: string) {
 		const keys = await this.#imageRepository.deleteEntityImages(type, id);
 		if (keys.length > 0) {
