@@ -23,3 +23,9 @@ export interface GetImageRequestType {
 }
 
 export type GetImagesRequest = Request<GetImageRequestType>;
+
+export interface DeleteImageRequestType {
+	id: string;
+}
+
+export type DeleteImageRequest = Request<DeleteImageRequestType>;
