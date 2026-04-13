@@ -125,6 +125,8 @@ export const uploadAccommodationImages = (accommodationId: string, files: File[]
 
 export const uploadRoomImages = (roomId: string, files: File[]): Promise<void> => uploadInChunks(`/images/room/${roomId}`, files);
 
+export const deleteImageApi = async (imageId: string): Promise<void> => apiClient.delete(`/images/${imageId}`).then(() => undefined);
+
 // export const getAmenities = async (): Promise<AmenityDto[]> => apiClient.get<ApiResponse<AmenityDto[]>>("/amenities").then((res) => res.data.data);
 
 // export const getFacilities = async (): Promise<FacilityDto[]> => apiClient.get<ApiResponse<FacilityDto[]>>("/facilities").then((res) => res.data.data);
