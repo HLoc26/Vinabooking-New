@@ -1,10 +1,11 @@
-import { Box, Typography, Paper, Container, Accordion, AccordionSummary, AccordionDetails, Divider, CircularProgress } from "@mui/material";
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Divider, CircularProgress } from "@mui/material";
 import { useState, useEffect } from "react";
 import type { WizardForm, ImageItem } from "../../../types/owner.types";
 import { ExpandMore as ExpandMoreIcon, PhotoLibrary as PhotoLibraryIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
 import ImageUploader from "./ImageUploader";
 import { useUploadImages } from "../../../hooks/useUploadImages";
 import { useGetImages } from "../../../hooks/useGetImages";
+import { useDeleteImage } from "../../../hooks/useDeleteImage";
 
 interface Props {
 	form: WizardForm;
@@ -28,6 +29,7 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 	const [isUploading, setIsUploading] = useState(false);
 	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
 	const { mutateAsync: uploadImages } = useUploadImages();
+	const { mutateAsync: deleteImage } = useDeleteImage();
 
 	const roomIds = form.rooms.map((r) => r.id).filter(Boolean) as string[];
 	const { data: dbImages, isLoading: isFetching } = useGetImages(form.accommodationId, roomIds);
@@ -69,8 +71,19 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 		onFieldChange?.();
 	};
 
-	const handleRemoveImage = (id: string) => {
-		// NOTE: If the user removes a DB image, you might need a separate API call to delete it from the server!
+	const handleRemoveImage = async (id: string) => {
+		const imageToRemove = form.images.find((img) => img.id === id);
+
+		if (imageToRemove && !imageToRemove.file) {
+			// This is a DB image, delete it from server
+			try {
+				await deleteImage(id);
+			} catch (error) {
+				console.error("Failed to delete image from server", error);
+				return;
+			}
+		}
+
 		setForm((prev) => ({
 			...prev,
 			images: prev.images.filter((img) => img.id !== id),
