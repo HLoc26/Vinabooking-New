@@ -208,7 +208,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		return (
 			<Box>
 				<Typography variant="h6" fontWeight={700} mb={2}>
-					Room Details
+					{isEntirePlace ? "Accommodation Details" : "Room Details"}
 				</Typography>
 				{(validationError || apiError || !canSaveInline) && (
 					<Alert severity={validationError || apiError ? "error" : "warning"} sx={{ mb: 2, borderRadius: 2 }}>
