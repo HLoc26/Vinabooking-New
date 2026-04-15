@@ -9,6 +9,8 @@ import RoomInfoFields from "./RoomInfoField";
 import BedList from "./BedList";
 import AmenityPicker from "./AmenityPicker";
 
+const MAX_PRICE = 100000000; // 100 Million VND
+
 interface Props {
 	room: RoomForm;
 	open: boolean;
@@ -29,13 +31,11 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 		amenities: [],
 	});
 
-	// Thêm state để quản lý lỗi validation tại chỗ
 	const [internalError, setInternalError] = useState<string | null>(null);
 
 	const set = (field: keyof RoomForm, value: any) => {
 		setInternalError(null);
 		setDraft((prev) => {
-			// Nếu giá trị không đổi thì không set lại để tránh re-render thừa gây mất focus/nhảy số
 			if (prev[field] === value) return prev;
 			return { ...prev, [field]: value };
 		});
@@ -49,52 +49,90 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 			beds: prev.beds.map((b) => (b.id === id ? { ...b, [field]: value } : b)),
 		}));
 
-	const handleSave = () => {
+	// ──────────────────────────────────────────────────────────────────────
+	// VALIDATION HELPERS
+	// ──────────────────────────────────────────────────────────────────────
+
+	const validateRoomPrice = (price: any): boolean => {
+		const num = Number(price);
+		return !isNaN(num) && num > 0 && num <= MAX_PRICE;
+	};
+
+	const validateBedPrices = (): boolean => {
+		return draft.beds.every((bed) => {
+			if (!bed.price) return true; // Price is optional for beds
+			const num = Number(bed.price);
+			return !isNaN(num) && num >= 0 && num <= MAX_PRICE;
+		});
+	};
+
+	const validateRoomData = (): { isValid: boolean; errors: string[] } => {
 		const isEntirePlace = rentalType === "ENTIRE_PLACE";
-		const finalName = (isEntirePlace ? accommodationType : draft.name)?.trim();
+		const nameToCheck = (isEntirePlace ? accommodationType : draft.name)?.trim();
+		const priceToCheck = Number(draft.price);
 
-		// --- VALIDATION LOGIC ---
-		if (!isEntirePlace && !finalName) {
-			setInternalError("Room name cannot be empty.");
+		const errors: string[] = [];
+
+		// Validation rules
+		if (!nameToCheck) errors.push("room name");
+		if (!isEntirePlace && priceToCheck <= 0) errors.push("valid price");
+		if (priceToCheck > MAX_PRICE) errors.push("room price exceeds 100M VND");
+
+		if (draft.maxAdults < 1) errors.push("guest capacity (min 1 adult)");
+
+		// Bed validation
+		if (!draft.beds?.length) {
+			errors.push("at least one bed");
+		} else {
+			draft.beds.forEach((bed, i) => {
+				if (!bed.name?.trim()) errors.push(`bed #${i + 1} name`);
+				if (!bed.bedType) errors.push(`bed #${i + 1} type`);
+				const qty = bed.quantity ?? 1;
+				if (!qty || qty < 1) errors.push(`bed #${i + 1} quantity (min 1)`);
+				const price = Number(bed.price || 0);
+				if (price > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100M VND`);
+			});
+		}
+
+		return { isValid: errors.length === 0, errors };
+	};
+
+	const { isValid: isValidData, errors: validationErrors } = validateRoomData();
+	const isSaveDisabled = isSaving || !isValidData;
+
+	const handleSave = () => {
+		if (isSaveDisabled) return;
+
+		setInternalError(null);
+		console.log("[RoomEditModal] Save triggered. Current draft:", draft);
+
+		// Run validation again before saving
+		const { isValid, errors } = validateRoomData();
+
+		if (!isValid) {
+			const errorMsg = `Invalid fields: ${errors.join(", ")}`;
+			console.warn("[RoomEditModal] Validation failed:", errors);
+			setInternalError(errorMsg);
 			return;
 		}
 
-		if (draft.price <= 0) {
-			setInternalError("Price must be greater than 0.");
-			return;
+		try {
+			const isEntirePlace = rentalType === "ENTIRE_PLACE";
+			const nameToCheck = (isEntirePlace ? accommodationType : draft.name)?.trim();
+
+			onSave({
+				...draft,
+				name: nameToCheck || "Room",
+				price: Number(draft.price) || 0,
+			});
+		} catch (error) {
+			console.error("[RoomEditModal] onSave execution error:", error);
+			setInternalError("An unexpected error occurred while saving.");
 		}
-
-		if (draft.beds.length === 0) {
-			setInternalError("At least one bed is required.");
-			return;
-		}
-
-		if (isSaving) return;
-
-		// Ép kiểu dữ liệu chuẩn xác trước khi gửi lên API
-		const finalPayload: RoomForm = {
-			...draft,
-			name: finalName || draft.name,
-			price: Number(draft.price), // Fix bug price bị trim/string
-			beds: draft.beds.map((b) => ({
-				...b,
-				price: Number(b.price || 0),
-				quantity: Number(b.quantity || 1),
-			})),
-		};
-
-		onSave(finalPayload);
 	};
 
 	return (
-		<Dialog
-			open={open}
-			onClose={() => !isSaving && onClose()}
-			fullWidth
-			maxWidth="md" // 2. GIẢM WIDTH XUỐNG MD
-			disableEnforceFocus
-			PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}
-		>
+		<Dialog open={open} onClose={() => !isSaving && onClose()} fullWidth maxWidth="md" disableEnforceFocus PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}>
 			{/* HEADER */}
 			<DialogTitle
 				sx={{
@@ -135,10 +173,10 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 					gap: 1,
 				}}
 			>
-				{/* 3. HIỂN THỊ VALIDATION ERROR (Cả BE lẫn FE) */}
-				{(validationError || internalError) && (
+				{/* Display validation errors */}
+				{(validationError || internalError || (validationErrors.length > 0 && !isSaving)) && (
 					<Alert severity="error" sx={{ borderRadius: 2 }}>
-						{internalError || validationError}
+						{internalError || validationError || `Invalid fields: ${validationErrors.join(", ")}`}
 					</Alert>
 				)}
 
@@ -146,7 +184,7 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 					<Button onClick={onClose} variant="outlined" disabled={isSaving}>
 						Cancel
 					</Button>
-					<Button onClick={handleSave} variant="contained" disabled={isSaving} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
+					<Button onClick={handleSave} variant="contained" disabled={isSaveDisabled} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
 						{isSaving ? "Saving…" : "Save Room"}
 					</Button>
 				</Box>
