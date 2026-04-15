@@ -53,19 +53,6 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 	// VALIDATION HELPERS
 	// ──────────────────────────────────────────────────────────────────────
 
-	const validateRoomPrice = (price: any): boolean => {
-		const num = Number(price);
-		return !isNaN(num) && num > 0 && num <= MAX_PRICE;
-	};
-
-	const validateBedPrices = (): boolean => {
-		return draft.beds.every((bed) => {
-			if (!bed.price) return true; // Price is optional for beds
-			const num = Number(bed.price);
-			return !isNaN(num) && num >= 0 && num <= MAX_PRICE;
-		});
-	};
-
 	const validateRoomData = (): { isValid: boolean; errors: string[] } => {
 		const isEntirePlace = rentalType === "ENTIRE_PLACE";
 		const nameToCheck = (isEntirePlace ? accommodationType : draft.name)?.trim();
