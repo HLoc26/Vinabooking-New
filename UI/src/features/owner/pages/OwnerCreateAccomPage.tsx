@@ -246,7 +246,7 @@ const OwnerCreateAccomPage = () => {
 			</Typography>
 
 			<Box display="flex" gap={3} alignItems="flex-start">
-				<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} />
+				<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} rentalType={form.rentalType} />
 
 				<Box flex={1} minWidth={0}>
 					<Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
