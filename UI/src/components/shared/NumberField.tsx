@@ -1,90 +1,276 @@
 import * as React from "react";
-import { NumberField as BaseNumberField } from "@base-ui/react/number-field";
-import { IconButton, FormControl, OutlinedInput, InputAdornment, InputLabel, Typography, Box } from "@mui/material";
-import KeyboardArrowUpIcon from "@mui/icons-material/KeyboardArrowUp";
-import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { FormHelperText } from "@mui/material";
+import { useTheme } from "@mui/material/styles";
 
-export default function NumberField({ id: idProp, label, error, size = "medium", suffix, step = 1000, value, onValueChange, ...other }: any) {
+interface NumberFieldProps {
+	id?: string;
+	label?: string;
+	size?: "small" | "medium";
+	suffix?: string;
+	step?: number;
+	value?: number | null;
+	onValueChange?: (value: number | null) => void;
+	max?: number;
+	min?: number;
+	onValidate?: (isValid: boolean) => void;
+}
+
+export default function NumberField({ id: idProp, label, size = "medium", suffix, step = 1000, value, onValueChange, max = 100000000, min = 0, onValidate }: NumberFieldProps) {
+	const theme = useTheme();
+
 	const generatedId = React.useId();
 	const id = idProp || generatedId;
-	const formatter = React.useMemo(() => new Intl.NumberFormat("vi-VN"), []);
 
-	const [tempValue, setTempValue] = React.useState("");
+	const isSmall = size === "small";
 
-	// Đồng bộ giá trị từ ngoài vào (khi bấm nút tăng giảm hoặc reset form)
+	// ===== FORMAT / PARSE =====
+	const format = (num: number | null) => {
+		if (num == null) return "";
+		return new Intl.NumberFormat("vi-VN").format(num);
+	};
+
+	const parse = (str: string) => {
+		const digits = str.replace(/[^\d]/g, "");
+		return digits ? Number(digits) : null;
+	};
+
+	const isTypingRef = React.useRef(false);
+	// display state (string)
+	const [display, setDisplay] = React.useState(format(value ?? null));
+
+	// sync external value
 	React.useEffect(() => {
-		if (value !== undefined) {
-			setTempValue(value === 0 ? "" : formatter.format(value));
+		if (!isTypingRef.current) {
+			setDisplay(format(value ?? null));
 		}
-	}, [value, formatter]);
+		isTypingRef.current = false;
+	}, [value]);
 
-	const handleInputChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-		const raw = e.target.value.replace(/\./g, ""); // Xóa dấu chấm để tính toán
-		if (/^\d*$/.test(raw)) {
-			const numeric = Number(raw);
-			setTempValue(raw === "" ? "" : formatter.format(numeric));
-			onValueChange(numeric);
+	// ===== VALIDATION =====
+	const isOverMax = value != null && value > max;
+	const isUnderMin = value != null && value < min;
+	const isInvalid = isOverMax || isUnderMin;
+
+	React.useEffect(() => {
+		onValidate?.(!isInvalid);
+	}, [isInvalid, onValidate]);
+
+	// ===== UI STATE =====
+	const [focused, setFocused] = React.useState(false);
+	const [hovered, setHovered] = React.useState(false);
+
+	const borderColor = isInvalid ? theme.palette.error.main : focused ? theme.palette.primary.main : hovered ? theme.palette.text.primary : theme.palette.divider;
+
+	const boxShadow = focused ? `0 0 0 2px ${isInvalid ? theme.palette.error.main : theme.palette.primary.main}33` : "none";
+
+	// ===== INPUT HANDLER =====
+	const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+		const raw = e.target.value;
+		const parsed = parse(raw);
+
+		if (parsed === null) {
+			setDisplay("");
+		} else {
+			setDisplay(new Intl.NumberFormat("vi-VN").format(parsed));
+		}
+		onValueChange?.(parsed);
+	};
+
+	// ===== STEPPER WITH HOLD-TO-REPEAT =====
+	// Use a ref to always access the latest value inside the interval callback
+	const valueRef = React.useRef(value);
+	React.useEffect(() => {
+		valueRef.current = value;
+	}, [value]);
+
+	const holdTimerRef = React.useRef<ReturnType<typeof setTimeout> | null>(null);
+	const holdIntervalRef = React.useRef<ReturnType<typeof setInterval> | null>(null);
+
+	const clearHold = () => {
+		if (holdTimerRef.current) {
+			clearTimeout(holdTimerRef.current);
+			holdTimerRef.current = null;
+		}
+		if (holdIntervalRef.current) {
+			clearInterval(holdIntervalRef.current);
+			holdIntervalRef.current = null;
 		}
 	};
 
-	return (
-		<BaseNumberField.Root id={id} step={step} value={value} onValueChange={onValueChange} {...other}>
-			<FormControl size={size} error={error} variant="outlined" fullWidth>
-				{/* 1. Label phải khớp với id của Input */}
-				<InputLabel htmlFor={id}>{label}</InputLabel>
+	const startHold = (direction: 1 | -1) => {
+		// Fire once immediately
+		const fire = () => onValueChange?.((valueRef.current ?? 0) + direction * step);
+		fire();
 
-				<OutlinedInput
-					id={id}
-					// 2. Phải có label ở đây thì cái rãnh (notch) trên border mới xuất hiện
-					label={label}
-					value={tempValue}
-					onChange={handleInputChange}
-					onKeyDown={(e) => {
-						if (["e", "E", "+", "-", ","].includes(e.key)) e.preventDefault();
-					}}
-					endAdornment={
-						<InputAdornment
-							position="end"
-							sx={{
-								height: "100%",
-								ml: 0,
-								// Ép cụm nút lùi sát về bên phải để không chiếm chỗ của Input
-								marginRight: "-14px",
-							}}
-						>
-							{suffix && (
-								<Typography variant="caption" fontWeight={700} sx={{ mr: 1, color: "text.disabled", userSelect: "none" }}>
-									{suffix}
-								</Typography>
-							)}
-							<Box
-								display="flex"
-								flexDirection="column"
-								sx={{
-									borderLeft: "1px solid",
-									borderColor: "divider",
-									height: "calc(100% + 2px)", // Khít viền
-								}}
-							>
-								<BaseNumberField.Increment render={<IconButton size="small" sx={{ p: 0, width: 32, flex: 1, borderRadius: 0 }} />}>
-									<KeyboardArrowUpIcon sx={{ fontSize: "1.1rem" }} />
-								</BaseNumberField.Increment>
-								<BaseNumberField.Decrement render={<IconButton size="small" sx={{ p: 0, width: 32, flex: 1, borderRadius: 0, borderTop: "1px solid", borderColor: "divider" }} />}>
-									<KeyboardArrowDownIcon sx={{ fontSize: "1.1rem" }} />
-								</BaseNumberField.Decrement>
-							</Box>
-						</InputAdornment>
+		// After 400ms initial delay, start repeating every 80ms
+		holdTimerRef.current = setTimeout(() => {
+			holdIntervalRef.current = setInterval(fire, 80);
+		}, 400);
+	};
+
+	// Clean up on unmount
+	React.useEffect(() => () => clearHold(), []);
+
+	const stepperButtonHandlers = (direction: 1 | -1) => ({
+		onMouseDown: (e: React.MouseEvent) => {
+			e.preventDefault(); // prevent input blur
+			startHold(direction);
+		},
+		onMouseUp: clearHold,
+		onMouseLeave: clearHold,
+		onTouchStart: (e: React.TouchEvent) => {
+			e.preventDefault();
+			startHold(direction);
+		},
+		onTouchEnd: clearHold,
+	});
+
+	return (
+		<div style={{ display: "flex", flexDirection: "column", width: "100%" }}>
+			<div
+				style={{
+					position: "relative",
+					width: "100%",
+					display: "flex",
+					alignItems: "stretch",
+					border: `1px solid ${borderColor}`,
+					borderRadius: 6,
+					height: isSmall ? 40 : 56,
+					backgroundColor: theme.palette.background.paper,
+					boxSizing: "border-box",
+					transition: "all 0.2s ease",
+					boxShadow,
+				}}
+				onMouseEnter={() => setHovered(true)}
+				onMouseLeave={() => setHovered(false)}
+				onFocus={() => setFocused(true)}
+				onBlur={(e) => {
+					if (!e.currentTarget.contains(e.relatedTarget as Node)) {
+						setFocused(false);
 					}
-					sx={{
-						fontWeight: 700,
-						// 3. Ép height chuẩn 56px của MUI Medium
-						height: 56,
-						"& .MuiOutlinedInput-input": {
-							boxSizing: "border-box",
-						},
+				}}
+			>
+				{/* Label */}
+				{label && (
+					<label
+						htmlFor={id}
+						style={{
+							position: "absolute",
+							top: isSmall ? -8 : -10,
+							left: 10,
+							backgroundColor: theme.palette.background.paper,
+							padding: "0 4px",
+							fontSize: isSmall ? 11 : 12,
+							color: isInvalid ? theme.palette.error.main : focused ? theme.palette.primary.main : theme.palette.text.secondary,
+							zIndex: 1,
+							pointerEvents: "none",
+						}}
+					>
+						{label}
+					</label>
+				)}
+
+				{/* INPUT */}
+				<input
+					id={id}
+					value={display}
+					onChange={handleChange}
+					inputMode="numeric"
+					style={{
+						flex: 1,
+						border: "none",
+						outline: "none",
+						background: "transparent",
+						padding: isSmall ? "0 8px 0 12px" : "0 8px 0 14px",
+						fontSize: isSmall ? 13 : 15,
+						fontWeight: 600,
+						color: theme.palette.text.primary,
+						width: "100%",
 					}}
 				/>
-			</FormControl>
-		</BaseNumberField.Root>
+
+				{/* Suffix */}
+				{suffix && (
+					<span
+						style={{
+							display: "flex",
+							alignItems: "center",
+							paddingRight: 6,
+							fontSize: isSmall ? 11 : 12,
+							fontWeight: 600,
+							color: theme.palette.text.disabled,
+							userSelect: "none",
+						}}
+					>
+						{suffix}
+					</span>
+				)}
+
+				{/* Divider */}
+				<div
+					style={{
+						width: 1,
+						backgroundColor: theme.palette.divider,
+					}}
+				/>
+
+				{/* Stepper */}
+				<div
+					style={{
+						display: "flex",
+						flexDirection: "column",
+						width: isSmall ? 28 : 32,
+						backgroundColor: theme.palette.action.hover,
+						borderRadius: "0 6px 6px 0",
+						overflow: "hidden",
+					}}
+				>
+					<button
+						type="button"
+						{...stepperButtonHandlers(1)}
+						style={{
+							flex: 1,
+							border: "none",
+							background: "transparent",
+							cursor: "pointer",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							color: theme.palette.text.secondary,
+						}}
+					>
+						<svg width="12" height="12" viewBox="0 0 24 24">
+							<path d="M6 14l6-6 6 6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+						</svg>
+					</button>
+
+					<button
+						type="button"
+						{...stepperButtonHandlers(-1)}
+						style={{
+							flex: 1,
+							border: "none",
+							background: "transparent",
+							cursor: "pointer",
+							display: "flex",
+							alignItems: "center",
+							justifyContent: "center",
+							color: theme.palette.text.secondary,
+						}}
+					>
+						<svg width="12" height="12" viewBox="0 0 24 24">
+							<path d="M6 10l6 6 6-6" stroke="currentColor" strokeWidth="1.5" fill="none" />
+						</svg>
+					</button>
+				</div>
+			</div>
+
+			{/* Helper text */}
+			{isInvalid && (
+				<FormHelperText error sx={{ fontWeight: 600, mx: "14px", mt: "3px" }}>
+					{isOverMax ? "Price cannot exceed 100 million" : "Price must be greater than minimum"}
+				</FormHelperText>
+			)}
+		</div>
 	);
 }
