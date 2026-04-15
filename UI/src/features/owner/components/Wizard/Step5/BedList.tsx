@@ -1,9 +1,10 @@
-import { Box, Typography, Button, Paper, Stack, TextField, MenuItem, IconButton, InputAdornment, Tooltip } from "@mui/material";
+import { Box, Typography, Button, Paper, Stack, TextField, MenuItem, IconButton, Tooltip } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import DeleteOutlineIcon from "@mui/icons-material/DeleteOutline";
 import InfoOutlinedIcon from "@mui/icons-material/InfoOutlined";
 import type { BedForm } from "../../../types/owner.types";
 import { BED_TYPES, BED_SIZES } from "../../../const/RoomConst";
+import NumberField from "../../../../../components/shared/NumberField";
 
 interface Props {
 	beds: BedForm[];
@@ -13,9 +14,18 @@ interface Props {
 	rentalType?: string;
 }
 
+const MAX_BED_PRICE = 100000000;
+
 export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }: Props) {
-	const showBedPrice = rentalType === "SHARED_ROOM" || rentalType === "PRIVATE_ROOM";
+	// Only SHARED_ROOM gets bed-level pricing
+	const showBedPrice = rentalType === "SHARED_ROOM";
 	const showQuantity = rentalType === "SHARED_ROOM" || rentalType === "PRIVATE_ROOM";
+
+	// Validation helper
+	const validateQuantity = (val: any): number => {
+		const num = Number(val);
+		return isNaN(num) || num < 1 ? 1 : num;
+	};
 
 	return (
 		<Box>
@@ -37,18 +47,27 @@ export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }:
 			<Stack spacing={2}>
 				{beds.map((bed) => {
 					const isBunk = bed.bedType === "BUNK_BED";
+					const quantity = bed.quantity ?? 1;
+					const price = bed.price ?? undefined;
 
 					return (
 						<Paper key={bed.id} elevation={0} sx={{ p: 2, borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
 							<Box display="flex" gap={1.5} alignItems="center" flexWrap="nowrap">
 								{/* Bed Name */}
 								<Box sx={{ flex: "2 1 130px", minWidth: 0 }}>
-									<TextField fullWidth size="small" label="Bed Name" value={bed.name} onChange={(e) => onUpdate(bed.id, "name", e.target.value)} placeholder="e.g. Master Bed" />
+									<TextField
+										fullWidth
+										size="small"
+										label="Bed Name"
+										value={bed.name || ""}
+										onChange={(e) => onUpdate(bed.id, "name", e.target.value.slice(0, 50))}
+										placeholder="e.g. Master Bed"
+									/>
 								</Box>
 
 								{/* Type */}
 								<Box sx={{ flex: "2 1 120px", minWidth: 0 }}>
-									<TextField fullWidth size="small" select label="Type" value={bed.bedType} onChange={(e) => onUpdate(bed.id, "bedType", e.target.value)}>
+									<TextField fullWidth size="small" select label="Type" value={bed.bedType || ""} onChange={(e) => onUpdate(bed.id, "bedType", e.target.value)}>
 										{BED_TYPES.map((t) => (
 											<MenuItem key={t} value={t}>
 												{t.replace(/_/g, " ")}
@@ -59,7 +78,7 @@ export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }:
 
 								{/* Size */}
 								<Box sx={{ flex: "1 1 90px", minWidth: 0 }}>
-									<TextField fullWidth size="small" select label="Size" value={bed.size || ""} onChange={(e) => onUpdate(bed.id, "size", e.target.value)}>
+									<TextField fullWidth size="small" select label="Size" value={bed.size || ""} onChange={(e) => onUpdate(bed.id, "size", e.target.value || undefined)}>
 										<MenuItem value="">—</MenuItem>
 										{BED_SIZES.map((s) => (
 											<MenuItem key={s} value={s}>
@@ -88,25 +107,29 @@ export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }:
 													"Qty"
 												)
 											}
-											value={bed.quantity ?? 1}
-											onChange={(e) => onUpdate(bed.id, "quantity", Math.max(1, Number(e.target.value)))}
+											value={quantity}
+											onChange={(e) => {
+												const validated = validateQuantity(e.target.value);
+												onUpdate(bed.id, "quantity", validated);
+											}}
 											inputProps={{ min: 1 }}
 										/>
 									</Box>
 								)}
 
-								{/* Price — SHARED_ROOM and PRIVATE_ROOM only */}
+								{/* Price — SHARED_ROOM only */}
 								{showBedPrice && (
-									<Box sx={{ flex: "1 1 110px", minWidth: 0 }}>
-										<TextField
-											fullWidth
-											size="small"
-											type="number"
+									<Box sx={{ flex: "1 1 160px", minWidth: 0 }}>
+										<NumberField
 											label="Price"
-											value={bed.price ?? ""}
-											onChange={(e) => onUpdate(bed.id, "price", e.target.value ? Math.max(0, Number(e.target.value)) : undefined)}
-											inputProps={{ min: 0 }}
-											InputProps={{ endAdornment: <InputAdornment position="end">VND</InputAdornment> }}
+											suffix="VND"
+											size="small"
+											value={price ?? 0}
+											onValueChange={(val: number | null) => {
+												const finalVal = val === null || val === undefined ? undefined : Math.min(MAX_BED_PRICE, Math.max(0, val));
+												onUpdate(bed.id, "price", finalVal === 0 ? undefined : finalVal);
+											}}
+											max={MAX_BED_PRICE}
 										/>
 									</Box>
 								)}
