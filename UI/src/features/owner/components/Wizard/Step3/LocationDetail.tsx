@@ -3,9 +3,8 @@ import { TextField, Grid, Box, Typography } from "@mui/material";
 interface LocationDetailsProps {
 	address: {
 		street: string;
-		ward: string;
-		district: string;
 		city: string;
+		country: string;
 	};
 	onChange: (data: any) => void;
 }
@@ -25,15 +24,6 @@ export default function LocationDetails({ address, onChange }: LocationDetailsPr
 				<Grid size={{ xs: 12, sm: 6 }}>
 					<TextField fullWidth label="Street / House Number" value={address.street || ""} onChange={handleChange("street")} />
 				</Grid>
-
-				<Grid size={{ xs: 12, sm: 6 }}>
-					<TextField fullWidth label="Ward / Suburb" value={address.ward || ""} onChange={handleChange("ward")} />
-				</Grid>
-
-				<Grid size={{ xs: 12, sm: 6 }}>
-					<TextField fullWidth label="District" value={address.district || ""} onChange={handleChange("district")} />
-				</Grid>
-
 				<Grid size={{ xs: 12, sm: 6 }}>
 					<TextField fullWidth label="City / Province" value={address.city || ""} onChange={handleChange("city")} />
 				</Grid>
