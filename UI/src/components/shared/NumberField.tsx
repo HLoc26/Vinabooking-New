@@ -264,13 +264,6 @@ export default function NumberField({ id: idProp, label, size = "medium", suffix
 					</button>
 				</div>
 			</div>
-
-			{/* Helper text */}
-			{isInvalid && (
-				<FormHelperText error sx={{ fontWeight: 600, mx: "14px", mt: "3px" }}>
-					{isOverMax ? "Price cannot exceed 100 million" : "Price must be greater than minimum"}
-				</FormHelperText>
-			)}
 		</div>
 	);
 }
