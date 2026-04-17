@@ -229,8 +229,6 @@ model Accommodation {
 model Address {
     id          String  @id @default(uuid())
     street      String  @db.VarChar(255)
-    ward        String? @db.VarChar(100)
-    district    String? @db.VarChar(100)
     city        String  @db.VarChar(100)
     country     String  @db.VarChar(100)
     countryCode String  @db.Char(2)
@@ -248,7 +246,7 @@ model Address {
 
     accommodation Accommodation?
 
-    @@index([city, ward])
+    @@index([country, city])
     @@index([countryCode, city])
     @@index([latitude, longitude])
     @@index([postalCode])
