@@ -51,9 +51,6 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 								</Typography>
 								<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
 									<LocationOn sx={{ fontSize: 16, color: "text.secondary" }} />
-									<Typography variant="body2" color="text.secondary">
-										{accommodation.address.district}, {accommodation.address.city}
-									</Typography>
 								</Box>
 								<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 2 }}>
 									{accommodation.reviewCount > 0 ? (
@@ -173,9 +170,6 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 
 				<Box sx={{ display: "flex", alignItems: "center", gap: 0.5, mb: 1 }}>
 					<LocationOn sx={{ fontSize: 16, color: "text.secondary" }} />
-					<Typography variant="body2" color="text.secondary" noWrap>
-						{accommodation.address.district}, {accommodation.address.city}
-					</Typography>
 				</Box>
 
 				<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
