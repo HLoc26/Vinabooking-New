@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import ImageController from "@/controllers/image.controller";
-import type { GetImagesRequest, UploadRequest } from "../types/requests";
+import type { DeleteImageRequest, GetImagesRequest, UploadRequest } from "../types/requests";
 import multer from "multer";
 import { authMiddleware } from "@/middlewares/auth.middleware";
 
@@ -32,6 +32,11 @@ class ImageRouter {
 		this.router.get("/:type/:id", (req: Request, res: Response) => {
 			const request = req as unknown as GetImagesRequest;
 			return this.#imageController.getImages(request, res);
+		});
+
+		this.router.delete("/:id", authMiddleware, (req: Request, res: Response) => {
+			const request = req as unknown as DeleteImageRequest;
+			return this.#imageController.delete(request, res);
 		});
 	}
 }
