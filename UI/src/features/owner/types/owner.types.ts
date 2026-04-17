@@ -136,8 +136,6 @@ export type CreateRoomPayload = {
 export type AddressForm = {
 	fullAddress: string;
 	street: string;
-	ward: string;
-	district: string;
 	city: string;
 	country: string;
 	latitude: number | null;

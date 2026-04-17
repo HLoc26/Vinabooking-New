@@ -1,12 +1,15 @@
 import { useEffect, useState } from "react";
-import { Box, Grid, TextField, Typography, Divider, Chip, CircularProgress } from "@mui/material";
+import { Box, Grid, TextField, Typography, Divider, Chip, CircularProgress, InputAdornment } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
+import PublicIcon from "@mui/icons-material/Public";
+import LocationOnIcon from "@mui/icons-material/LocationOn";
 
-import AddressInput from "./AddressInput";
 import MapPicker from "./MapPicker";
-import { useUpdateAddress } from "../../../hooks/useUpdateAddress";
+import CountryComboBox from "./CountryComboBox";
+import CityComboBox from "./CityComBoBox";
 
+import { useUpdateAddress } from "../../../hooks/useUpdateAddress";
 import type { WizardForm, UpdateAddressPayload } from "../../../types/owner.types";
 
 interface Props {
@@ -18,18 +21,13 @@ interface Props {
 	onSuccess: () => void;
 }
 
-// ── Reverse geocode helper ───────────────────────────────────────────────
-async function reverseGeocode(lat: number, lng: number) {
+async function reverseGeocodeExtra(lat: number, lng: number) {
 	const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&layer=address`, { headers: { "User-Agent": "Vinabooking-App/1.0" } });
-
 	if (!res.ok) throw new Error("Reverse geocode failed");
-
 	const data = await res.json();
 	const addr = data.address || {};
-
 	return {
-		countryCode: (addr.country_code || "").toUpperCase(),
-		postalCode: addr.postcode || "",
+		postalCode: addr.postcode ?? "",
 		placeId: data.place_id ? String(data.place_id) : "",
 	};
 }
@@ -37,87 +35,63 @@ async function reverseGeocode(lat: number, lng: number) {
 const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
 	const { address, accommodationId } = form;
 	const { mutate, isPending } = useUpdateAddress(accommodationId ?? "");
-
 	const [hasChanged, setHasChanged] = useState(false);
 
-	// ── Handle address change (search + map) ───────────────────────────────
-	const handleAddressChange = (data: Partial<WizardForm["address"]>) => {
-		const merged = { ...address, ...data };
-
+	const update = (data: Partial<WizardForm["address"]>) => {
 		setForm((prev) => ({
 			...prev,
-			address: merged,
+			address: { ...prev.address, ...data },
 		}));
-
 		setHasChanged(true);
 		onFieldChange?.();
 	};
 
-	// ── Manual field update (NO AUTO GEOCODE) ──────────────────────────────
-	const handleFieldUpdate = (field: keyof WizardForm["address"], value: string) => {
-		const updated = {
-			...address,
-			[field]: value,
-		};
-
-		const newFullAddress = [updated.street, updated.ward, updated.district, updated.city, updated.country].filter(Boolean).join(", ");
-
-		setForm((prev) => ({
-			...prev,
-			address: {
-				...updated,
-				fullAddress: newFullAddress,
-			},
-		}));
-
-		setHasChanged(true);
-		onFieldChange?.();
+	const handleCountryChange = (country: string, countryCode: string) => {
+		update({ country, countryCode, city: "" });
 	};
 
-	// ── Submit logic ───────────────────────────────────────────────────────
+	const handleMapChange = (data: Partial<WizardForm["address"]>) => {
+		update(data);
+	};
+
 	useEffect(() => {
 		if (!triggerSubmit) return;
 
 		const run = async () => {
-			// ✅ skip ONLY if nothing changed
 			if (!hasChanged && accommodationId) {
 				resetTrigger();
 				onSuccess();
 				return;
 			}
 
-			let countryCode = "";
-			let postalCode = "";
-			let placeId = "";
+			let postalCode = address.postalCode ?? "";
+			let placeId = address.placeId ?? "";
 
 			if (address.latitude != null && address.longitude != null) {
 				try {
-					const geo = await reverseGeocode(address.latitude, address.longitude);
-					countryCode = geo.countryCode;
-					postalCode = geo.postalCode;
-					placeId = geo.placeId;
+					const extra = await reverseGeocodeExtra(address.latitude, address.longitude);
+					postalCode = extra.postalCode;
+					placeId = extra.placeId;
 				} catch (err) {
 					console.error("Reverse geocode failed:", err);
 				}
 			}
 
 			const payload: UpdateAddressPayload = {
-				fullAddress: address.fullAddress,
-				street: address.street,
-				ward: address.ward,
-				district: address.district,
-				city: address.city,
-				country: address.country,
-				countryCode,
+				fullAddress: address.fullAddress ?? "",
+				street: address.street ?? "",
+				city: address.city ?? "",
+				country: address.country ?? "",
+				countryCode: address.countryCode ?? "",
 				postalCode,
 				placeId,
-				latitude: address.latitude,
-				longitude: address.longitude,
+				latitude: address.latitude ?? null,
+				longitude: address.longitude ?? null,
 			};
 
 			mutate(payload, {
 				onSuccess: () => {
-					setHasChanged(false); // reset dirty state
+					setHasChanged(false);
 					onSuccess();
 				},
 				onSettled: resetTrigger,
@@ -127,76 +101,90 @@ const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrig
 		run();
 	}, [triggerSubmit]);
 
-	// ── Derived state ──────────────────────────────────────────────────────
 	const hasCoords = address.latitude != null && address.longitude != null;
-	const hasRequiredFields = !!address.street && !!address.district && !!address.city && !!address.country;
+	const hasRequiredFields = !!address.street && !!address.city && !!address.country;
 
-	// ── UI ────────────────────────────────────────────────────────────────
 	return (
 		<Box display="flex" flexDirection="column" gap={3}>
 			<Box>
 				<Typography variant="h6" fontWeight={700}>
-					Location
+					Property Location
 				</Typography>
-				<Typography variant="body2" color="text.secondary">
-					Search for your address or click on the map.
+				<Typography variant="body2" color="text.secondary" mt={0.5}>
+					Fill in the address details and pin the exact location on the map. Clicking the map will auto-fill Country and City.
 				</Typography>
 			</Box>
 
-			{/* Search */}
-			<AddressInput address={address} onChange={handleAddressChange} />
-
-			{/* Status */}
-			<Box display="flex" gap={1} flexWrap="wrap">
-				<Chip
-					size="small"
-					icon={hasCoords ? <CheckCircleOutlineIcon /> : <ErrorOutlineIcon />}
-					label={hasCoords ? "Map location set" : "Map location required"}
-					color={hasCoords ? "success" : "default"}
-				/>
-
+			<Box display="flex" gap={1} flexWrap="wrap" alignItems="center">
+				<Chip size="small" icon={hasCoords ? <CheckCircleOutlineIcon /> : <LocationOnIcon />} label={hasCoords ? "Pin set" : "Pin not set"} color={hasCoords ? "success" : "default"} />
 				<Chip
 					size="small"
 					icon={hasRequiredFields ? <CheckCircleOutlineIcon /> : <ErrorOutlineIcon />}
 					label={hasRequiredFields ? "Fields complete" : "Fill required fields"}
 					color={hasRequiredFields ? "success" : "default"}
 				/>
-
-				{isPending && <CircularProgress size={18} />}
+				{isPending && <CircularProgress size={16} sx={{ ml: 0.5 }} />}
 			</Box>
 
 			<Divider />
 
-			{/* Manual fields */}
 			<Grid container spacing={2}>
 				<Grid size={{ xs: 12, sm: 6 }}>
-					<TextField fullWidth label="Street" value={address.street || ""} onChange={(e) => handleFieldUpdate("street", e.target.value)} />
+					<CountryComboBox value={address.country ?? ""} onChange={handleCountryChange} />
 				</Grid>
 
 				<Grid size={{ xs: 12, sm: 6 }}>
-					<TextField fullWidth label="Ward" value={address.ward || ""} onChange={(e) => handleFieldUpdate("ward", e.target.value)} />
+					<CityComboBox
+						label="City / Province"
+						value={address.city ?? ""}
+						country={address.country ?? ""}
+						countryCode={address.countryCode ?? ""}
+						onChange={(city) => update({ city })}
+						disabled={!address.country}
+					/>
 				</Grid>
 
-				<Grid size={{ xs: 12, sm: 4 }}>
-					<TextField fullWidth label="District" value={address.district || ""} onChange={(e) => handleFieldUpdate("district", e.target.value)} />
+				<Grid size={{ xs: 12, sm: 6 }}>
+					<TextField
+						fullWidth
+						label="Street / House Number"
+						placeholder="e.g. 123 Nguyen Hue"
+						value={address.street ?? ""}
+						onChange={(e) => update({ street: e.target.value })}
+						slotProps={{
+							htmlInput: { maxLength: 255 },
+						}}
+					/>
 				</Grid>
 
-				<Grid size={{ xs: 12, sm: 4 }}>
-					<TextField fullWidth label="City" value={address.city || ""} onChange={(e) => handleFieldUpdate("city", e.target.value)} />
-				</Grid>
-
-				<Grid size={{ xs: 12, sm: 4 }}>
-					<TextField fullWidth label="Country" value={address.country || ""} onChange={(e) => handleFieldUpdate("country", e.target.value)} />
+				<Grid size={{ xs: 12 }}>
+					<TextField
+						fullWidth
+						label="Full Address"
+						placeholder="e.g. 123 Nguyen Hue, Ben Nghe Ward, District 1, Ho Chi Minh City"
+						value={address.fullAddress ?? ""}
+						onChange={(e) => update({ fullAddress: e.target.value })}
+						multiline
+						minRows={1}
+						slotProps={{
+							htmlInput: { maxLength: 500 },
+							input: {
+								startAdornment: (
+									<InputAdornment position="start" sx={{ alignSelf: "center" }}>
+										<PublicIcon fontSize="small" sx={{ color: "text.secondary" }} />
+									</InputAdornment>
+								),
+							},
+						}}
+					/>
 				</Grid>
 			</Grid>
 
-			{/* Map */}
 			<Box>
-				<Typography variant="body2" mb={1}>
-					Click map to set exact location
+				<Typography variant="body2" color="text.secondary" mb={1}>
+					Click anywhere on the map to drop a pin — Country and City will be filled automatically.
 				</Typography>
-
-				<MapPicker lat={address.latitude} lng={address.longitude} onChange={handleAddressChange} />
+				<MapPicker lat={address.latitude ?? null} lng={address.longitude ?? null} onChange={handleMapChange} />
 			</Box>
 		</Box>
 	);

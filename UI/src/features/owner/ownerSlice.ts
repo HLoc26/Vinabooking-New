@@ -9,8 +9,6 @@ export type AccommodationType = "apartment" | "hotel" | "villa" | "resort" | "un
 export interface Address {
 	fullAddress: string;
 	street: string;
-	ward: string;
-	district: string;
 	city: string;
 	country: string;
 	latitude: number | null;
