@@ -1,4 +1,4 @@
-import { PutObjectCommand } from "@aws-sdk/client-s3";
+import { PutObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
 import { EEntityType, EVariantType } from "@/generated/enums";
 import S3ClientSingleton from "@/clients/s3.client";
 import { type ImageProcessingResultKey, type UploadResult, type UploadResultProperties } from "@/types/image.types";
@@ -18,6 +18,31 @@ export default class S3Service {
 				ACL: "public-read",
 			})
 		);
+	}
+
+	public async deleteFiles(keys: string[]) {
+		if (keys.length === 0) return;
+
+		const CHUNK_SIZE = 1000;
+		const deletePromises = [];
+
+		for (let i = 0; i < keys.length; i += CHUNK_SIZE) {
+			const chunk = keys.slice(i, i + CHUNK_SIZE);
+
+			const promise = this.s3Client.send(
+				new DeleteObjectsCommand({
+					Bucket: this.bucket,
+					Delete: {
+						Objects: chunk.map((key) => ({ Key: key })),
+						Quiet: true,
+					},
+				})
+			);
+
+			deletePromises.push(promise);
+		}
+
+		await Promise.all(deletePromises);
 	}
 
 	private async uploadVariant(baseKey: string, buffer: Buffer, variantName: ImageProcessingResultKey, mimeType: string) {

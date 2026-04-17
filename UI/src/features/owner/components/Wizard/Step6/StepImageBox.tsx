@@ -1,110 +1,234 @@
-import { Box, Typography, Paper } from "@mui/material";
-import { useCallback } from "react";
+import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Divider, CircularProgress } from "@mui/material";
+import { useState, useEffect } from "react";
+import type { WizardForm, ImageItem } from "../../../types/owner.types";
+import { ExpandMore as ExpandMoreIcon, PhotoLibrary as PhotoLibraryIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
+import ImageUploader from "./ImageUploader";
+import { useUploadImages } from "../../../hooks/useUploadImages";
+import { useGetImages } from "../../../hooks/useGetImages";
+import { useDeleteImage } from "../../../hooks/useDeleteImage";
 
-type Props = {
-	form: any;
-};
+interface Props {
+	form: WizardForm;
+	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
+	onFieldChange?: () => void;
+	triggerSubmit: boolean;
+	resetTrigger: () => void;
+	onSuccess: () => void;
+}
 
-const StepImageBox = ({ form }: Props) => {
-	// ─── Utils ─────────────────────────────────────────────
+interface Props {
+	form: WizardForm;
+	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
+	onFieldChange?: () => void;
+	triggerSubmit: boolean;
+	resetTrigger: () => void;
+	onSuccess: () => void;
+}
 
-	const chunkFiles = (files: File[], size = 10) => {
-		const chunks: File[][] = [];
-		for (let i = 0; i < files.length; i += size) {
-			chunks.push(files.slice(i, i + size));
-		}
-		return chunks;
+const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
+	const [isUploading, setIsUploading] = useState(false);
+	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
+	const { mutateAsync: uploadImages } = useUploadImages();
+	const { mutateAsync: deleteImage } = useDeleteImage();
+
+	const roomIds = form.rooms.map((r) => r.id).filter(Boolean) as string[];
+	const { data: dbImages, isLoading: isFetching } = useGetImages(form.accommodationId, roomIds);
+
+	// 1. FIXED MERGE LOGIC
+	useEffect(() => {
+		if (!dbImages) return;
+
+		setForm((prev) => {
+			// Get only the local files that haven't been uploaded to the DB yet
+			const localOnly = prev.images.filter((img) => !!img.file);
+
+			// Combine DB images with local files.
+			// We don't need to check IDs because DB images won't have the 'file' property
+			return {
+				...prev,
+				images: [...dbImages, ...localOnly],
+			};
+		});
+	}, [dbImages, setForm]);
+
+	const handleAccordionChange = (panel: string) => (_event: React.SyntheticEvent, isExpanded: boolean) => {
+		setExpandedAccordion(isExpanded ? panel : false);
 	};
 
-	const uploadImages = async (url: string, files: File[]) => {
-		const chunks = chunkFiles(files, 10);
+	const handleAddImages = (target: "accommodation" | "room", roomId?: string, roomTempId?: string) => (files: File[]) => {
+		const newImages: ImageItem[] = files.map((file) => ({
+			id: crypto.randomUUID(), // This is fine for local tracking
+			file,
+			target,
+			roomId,
+			roomTempId,
+		}));
 
-		for (const chunk of chunks) {
-			const formData = new FormData();
-
-			chunk.forEach((file) => {
-				formData.append("files", file);
-			});
-
-			await fetch(url, {
-				method: "POST",
-				body: formData,
-			});
-		}
+		setForm((prev) => ({
+			...prev,
+			images: [...prev.images, ...newImages],
+		}));
+		onFieldChange?.();
 	};
 
-	// ─── Drop handlers ─────────────────────────────────────
+	const handleRemoveImage = async (id: string) => {
+		const imageToRemove = form.images.find((img) => img.id === id);
 
-	const handleAccommodationDrop = useCallback(
-		async (e: React.DragEvent) => {
-			e.preventDefault();
-
-			const files = Array.from(e.dataTransfer.files);
-
-			if (!form.accommodationId) {
-				alert("Accommodation must be created first.");
+		if (imageToRemove && !imageToRemove.file) {
+			// This is a DB image, delete it from server
+			try {
+				await deleteImage(id);
+			} catch (error) {
+				console.error("Failed to delete image from server", error);
 				return;
 			}
+		}
 
-			await uploadImages(`/images/accommodation/${form.accommodationId}`, files);
-		},
-		[form.accommodationId]
-	);
+		setForm((prev) => ({
+			...prev,
+			images: prev.images.filter((img) => img.id !== id),
+		}));
+		onFieldChange?.();
+	};
 
-	const handleRoomDrop = useCallback(async (e: React.DragEvent, roomId: string) => {
-		e.preventDefault();
+	// 2. FIXED UPLOAD LOGIC
+	useEffect(() => {
+		if (triggerSubmit) {
+			const performUpload = async () => {
+				setIsUploading(true);
+				try {
+					// Filter out DB images so we only upload new files
+					const imagesToUpload = form.images.filter((img) => !!img.file);
 
-		const files = Array.from(e.dataTransfer.files);
+					if (form.accommodationId && imagesToUpload.length > 0) {
+						await uploadImages({
+							accommodationId: form.accommodationId,
+							images: imagesToUpload,
+						});
+					}
+					onSuccess();
+				} catch (error) {
+					console.error("Upload failed", error);
+				} finally {
+					setIsUploading(false);
+					resetTrigger();
+				}
+			};
 
-		await uploadImages(`/images/room/${roomId}`, files);
-	}, []);
+			performUpload();
+		}
+	}, [triggerSubmit]); // Removed aggressive dependencies that could cause multi-renders
 
-	// ─── UI ────────────────────────────────────────────────
+	if (isFetching && form.images.length === 0) {
+		return (
+			<Box display="flex" justifyContent="center" py={6}>
+				<CircularProgress />
+			</Box>
+		);
+	}
 
 	return (
-		<Box>
-			<Typography variant="h6" fontWeight={700} mb={2}>
-				Upload Images
-			</Typography>
-
-			{/* ── Accommodation Upload ───────────────── */}
-			<Paper
-				onDrop={handleAccommodationDrop}
-				onDragOver={(e) => e.preventDefault()}
-				sx={{
-					p: 4,
-					border: "2px dashed",
-					borderColor: "primary.main",
-					borderRadius: 3,
-					textAlign: "center",
-					mb: 4,
-					cursor: "pointer",
-				}}
-			>
-				<Typography fontWeight={600}>Drop images for main property here</Typography>
-				<Typography variant="caption">(Max 10 per request — auto chunked)</Typography>
-			</Paper>
-
-			{/* ── Room Uploads ───────────────────────── */}
-			{form.rooms.map((room: any) => (
-				<Paper
-					key={room.id}
-					onDrop={(e) => handleRoomDrop(e, room.id)}
-					onDragOver={(e) => e.preventDefault()}
+		<Box sx={{ position: "relative" }}>
+			{isUploading && (
+				<Box
 					sx={{
-						p: 3,
-						border: "2px dashed",
-						borderColor: "divider",
-						borderRadius: 3,
-						textAlign: "center",
-						mb: 2,
-						cursor: "pointer",
+						position: "absolute",
+						top: 0,
+						left: 0,
+						right: 0,
+						bottom: 0,
+						bgcolor: "rgba(0,0,0,0.5)",
+						zIndex: 10,
+						display: "flex",
+						alignItems: "center",
+						justifyContent: "center",
+						borderRadius: 4,
 					}}
 				>
-					<Typography fontWeight={600}>Room: {room.name || room.id}</Typography>
-					<Typography variant="caption">Drop room images here</Typography>
-				</Paper>
-			))}
+					<CircularProgress />
+				</Box>
+			)}
+
+			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
+				<Box>
+					<Typography variant="h5" fontWeight={800} mb={1} color="primary">
+						Property Photos
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
+					</Typography>
+				</Box>
+			</Box>
+
+			{/* Section 1: General Accommodation Gallery */}
+			<Box sx={{ mb: 4 }}>
+				<Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
+					<PhotoLibraryIcon sx={{ mr: 1, color: "primary.main" }} />
+					<Typography variant="subtitle1" fontWeight={700}>
+						General Property Photos
+					</Typography>
+				</Box>
+
+				<Box sx={{ p: 2, backgroundColor: "action.hover", borderRadius: 2, border: "1px solid", borderColor: "divider" }}>
+					<ImageUploader
+						title="Facade, Lobby & Amenities"
+						description="Upload photos of the building exterior, reception, pool, gym, or restaurant."
+						images={form.images.filter((img) => img.target === "accommodation")}
+						onAdd={handleAddImages("accommodation")}
+						onRemove={handleRemoveImage}
+					/>
+				</Box>
+			</Box>
+
+			<Divider sx={{ my: 4 }} />
+
+			{/* Section 2: Room-Specific Galleries */}
+			<Box>
+				<Box sx={{ display: "flex", alignItems: "center", mb: 1 }}>
+					<MeetingRoomIcon sx={{ mr: 1, color: "secondary.main" }} />
+					<Typography variant="subtitle1" fontWeight={700}>
+						Room-Specific Photos
+					</Typography>
+				</Box>
+				<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+					Upload photos for each room type you offer. Guests want to see exactly where they will be sleeping.
+				</Typography>
+
+				{form.rooms.map((room) => (
+					<Accordion
+						key={room.id || room.tempId}
+						expanded={expandedAccordion === (room.id || room.tempId)}
+						onChange={handleAccordionChange(room.id || room.tempId)}
+						disableGutters
+						elevation={0}
+						sx={{
+							mb: 1.5,
+							border: "1px solid",
+							borderColor: "divider",
+							borderRadius: "8px !important",
+							overflow: "hidden",
+							"&:before": { display: "none" },
+						}}
+					>
+						<AccordionSummary expandIcon={<ExpandMoreIcon sx={{ color: "text.secondary" }} />} sx={{ px: 2, py: 0.5, bgcolor: "action.hover" }}>
+							<Typography variant="subtitle2" sx={{ fontWeight: 600 }}>
+								{room.name}
+							</Typography>
+							<Typography variant="caption" sx={{ ml: 2, color: "text.secondary", alignSelf: "center" }}>
+								{form.images.filter((img) => img.target === "room" && (img.roomId === room.id || img.roomTempId === room.tempId)).length} photos
+							</Typography>
+						</AccordionSummary>
+						<AccordionDetails sx={{ p: 2 }}>
+							<ImageUploader
+								description={room.description}
+								images={form.images.filter((img) => img.target === "room" && (img.roomId === room.id || img.roomTempId === room.tempId))}
+								onAdd={handleAddImages("room", room.id, room.tempId)}
+								onRemove={handleRemoveImage}
+							/>
+						</AccordionDetails>
+					</Accordion>
+				))}
+			</Box>
 		</Box>
 	);
 };
