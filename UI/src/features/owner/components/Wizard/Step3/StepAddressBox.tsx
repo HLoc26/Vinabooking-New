@@ -129,11 +129,11 @@ const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrig
 			<Divider />
 
 			<Grid container spacing={2}>
-				<Grid size={{ xs: 12, sm: 6 }}>
+				<Grid size={{ xs: 12, sm: 6, md: 4 }}>
 					<CountryComboBox value={address.country ?? ""} onChange={handleCountryChange} />
 				</Grid>
 
-				<Grid size={{ xs: 12, sm: 6 }}>
+				<Grid size={{ xs: 12, sm: 6, md: 4 }}>
 					<CityComboBox
 						label="City / Province"
 						value={address.city ?? ""}
@@ -144,7 +144,7 @@ const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrig
 					/>
 				</Grid>
 
-				<Grid size={{ xs: 12, sm: 6 }}>
+				<Grid size={{ xs: 12, sm: 6, md: 4 }}>
 					<TextField
 						fullWidth
 						label="Street / House Number"
