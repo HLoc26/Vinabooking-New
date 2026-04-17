@@ -9,6 +9,8 @@ import RoomInfoFields from "./RoomInfoField";
 import BedList from "./BedList";
 import AmenityPicker from "./AmenityPicker";
 
+const MAX_PRICE = 100000000; // 100 Million VND
+
 interface Props {
 	room: RoomForm;
 	open: boolean;
@@ -16,12 +18,9 @@ interface Props {
 	onSave: (room: RoomForm) => void;
 	draftAmenities: AmenityConfigForm[];
 	onAmenityToggle: (a: AmenityConfigForm) => void;
-	/** Controls bed price / quantity visibility and bedroom/bathroom visibility */
 	rentalType?: string;
 	accommodationType?: string;
-	/** True while the create/update mutation is in-flight */
 	isSaving?: boolean;
-	/** Validation error from parent (e.g. missing bed prices) */
 	validationError?: string | null;
 }
 
@@ -32,39 +31,95 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 		amenities: [],
 	});
 
-	const set = (field: keyof RoomForm, value: any) => setDraft((prev) => ({ ...prev, [field]: value }));
+	const [internalError, setInternalError] = useState<string | null>(null);
+
+	const set = (field: keyof RoomForm, value: any) => {
+		setInternalError(null);
+		setDraft((prev) => {
+			if (prev[field] === value) return prev;
+			return { ...prev, [field]: value };
+		});
+	};
 
 	const addBed = () => setDraft((prev) => ({ ...prev, beds: [...prev.beds, makeBed()] }));
-
 	const removeBed = (id: string) => setDraft((prev) => ({ ...prev, beds: prev.beds.filter((b) => b.id !== id) }));
-
 	const updateBed = (id: string, field: keyof BedForm, value: any) =>
 		setDraft((prev) => ({
 			...prev,
 			beds: prev.beds.map((b) => (b.id === id ? { ...b, [field]: value } : b)),
 		}));
 
-	const handleSave = () => {
-		const isEntirePlace = rentalType === "ENTIRE_PLACE";
-		const finalName = isEntirePlace ? accommodationType : draft.name;
-		if (!isEntirePlace && !draft.name.trim()) return;
-		if (isSaving) return;
+	// ──────────────────────────────────────────────────────────────────────
+	// VALIDATION HELPERS
+	// ──────────────────────────────────────────────────────────────────────
 
-		// Truyền draft đã được gán tên đúng lên cho StepRoomsBox xử lý
-		onSave({ ...draft, name: finalName || draft.name });
+	const validateRoomData = (): { isValid: boolean; errors: string[] } => {
+		const isEntirePlace = rentalType === "ENTIRE_PLACE";
+		const nameToCheck = (isEntirePlace ? accommodationType : draft.name)?.trim();
+		const priceToCheck = Number(draft.price);
+
+		const errors: string[] = [];
+
+		// Validation rules
+		if (!nameToCheck) errors.push("room name");
+		if (!isEntirePlace && priceToCheck <= 0) errors.push("valid price");
+		if (priceToCheck > MAX_PRICE) errors.push("room price exceeds 100M VND");
+
+		if (draft.maxAdults < 1) errors.push("guest capacity (min 1 adult)");
+
+		// Bed validation
+		if (!draft.beds?.length) {
+			errors.push("at least one bed");
+		} else {
+			draft.beds.forEach((bed, i) => {
+				if (!bed.name?.trim()) errors.push(`bed #${i + 1} name`);
+				if (!bed.bedType) errors.push(`bed #${i + 1} type`);
+				const qty = bed.quantity ?? 1;
+				if (!qty || qty < 1) errors.push(`bed #${i + 1} quantity (min 1)`);
+				const price = Number(bed.price || 0);
+				if (price > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100M VND`);
+			});
+		}
+
+		return { isValid: errors.length === 0, errors };
+	};
+
+	const { isValid: isValidData, errors: validationErrors } = validateRoomData();
+	const isSaveDisabled = isSaving || !isValidData;
+
+	const handleSave = () => {
+		if (isSaveDisabled) return;
+
+		setInternalError(null);
+		console.log("[RoomEditModal] Save triggered. Current draft:", draft);
+
+		// Run validation again before saving
+		const { isValid, errors } = validateRoomData();
+
+		if (!isValid) {
+			const errorMsg = `Invalid fields: ${errors.join(", ")}`;
+			console.warn("[RoomEditModal] Validation failed:", errors);
+			setInternalError(errorMsg);
+			return;
+		}
+
+		try {
+			const isEntirePlace = rentalType === "ENTIRE_PLACE";
+			const nameToCheck = (isEntirePlace ? accommodationType : draft.name)?.trim();
+
+			onSave({
+				...draft,
+				name: nameToCheck || "Room",
+				price: Number(draft.price) || 0,
+			});
+		} catch (error) {
+			console.error("[RoomEditModal] onSave execution error:", error);
+			setInternalError("An unexpected error occurred while saving.");
+		}
 	};
 
 	return (
-		<Dialog
-			open={open}
-			onClose={() => {
-				if (!isSaving) onClose();
-			}}
-			fullWidth
-			maxWidth="lg"
-			disableEnforceFocus
-			PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}
-		>
+		<Dialog open={open} onClose={() => !isSaving && onClose()} fullWidth maxWidth="md" disableEnforceFocus PaperProps={{ sx: { borderRadius: 3, overflow: "hidden" } }}>
 			{/* HEADER */}
 			<DialogTitle
 				sx={{
@@ -80,29 +135,17 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 				<Typography variant="h6" fontWeight={700} color="inherit">
 					{draft.name || "Edit Room"}
 				</Typography>
-				<IconButton
-					onClick={() => {
-						if (!isSaving) onClose();
-					}}
-					size="small"
-					sx={{ color: "primary.contrastText" }}
-					disabled={isSaving}
-				>
+				<IconButton onClick={onClose} size="small" sx={{ color: "primary.contrastText" }} disabled={isSaving}>
 					<CloseIcon />
 				</IconButton>
 			</DialogTitle>
 
 			{/* CONTENT */}
 			<DialogContent dividers sx={{ display: "flex", flexDirection: "column", gap: 3, bgcolor: "background.paper" }}>
-				{/* Pass rentalType so bedroom/bathroom can be hidden for PRIVATE_ROOM */}
 				<RoomInfoFields draft={draft} set={set} rentalType={rentalType} />
-
 				<Divider />
-
 				<BedList beds={draft.beds} onAdd={addBed} onRemove={removeBed} onUpdate={updateBed} rentalType={rentalType} />
-
 				<Divider />
-
 				<AmenityPicker selected={draftAmenities} onToggle={onAmenityToggle} />
 			</DialogContent>
 
@@ -117,16 +160,18 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 					gap: 1,
 				}}
 			>
-				{validationError && (
+				{/* Display validation errors */}
+				{(validationError || internalError || (validationErrors.length > 0 && !isSaving)) && (
 					<Alert severity="error" sx={{ borderRadius: 2 }}>
-						{validationError}
+						{internalError || validationError || `Invalid fields: ${validationErrors.join(", ")}`}
 					</Alert>
 				)}
+
 				<Box display="flex" justifyContent="flex-end" gap={1}>
 					<Button onClick={onClose} variant="outlined" disabled={isSaving}>
 						Cancel
 					</Button>
-					<Button onClick={handleSave} variant="contained" disabled={!draft.name.trim() || isSaving} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
+					<Button onClick={handleSave} variant="contained" disabled={isSaveDisabled} startIcon={isSaving ? <CircularProgress size={16} color="inherit" /> : undefined}>
 						{isSaving ? "Saving…" : "Save Room"}
 					</Button>
 				</Box>

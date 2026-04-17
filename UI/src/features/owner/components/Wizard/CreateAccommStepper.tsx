@@ -5,9 +5,11 @@ interface CreateAccommStepperProps {
 	step: number;
 	completed: Set<number>;
 	goToStep: (target: number) => void;
+	rentalType?: string;
 }
 
-export const CreateAccommStepper: React.FC<CreateAccommStepperProps> = ({ step, completed, goToStep }) => {
+export const CreateAccommStepper: React.FC<CreateAccommStepperProps> = ({ step, completed, goToStep, rentalType }) => {
+	const isEntirePlace = rentalType === "ENTIRE_PLACE";
 	return (
 		<Paper
 			elevation={0}
@@ -48,6 +50,10 @@ export const CreateAccommStepper: React.FC<CreateAccommStepperProps> = ({ step, 
 					const isCompleted = completed.has(i);
 					const isClickable = i < step || isCompleted;
 					const Icon = meta.icon;
+
+					// Override label/subtitle for the rooms step when ENTIRE_PLACE
+					const label = isEntirePlace && i === 3 ? "Accommodation Detail" : meta.label;
+					const subtitle = isEntirePlace && i === 3 ? "Room & amenities" : meta.subtitle;
 
 					return (
 						<Step key={meta.label} completed={isCompleted}>
@@ -103,7 +109,7 @@ export const CreateAccommStepper: React.FC<CreateAccommStepperProps> = ({ step, 
 										/>
 									}
 								>
-									{meta.label}
+									{label}
 									<Typography
 										component="span"
 										className="step-subtitle"
@@ -116,7 +122,7 @@ export const CreateAccommStepper: React.FC<CreateAccommStepperProps> = ({ step, 
 											transition: "color 0.2s ease",
 										}}
 									>
-										{meta.subtitle}
+										{subtitle}
 									</Typography>
 								</StepLabel>
 							</StepButton>
