@@ -16,15 +16,6 @@ interface Props {
 	onSuccess: () => void;
 }
 
-interface Props {
-	form: WizardForm;
-	setForm: React.Dispatch<React.SetStateAction<WizardForm>>;
-	onFieldChange?: () => void;
-	triggerSubmit: boolean;
-	resetTrigger: () => void;
-	onSuccess: () => void;
-}
-
 const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
 	const [isUploading, setIsUploading] = useState(false);
 	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
@@ -32,7 +23,7 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 	const { mutateAsync: deleteImage } = useDeleteImage();
 
 	const roomIds = form.rooms.map((r) => r.id).filter(Boolean) as string[];
-	const { data: dbImages, isLoading: isFetching } = useGetImages(form.accommodationId, roomIds);
+	const { data: dbImages, isLoading: isFetching, refetch } = useGetImages(form.accommodationId, roomIds);
 
 	// 1. FIXED MERGE LOGIC
 	useEffect(() => {
@@ -105,6 +96,15 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 							accommodationId: form.accommodationId,
 							images: imagesToUpload,
 						});
+
+						// Refetch to get the latest DB images with proper IDs and URLs
+						const { data: newImages } = await refetch();
+						if (newImages) {
+							setForm((prev) => ({
+								...prev,
+								images: newImages,
+							}));
+						}
 					}
 					onSuccess();
 				} catch (error) {
