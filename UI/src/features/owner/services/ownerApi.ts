@@ -127,6 +127,11 @@ export const uploadRoomImages = (roomId: string, files: File[]): Promise<void> =
 
 export const deleteImageApi = async (imageId: string): Promise<void> => apiClient.delete(`/images/${imageId}`).then(() => undefined);
 
+export const publishAccommodation = async (id: string): Promise<void> =>
+	apiClient.patch<ApiResponse<void>>(`/owners/accommodations/${id}/publish`).then((res) => {
+		if (!res.data.success) throw new Error(res.data.error || "Failed to publish accommodation");
+	});
+
 // export const getAmenities = async (): Promise<AmenityDto[]> => apiClient.get<ApiResponse<AmenityDto[]>>("/amenities").then((res) => res.data.data);
 
 // export const getFacilities = async (): Promise<FacilityDto[]> => apiClient.get<ApiResponse<FacilityDto[]>>("/facilities").then((res) => res.data.data);

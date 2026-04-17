@@ -1,5 +1,6 @@
 import { useState } from "react";
-import { Box, Button, Typography, Paper, Alert } from "@mui/material";
+import { Box, Button, Typography, Paper, Alert, CircularProgress } from "@mui/material";
+import { useNavigate } from "react-router-dom";
 
 import PreWizardPage from "../components/PreWizard/PreWizardPage";
 import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
@@ -13,6 +14,7 @@ import { type WizardForm } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
 import { STEP_META } from "../const/StepperMetaConst";
+import { usePublishAccommodation } from "../hooks/usePublishAccommodation";
 
 // ─── VALIDATION (Merged from V1) ──────────────────────────────────────────────
 
@@ -96,6 +98,9 @@ const OwnerCreateAccomPage = () => {
 		images: [],
 	});
 
+	const navigate = useNavigate();
+	const { mutateAsync: publishAsync, isPending } = usePublishAccommodation();
+
 	// ── Pre-wizard gate ──────────────────────────────────────────────────────────
 
 	if (!preWizardDone) {
@@ -131,7 +136,7 @@ const OwnerCreateAccomPage = () => {
 		setStep(target);
 	};
 
-	const next = () => {
+	const next = async () => {
 		const error = validateStep(step, form);
 		if (error) {
 			setValidationError(error);
@@ -147,8 +152,16 @@ const OwnerCreateAccomPage = () => {
 		}
 
 		if (step === 5) {
-			// TODO: actually call API
-			alert("Accommodation published successfully!");
+			if (!form.accommodationId) {
+				setValidationError("Could not find accommodation ID to publish.");
+				return;
+			}
+			try {
+				await publishAsync(form.accommodationId);
+				navigate("/owner/dashboard");
+			} catch (err: any) {
+				setValidationError(err.message || "Failed to publish accommodation.");
+			}
 			return;
 		}
 
@@ -293,8 +306,15 @@ const OwnerCreateAccomPage = () => {
 							</Typography>
 
 							{isLastStep ? (
-								<Button variant="contained" color="success" sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }} onClick={next}>
-									Publish Listing
+								<Button
+									variant="contained"
+									color="success"
+									sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }}
+									onClick={next}
+									disabled={isPending}
+									startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : null}
+								>
+									{isPending ? "Publishing..." : "Publish Listing"}
 								</Button>
 							) : (
 								<Button variant="contained" onClick={next} sx={{ minWidth: 100, borderRadius: 2, fontWeight: 600 }}>
