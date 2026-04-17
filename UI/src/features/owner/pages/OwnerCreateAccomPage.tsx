@@ -27,7 +27,6 @@ function validateStep(step: number, form: WizardForm): string | null {
 			const a = form.address;
 			if (!a.fullAddress) return "Please select a location.";
 			if (!a.street) return "Street is required.";
-			if (!a.district) return "District is required.";
 			if (!a.city) return "City is required.";
 			if (!a.country) return "Country is required.";
 			if (a.latitude == null || a.longitude == null) return "Please confirm map location.";
@@ -84,8 +83,6 @@ const OwnerCreateAccomPage = () => {
 		address: {
 			fullAddress: "",
 			street: "",
-			ward: "",
-			district: "",
 			city: "",
 			country: "",
 			latitude: null,
