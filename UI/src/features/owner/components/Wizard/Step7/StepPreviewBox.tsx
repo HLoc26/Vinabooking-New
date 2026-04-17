@@ -1,43 +1,115 @@
+import React, { useState, useMemo, lazy, Suspense } from "react";
 import { Box, Typography, Paper, Divider, Chip } from "@mui/material";
 import type { WizardForm, ImageItem, RoomForm } from "../../../types/owner.types";
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 
-interface Props {
-	form: WizardForm;
+const ImageGallery = lazy(() => import("../../../../../components/shared/ImageGallery"));
+
+interface CompactImageGalleryProps {
+	images: ImageItem[];
+	height?: number;
+	onImageClick: (index: number) => void;
 }
 
-const CompactImageGallery = ({ images, height = 80 }: { images: ImageItem[]; height?: number }) => {
+const CompactImageGallery = ({ images, height = 80, onImageClick }: CompactImageGalleryProps) => {
 	if (images.length === 0) return null;
+
+	const maxVisible = 5;
+	const visibleImages = images.slice(0, maxVisible);
+	const remainingCount = images.length - maxVisible;
+
 	return (
 		<Box display="flex" gap={1} mt={1.5} sx={{ overflowX: "auto", pb: 0.5, "&::-webkit-scrollbar": { height: 4 }, "&::-webkit-scrollbar-thumb": { bgcolor: "divider", borderRadius: 2 } }}>
-			{images.map((img) => (
-				<Box
-					key={img.id}
-					component="img"
-					src={img.url || (img.file ? URL.createObjectURL(img.file) : "")}
-					sx={{
-						width: height * 1.33,
-						height: height,
-						objectFit: "cover",
-						borderRadius: 1.5,
-						flexShrink: 0,
-						border: "1px solid",
-						borderColor: "divider",
-					}}
-				/>
-			))}
+			{visibleImages.map((img, index) => {
+				const isLast = index === maxVisible - 1 && remainingCount > 0;
+				const imageUrl = img.url || (img.file ? URL.createObjectURL(img.file) : "");
+
+				return (
+					<Box
+						key={img.id}
+						onClick={() => onImageClick(index)}
+						sx={{
+							position: "relative",
+							width: height * 1.33,
+							height: height,
+							borderRadius: 1.5,
+							overflow: "hidden",
+							cursor: "pointer",
+							flexShrink: 0,
+							border: "1px solid",
+							borderColor: "divider",
+							"&:hover img": {
+								transform: "scale(1.05)",
+							},
+						}}
+					>
+						<Box
+							component="img"
+							src={imageUrl}
+							sx={{
+								width: "100%",
+								height: "100%",
+								objectFit: "cover",
+								transition: "transform 0.3s ease",
+							}}
+						/>
+						{isLast && (
+							<Box
+								sx={{
+									position: "absolute",
+									top: 0,
+									left: 0,
+									width: "100%",
+									height: "100%",
+									bgcolor: "rgba(0,0,0,0.6)",
+									display: "flex",
+									alignItems: "center",
+									justifyContent: "center",
+									color: "white",
+									fontWeight: 700,
+									fontSize: "1.1rem",
+									backdropFilter: "blur(2px)",
+								}}
+							>
+								+{remainingCount}
+							</Box>
+						)}
+					</Box>
+				);
+			})}
 		</Box>
 	);
 };
 
 const StepPreviewBox = ({ form }: Props) => {
-	const accommodationImages = form.images.filter((img) => img.target === "accommodation");
+	const [galleryState, setGalleryState] = useState<{
+		open: boolean;
+		images: string[];
+		currentIndex: number;
+	}>({
+		open: false,
+		images: [],
+		currentIndex: 0,
+	});
+
+	const accommodationImages = useMemo(() => form.images.filter((img) => img.target === "accommodation"), [form.images]);
 
 	const getRoomImages = (room: RoomForm) => {
 		return form.images.filter((img) => img.target === "room" && (img.roomTempId === room.tempId || (img.roomId && img.roomId === room.id)));
 	};
+
+	const handleOpenGallery = (images: ImageItem[], index: number) => {
+		const imageUrls = images.map((img) => img.url || (img.file ? URL.createObjectURL(img.file) : ""));
+		setGalleryState({
+			open: true,
+			images: imageUrls,
+			currentIndex: index,
+		});
+	};
+
+	const handleCloseGallery = () => setGalleryState((prev) => ({ ...prev, open: false }));
 
 	return (
 		<Box display="flex" flexDirection="column" gap={3}>
@@ -84,7 +156,7 @@ const StepPreviewBox = ({ form }: Props) => {
 				<Typography variant="caption" fontWeight={700} color="text.secondary" sx={{ textTransform: "uppercase", letterSpacing: 0.5 }}>
 					Property Images ({accommodationImages.length})
 				</Typography>
-				<CompactImageGallery images={accommodationImages} height={100} />
+				<CompactImageGallery images={accommodationImages} height={100} onImageClick={(idx) => handleOpenGallery(accommodationImages, idx)} />
 			</Paper>
 
 			{/* Rooms Section */}
@@ -116,7 +188,7 @@ const StepPreviewBox = ({ form }: Props) => {
 									))}
 								</Box>
 
-								<CompactImageGallery images={roomImages} height={70} />
+								<CompactImageGallery images={roomImages} height={70} onImageClick={(idx) => handleOpenGallery(roomImages, idx)} />
 
 								{idx < form.rooms.length - 1 && <Divider sx={{ mt: 2 }} />}
 							</Box>
@@ -129,6 +201,35 @@ const StepPreviewBox = ({ form }: Props) => {
 					)}
 				</Box>
 			</Paper>
+
+			<Suspense fallback={null}>
+				{galleryState.open && (
+					<ImageGallery
+						openGallery={galleryState.open}
+						galleryImages={galleryState.images}
+						currentIndex={galleryState.currentIndex}
+						setCurrentIndex={(idx) =>
+							setGalleryState((prev) => ({
+								...prev,
+								currentIndex: typeof idx === "function" ? idx(prev.currentIndex) : idx,
+							}))
+						}
+						closeGallery={handleCloseGallery}
+						handleNextImage={() =>
+							setGalleryState((prev) => ({
+								...prev,
+								currentIndex: (prev.currentIndex + 1) % prev.images.length,
+							}))
+						}
+						handlePrevImage={() =>
+							setGalleryState((prev) => ({
+								...prev,
+								currentIndex: (prev.currentIndex - 1 + prev.images.length) % prev.images.length,
+							}))
+						}
+					/>
+				)}
+			</Suspense>
 		</Box>
 	);
 };

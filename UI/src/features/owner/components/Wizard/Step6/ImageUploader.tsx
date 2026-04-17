@@ -1,7 +1,9 @@
-import React, { useRef } from "react";
+import React, { useRef, useState, useMemo, lazy, Suspense } from "react";
 import { Box, Typography, IconButton, Paper } from "@mui/material";
-import { CloudUpload as CloudUploadIcon, Close as CloseIcon, Add as AddIcon } from "@mui/icons-material";
+import { CloudUpload as CloudUploadIcon, Close as CloseIcon, Add as AddIcon, Visibility as VisibilityIcon } from "@mui/icons-material";
 import type { ImageItem } from "../../../types/owner.types";
+
+const ImageGallery = lazy(() => import("../../../../../components/shared/ImageGallery"));
 
 interface ImageUploaderProps {
 	title?: string;
@@ -13,6 +15,11 @@ interface ImageUploaderProps {
 
 export default function ImageUploader({ title, description, images, onAdd, onRemove }: ImageUploaderProps) {
 	const fileInputRef = useRef<HTMLInputElement>(null);
+	const [galleryIndex, setGalleryIndex] = useState<number | null>(null);
+
+	const imageUrls = useMemo(() => 
+		images.map(img => img.url || (img.file ? URL.createObjectURL(img.file) : "")),
+	[images]);
 
 	const handleFileChange = (event: React.ChangeEvent<HTMLInputElement>) => {
 		if (event.target.files && event.target.files.length > 0) {
@@ -34,6 +41,12 @@ export default function ImageUploader({ title, description, images, onAdd, onRem
 	const triggerFileInput = () => {
 		fileInputRef.current?.click();
 	};
+
+	const handlePreview = (index: number) => {
+		setGalleryIndex(index);
+	};
+
+	const handleCloseGallery = () => setGalleryIndex(null);
 
 	if (images.length === 0) {
 		return (
@@ -99,7 +112,7 @@ export default function ImageUploader({ title, description, images, onAdd, onRem
 			)}
 
 			<Box sx={{ display: "grid", gridTemplateColumns: "repeat(auto-fill, minmax(160px, 1fr))", gap: 2 }}>
-				{images.map((img) => (
+				{images.map((img, index) => (
 					<Box
 						key={img.id}
 						sx={{
@@ -108,12 +121,19 @@ export default function ImageUploader({ title, description, images, onAdd, onRem
 							borderRadius: 2,
 							overflow: "hidden",
 							boxShadow: 3,
-							// border: index === 0 ? "2px solid" : "none", // Logic for cover image can be improved
-							// borderColor: "primary.main",
+							cursor: "pointer",
+							"& .overlay": {
+								opacity: 0,
+								transition: "opacity 0.2s",
+							},
+							"&:hover .overlay": {
+								opacity: 1,
+							},
 						}}
+						onClick={() => handlePreview(index)}
 					>
 						<img
-							src={img.url || (img.file ? URL.createObjectURL(img.file) : "")}
+							src={imageUrls[index]}
 							alt="Uploaded"
 							style={{
 								position: "absolute",
@@ -125,36 +145,38 @@ export default function ImageUploader({ title, description, images, onAdd, onRem
 							}}
 						/>
 
-						{/* Cover Image Badge - for now we can say the first accommodation image is cover */}
-						{/* {index === 0 && (
-							<Box
-								sx={{
-									position: "absolute",
-									bottom: 0,
-									left: 0,
-									right: 0,
-									backgroundColor: "rgba(0,0,0,0.7)",
-									color: "white",
-									py: 0.5,
-									textAlign: "center",
-									fontSize: "0.75rem",
-									fontWeight: "bold",
-								}}
-							>
-								COVER IMAGE
-							</Box>
-						)} */}
+						{/* Hover Overlay with Preview Icon */}
+						<Box
+							className="overlay"
+							sx={{
+								position: "absolute",
+								top: 0,
+								left: 0,
+								right: 0,
+								bottom: 0,
+								backgroundColor: "rgba(0,0,0,0.3)",
+								display: "flex",
+								alignItems: "center",
+								justifyContent: "center",
+							}}
+						>
+							<VisibilityIcon sx={{ color: "white", fontSize: 32 }} />
+						</Box>
 
 						{/* Remove Button */}
 						<IconButton
 							size="small"
-							onClick={() => onRemove(img.id)}
+							onClick={(e) => {
+								e.stopPropagation();
+								onRemove(img.id);
+							}}
 							sx={{
 								position: "absolute",
 								top: 4,
 								right: 4,
 								backgroundColor: "rgba(0,0,0,0.5)",
 								color: "white",
+								zIndex: 2,
 								"&:hover": {
 									backgroundColor: "rgba(244, 67, 54, 0.8)",
 								},
@@ -211,6 +233,20 @@ export default function ImageUploader({ title, description, images, onAdd, onRem
 					<input type="file" multiple accept="image/*" hidden ref={fileInputRef} onChange={handleFileChange} />
 				</Paper>
 			</Box>
+
+			<Suspense fallback={null}>
+				{galleryIndex !== null && (
+					<ImageGallery
+						openGallery={galleryIndex !== null}
+						galleryImages={imageUrls}
+						currentIndex={galleryIndex}
+						setCurrentIndex={(idx) => setGalleryIndex(typeof idx === "function" ? idx(galleryIndex) : idx)}
+						closeGallery={handleCloseGallery}
+						handleNextImage={() => setGalleryIndex((prev) => (prev !== null ? (prev + 1) % imageUrls.length : null))}
+						handlePrevImage={() => setGalleryIndex((prev) => (prev !== null ? (prev - 1 + imageUrls.length) % imageUrls.length : null))}
+					/>
+				)}
+			</Suspense>
 		</Box>
 	);
 }
