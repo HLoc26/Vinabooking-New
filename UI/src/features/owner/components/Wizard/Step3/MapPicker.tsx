@@ -1,6 +1,8 @@
 import { MapContainer, TileLayer, Marker, useMapEvents, useMap } from "react-leaflet";
+import type { LatLngExpression } from "leaflet";
 import { useEffect } from "react";
-import { Box } from "@mui/material";
+import { Box, Typography } from "@mui/material";
+import MyLocationIcon from "@mui/icons-material/MyLocation";
 
 type Props = {
 	lat: number | null;
@@ -14,36 +16,33 @@ function ClickHandler({ onChange }: { onChange: (data: any) => void }) {
 			const { lat, lng } = e.latlng;
 
 			try {
-				// 🛰️ Switched to Nominatim Reverse Geocoding API
-				const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`, {
-					headers: {
-						"User-Agent": "Vinabooking-App/1.0", // 🛡️ Mandatory for Nominatim
-					},
-				});
-
-				if (!res.ok) throw new Error(`Nominatim Error: ${res.status}`);
+				const res = await fetch(`https://nominatim.openstreetmap.org/reverse?format=jsonv2&lat=${lat}&lon=${lng}&addressdetails=1`, { headers: { "User-Agent": "Vinabooking-App/1.0" } });
+				if (!res.ok) throw new Error(`Nominatim ${res.status}`);
 
 				const data = await res.json();
 				const addr = data.address || {};
+
+				// Derive a clean English country name
+				const country = addr.country || "";
+
+				// City: prefer city > town > state
+				const city = addr.city || addr.town || addr.municipality || addr.county || addr.state_district || addr.state || "";
 
 				onChange({
 					latitude: lat,
 					longitude: lng,
 					fullAddress: data.display_name || "",
-					// Nominatim has slightly different address keys than LocationIQ
-					street: addr.road || addr.pedestrian || addr.house_number || "",
+					street: [addr.house_number, addr.road || addr.pedestrian].filter(Boolean).join(" "),
 					ward: addr.suburb || addr.village || addr.neighbourhood || addr.hamlet || "",
 					district: addr.city_district || addr.county || addr.state_district || "",
-					city: addr.city || addr.town || addr.state || "",
-					country: addr.country || "",
+					city,
+					country,
+					// pass raw ISO code if available
+					countryCode: addr["ISO3166-2-lvl4"]?.split("-")[0] || "",
 				});
 			} catch (err) {
 				console.error("Reverse geocode failed:", err);
-				// Still update coordinates so the pin moves even if API fails
-				onChange({
-					latitude: lat,
-					longitude: lng,
-				});
+				onChange({ latitude: lat, longitude: lng });
 			}
 		},
 	});
@@ -53,38 +52,56 @@ function ClickHandler({ onChange }: { onChange: (data: any) => void }) {
 function Recenter({ lat, lng }: { lat: number | null; lng: number | null }) {
 	const map = useMap();
 	useEffect(() => {
-		if (lat && lng) {
-			map.setView([lat, lng], 16);
-		}
+		if (lat && lng) map.setView([lat, lng] as LatLngExpression, 14);
 	}, [lat, lng, map]);
 	return null;
 }
 
 export default function MapPicker({ lat, lng, onChange }: Props) {
-	// Default to Ho Chi Minh City if no lat/lng provided
-	const defaultPosition: [number, number] = [10.7769, 106.7009];
-	const position: [number, number] = lat && lng ? [lat, lng] : defaultPosition;
+	const defaultPosition: LatLngExpression = [10.7769, 106.7009];
+	const position: LatLngExpression = lat && lng ? [lat, lng] : defaultPosition;
 
 	return (
 		<Box
 			sx={{
-				height: 400,
+				position: "relative",
+				height: 380,
 				width: "100%",
-				borderRadius: 2,
+				borderRadius: 3,
 				overflow: "hidden",
-				mt: 2,
-				border: "1px solid #ccc",
-				position: "relative", // Ensures children don't float away
+				border: "1px solid",
+				borderColor: "divider",
+				boxShadow: "0 2px 12px rgba(0,0,0,0.12)",
 			}}
 		>
-			<MapContainer center={position} zoom={13} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
-				{/* 🗺️ Standard OpenStreetMap Tiles */}
-				<TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a> contributors' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
+			{/* Overlay hint */}
+			<Box
+				sx={{
+					position: "absolute",
+					top: 10,
+					left: "50%",
+					transform: "translateX(-50%)",
+					zIndex: 1000,
+					bgcolor: "rgba(0,0,0,0.55)",
+					color: "#fff",
+					px: 1.5,
+					py: 0.5,
+					borderRadius: 5,
+					display: "flex",
+					alignItems: "center",
+					gap: 0.5,
+					pointerEvents: "none",
+				}}
+			>
+				<MyLocationIcon sx={{ fontSize: 14 }} />
+				<Typography variant="caption">Click to set pin</Typography>
+			</Box>
 
+			<MapContainer center={position} zoom={13} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
+				<TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
 				<ClickHandler onChange={onChange} />
 				<Recenter lat={lat} lng={lng} />
-
-				{lat && lng && <Marker position={[lat, lng]} />}
+				{lat && lng && <Marker position={[lat, lng] as LatLngExpression} />}
 			</MapContainer>
 		</Box>
 	);

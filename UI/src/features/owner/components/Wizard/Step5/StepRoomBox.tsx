@@ -2,7 +2,6 @@ import { useState, useEffect, useRef } from "react";
 import { Box, Typography, Button, Stack, Alert, Divider, Paper } from "@mui/material";
 import AddIcon from "@mui/icons-material/Add";
 import type { RoomForm, AmenityConfigForm, WizardForm, UpdateRoomDTO, RoomSummary, BedForm } from "../../../types/owner.types";
-import type { RoomForm, AmenityConfigForm, WizardForm, UpdateRoomDTO, RoomSummary, BedForm } from "../../../types/owner.types";
 import { makeRoom, makeBed, toEViewType, toEPricingType, toEBedType, toEBedSize } from "../../../const/RoomConst";
 import { useCreateRoom, useUpdateRoom } from "../../../hooks/useCreateAndUpdateRoom";
 import { useDeleteRoom } from "../../../hooks/useDeleteRoom";
