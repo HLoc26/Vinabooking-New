@@ -1,6 +1,6 @@
 import { useEffect } from "react";
-import { Box, TextField, CircularProgress } from "@mui/material";
-import { useForm } from "react-hook-form";
+import { Box, TextField, CircularProgress, Typography } from "@mui/material";
+import { useForm, Controller } from "react-hook-form";
 import { useQuery } from "@tanstack/react-query";
 import { useCreateBasicAccom } from "../../../hooks/useCreateBasicAccom";
 import { useUpdateBasicAccom } from "../../../hooks/useUpdateBasicAccom";
@@ -21,45 +21,84 @@ interface BasicInfoFormValues {
 	description: string;
 }
 
+//Toggle between word count and character count, if true => word count, false => character count
+const USE_WORD_COUNT = false;
+//Limit=150 words
+const LIMIT = 150;
+
 const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSuccess }: Props) => {
 	const { mutate: createMutate, isPending: isCreating } = useCreateBasicAccom();
 	const { mutate: updateMutate, isPending: isUpdating } = useUpdateBasicAccom(form.accommodationId ?? "");
 
-	// ── RHF ──────────────────────────────────────
 	const {
 		register,
 		handleSubmit,
 		reset,
 		watch,
+		control,
 		formState: { isDirty },
 	} = useForm<BasicInfoFormValues>({
-		defaultValues: { name: form.name, description: form.description },
+		defaultValues: {
+			name: form.name,
+			description: form.description,
+		},
 	});
+
 	const watchedName = watch("name");
 	const watchedDescription = watch("description");
+
+	// 👉 Sync to parent
 	useEffect(() => {
-		setForm((prev) => ({ ...prev, name: watchedName, description: watchedDescription }));
+		setForm((prev) => ({
+			...prev,
+			name: watchedName,
+			description: watchedDescription,
+		}));
 	}, [watchedName, watchedDescription]);
-	// ── Load from cache on back-navigation ───────
+
+	// 👉 Fetch cached data
 	const { data: cachedData, isLoading: isFetching } = useQuery({
 		queryKey: ["accommodation", form.accommodationId, "basic"],
 		queryFn: () => getBasicInfo(form.accommodationId!),
 		enabled: !!form.accommodationId,
-		staleTime: 5 * 60 * 1000, // 5 minutes — no background refetch
+		staleTime: 5 * 60 * 1000,
 	});
 
 	useEffect(() => {
 		if (cachedData) {
-			reset({ name: cachedData.name, description: cachedData.description });
+			reset({
+				name: cachedData.name,
+				description: cachedData.description,
+			});
 		}
 	}, [cachedData]);
 
-	// ── Submit when parent triggers ───────────────
+	// 👉 Centralized count logic (used for submit blocking)
+	const getCount = (value: string) => {
+		if (!value) return 0;
+
+		if (USE_WORD_COUNT) {
+			return value.trim() ? value.trim().split(/\s+/).length : 0;
+		}
+
+		// 👉 Character count (toggle by switching USE_WORD_COUNT)
+		return value.length;
+	};
+
+	const currentCount = getCount(watchedDescription || "");
+	const isOverLimit = currentCount > LIMIT;
+
+	// 👉 Submit handler
 	useEffect(() => {
 		if (!triggerSubmit) return;
 
 		handleSubmit((values) => {
-			// ── Case 1: First time — POST ─────────────
+			if (isOverLimit) {
+				resetTrigger();
+				return;
+			}
+
+			// ── CREATE ──
 			if (!form.accommodationId) {
 				if (!form.rentalType || !form.accommodationType) {
 					resetTrigger();
@@ -75,8 +114,18 @@ const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSucces
 
 				createMutate(payload, {
 					onSuccess: (data) => {
-						setForm((prev) => ({ ...prev, accommodationId: data.id, name: data.name, description: data.description ?? "" }));
-						reset({ name: data.name, description: data.description ?? "" }); // ← add this
+						setForm((prev) => ({
+							...prev,
+							accommodationId: data.id,
+							name: data.name,
+							description: data.description ?? "",
+						}));
+
+						reset({
+							name: data.name,
+							description: data.description ?? "",
+						});
+
 						onSuccess();
 					},
 					onSettled: resetTrigger,
@@ -84,14 +133,14 @@ const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSucces
 				return;
 			}
 
-			// ── Case 2: No changes — skip API ─────────
+			// ── NO CHANGE ──
 			if (!isDirty) {
 				resetTrigger();
 				onSuccess();
 				return;
 			}
 
-			// ── Case 3: Has changes — PATCH ───────────
+			// ── UPDATE ──
 			const payload: UpdateAccommodationPayload = {
 				name: values.name,
 				description: values.description,
@@ -99,18 +148,27 @@ const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSucces
 
 			updateMutate(payload, {
 				onSuccess: (data) => {
-					setForm((prev) => ({ ...prev, name: data.name, description: data.description ?? "" }));
-					reset({ name: data.name, description: data.description ?? "" }); // ← add this
+					setForm((prev) => ({
+						...prev,
+						name: data.name,
+						description: data.description ?? "",
+					}));
+
+					reset({
+						name: data.name,
+						description: data.description ?? "",
+					});
+
 					onSuccess();
 				},
 				onSettled: resetTrigger,
 			});
 		})();
-	}, [triggerSubmit]);
+	}, [triggerSubmit, isOverLimit]);
 
-	// ── UI ────────────────────────────────────────
 	const isPending = isCreating || isUpdating;
 
+	// ── Loading ──
 	if (isFetching) {
 		return (
 			<Box display="flex" justifyContent="center" py={6}>
@@ -119,10 +177,54 @@ const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSucces
 		);
 	}
 
+	// ── UI ──
 	return (
 		<Box display="flex" flexDirection="column" gap={3}>
+			<Box>
+				<Typography variant="h6" fontWeight={700}>
+					Basic Information
+				</Typography>
+				<Typography variant="body2" color="text.secondary" mt={0.5}>
+					Fill in your property name and a brief description to attract potential guests.
+				</Typography>
+			</Box>
+
 			<TextField label="Property Name" {...register("name")} fullWidth disabled={isPending} />
-			<TextField label="Description" {...register("description")} multiline rows={4} fullWidth disabled={isPending} />
+
+			<Box>
+				<Typography variant="h6" fontWeight={700}>
+					Description
+				</Typography>
+				<Controller
+					name="description"
+					control={control}
+					render={({ field }) => {
+						const value = field.value || "";
+
+						const count = getCount(value);
+						const overLimit = count > LIMIT;
+						return (
+							<TextField
+								{...field}
+								label="Description"
+								multiline
+								rows={4}
+								fullWidth
+								disabled={isPending}
+								error={overLimit}
+								helperText={`${count}/${LIMIT} ${USE_WORD_COUNT ? "words" : "chars"}`}
+								FormHelperTextProps={{
+									sx: {
+										textAlign: "right",
+										marginLeft: 0,
+										color: overLimit ? "error.main" : "text.secondary",
+									},
+								}}
+							/>
+						);
+					}}
+				/>
+			</Box>
 		</Box>
 	);
 };
