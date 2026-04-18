@@ -11,6 +11,7 @@ export const BED_SIZES = ["Single (90×190cm)", "Twin (90×190cm)", "Double (135
 
 export function makeRoom(): RoomForm {
 	return {
+		tempId: crypto.randomUUID(),
 		id: nanoid(),
 		name: "",
 		description: "",
