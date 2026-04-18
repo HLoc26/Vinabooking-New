@@ -65,24 +65,36 @@ const validateRoomForSave = (room: RoomForm, form: WizardForm): { isValid: boole
 
 	const errors: string[] = [];
 
-	// Basic validation
-	if (!nameToCheck) errors.push("room name");
-	if (!isEntirePlace && priceToCheck <= 0) errors.push("valid price");
-	if (priceToCheck > MAX_PRICE) errors.push("room price exceeds 100M VND");
+	// Name
+	if (!nameToCheck) errors.push("room name is required");
 
-	if (room.maxAdults < 1) errors.push("guest capacity (min 1)");
+	// Price
+	if (isNaN(priceToCheck) || priceToCheck <= 0) {
+		errors.push("room price is required");
+	} else if (priceToCheck < 1000) {
+		errors.push("room price must be at least 1,000 VND");
+	} else if (priceToCheck > MAX_PRICE) {
+		errors.push("room price exceeds 100,000,000 VND");
+	}
+
+	// Guest capacity
+	if (room.maxAdults < 1) errors.push("guest capacity (min 1 adult)");
+
+	// Size
+	const size = room.size ?? 0;
+	if (size > 0 && size < 5) errors.push("room size must be at least 5 m²");
 
 	// Bed validation
 	if (!room.beds?.length) {
-		errors.push("at least one bed");
+		errors.push("at least one bed is required");
 	} else {
 		room.beds.forEach((bed, i) => {
-			if (!bed.name?.trim()) errors.push(`bed #${i + 1} name`);
-			if (!bed.bedType) errors.push(`bed #${i + 1} type`);
+			if (!bed.name?.trim()) errors.push(`bed #${i + 1} name is required`);
+			if (!bed.bedType) errors.push(`bed #${i + 1} type is required`);
 			const qty = bed.quantity ?? 1;
 			if (!qty || qty < 1) errors.push(`bed #${i + 1} quantity (min 1)`);
 			const bedPrice = Number(bed.price || 0);
-			if (bedPrice > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100M VND`);
+			if (bedPrice > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100,000,000 VND`);
 		});
 	}
 
@@ -218,7 +230,11 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		// Validate price field
 		if (f === "price") {
 			const numValue = Number(v);
-			val = isNaN(numValue) ? 0 : Math.min(MAX_PRICE, Math.max(0, numValue));
+			if (isNaN(numValue)) {
+				val = undefined; // let validation catch it
+			} else {
+				val = Math.min(MAX_PRICE, Math.max(0, numValue));
+			}
 		}
 
 		setInlineRoom((p) => ({ ...p, [f]: val }));
@@ -264,7 +280,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					<Typography variant="h6" fontWeight={700}>
 						Manage Rooms
 					</Typography>
-					<Typography variant="body2" color="text.secondary">
+					<Typography variant="body2" color="text.secondary" mt={0.5}>
 						Add rooms and their specific features.
 					</Typography>
 				</Box>

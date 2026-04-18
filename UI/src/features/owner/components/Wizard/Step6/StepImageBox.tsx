@@ -151,10 +151,10 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 
 			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
 				<Box>
-					<Typography variant="h5" fontWeight={800} mb={1} color="primary">
-						Property Photos
+					<Typography variant="h6" fontWeight={700}>
+						Properties Photos
 					</Typography>
-					<Typography variant="body2" color="text.secondary">
+					<Typography variant="body2" color="text.secondary" mt={0.5}>
 						Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
 					</Typography>
 				</Box>
