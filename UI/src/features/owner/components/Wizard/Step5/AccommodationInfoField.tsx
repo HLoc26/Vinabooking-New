@@ -1,4 +1,4 @@
-import { Box, Typography } from "@mui/material";
+import { Box, Typography, FormHelperText } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import { CommonFields } from "./CommonFields";
 import { StepperField } from "./StepperField";
@@ -10,6 +10,8 @@ interface Props {
 
 export default function AccommodationInfoField({ draft, set }: Props) {
 	const viewDisabled = draft.viewType === "NONE";
+	const sizeValue = draft.size ?? 0;
+	const isSizeTooSmall = sizeValue > 0 && sizeValue < 5;
 
 	return (
 		<Box>
@@ -38,8 +40,13 @@ export default function AccommodationInfoField({ draft, set }: Props) {
 					<Box display="flex" justifyContent="center">
 						<StepperField label="Bathrooms" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
 					</Box>
-					<Box display="flex" justifyContent="flex-end">
-						<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+					<Box display="flex" justifyContent="flex-end" flexDirection="column" alignItems="flex-end">
+						<StepperField label="Size (m²)" value={sizeValue} onChange={(v) => set("size", v || undefined)} allowDecimal />
+						{isSizeTooSmall && (
+							<FormHelperText error sx={{ mt: 0.5, textAlign: "right" }}>
+								Minimum size is 5 m²
+							</FormHelperText>
+						)}
 					</Box>
 				</Box>
 
