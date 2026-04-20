@@ -195,6 +195,10 @@ const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSucces
 				<Typography variant="h6" fontWeight={700}>
 					Description
 				</Typography>
+				<Typography variant="body2" color="text.secondary" mt={0.5}>
+					Add a short description of your property. Highlight key features and amenities to entice guests. (Max {LIMIT} {USE_WORD_COUNT ? "words" : "characters"})
+				</Typography>
+				<Box mt={1.5} />
 				<Controller
 					name="description"
 					control={control}
@@ -212,12 +216,14 @@ const StepBasicInfoBox = ({ form, setForm, triggerSubmit, resetTrigger, onSucces
 								fullWidth
 								disabled={isPending}
 								error={overLimit}
-								helperText={`${count}/${LIMIT} ${USE_WORD_COUNT ? "words" : "chars"}`}
-								FormHelperTextProps={{
-									sx: {
-										textAlign: "right",
-										marginLeft: 0,
-										color: overLimit ? "error.main" : "text.secondary",
+								helperText={`${count}/${LIMIT} ${USE_WORD_COUNT ? "words" : "characters"}`}
+								slotProps={{
+									formHelperText: {
+										sx: {
+											textAlign: "right",
+											marginLeft: 0,
+											color: overLimit ? "error.main" : "text.secondary",
+										},
 									},
 								}}
 							/>
