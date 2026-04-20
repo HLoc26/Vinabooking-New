@@ -24,8 +24,9 @@ export function CommonFields({
 	const priceValue = draft.price ?? 0;
 
 	const isPriceOverMax = priceValue > MAX_PRICE;
-	const isPriceUnderMin = priceValue < 0;
-	const isInvalid = isPriceOverMax || isPriceUnderMin;
+	const isPriceUnderMin = priceValue > 0 && priceValue < 1000;
+	const isPriceZeroOrNeg = priceValue < 0;
+	const isInvalid = isPriceOverMax || isPriceUnderMin || isPriceZeroOrNeg;
 
 	const disableSave = isInvalid;
 	const disableNext = isInvalid;
@@ -66,7 +67,8 @@ export function CommonFields({
 				<Box>
 					<NumberField label="Price" suffix="VND" value={priceValue} onValueChange={handlePriceChange} max={MAX_PRICE} />
 
-					{isPriceOverMax && <FormHelperText error>Price cannot exceed 100 million</FormHelperText>}
+					{isPriceOverMax && <FormHelperText error>Price cannot exceed 100,000,000 VND</FormHelperText>}
+					{isPriceUnderMin && <FormHelperText error>Price must be at least 1,000 VND</FormHelperText>}
 				</Box>
 
 				<TextField

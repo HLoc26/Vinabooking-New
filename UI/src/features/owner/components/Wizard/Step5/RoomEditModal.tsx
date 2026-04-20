@@ -60,24 +60,36 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 
 		const errors: string[] = [];
 
-		// Validation rules
-		if (!nameToCheck) errors.push("room name");
-		if (!isEntirePlace && priceToCheck <= 0) errors.push("valid price");
-		if (priceToCheck > MAX_PRICE) errors.push("room price exceeds 100M VND");
+		// Name
+		if (!nameToCheck) errors.push("room name is required");
 
+		// Price
+		if (isNaN(priceToCheck) || priceToCheck <= 0) {
+			errors.push("room price is required");
+		} else if (priceToCheck < 1000) {
+			errors.push("room price must be at least 1,000 VND");
+		} else if (priceToCheck > MAX_PRICE) {
+			errors.push("room price exceeds 100,000,000 VND");
+		}
+
+		// Guest capacity
 		if (draft.maxAdults < 1) errors.push("guest capacity (min 1 adult)");
+
+		// Size
+		const size = draft.size ?? 0;
+		if (size > 0 && size < 5) errors.push("room size must be at least 5 m²");
 
 		// Bed validation
 		if (!draft.beds?.length) {
-			errors.push("at least one bed");
+			errors.push("at least one bed is required");
 		} else {
 			draft.beds.forEach((bed, i) => {
-				if (!bed.name?.trim()) errors.push(`bed #${i + 1} name`);
-				if (!bed.bedType) errors.push(`bed #${i + 1} type`);
+				if (!bed.name?.trim()) errors.push(`bed #${i + 1} name is required`);
+				if (!bed.bedType) errors.push(`bed #${i + 1} type is required`);
 				const qty = bed.quantity ?? 1;
 				if (!qty || qty < 1) errors.push(`bed #${i + 1} quantity (min 1)`);
 				const price = Number(bed.price || 0);
-				if (price > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100M VND`);
+				if (price > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100,000,000 VND`);
 			});
 		}
 
