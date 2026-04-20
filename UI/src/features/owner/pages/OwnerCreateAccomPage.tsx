@@ -143,7 +143,7 @@ const OwnerCreateAccomPage = () => {
 			return;
 		}
 
-		setValidationError(null); // Xóa lỗi cũ trước khi tiến hành
+		setValidationError(null);
 
 		// Các bước 0, 1, 2, 4 dùng triggerSubmit chung
 		if (step === 0 || step === 1 || step === 2 || step === 4) {
@@ -168,12 +168,9 @@ const OwnerCreateAccomPage = () => {
 		// Bước 3 (Rooms)
 		if (step === 3) {
 			if (form.rentalType === "ENTIRE_PLACE") {
-				// Chỉ Entire Place mới cần trigger gọi API từ bên trong StepRoomsBox
 				setTriggerRoomSave(true);
 				return;
 			} else {
-				// Shared/Private Room: Dữ liệu đã được lưu vào form.rooms qua Modal rồi
-				// Chỉ cần chuyển bước nếu validateStep ở trên đã pass
 				setCompleted((prev) => new Set(prev).add(3));
 				setStep(4);
 				return;
@@ -272,57 +269,75 @@ const OwnerCreateAccomPage = () => {
 
 	const isLastStep = step === STEP_META.length - 1;
 
-	// ── Layout (V2 Style) ───────────────────────────────────────────────────────
+	// ── Layout ───────────────────────────────────────────────────────────────────
 
 	return (
-		<Box sx={{ mx: "auto", mt: 5, px: 3, maxWidth: 1200, pb: 8 }}>
-			<Typography variant="h5" fontWeight={700} mb={0.5} px={0.5}>
-				List Your Property
-			</Typography>
-			<Typography variant="body2" color="text.secondary" mb={3} px={0.5}>
-				Fill in the details below to publish your accommodation.
-			</Typography>
+		<Box
+			sx={{
+				bgcolor: "background.default",
+				minHeight: "100vh",
+				py: 6,
+				px: 3,
+			}}
+		>
+			<Box sx={{ mx: "auto", maxWidth: 1200, pb: 8 }}>
+				<Typography variant="h5" fontWeight={700} mb={0.5} px={0.5} color="common.white">
+					List Your Property
+				</Typography>
+				<Typography variant="body2" color="text.secondary" mb={3} px={0.5}>
+					Fill in the details below to publish your accommodation.
+				</Typography>
 
-			<Box display="flex" gap={3} alignItems="flex-start">
-				<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} rentalType={form.rentalType} />
+				<Box display="flex" gap={3} alignItems="flex-start">
+					<CreateAccommStepper step={step} completed={completed} goToStep={goToStep} rentalType={form.rentalType} />
 
-				<Box flex={1} minWidth={0}>
-					<Paper elevation={0} sx={{ p: 4, borderRadius: 3, border: "1px solid", borderColor: "divider" }}>
-						{validationError && (
-							<Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
-								{validationError}
-							</Alert>
-						)}
-
-						{renderStep()}
-
-						<Box mt={5} display="flex" justifyContent="space-between" alignItems="center">
-							<Button variant="outlined" disabled={step === 0} onClick={back} sx={{ minWidth: 100, borderRadius: 2 }}>
-								Back
-							</Button>
-
-							<Typography variant="caption" color="text.disabled">
-								Step {step + 1} of {STEP_META.length}
-							</Typography>
-
-							{isLastStep ? (
-								<Button
-									variant="contained"
-									color="success"
-									sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }}
-									onClick={next}
-									disabled={isPending}
-									startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : null}
-								>
-									{isPending ? "Publishing..." : "Publish Listing"}
-								</Button>
-							) : (
-								<Button variant="contained" onClick={next} sx={{ minWidth: 100, borderRadius: 2, fontWeight: 600 }}>
-									Next
-								</Button>
+					<Box flex={1} minWidth={0}>
+						<Paper
+							elevation={0}
+							sx={{
+								p: 4,
+								borderRadius: 4,
+								border: "1px solid rgba(0,0,0,0.08)",
+								boxShadow: "0 10px 40px rgba(0,0,0,0.03)",
+								backgroundColor: "background.paper",
+							}}
+						>
+							{validationError && (
+								<Alert severity="error" sx={{ mb: 3, borderRadius: 2 }}>
+									{validationError}
+								</Alert>
 							)}
-						</Box>
-					</Paper>
+
+							{renderStep()}
+
+							<Box mt={5} display="flex" justifyContent="space-between" alignItems="center">
+								<Button variant="outlined" disabled={step === 0} onClick={back} sx={{ minWidth: 100, borderRadius: 2 }}>
+									Back
+								</Button>
+
+								<Typography variant="caption" color="text.disabled">
+									Step {step + 1} of {STEP_META.length}
+								</Typography>
+
+								{isLastStep ? (
+									<Button
+										variant="contained"
+										color="success"
+										sx={{ minWidth: 140, borderRadius: 2, fontWeight: 700 }}
+										onClick={next}
+										disabled={isPending}
+										startIcon={isPending ? <CircularProgress size={16} color="inherit" /> : null}
+									>
+										{isPending ? "Publishing..." : "Publish Listing"}
+									</Button>
+								) : (
+									<Button variant="contained" onClick={next} sx={{ minWidth: 100, borderRadius: 2, fontWeight: 600 }}>
+										Next
+									</Button>
+								)}
+							</Box>
+						</Paper>
+					</Box>
 				</Box>
 			</Box>
 		</Box>
