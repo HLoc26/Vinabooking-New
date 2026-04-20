@@ -125,9 +125,6 @@ const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrig
 				/>
 				{isPending && <CircularProgress size={16} sx={{ ml: 0.5 }} />}
 			</Box>
-
-			<Divider />
-
 			<Grid container spacing={2}>
 				<Grid size={{ xs: 12, sm: 6 }}>
 					<CountryComboBox value={address.country ?? ""} onChange={handleCountryChange} />

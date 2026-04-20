@@ -128,10 +128,11 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm, trigge
 		<Box>
 			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
 				<Box>
-					<Typography variant="h5" fontWeight={800} mb={1} color="primary">
+					<Typography variant="h6" fontWeight={700}>
 						Select Facilities & Amenities
 					</Typography>
-					<Typography variant="body2" color="text.secondary">
+
+					<Typography variant="body2" color="text.secondary" mt={0.5}>
 						Click a tile to select it. Hover selected items to configure fees and notes.
 					</Typography>
 				</Box>

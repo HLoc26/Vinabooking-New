@@ -1,4 +1,4 @@
-import { Box, TextField, Typography } from "@mui/material";
+import { Box, TextField, Typography, FormHelperText } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import AccommodationInfoField from "./AccommodationInfoField";
 import { CommonFields } from "./CommonFields";
@@ -16,6 +16,8 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 
 	const isShared = rentalType === "SHARED_ROOM";
 	const viewDisabled = draft.viewType === "NONE";
+	const sizeValue = draft.size ?? 0;
+	const isSizeTooSmall = sizeValue > 0 && sizeValue < 5;
 
 	return (
 		<Box>
@@ -47,8 +49,13 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 							<Box display="flex" justifyContent="center">
 								<StepperField label="Baths" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
 							</Box>
-							<Box display="flex" justifyContent="flex-end">
-								<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+							<Box display="flex" justifyContent="flex-end" flexDirection="column" alignItems="flex-end">
+								<StepperField label="Size (m²)" value={sizeValue} onChange={(v) => set("size", v || undefined)} allowDecimal />
+								{isSizeTooSmall && (
+									<FormHelperText error sx={{ mt: 0.5, textAlign: "right" }}>
+										Minimum size is 5 m²
+									</FormHelperText>
+								)}
 							</Box>
 						</>
 					) : (
@@ -56,8 +63,13 @@ export default function RoomInfoFields({ draft, set, rentalType }: Props) {
 							<Box display="flex" justifyContent="flex-start">
 								<StepperField label="Baths" value={draft.bathroomCount} onChange={(v) => set("bathroomCount", v)} />
 							</Box>
-							<Box display="flex" justifyContent="center">
-								<StepperField label="Size (m²)" value={draft.size ?? 0} onChange={(v) => set("size", v || undefined)} allowDecimal />
+							<Box display="flex" justifyContent="center" flexDirection="column" alignItems="center">
+								<StepperField label="Size (m²)" value={sizeValue} onChange={(v) => set("size", v || undefined)} allowDecimal />
+								{isSizeTooSmall && (
+									<FormHelperText error sx={{ mt: 0.5 }}>
+										Minimum size is 5 m²
+									</FormHelperText>
+								)}
 							</Box>
 							<Box display="flex" justifyContent="flex-end" />
 						</>
