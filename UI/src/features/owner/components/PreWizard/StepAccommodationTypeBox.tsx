@@ -1,7 +1,9 @@
-import { Box, Typography, Paper, Stack } from "@mui/material";
+import { Box, Typography, Paper } from "@mui/material";
+// Importing from the top level to ensure compatibility
+import Grid from "@mui/material/Grid";
 import type { SvgIconComponent } from "@mui/icons-material";
 
-// Property icons
+// Icons
 import ApartmentIcon from "@mui/icons-material/Apartment";
 import HouseIcon from "@mui/icons-material/House";
 import VillaIcon from "@mui/icons-material/Villa";
@@ -23,15 +25,16 @@ import ForestIcon from "@mui/icons-material/Forest";
 import CategoryIcon from "@mui/icons-material/Category";
 
 import { ERentalType, EAccommodationType } from "../../../accommodation/types/accommodation.types";
-import { AccommodationToRentalMap } from "../../../accommodation/types/const";
 
-// ─── Option map: rental type → list of accommodation options ─────────────────
+// ─── Types ─────────────────────────
 
 interface AccomOption {
 	value: EAccommodationType;
 	label: string;
 	icon: SvgIconComponent;
 }
+
+// ─── Options ───────────────────────
 
 const optionsMap: Record<ERentalType, AccomOption[]> = {
 	[ERentalType.ENTIRE_PLACE]: [
@@ -62,7 +65,7 @@ const optionsMap: Record<ERentalType, AccomOption[]> = {
 	],
 };
 
-// ─── Component ────────────────────────────────────────────────────────────────
+// ─── Component ─────────────────────
 
 interface Props {
 	rentalType: ERentalType | "";
@@ -73,7 +76,7 @@ interface Props {
 export default function StepAccommodationTypeBox({ rentalType, value, onChange }: Props) {
 	if (!rentalType) return null;
 
-	const options = optionsMap[rentalType as ERentalType] ?? [];
+	const options = optionsMap[rentalType] ?? [];
 
 	return (
 		<Box>
@@ -81,70 +84,58 @@ export default function StepAccommodationTypeBox({ rentalType, value, onChange }
 				What kind of place are you listing?
 			</Typography>
 
-			<Stack spacing={2}>
+			<Grid container spacing={2}>
 				{options.map((opt) => {
 					const selected = value === opt.value;
 					const Icon = opt.icon;
 
-					// Derive the rental type this accommodation maps to — used as a
-					// subtle hint so the owner sees the relationship is correct.
-					const mappedRental = AccommodationToRentalMap[opt.value];
-					const rentalLabel =
-						mappedRental === ERentalType.ENTIRE_PLACE
-							? "Entire place"
-							: mappedRental === ERentalType.PRIVATE_ROOM
-								? "Private room"
-								: mappedRental === ERentalType.SHARED_ROOM
-									? "Shared room"
-									: null;
-
 					return (
-						<Paper
+						<Grid
 							key={opt.value}
-							onClick={() => onChange(opt.value)}
-							elevation={selected ? 4 : 1}
-							sx={{
-								p: 3,
-								borderRadius: 3,
-								cursor: "pointer",
-								border: "2px solid",
-								borderColor: selected ? "#1976d2" : "transparent",
-								bgcolor: selected ? "rgba(25, 118, 210, 0.05)" : "background.paper",
-								transition: "all 0.25s ease",
-								display: "flex",
-								gap: 2,
-								alignItems: "flex-start",
-								"&:hover": {
-									borderColor: "#1976d2",
-									boxShadow: 3,
-									bgcolor: "rgba(25, 118, 210, 0.04)",
-								},
-							}}
+							// In MUI v6, 'item' is removed. Use 'size' instead of 'xs', 'sm', etc.
+							// If your version doesn't support 'size', use 'xs={12}' WITHOUT the 'item' prop.
+							size={{ xs: 12, sm: 6, md: 4 }}
+							sx={{ display: "flex" }}
 						>
-							<Box
+							<Paper
+								onClick={() => onChange(opt.value)}
+								elevation={selected ? 4 : 1}
 								sx={{
-									mt: 0.5,
-									color: selected ? "primary.main" : "text.secondary",
-									transition: "color 0.25s ease",
+									p: 3,
+									borderRadius: 3,
+									cursor: "pointer",
+									border: "2px solid",
+									borderColor: selected ? "primary.main" : "transparent",
+									bgcolor: selected ? "action.selected" : "background.paper",
+									transition: "all 0.2s ease",
+									display: "flex",
+									flexDirection: "column",
+									alignItems: "center",
+									justifyContent: "center",
+									textAlign: "center",
+									width: "100%",
+									minHeight: 140,
+									"&:hover": {
+										borderColor: "primary.main",
+										boxShadow: 3,
+										transform: "translateY(-2px)",
+									},
 								}}
 							>
-								<Icon />
-							</Box>
+								<Icon
+									fontSize="large"
+									sx={{
+										mb: 1,
+										color: selected ? "primary.main" : "text.secondary",
+									}}
+								/>
 
-							<Box flex={1}>
-								<Typography variant="subtitle1" fontWeight={selected ? 700 : 600} color={selected ? "primary.main" : "text.primary"} sx={{ transition: "all 0.25s ease" }}>
-									{opt.label}
-								</Typography>
-								{rentalLabel && (
-									<Typography variant="caption" color="text.disabled">
-										{rentalLabel}
-									</Typography>
-								)}
-							</Box>
-						</Paper>
+								<Typography fontWeight={selected ? 700 : 600}>{opt.label}</Typography>
+							</Paper>
+						</Grid>
 					);
 				})}
-			</Stack>
+			</Grid>
 		</Box>
 	);
 }
