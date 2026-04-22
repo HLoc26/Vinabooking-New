@@ -135,3 +135,16 @@ export const publishAccommodation = async (id: string): Promise<void> =>
 // export const getAmenities = async (): Promise<AmenityDto[]> => apiClient.get<ApiResponse<AmenityDto[]>>("/amenities").then((res) => res.data.data);
 
 // export const getFacilities = async (): Promise<FacilityDto[]> => apiClient.get<ApiResponse<FacilityDto[]>>("/facilities").then((res) => res.data.data);
+
+export type AccommodationHydrateResponse = AccommodationSummary & {
+	currentWizardStep: number;
+	rooms: RoomSummary[];
+};
+
+export const getAccommodationDraftDetail = async (id: string): Promise<AccommodationHydrateResponse> => {
+	return apiClient.get<ApiResponse<AccommodationHydrateResponse>>(`/owners/accommodations/${id}/draft`).then((res) => {
+		const { success, data, error } = res.data;
+		if (!success || !data) throw new Error(error || "Failed to fetch draft details");
+		return data;
+	});
+};
