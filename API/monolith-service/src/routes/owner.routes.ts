@@ -43,6 +43,10 @@ class OwnerRouter {
 			return this.ownerController.getDraftAccommodations(req, res);
 		});
 
+		this.router.get("/accommodations/:id/draft", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.getAccommodationDetail(req as Request<{ id: string }>, res);
+		});
+
 		this.router.get("/accommodations", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.accommodationController.getOwnerAccommodations(req, res);
 		});
