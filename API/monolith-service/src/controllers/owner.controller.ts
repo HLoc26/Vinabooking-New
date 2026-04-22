@@ -31,6 +31,17 @@ class OwnerController {
 		return ResponseHelper.success<DraftAccommodation[] | null>(res, accommodations);
 	}
 
+	public async getAccommodationDetail(req: Request<{ id: string }>, res: Response) {
+		const userId = req.userId;
+		const { id } = req.params;
+
+		if (!userId) throw new BadRequestError("Missing user identity");
+
+		const draftDetail = await this.#ownerService.getDraftForHydration(userId, id);
+
+		return ResponseHelper.success(res, draftDetail);
+	}
+
 	public async upgradeRole(req: UpgradeOwnerRequest, res: Response<ApiResponse<UpgradeOwnerResponse>>) {
 		const userId = req.userId;
 		const { businessName, contactPhone, taxId } = req.body;

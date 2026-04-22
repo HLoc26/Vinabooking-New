@@ -1,9 +1,16 @@
 import BadRequestError from "@/errors/BadRequestError";
+import { NotFoundError } from "@/errors";
 import { AccommodationRepository, ImageRepository, OwnerRepository } from "@/repositories";
 import { AccommodationService, BookingService } from "@/services";
-import { AccommodationWithDetails, DraftAccommodation } from "@/types/accommodation.types";
+import { DraftAccommodation } from "@/types/accommodation.types";
 import { EEntityType } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
+
+interface IWizardStepData {
+	address: unknown;
+	facilities: unknown[];
+	rooms?: unknown[];
+}
 
 class OwnerService {
 	readonly #ownerRepo: OwnerRepository;
@@ -28,32 +35,55 @@ class OwnerService {
 		const accommodations = await this.#accommodationRepo.findDraftByOwnerId(ownerId);
 		const accommodationsWithSteps = await Promise.all(
 			accommodations.map(async (acc) => {
-				const step = await this.calculateWizardStep(acc);
+				const imageCount = await this.#imageRepo.countByEntity(acc.id, EEntityType.ACCOMMODATION);
+				const step = await this.calculateWizardStep(acc, imageCount);
 				return { ...acc, currentWizardStep: step };
 			})
 		);
 		return accommodationsWithSteps;
 	}
 
-	private async calculateWizardStep(accommodation: AccommodationWithDetails): Promise<number> {
+	private async calculateWizardStep(accommodation: IWizardStepData, imageCount: number): Promise<number> {
 		if (!accommodation.address) {
 			return 1;
 		}
 
-		if (accommodation.facilities.length === 0) {
+		if (!accommodation.facilities || accommodation.facilities.length === 0) {
 			return 2;
 		}
 
-		// @ts-ignore
 		if (!accommodation.rooms || accommodation.rooms.length === 0) {
 			return 3;
 		}
-
-		const imageCount = await this.#imageRepo.countByEntity(accommodation.id, EEntityType.ACCOMMODATION);
 		if (imageCount === 0) {
 			return 4;
 		}
 		return 5;
+	}
+
+	public async getDraftForHydration(ownerId: string, accommodationId: string) {
+		const accDetails = await this.#accommodationRepo.getOwnerDraftDetails(accommodationId, ownerId);
+		if (!accDetails) {
+			throw new NotFoundError("Draft accommodation not found or unauthorized access.");
+		}
+
+		const accommImages = await this.#imageRepo.getEntityImageBatch(EEntityType.ACCOMMODATION, [accommodationId]);
+		const roomIds = accDetails.rooms.map((r) => r.id);
+		const roomImages = roomIds.length > 0 ? await this.#imageRepo.getEntityImageBatch(EEntityType.ROOM, roomIds) : [];
+		const formattedImages = [
+			...accommImages.map((img) => ({ ...img, target: "accommodation" })),
+			...roomImages.map((img) => {
+				const ref = img.references[0];
+				return { ...img, target: "room", roomId: ref?.entityId };
+			}),
+		];
+		const currentWizardStep = await this.calculateWizardStep(accDetails, accommImages.length);
+
+		return {
+			...accDetails,
+			currentWizardStep,
+			images: formattedImages,
+		};
 	}
 
 	public async upgradeToOwner(userId: string, data: { businessName: string; contactPhone: string; taxId?: string }) {
