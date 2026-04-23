@@ -1,10 +1,12 @@
 # Vinabooking
 
-Welcome to Vinabooking, a comprehensive online platform for accommodation booking. This repository contains the full-stack application, comprising a microservices-based backend and a modern React frontend.
+Welcome to Vinabooking, a comprehensive online platform for accommodation booking. This repository contains the full-stack application, comprising a monolithic backend and a modern React frontend.
+
+**Project Documentation:** [docs/](docs/)
 
 ## Architecture
 
-The Vinabooking application follows a microservices architecture for its backend, built with Node.js and TypeScript, communicating primarily via gRPC. A dedicated API Gateway acts as the single entry point. The frontend is a single-page application developed with React and Vite, consuming the APIs exposed by the backend. The entire system is containerized using Docker and orchestrated with Docker Compose for easy deployment and development.
+The Vinabooking application follows a monolithic architecture for its backend, built with Node.js and TypeScript. The frontend is a single-page application developed with React and Vite, consuming the APIs exposed by the backend. The entire system is containerized using Docker and orchestrated with Docker Compose for easy deployment and development.
 
 ## Core Features
 
@@ -14,16 +16,15 @@ The Vinabooking application follows a microservices architecture for its backend
 *   **Booking System:** Seamless reservation and booking process.
 *   **Reviews & Ratings:** Users can leave reviews and ratings for accommodations.
 *   **Image Management:** Upload and display images for accommodations and users.
-*   **Email Notifications:** Transactional emails for booking confirmations, etc.
 
 ## Technology Stack
 
-*   **Frontend:** React, TypeScript, Vite
+*   **Frontend:** React 19, TypeScript, Vite, MUI, Redux Toolkit, React Query
 *   **Backend:** Node.js, TypeScript, Express.js
 *   **Database:** MySQL (via Prisma ORM)
-*   **Inter-service Communication:** gRPC
+*   **Cache:** Redis
+*   **Infrastructure:** AWS (Cognito, S3)
 *   **Containerization:** Docker, Docker Compose
-*   **Process Management:** PM2 (for non-containerized backend development)
 *   **Version Control:** Git
 
 ## Getting Started
@@ -37,26 +38,28 @@ To get the Vinabooking application up and running on your local machine, follow 
     ```
 
 2.  **Backend Setup:**
-    Follow the detailed instructions in the [API/README.md](./API/README.md) for environment configuration, gRPC code generation, database setup, and installing dependencies for all backend services.
+    Follow the detailed instructions in the [API/monolith-service/README.md](./API/monolith-service/README.md) for environment configuration, database setup, and installing dependencies.
 
 3.  **Frontend Setup:**
-    Follow the detailed instructions in the [UI/README.md](./UI/README.md) for environment configuration and installing dependencies for the frontend application.
+    Follow the detailed instructions in the [UI/README.md](./UI/README.md) for environment configuration and installing dependencies.
 
 4.  **Run the entire application with Docker Compose (Recommended):**
-    Once you have configured the environment variables as described in the `API/README.md` and `UI/README.md`, you can start all services (backend and frontend) with a single command from the project root:
+    Once you have configured the environment variables as described in the backend and frontend READMEs, you can start all services with a single command from the project root:
 
     ```bash
     docker-compose up -d --build
     ```
-    -   The API Gateway will be accessible at `http://localhost:3000`.
+    -   The API will be accessible at `http://localhost:8080`.
     -   The UI application will be accessible at `http://localhost:5173`.
 
     Refer to the individual `README.md` files for instructions on running services locally without Docker or for specific development workflows.
 
 ## Project Structure
 
-*   `API/`: Contains all backend microservices.
+*   `API/monolith-service/`: Contains the monolithic backend service.
 *   `UI/`: Contains the React frontend application.
-*   `contracts/`: Protocol buffer (`.proto`) definitions for gRPC communication.
-*   `generated/`: Generated gRPC code (and potentially other generated files).
 *   `docker-compose.yaml`: Defines and orchestrates the multi-container Docker application.
+
+## AI Integration
+
+This project uses Gemini CLI as an AI coding assistant. The `docs/` folder serves as the single source of truth for both developers and the Gemini agent. For details on how to write code according to project conventions, refer to the local `GEMINI.md` context files and any rules configured in the workspace.
