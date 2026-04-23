@@ -234,6 +234,29 @@ class AccommodationController {
 			}
 		}
 	}
+
+	/**
+	 * GET /accommodations/:id/reviews/search?q=...
+	 */
+	public async searchReviews(req: Request, res: Response) {
+		const { id } = req.params;
+		const { q } = req.query;
+
+		if (!q) {
+			return ResponseHelper.error(res, "Query parameter 'q' is required", 400);
+		}
+
+		try {
+			const results = await this.#accommodationService.semanticSearchReviews(id, q.toString());
+			ResponseHelper.success(res, results);
+		} catch (error) {
+			if (error instanceof Error) {
+				ResponseHelper.error(res, error.message, 400);
+			} else {
+				ResponseHelper.error(res, "An unknown error occurred", 500);
+			}
+		}
+	}
 }
 
 export default AccommodationController;

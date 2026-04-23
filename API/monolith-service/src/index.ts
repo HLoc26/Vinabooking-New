@@ -40,6 +40,7 @@ import FacilityRouter from "./routes/facility.routes";
 import FacilityController from "./controllers/facility.controller";
 import OwnerController from "./controllers/owner.controller";
 import OwnerRouter from "./routes/owner.routes";
+import "@/workers/ai.worker";
 
 const app: Express = express();
 connectRedis();

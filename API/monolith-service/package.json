@@ -19,14 +19,18 @@
 		"@prisma/adapter-mariadb": "^7.3.0",
 		"@prisma/client": "^7.3.0",
 		"aws-jwt-verify": "^5.1.1",
+		"bullmq": "^5.76.1",
 		"cookie-parser": "^1.4.7",
 		"cors": "^2.8.6",
 		"dotenv": "^17.2.3",
 		"express": "^5.2.1",
+		"ioredis": "^5.10.1",
 		"multer": "^2.0.2",
 		"nodemailer": "^8.0.0",
+		"p-limit": "^7.3.0",
 		"redis": "^5.10.0",
 		"sharp": "^0.34.5",
+		"stopword": "^3.1.5",
 		"uuid": "^13.0.0"
 	},
 	"devDependencies": {

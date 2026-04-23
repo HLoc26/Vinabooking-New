@@ -34,6 +34,9 @@ class AccommodationRouter {
 		 */
 		this.router.post("/_mget", (req: Request, res: Response) => this.accommodationController.getAccommodationsBatch(req as PostAccommodationIdsRequest, res));
 
+		// GET /:id/reviews/search
+		this.router.get("/:id/reviews/search", (req: Request, res: Response) => this.accommodationController.searchReviews(req, res));
+
 		// GET /:id
 		this.router.get("/:id", (req: Request, res: Response) => this.accommodationController.getById(req as unknown as GetAccommodationByIdRequest, res));
 	}

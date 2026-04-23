@@ -14,6 +14,7 @@ class AccommodationRepository {
 			include: {
 				address: true,
 				facilities: { include: { facility: true } },
+				accommodationReviewSummaries: true,
 			},
 		});
 	}
@@ -218,6 +219,7 @@ class AccommodationRepository {
 			include: {
 				address: true,
 				facilities: { include: { facility: true } },
+				accommodationReviewSummaries: true,
 			},
 		});
 	}

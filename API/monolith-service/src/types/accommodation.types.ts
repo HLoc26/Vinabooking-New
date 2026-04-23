@@ -22,6 +22,7 @@ export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
 				facility: true;
 			};
 		};
+		accommodationReviewSummaries: true;
 	};
 }>;
 
@@ -38,6 +39,7 @@ export type AccommodationFullInfo = AccommodationWithDetails & {
 	minPrice?: number;
 	avgStar?: number | null;
 	reviewCount?: number | null;
+	reviewSummary?: string | null;
 };
 
 export interface AccommodationSearchResult {

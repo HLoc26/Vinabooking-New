@@ -17,6 +17,7 @@ import {
 } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
+import AIService from "./ai.service";
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
@@ -92,6 +93,8 @@ class AccommodationService {
 				minPrice: stats?.minPrice ? Number(stats.minPrice) : undefined,
 				avgStar: stats?.avgStar ? Number(stats.avgStar) : null,
 				reviewCount: Number(stats?.reviewCount || 0),
+				// AI review summary
+				reviewSummary: acc.accommodationReviewSummaries?.content || null,
 				// Chuẩn hóa facilities thống nhất cho cả app
 				facilities: acc.facilities
 					.filter((f) => f.isAvailable) // Đồng bộ logic filter
@@ -107,6 +110,31 @@ class AccommodationService {
 		});
 
 		return finalData;
+	}
+
+	/**
+	 * Semantic Search for Reviews with Hybrid Fallback
+	 */
+	public async semanticSearchReviews(accommodationId: string, query: string) {
+		const semanticResults = await AIService.semanticSearch(accommodationId, query);
+
+		// Hybrid Fallback: If AI returns no matches or very low score matches, 
+		// you could merge with SQL search. For now, we'll just return AI results.
+		// If you want SQL fallback:
+		if (semanticResults.length === 0) {
+			console.log(`[Accommodation Service] No semantic results. Falling back to SQL for: "${query}"`);
+			// Minimal SQL fallback logic
+			return await prismaClient.review.findMany({
+				where: {
+					accommodationId,
+					comment: { contains: query },
+					parentId: null,
+				},
+				take: 10,
+			});
+		}
+
+		return semanticResults;
 	}
 
 	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {
