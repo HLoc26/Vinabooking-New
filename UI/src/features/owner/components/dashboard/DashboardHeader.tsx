@@ -1,6 +1,7 @@
-import { Box, Typography, Button } from "@mui/material";
+import { Box, Button } from "@mui/material";
 import { Add } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
+import { PageTitleText } from "../PageTitleText";
 
 export const DashboardHeader = () => {
 	const navigate = useNavigate();
@@ -14,32 +15,7 @@ export const DashboardHeader = () => {
 				mb: 5,
 			}}
 		>
-			<Box sx={{ display: "flex", alignItems: "center", gap: 2 }}>
-				<Box
-					sx={{
-						width: 4,
-						height: 36,
-						background: "linear-gradient(180deg, #f7b740, #e8931a)",
-						borderRadius: "9999px",
-						boxShadow: "0 0 12px rgba(245,166,35,0.4)",
-						flexShrink: 0,
-					}}
-				/>
-
-				<Typography
-					variant="h4"
-					component="h1"
-					sx={{
-						fontWeight: 800,
-						letterSpacing: "-0.025em",
-						lineHeight: 1.1,
-						color: "text.primary",
-					}}
-				>
-					My Accommodations
-				</Typography>
-			</Box>
-
+			<PageTitleText>My Accommodations</PageTitleText>
 			<Button
 				variant="contained"
 				startIcon={<Add sx={{ fontSize: "1rem" }} />}

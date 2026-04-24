@@ -7,6 +7,7 @@ import { Box, Button, Chip, LinearProgress, Paper, Skeleton, Table, TableBody, T
 import { Add, ChevronRight } from "@mui/icons-material";
 import { usePushNotification } from "../../../hooks/usePushNotification";
 import { useEffect } from "react";
+import { PageTitleText } from "../components/PageTitleText";
 
 const getStepLabel = (step: number) => {
 	switch (step) {
