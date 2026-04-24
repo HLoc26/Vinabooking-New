@@ -1,13 +1,12 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAccommodationDraftDetail } from "../services/ownerApi";
 import { EAmenityType } from "../../accommodation/types/accommodation.types";
-import type { FacilityConfig } from "../types/owner.types"; // <-- Đã thêm chữ 'type'
+import type { FacilityConfig } from "../types/owner.types";
 
 export const useFetchDraftForHydration = (draftId?: string) => {
 	return useQuery({
 		queryKey: ["draftAccommodation", draftId],
 		queryFn: () => {
-			// Đã fix lỗi SonarLint (Xóa dấu !), dùng if check an toàn tuyệt đối
 			if (!draftId) throw new Error("Missing draft ID");
 			return getAccommodationDraftDetail(draftId);
 		},
@@ -74,13 +73,15 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 					name: draftData.name,
 					description: draftData.description || "",
 					address: mappedAddress,
-					facilities: draftData.facilities?.map((f) => ({
-						...f,
-						id: f.facilityId,
-						facilityId: f.facilityId,
-						fee: f.fee ? Number(f.fee) : 0,
-						note: f.note || "",
-					})) as unknown as FacilityConfig[],
+					facilities: draftData.facilities?.map(
+						(f) =>
+							({
+								id: f.facilityId,
+								name: f.name,
+								fee: f.fee ? Number(f.fee) : 0,
+								note: f.note || "",
+							}) as FacilityConfig
+					),
 					rooms: mappedRooms,
 					images: mappedImages,
 				},
