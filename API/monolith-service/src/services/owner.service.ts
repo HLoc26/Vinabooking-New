@@ -33,17 +33,31 @@ class OwnerService {
 
 	public async getDraftAccommodations(ownerId: string): Promise<DraftAccommodation[]> {
 		const accommodations = await this.#accommodationRepo.findDraftByOwnerId(ownerId);
-		const accommodationsWithSteps = await Promise.all(
-			accommodations.map(async (acc) => {
-				const imageCount = await this.#imageRepo.countByEntity(acc.id, EEntityType.ACCOMMODATION);
-				const step = await this.calculateWizardStep(acc, imageCount);
-				return { ...acc, currentWizardStep: step };
-			})
-		);
+
+		if (accommodations.length === 0) return [];
+
+		const accIds = accommodations.map((acc) => acc.id);
+		const allImages = await this.#imageRepo.getEntityImageBatch(EEntityType.ACCOMMODATION, accIds);
+
+		const imageCountMap = new Map<string, number>();
+		allImages.forEach((img) => {
+			const ref = img.references?.[0];
+			if (ref?.entityId) {
+				const currentCount = imageCountMap.get(ref.entityId) || 0;
+				imageCountMap.set(ref.entityId, currentCount + 1);
+			}
+		});
+
+		const accommodationsWithSteps = accommodations.map((acc) => {
+			const imageCount = imageCountMap.get(acc.id) || 0;
+			const step = this.calculateWizardStep(acc, imageCount);
+			return { ...acc, currentWizardStep: step };
+		});
+
 		return accommodationsWithSteps;
 	}
 
-	private async calculateWizardStep(accommodation: IWizardStepData, imageCount: number): Promise<number> {
+	private calculateWizardStep(accommodation: IWizardStepData, imageCount: number): number {
 		if (!accommodation.address) {
 			return 1;
 		}
@@ -73,11 +87,12 @@ class OwnerService {
 		const formattedImages = [
 			...accommImages.map((img) => ({ ...img, target: "accommodation" })),
 			...roomImages.map((img) => {
-				const ref = img.references[0];
+				const ref = img.references?.[0];
 				return { ...img, target: "room", roomId: ref?.entityId };
 			}),
 		];
-		const currentWizardStep = await this.calculateWizardStep(accDetails, accommImages.length);
+
+		const currentWizardStep = this.calculateWizardStep(accDetails, accommImages.length);
 
 		return {
 			...accDetails,
