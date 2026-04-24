@@ -18,7 +18,7 @@ export const OwnerRouter = () => (
 		<Route path="/login" element={<LoginPage />} />
 		<Route path="/otp" element={<ConfirmOTPPage />} />
 		<Route path="/onboard" element={<OwnerOnboardPage />} />
-		<Route path="/create" element={<OwnerCreateAccomPage />} />
+		<Route path="/create/:draftId?" element={<OwnerCreateAccomPage />} />
 		<Route
 			path="/dashboard"
 			element={
