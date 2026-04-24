@@ -1,6 +1,6 @@
-import { useState } from "react";
-import { Box, Button, Typography, Paper, Alert, CircularProgress } from "@mui/material";
-import { useNavigate } from "react-router-dom";
+import { useState, useEffect } from "react";
+import { Box, Button, Typography, Paper, Alert, CircularProgress, Backdrop } from "@mui/material";
+import { useNavigate, useParams } from "react-router-dom";
 
 import PreWizardPage from "../components/PreWizard/PreWizardPage";
 import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
@@ -15,48 +15,56 @@ import { ERentalType, EAccommodationType } from "../../accommodation/types/accom
 import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
 import { STEP_META } from "../const/StepperMetaConst";
 import { usePublishAccommodation } from "../hooks/usePublishAccommodation";
+import { useFetchDraftForHydration } from "../hooks/useFetchDraftForHydration";
 
-// ─── VALIDATION (Merged from V1) ──────────────────────────────────────────────
+// ─── VALIDATION ──────────────────────────────────────────────
+
+const validateStep0 = (form: WizardForm): string | null => {
+	if (!form.name) return "Property name is required.";
+	if (!form.description) return "Description is required.";
+	return null;
+};
+
+const validateStep1 = (form: WizardForm): string | null => {
+	const a = form.address;
+	if (!a.fullAddress) return "Please select a location.";
+	if (!a.street) return "Street is required.";
+	if (!a.city) return "City is required.";
+	if (!a.country) return "Country is required.";
+	if (a.latitude == null || a.longitude == null) return "Please confirm map location.";
+	return null;
+};
+
+const validateStep3 = (form: WizardForm): string | null => {
+	if (form.rentalType === "ENTIRE_PLACE") return null;
+	if (form.rooms.length === 0) return "Please add at least one room.";
+
+	if (form.rentalType === "SHARED_ROOM") {
+		for (const room of form.rooms) {
+			const hasMissingPrice = room.beds.some((bed) => bed.price === undefined || bed.price === null || bed.price <= 0);
+			if (hasMissingPrice) {
+				return `In a Shared Room, every bed must have a price. Check "${room.name || "Room"}".`;
+			}
+		}
+	}
+	return null;
+};
+
+const validateStep4 = (form: WizardForm): string | null => {
+	if (form.images.length === 0) return "Please upload at least one image.";
+	return null;
+};
 
 function validateStep(step: number, form: WizardForm): string | null {
 	switch (step) {
 		case 0:
-			if (!form.name) return "Property name is required.";
-			if (!form.description) return "Description is required.";
-			return null;
-
-		case 1: {
-			const a = form.address;
-			if (!a.fullAddress) return "Please select a location.";
-			if (!a.street) return "Street is required.";
-			if (!a.city) return "City is required.";
-			if (!a.country) return "Country is required.";
-			if (a.latitude == null || a.longitude == null) return "Please confirm map location.";
-			return null;
-		}
-
-		case 3: {
-			// Entire Place skips client-side list validation because it saves inline
-			if (form.rentalType === "ENTIRE_PLACE") return null;
-			if (form.rooms.length === 0) return "Please add at least one room.";
-
-			if (form.rentalType === "SHARED_ROOM") {
-				for (const room of form.rooms) {
-					const hasMissingPrice = room.beds.some((bed) => bed.price === undefined || bed.price === null || bed.price <= 0);
-					if (hasMissingPrice) {
-						return `In a Shared Room, every bed must have a price. Check "${room.name || "Room"}".`;
-					}
-				}
-			}
-			return null;
-		}
-		case 4: {
-			if (form.images.length === 0) return "Please upload at least one image.";
-			return null;
-		}
-		case 5: {
-			return null;
-		}
+			return validateStep0(form);
+		case 1:
+			return validateStep1(form);
+		case 3:
+			return validateStep3(form);
+		case 4:
+			return validateStep4(form);
 		default:
 			return null;
 	}
@@ -65,6 +73,11 @@ function validateStep(step: number, form: WizardForm): string | null {
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 const OwnerCreateAccomPage = () => {
+	const { draftId } = useParams<{ draftId: string }>();
+	const navigate = useNavigate();
+
+	const { data: hydratedData, isLoading: isDraftLoading, isError: isDraftError } = useFetchDraftForHydration(draftId);
+
 	const [preWizardDone, setPreWizardDone] = useState(false);
 	const [step, setStep] = useState(0);
 	const [completed, setCompleted] = useState<Set<number>>(new Set());
@@ -98,8 +111,37 @@ const OwnerCreateAccomPage = () => {
 		images: [],
 	});
 
-	const navigate = useNavigate();
 	const { mutateAsync: publishAsync, isPending } = usePublishAccommodation();
+
+	useEffect(() => {
+		if (isDraftError) {
+			navigate("/owner/drafts");
+			return;
+		}
+
+		if (hydratedData) {
+			setForm((prev) => ({ ...prev, ...hydratedData.mappedForm }));
+
+			const targetStep = hydratedData.targetStep;
+			const newCompleted = new Set<number>();
+			for (let i = 0; i < targetStep; i++) {
+				newCompleted.add(i);
+			}
+
+			setCompleted(newCompleted);
+			setStep(targetStep);
+			setPreWizardDone(true);
+		}
+	}, [hydratedData, isDraftError, navigate]);
+
+	if (isDraftLoading) {
+		return (
+			<Backdrop sx={{ color: "#fff", zIndex: (theme) => theme.zIndex.drawer + 1 }} open={true}>
+				<CircularProgress color="inherit" />
+				<Typography sx={{ ml: 2, fontWeight: 600 }}>Loading draft data...</Typography>
+			</Backdrop>
+		);
+	}
 
 	// ── Pre-wizard gate ──────────────────────────────────────────────────────────
 
@@ -159,8 +201,12 @@ const OwnerCreateAccomPage = () => {
 			try {
 				await publishAsync(form.accommodationId);
 				navigate("/owner/dashboard");
-			} catch (err: any) {
-				setValidationError(err.message || "Failed to publish accommodation.");
+			} catch (err: unknown) {
+				if (err instanceof Error) {
+					setValidationError(err.message);
+				} else {
+					setValidationError("Failed to publish accommodation.");
+				}
 			}
 			return;
 		}

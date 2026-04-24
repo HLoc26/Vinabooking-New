@@ -1,22 +1,9 @@
 import { useQuery } from "@tanstack/react-query";
+import { useNavigate } from "react-router-dom";
 import { getDraftAccommodations } from "../services/ownerApi";
 import { type DraftAccommodation } from "../../accommodation/types/accommodation.types";
 import { type ApiResponse } from "../../../types/Response";
-import {
-	Box,
-	Button,
-	Chip,
-	LinearProgress,
-	Paper,
-	Skeleton,
-	Table,
-	TableBody,
-	TableCell,
-	TableContainer,
-	TableHead,
-	TableRow,
-	Typography,
-} from "@mui/material";
+import { Box, Button, Chip, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Add, ChevronRight } from "@mui/icons-material";
 import { usePushNotification } from "../../../hooks/usePushNotification";
 import { useEffect } from "react";
@@ -85,6 +72,7 @@ const DraftsPage = () => {
 		queryFn: getDraftAccommodations,
 	});
 	const { pushNotification } = usePushNotification();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (isError) {
@@ -100,7 +88,7 @@ const DraftsPage = () => {
 				<Typography variant="h4" component="h1" color="text.primary">
 					My Draft Accommodations
 				</Typography>
-				<Button variant="contained" startIcon={<Add />} disabled>
+				<Button variant="contained" startIcon={<Add />} onClick={() => navigate("/owner/create")}>
 					Create New
 				</Button>
 			</Box>
@@ -139,15 +127,13 @@ const DraftsPage = () => {
 														<LinearProgress variant="determinate" value={progressValue} />
 													</Box>
 													<Box sx={{ minWidth: 35 }}>
-														<Typography variant="body2" color="text.secondary">{`${Math.round(
-															progressValue,
-														)}%`}</Typography>
+														<Typography variant="body2" color="text.secondary">{`${Math.round(progressValue)}%`}</Typography>
 													</Box>
 												</Box>
 											</TableCell>
 											<TableCell>{getStepLabel(accommodation.currentWizardStep)}</TableCell>
 											<TableCell align="right">
-												<Button variant="contained" endIcon={<ChevronRight />} disabled>
+												<Button variant="contained" endIcon={<ChevronRight />} onClick={() => navigate(`/owner/create/${accommodation.id}`)}>
 													Continue
 												</Button>
 											</TableCell>
