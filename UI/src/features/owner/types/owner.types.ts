@@ -76,7 +76,7 @@ export type AccommodationSummary = {
 	address: AddressForm | null;
 
 	facilities: {
-		facilityId: string;
+		id: string;
 		name: string;
 		fee: number;
 		note?: string;
