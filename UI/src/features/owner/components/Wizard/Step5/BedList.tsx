@@ -78,8 +78,7 @@ export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }:
 
 								{/* Size */}
 								<Box sx={{ flex: "1 1 90px", minWidth: 0 }}>
-									<TextField fullWidth size="small" select label="Size" value={bed.size || ""} onChange={(e) => onUpdate(bed.id, "size", e.target.value || undefined)}>
-										<MenuItem value="">—</MenuItem>
+									<TextField fullWidth size="small" select label="Size" value={bed.size || ""} onChange={(e) => onUpdate(bed.id, "size", e.target.value)}>
 										{BED_SIZES.map((s) => (
 											<MenuItem key={s} value={s}>
 												{s}
@@ -112,7 +111,9 @@ export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }:
 												const validated = validateQuantity(e.target.value);
 												onUpdate(bed.id, "quantity", validated);
 											}}
-											inputProps={{ min: 1 }}
+											slotProps={{
+												htmlInput: { min: 1 },
+											}}
 										/>
 									</Box>
 								)}

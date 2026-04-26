@@ -10,6 +10,8 @@ import RoomEditModal from "./RoomEditModal";
 import RoomInfoFields from "./RoomInfoField";
 import BedList from "./BedList";
 import AmenityPicker from "./AmenityPicker";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
+import { MAX_PRICE, validateRoomForSave } from "./validators";
 
 interface Props {
 	form: WizardForm;
@@ -19,9 +21,7 @@ interface Props {
 	onSaveFailed?: () => void;
 }
 
-const MAX_PRICE = 100000000; // 100 Million VND
-
-// ─── HELPERS ──────────────────────────────────────────────────────────────────
+// HELPERS
 
 function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardForm): UpdateRoomDTO {
 	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
@@ -50,56 +50,11 @@ function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardF
 			price: Number(b.price) || 0,
 			quantity: b.quantity ?? 1,
 		})),
-		amenityIds: amenities.map((a) => a.amenityId),
+		amenityIds: amenities.map((a) => a.id),
 	};
 }
 
 const isRealServerId = (id?: string) => !!id && id.length > 25 && !id.startsWith("local-");
-
-// VALIDATION HELPERS
-
-const validateRoomForSave = (room: RoomForm, form: WizardForm): { isValid: boolean; errors: string[] } => {
-	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
-	const nameToCheck = (isEntirePlace ? form.accommodationType : room.name)?.trim();
-	const priceToCheck = Number(room.price);
-
-	const errors: string[] = [];
-
-	// Name
-	if (!nameToCheck) errors.push("room name is required");
-
-	// Price
-	if (isNaN(priceToCheck) || priceToCheck <= 0) {
-		errors.push("room price is required");
-	} else if (priceToCheck < 1000) {
-		errors.push("room price must be at least 1,000 VND");
-	} else if (priceToCheck > MAX_PRICE) {
-		errors.push("room price exceeds 100,000,000 VND");
-	}
-
-	// Guest capacity
-	if (room.maxAdults < 1) errors.push("guest capacity (min 1 adult)");
-
-	// Size
-	const size = room.size ?? 0;
-	if (size > 0 && size < 5) errors.push("room size must be at least 5 m²");
-
-	// Bed validation
-	if (!room.beds?.length) {
-		errors.push("at least one bed is required");
-	} else {
-		room.beds.forEach((bed, i) => {
-			if (!bed.name?.trim()) errors.push(`bed #${i + 1} name is required`);
-			if (!bed.bedType) errors.push(`bed #${i + 1} type is required`);
-			const qty = bed.quantity ?? 1;
-			if (!qty || qty < 1) errors.push(`bed #${i + 1} quantity (min 1)`);
-			const bedPrice = Number(bed.price || 0);
-			if (bedPrice > MAX_PRICE) errors.push(`bed #${i + 1} price exceeds 100,000,000 VND`);
-		});
-	}
-
-	return { isValid: errors.length === 0, errors };
-};
 
 // COMPONENT
 
@@ -107,6 +62,8 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 	const accommodationId = form.accommodationId ?? "";
 	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
 	const rooms = form.rooms ?? [];
+
+	const { pushNotification } = usePushNotificationContext();
 
 	const [inlineRoom, setInlineRoom] = useState<RoomForm>(() => (rooms.length > 0 ? rooms[0] : makeRoom()));
 	const [inlineAmenities, setInlineAmenities] = useState<AmenityConfigForm[]>(rooms.length > 0 ? rooms[0].amenities || [] : []);
@@ -121,8 +78,6 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 	const activeId = isEntirePlace ? inlineRoom.id : editingRoom?.id;
 	const hasPersisted = isRealServerId(activeId);
 	const updateMutation = useUpdateRoom(accommodationId, hasPersisted ? activeId! : "");
-
-	const apiError = createMutation.error?.message ?? updateMutation.error?.message ?? deleteMutation.error?.message ?? null;
 
 	const stateRef = useRef({ inlineRoom, inlineAmenities });
 	useEffect(() => {
@@ -144,6 +99,9 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		if (isRealServerId(roomId)) {
 			deleteMutation.mutate(roomId, {
 				onSuccess: removeLocal,
+				onError: () => {
+					pushNotification("Failed to delete room. Please try again.", "error");
+				},
 			});
 		} else {
 			removeLocal();
@@ -157,11 +115,11 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		const { inlineRoom: currentRoom, inlineAmenities: currentAmenities } = stateRef.current;
 
 		// Validation logic
-		const { isValid, errors } = validateRoomForSave(currentRoom, form);
+		const { isValid, errors } = validateRoomForSave(currentRoom, form.rentalType, form.accommodationType);
 
 		if (!isValid) {
-			console.error("[StepRoomsBox Validation Failed]:", errors);
 			setValidationError(`Validation Error: ${errors.join(", ")}`);
+			pushNotification("Please correct the validation errors before proceeding.", "error");
 			onSaveFailed?.();
 			return;
 		}
@@ -186,8 +144,8 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 			onSaveComplete?.();
 		};
 
-		const onError = (err: unknown) => {
-			console.error("[StepRoomsBox API Error]:", err);
+		const onError = () => {
+			pushNotification("Failed to save room details. Please try again.", "error");
 			onSaveFailed?.();
 		};
 
@@ -241,7 +199,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 	};
 
 	// ─ Inline validation for displaying errors in real-time
-	const inlineValidation = validateRoomForSave(inlineRoom, form);
+	const inlineValidation = validateRoomForSave(inlineRoom, form.rentalType, form.accommodationType);
 	const canSaveInline = inlineValidation.isValid;
 
 	if (isEntirePlace) {
@@ -250,9 +208,9 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 				<Typography variant="h6" fontWeight={700} mb={2}>
 					{isEntirePlace ? "Accommodation Details" : "Room Details"}
 				</Typography>
-				{(validationError || apiError || !canSaveInline) && (
-					<Alert severity={validationError || apiError ? "error" : "warning"} sx={{ mb: 2, borderRadius: 2 }}>
-						{validationError || apiError || `Please fix: ${inlineValidation.errors.join(", ")}`}
+				{(validationError || !canSaveInline) && (
+					<Alert severity={validationError ? "error" : "warning"} sx={{ mb: 2, borderRadius: 2 }}>
+						{validationError || `Please fix: ${inlineValidation.errors.join(", ")}`}
 					</Alert>
 				)}
 				<RoomInfoFields draft={inlineRoom} set={handleSetInlineField} rentalType={form.rentalType} />
@@ -265,10 +223,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					rentalType={form.rentalType}
 				/>
 				<Divider sx={{ my: 3 }} />
-				<AmenityPicker
-					selected={inlineAmenities}
-					onToggle={(a) => setInlineAmenities((prev) => (prev.some((x) => x.amenityId === a.amenityId) ? prev.filter((x) => x.amenityId !== a.amenityId) : [...prev, a]))}
-				/>
+				<AmenityPicker selected={inlineAmenities} onToggle={(a) => setInlineAmenities((prev) => (prev.some((x) => x.id === a.id) ? prev.filter((x) => x.id !== a.id) : [...prev, a]))} />
 			</Box>
 		);
 	}
@@ -298,9 +253,9 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 				)}
 			</Box>
 
-			{(validationError || apiError) && (
+			{validationError && (
 				<Alert severity="error" sx={{ mb: 2 }}>
-					{validationError || apiError}
+					{validationError}
 				</Alert>
 			)}
 
@@ -339,8 +294,9 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					open
 					room={editingRoom}
 					draftAmenities={draftAmenities}
-					onAmenityToggle={(a) => setDraftAmenities((prev) => (prev.some((x) => x.amenityId === a.amenityId) ? prev.filter((x) => x.amenityId !== a.amenityId) : [...prev, a]))}
+					onAmenityToggle={(a) => setDraftAmenities((prev) => (prev.some((x) => x.id === a.id) ? prev.filter((x) => x.id !== a.id) : [...prev, a]))}
 					rentalType={form.rentalType}
+					accommodationType={form.accommodationType}
 					isSaving={createMutation.isPending || updateMutation.isPending}
 					onClose={() => {
 						setEditingRoom(null);
@@ -348,7 +304,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 					}}
 					onSave={(updated) => {
 						// Modal validation
-						const { isValid, errors } = validateRoomForSave(updated, form);
+						const { isValid, errors } = validateRoomForSave(updated, form.rentalType, form.accommodationType);
 
 						if (!isValid) {
 							console.error("[Modal Save Validation Failed]:", errors);
@@ -378,7 +334,9 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 							setValidationError(null);
 						};
 
-						const onError = (err: unknown) => console.error("[Modal API Error]:", err);
+						const onError = () => {
+							pushNotification("Failed to save room details. Please try again.", "error");
+						};
 
 						if (persisted) updateMutation.mutate(payload, { onSuccess, onError });
 						else createMutation.mutate(payload, { onSuccess, onError });

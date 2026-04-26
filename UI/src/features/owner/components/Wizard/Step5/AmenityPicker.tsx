@@ -11,10 +11,9 @@ export default function AmenityPicker({ selected, onToggle }: Props) {
 	const { amenities, isLoading } = useOwnerAmenities();
 
 	const mapAmenityToForm = (a: AmenityDto): AmenityConfigForm => ({
-		amenityId: a.id,
+		id: a.id,
 		name: a.name,
 		type: a.type,
-		note: "",
 	});
 
 	if (isLoading) return <Typography>Loading amenities...</Typography>;
@@ -27,7 +26,7 @@ export default function AmenityPicker({ selected, onToggle }: Props) {
 
 			<Box display="flex" flexWrap="wrap" gap={1}>
 				{amenities.map((a) => {
-					const isSelected = selected.some((x) => x.amenityId === a.id);
+					const isSelected = selected.some((x) => x.id === a.id);
 
 					return (
 						<Chip
