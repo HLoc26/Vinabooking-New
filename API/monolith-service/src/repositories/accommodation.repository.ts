@@ -319,7 +319,14 @@ class AccommodationRepository {
 					include: { facility: true },
 				},
 				rooms: {
-					include: { beds: true },
+					include: {
+						beds: true,
+						amenities: {
+							include: {
+								amenity: true,
+							},
+						},
+					},
 				},
 			},
 		});
