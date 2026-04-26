@@ -1,5 +1,5 @@
 import * as React from "react";
-import { Box, MenuItem, TextField, FormHelperText } from "@mui/material";
+import { Box, MenuItem, TextField } from "@mui/material";
 import type { RoomForm } from "../../../types/owner.types";
 import { PRICING_TYPES, VIEW_TYPES } from "../../../const/RoomConst";
 import NumberField from "../../../../../components/shared/NumberField";
@@ -18,7 +18,7 @@ export function CommonFields({
 	onValidationChange?: (state: { disableSave: boolean; disableNext: boolean }) => void;
 }) {
 	const handlePriceChange = (val: number | null) => {
-		set("price", val ?? 0); // ✅ no clamp
+		set("price", Math.max(val ?? 0, 0));
 	};
 
 	const priceValue = draft.price ?? 0;
@@ -31,7 +31,6 @@ export function CommonFields({
 	const disableSave = isInvalid;
 	const disableNext = isInvalid;
 
-	// 🔥 push state up
 	React.useEffect(() => {
 		onValidationChange?.({
 			disableSave,
@@ -65,10 +64,7 @@ export function CommonFields({
 			{/* Row 2 */}
 			<Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} alignItems="flex-start">
 				<Box>
-					<NumberField label="Price" suffix="VND" value={priceValue} onValueChange={handlePriceChange} max={MAX_PRICE} />
-
-					{isPriceOverMax && <FormHelperText error>Price cannot exceed 100,000,000 VND</FormHelperText>}
-					{isPriceUnderMin && <FormHelperText error>Price must be at least 1,000 VND</FormHelperText>}
+					<NumberField label="Price" suffix="VND" value={priceValue} onValueChange={handlePriceChange} max={MAX_PRICE} min={0} />
 				</Box>
 
 				<TextField

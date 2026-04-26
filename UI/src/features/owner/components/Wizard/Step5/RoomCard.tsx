@@ -87,7 +87,7 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 					<Chip key={b.id} icon={<KingBedOutlinedIcon />} label={b.name || b.bedType} size="small" variant="outlined" />
 				))}
 				{room.amenities.slice(0, 4).map((a) => (
-					<Chip key={a.amenityId} icon={<WifiOutlinedIcon />} label={a.name} size="small" />
+					<Chip key={a.id} icon={<WifiOutlinedIcon />} label={a.name} size="small" />
 				))}
 				{room.amenities.length > 4 && <Chip label={`+${room.amenities.length - 4} more`} size="small" variant="outlined" />}
 			</Stack>

@@ -1,6 +1,6 @@
 import { useQuery } from "@tanstack/react-query";
 import { getAccommodationDraftDetail } from "../services/ownerApi";
-import { EAmenityType } from "../../accommodation/types/accommodation.types";
+import { EAccommodationType, EAmenityType, ERentalType } from "../../accommodation/types/accommodation.types";
 import type { FacilityConfig } from "../types/owner.types";
 
 export const useFetchDraftForHydration = (draftId?: string) => {
@@ -51,7 +51,7 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 						price: bed.price ? Number(bed.price) : undefined,
 					})),
 					amenities: room.amenities.map((a) => ({
-						amenityId: a.id,
+						id: a.id,
 						name: a.name,
 						type: a.type as EAmenityType,
 					})),
@@ -67,8 +67,8 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 
 			return {
 				mappedForm: {
-					rentalType: draftData.rentalType,
-					accommodationType: draftData.type,
+					rentalType: draftData.rentalType as ERentalType,
+					accommodationType: draftData.type as EAccommodationType,
 					accommodationId: draftData.id,
 					name: draftData.name,
 					description: draftData.description || "",

@@ -156,7 +156,7 @@ export type FacilityConfig = FacilityConfigFromAccommodation;
 ──────────────────────────────────────────────────────── */
 
 export type AmenityConfigForm = {
-	amenityId: string;
+	id: string;
 	name: string;
 	type: EAmenityType;
 	note?: string;
@@ -328,8 +328,8 @@ export type ImageItem = {
 
 export type WizardForm = {
 	// Step 2
-	rentalType: ERentalType | "";
-	accommodationType: string;
+	rentalType: ERentalType;
+	accommodationType: EAccommodationType;
 	name: string;
 	description: string;
 
