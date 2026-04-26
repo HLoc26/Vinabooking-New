@@ -6,6 +6,7 @@ import ImageUploader from "./ImageUploader";
 import { useUploadImages } from "../../../hooks/useUploadImages";
 import { useGetImages } from "../../../hooks/useGetImages";
 import { useDeleteImage } from "../../../hooks/useDeleteImage";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 
 interface Props {
 	form: WizardForm;
@@ -17,6 +18,7 @@ interface Props {
 }
 
 const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
+	const { pushNotification } = usePushNotificationContext();
 	const [isUploading, setIsUploading] = useState(false);
 	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
 	const { mutateAsync: uploadImages } = useUploadImages();
@@ -69,8 +71,8 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 			// This is a DB image, delete it from server
 			try {
 				await deleteImage(id);
-			} catch (error) {
-				console.error("Failed to delete image from server", error);
+			} catch {
+				pushNotification("Failed to delete image. Please try again.", "error");
 				return;
 			}
 		}
@@ -107,8 +109,8 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 						}
 					}
 					onSuccess();
-				} catch (error) {
-					console.error("Upload failed", error);
+				} catch {
+					pushNotification("Failed to upload images. Please check your connection and try again.", "error");
 				} finally {
 					setIsUploading(false);
 					resetTrigger();
