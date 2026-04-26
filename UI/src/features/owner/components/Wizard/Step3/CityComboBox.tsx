@@ -2,11 +2,11 @@ import { useState, useRef, useEffect, useCallback } from "react";
 import { Box, TextField, Paper, List, ListItemButton, Radio, Typography, InputAdornment, CircularProgress } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import type { NominatimResponse } from "./nominatim.type";
 
 interface Props {
 	label?: string;
 	value: string;
-	country: string; // e.g. "Vietnam" — passed to Nominatim as countrycodes
 	countryCode: string; // ISO alpha-2, e.g. "VN"
 	onChange: (city: string) => void;
 	disabled?: boolean;
@@ -46,7 +46,7 @@ async function fetchCities(query: string, countryCode: string): Promise<string[]
 	});
 	if (!res.ok) throw new Error(`Nominatim ${res.status}`);
 
-	const data: any[] = await res.json();
+	const data: NominatimResponse[] = await res.json();
 
 	// Extract city name: prefer display_name split or name field
 	const names = data.map((item) => item.name || item.display_name?.split(",")[0]?.trim() || "").filter(Boolean);
@@ -55,7 +55,7 @@ async function fetchCities(query: string, countryCode: string): Promise<string[]
 	return [...new Set(names)];
 }
 
-export default function CityComboBox({ label = "City", value, country, countryCode, onChange, disabled = false }: Props) {
+export default function CityComboBox({ label = "City", value, countryCode, onChange, disabled = false }: Props) {
 	const [open, setOpen] = useState(false);
 	const [query, setQuery] = useState("");
 	const [options, setOptions] = useState<string[]>([]);

@@ -3,14 +3,18 @@ import type { LatLngExpression } from "leaflet";
 import { useEffect } from "react";
 import { Box, Typography } from "@mui/material";
 import MyLocationIcon from "@mui/icons-material/MyLocation";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
+import type { WizardForm } from "../../../types/owner.types";
 
 type Props = {
 	lat: number | null;
 	lng: number | null;
-	onChange: (data: any) => void;
+	onChange: (data: Partial<WizardForm["address"]>) => void;
 };
 
-function ClickHandler({ onChange }: { onChange: (data: any) => void }) {
+function ClickHandler({ onChange }: { onChange: (data: Partial<WizardForm["address"]>) => void }) {
+	const { pushNotification } = usePushNotificationContext();
+
 	useMapEvents({
 		async click(e) {
 			const { lat, lng } = e.latlng;
@@ -33,8 +37,6 @@ function ClickHandler({ onChange }: { onChange: (data: any) => void }) {
 					longitude: lng,
 					fullAddress: data.display_name || "",
 					street: [addr.house_number, addr.road || addr.pedestrian].filter(Boolean).join(" "),
-					ward: addr.suburb || addr.village || addr.neighbourhood || addr.hamlet || "",
-					district: addr.city_district || addr.county || addr.state_district || "",
 					city,
 					country,
 					// pass raw ISO code if available
@@ -42,6 +44,7 @@ function ClickHandler({ onChange }: { onChange: (data: any) => void }) {
 				});
 			} catch (err) {
 				console.error("Reverse geocode failed:", err);
+				pushNotification("Reverse geocode failed. Please select your country and city manually.", "warning");
 				onChange({ latitude: lat, longitude: lng });
 			}
 		},
