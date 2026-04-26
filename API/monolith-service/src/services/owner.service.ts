@@ -94,7 +94,7 @@ class OwnerService {
 		const formattedRooms = accDetails.rooms.map((room) => ({
 			...room,
 			amenities: room.amenities.map((a) => ({
-				amenityId: a.amenity.id,
+				id: a.amenity.id,
 				name: a.amenity.name,
 				type: a.amenity.type,
 				isAvailable: true,
