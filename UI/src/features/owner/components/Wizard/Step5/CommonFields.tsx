@@ -13,7 +13,7 @@ export function CommonFields({
 	onValidationChange,
 }: {
 	draft: RoomForm;
-	set: any;
+	set: <K extends keyof RoomForm>(field: K, value: RoomForm[K]) => void;
 	viewDisabled: boolean;
 	onValidationChange?: (state: { disableSave: boolean; disableNext: boolean }) => void;
 }) {

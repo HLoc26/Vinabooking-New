@@ -239,6 +239,7 @@ export interface CreateBedBatchDTO {
 	size?: EBedSize;
 	/** Only relevant when accommodationType === "SHARED_ROOM" */
 	price?: number;
+	quantity?: number;
 }
 export interface UpdateRoomDTO {
 	name: string;
