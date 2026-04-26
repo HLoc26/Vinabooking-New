@@ -105,6 +105,12 @@ class OwnerService {
 
 		return {
 			...accDetails,
+			facilities: accDetails.facilities.map((f) => ({
+				id: f.facilityId,
+				name: f.facility.name,
+				fee: f.fee,
+				note: f.note,
+			})),
 			rooms: formattedRooms,
 			currentWizardStep,
 			images: formattedImages,
