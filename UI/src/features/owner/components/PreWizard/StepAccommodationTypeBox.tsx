@@ -90,13 +90,7 @@ export default function StepAccommodationTypeBox({ rentalType, value, onChange }
 					const Icon = opt.icon;
 
 					return (
-						<Grid
-							key={opt.value}
-							// In MUI v6, 'item' is removed. Use 'size' instead of 'xs', 'sm', etc.
-							// If your version doesn't support 'size', use 'xs={12}' WITHOUT the 'item' prop.
-							size={{ xs: 12, sm: 6, md: 4 }}
-							sx={{ display: "flex" }}
-						>
+						<Grid key={opt.value} size={{ xs: 12, sm: 6, md: 4 }} sx={{ display: "flex" }}>
 							<Paper
 								onClick={() => onChange(opt.value)}
 								elevation={selected ? 4 : 1}
