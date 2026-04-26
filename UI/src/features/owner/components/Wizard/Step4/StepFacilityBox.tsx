@@ -1,5 +1,5 @@
-import { Box, Typography, Grid, Chip, CircularProgress, Alert } from "@mui/material";
-import { useOwnerFacilities } from "../../../hooks/useOwnerFacility";
+import { Box, Typography, Grid, Chip, CircularProgress } from "@mui/material";
+import { useOwnerFacilities } from "../../../hooks/useOwnerFacilities";
 import { useUpdateFacilities } from "../../../hooks/useUpdateFacilities";
 import type { WizardForm } from "../../../types/owner.types";
 import { EFacilityType, type FacilityConfig } from "../../../../accommodation/types/accommodation.types";
@@ -9,6 +9,7 @@ import type React from "react";
 // Sub-components
 import FacilityCard from "./FacilityCard";
 import FacilityEditPopout from "./FacilityEditPopout";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 
 interface StepFacilityBoxProps {
 	form: WizardForm;
@@ -19,12 +20,19 @@ interface StepFacilityBoxProps {
 }
 
 const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm, triggerSubmit, resetTrigger, onSuccess }) => {
-	const { groupedByType, isLoading, isError } = useOwnerFacilities();
+	const { groupedByType, isLoading, error } = useOwnerFacilities();
+
+	const { pushNotification } = usePushNotificationContext();
+
+	useEffect(() => {
+		if (error) {
+			pushNotification(error.message, "error");
+		}
+	}, [error, pushNotification]);
 
 	// API Hook for saving
 	const { mutate, isPending } = useUpdateFacilities(form.accommodationId ?? "");
 
-	// Track if the user actually made changes to avoid unnecessary API calls
 	const [hasChanged, setHasChanged] = useState(false);
 
 	// Flatten the grouped facilities into a single continuous array
@@ -116,12 +124,6 @@ const StepFacilityBox: React.FC<StepFacilityBoxProps> = ({ form, setForm, trigge
 			<Box display="flex" justifyContent="center" py={6}>
 				<CircularProgress />
 			</Box>
-		);
-	if (isError)
-		return (
-			<Alert severity="error" sx={{ borderRadius: 2 }}>
-				Failed to load facilities.
-			</Alert>
 		);
 
 	return (
