@@ -2,6 +2,7 @@ import { useState, useRef, useEffect } from "react";
 import { Box, TextField, Paper, List, ListItemButton, Radio, Typography, InputAdornment, CircularProgress } from "@mui/material";
 import SearchIcon from "@mui/icons-material/Search";
 import KeyboardArrowDownIcon from "@mui/icons-material/KeyboardArrowDown";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 
 export interface CountryOption {
 	name: string; // e.g. "Vietnam"
@@ -44,6 +45,7 @@ export default function CountryComboBox({ label = "Country / Region", value, onC
 	const [countries, setCountries] = useState<CountryOption[]>([]);
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState(false);
+	const { pushNotification } = usePushNotificationContext();
 	const containerRef = useRef<HTMLDivElement>(null);
 
 	// Load once on first open
@@ -56,6 +58,7 @@ export default function CountryComboBox({ label = "Country / Region", value, onC
 			setCountries(list);
 		} catch {
 			setError(true);
+			pushNotification("Failed to load countries. Check your connection.", "error");
 		} finally {
 			setLoading(false);
 		}
@@ -182,14 +185,6 @@ export default function CountryComboBox({ label = "Country / Region", value, onC
 								<CircularProgress size={22} />
 								<Typography variant="caption" display="block" mt={1} color="text.secondary">
 									Loading countries...
-								</Typography>
-							</Box>
-						)}
-
-						{!loading && error && (
-							<Box sx={{ py: 3, textAlign: "center" }}>
-								<Typography variant="body2" color="error">
-									Failed to load countries. Check your connection.
 								</Typography>
 							</Box>
 						)}

@@ -1,5 +1,5 @@
 import { useEffect, useState } from "react";
-import { Box, Grid, TextField, Typography, Divider, Chip, CircularProgress, InputAdornment } from "@mui/material";
+import { Box, Grid, TextField, Typography, Chip, CircularProgress, InputAdornment } from "@mui/material";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
 import ErrorOutlineIcon from "@mui/icons-material/ErrorOutline";
 import PublicIcon from "@mui/icons-material/Public";
@@ -10,6 +10,7 @@ import CountryComboBox from "./CountryComboBox";
 import CityComboBox from "./CityComBoBox";
 
 import { useUpdateAddress } from "../../../hooks/useUpdateAddress";
+import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import type { WizardForm, UpdateAddressPayload } from "../../../types/owner.types";
 
 interface Props {
@@ -36,6 +37,7 @@ const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrig
 	const { address, accommodationId } = form;
 	const { mutate, isPending } = useUpdateAddress(accommodationId ?? "");
 	const [hasChanged, setHasChanged] = useState(false);
+	const { pushNotification } = usePushNotificationContext();
 
 	const update = (data: Partial<WizardForm["address"]>) => {
 		setForm((prev) => ({
@@ -74,6 +76,7 @@ const StepAddressBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrig
 					placeId = extra.placeId;
 				} catch (err) {
 					console.error("Reverse geocode failed:", err);
+					pushNotification("Reverse geocode failed. Using default postal code and place ID.", "warning");
 				}
 			}
 
