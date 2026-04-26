@@ -16,6 +16,7 @@ import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
 import { STEP_META } from "../const/StepperMetaConst";
 import { usePublishAccommodation } from "../hooks/usePublishAccommodation";
 import { useFetchDraftForHydration } from "../hooks/useFetchDraftForHydration";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 
 // ─── VALIDATION ──────────────────────────────────────────────
 
@@ -73,6 +74,7 @@ function validateStep(step: number, form: WizardForm): string | null {
 // ─── PAGE ─────────────────────────────────────────────────────────────────────
 
 const OwnerCreateAccomPage = () => {
+	const { pushNotification } = usePushNotificationContext();
 	const { draftId } = useParams<{ draftId: string }>();
 	const navigate = useNavigate();
 
@@ -195,18 +197,16 @@ const OwnerCreateAccomPage = () => {
 
 		if (step === 5) {
 			if (!form.accommodationId) {
-				setValidationError("Could not find accommodation ID to publish.");
+				pushNotification("Could not find accommodation ID to publish.", "error");
 				return;
 			}
 			try {
 				await publishAsync(form.accommodationId);
 				navigate("/owner/dashboard");
 			} catch (err: unknown) {
-				if (err instanceof Error) {
-					setValidationError(err.message);
-				} else {
-					setValidationError("Failed to publish accommodation.");
-				}
+				console.error("[Publish Error]:", err);
+				const msg = "Failed to publish accommodation. Please check all steps and try again.";
+				pushNotification(msg, "error");
 			}
 			return;
 		}
