@@ -1,6 +1,7 @@
 import { useState, useEffect } from "react";
 import { Box, Button, Typography, Paper, Alert, CircularProgress, Backdrop } from "@mui/material";
 import { useNavigate, useParams } from "react-router-dom";
+import { ArrowBack } from "@mui/icons-material";
 
 import PreWizardPage from "../components/PreWizard/PreWizardPage";
 import StepBasicInfoBox from "../components/Wizard/Step2/StepBasicInfoBox";
@@ -327,6 +328,18 @@ const OwnerCreateAccomPage = () => {
 			}}
 		>
 			<Box sx={{ mx: "auto", maxWidth: 1200, pb: 8 }}>
+				<Button
+					startIcon={<ArrowBack />}
+					onClick={() => navigate("/owner/drafts")}
+					sx={{
+						mb: 2,
+						color: "text.secondary",
+						"&:hover": { color: "primary.main" },
+						fontWeight: 600,
+					}}
+				>
+					Back to Drafts
+				</Button>
 				<Typography variant="h5" fontWeight={700} mb={0.5} px={0.5} color="common.white">
 					List Your Property
 				</Typography>
