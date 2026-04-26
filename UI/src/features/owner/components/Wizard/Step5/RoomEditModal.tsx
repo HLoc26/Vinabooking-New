@@ -33,7 +33,7 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 
 	const [internalError, setInternalError] = useState<string | null>(null);
 
-	const set = (field: keyof RoomForm, value: any) => {
+	const set = <K extends keyof RoomForm>(field: K, value: RoomForm[K]) => {
 		setInternalError(null);
 		setDraft((prev) => {
 			if (prev[field] === value) return prev;
@@ -43,7 +43,7 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 
 	const addBed = () => setDraft((prev) => ({ ...prev, beds: [...prev.beds, makeBed()] }));
 	const removeBed = (id: string) => setDraft((prev) => ({ ...prev, beds: prev.beds.filter((b) => b.id !== id) }));
-	const updateBed = (id: string, field: keyof BedForm, value: any) =>
+	const updateBed = <K extends keyof BedForm>(id: string, field: K, value: BedForm[K]) =>
 		setDraft((prev) => ({
 			...prev,
 			beds: prev.beds.map((b) => (b.id === id ? { ...b, [field]: value } : b)),

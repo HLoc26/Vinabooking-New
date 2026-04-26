@@ -45,7 +45,7 @@ function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardF
 		beds: room.beds.map((b) => ({
 			id: b.id && b.id.length > 25 && !b.id.startsWith("local-") ? b.id : undefined,
 			name: b.name || undefined,
-			bedType: toEBedType(b.bedType) as any,
+			bedType: toEBedType(b.bedType),
 			size: toEBedSize(b.size),
 			price: Number(b.price) || 0,
 			quantity: b.quantity ?? 1,
@@ -56,7 +56,7 @@ function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardF
 
 const isRealServerId = (id?: string) => !!id && id.length > 25 && !id.startsWith("local-");
 
-// ─── VALIDATION HELPERS ──────────────────────────────────────────────────────
+// VALIDATION HELPERS
 
 const validateRoomForSave = (room: RoomForm, form: WizardForm): { isValid: boolean; errors: string[] } => {
 	const isEntirePlace = form.rentalType === "ENTIRE_PLACE";
@@ -101,7 +101,7 @@ const validateRoomForSave = (room: RoomForm, form: WizardForm): { isValid: boole
 	return { isValid: errors.length === 0, errors };
 };
 
-// ─── COMPONENT ───────────────────────────────────────────────────────────────
+// COMPONENT
 
 export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplete, onSaveFailed }: Props) {
 	const accommodationId = form.accommodationId ?? "";
@@ -150,7 +150,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		}
 	};
 
-	// ── AUTO-SAVE EFFECT (ENTIRE PLACE) ──
+	// AUTO-SAVE EFFECT (ENTIRE PLACE)
 	useEffect(() => {
 		if (!isEntirePlace || !triggerSave) return;
 
@@ -186,7 +186,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 			onSaveComplete?.();
 		};
 
-		const onError = (err: any) => {
+		const onError = (err: unknown) => {
 			console.error("[StepRoomsBox API Error]:", err);
 			onSaveFailed?.();
 		};
@@ -195,26 +195,26 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		else createMutation.mutate(payload, { onSuccess, onError });
 	}, [triggerSave, isEntirePlace]);
 
-	// ── HANDLERS ────────────────────────────────────────────────────────────────
+	// HANDLERS
 
-	const handleUpdateInlineBed = (id: string, field: keyof BedForm, value: any) => {
+	const handleUpdateInlineBed = <K extends keyof BedForm>(id: string, field: K, value: BedForm[K]) => {
 		setValidationError(null);
-		let finalValue = value;
+		let finalValue = value as BedForm[K];
 
 		// Validate price field
 		if (field === "price") {
 			const numValue = Number(value);
 			if (isNaN(numValue) || numValue < 0) {
-				finalValue = undefined;
+				finalValue = undefined as BedForm[K];
 			} else {
-				finalValue = Math.min(MAX_PRICE, numValue);
+				finalValue = Math.min(MAX_PRICE, numValue) as BedForm[K];
 			}
 		}
 
 		// Validate quantity field
 		if (field === "quantity") {
 			const numValue = Number(value);
-			finalValue = isNaN(numValue) || numValue < 1 ? 1 : numValue;
+			finalValue = (isNaN(numValue) || numValue < 1 ? 1 : numValue) as BedForm[K];
 		}
 
 		setInlineRoom((p) => ({
@@ -223,17 +223,17 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 		}));
 	};
 
-	const handleSetInlineField = (f: keyof RoomForm, v: any) => {
+	const handleSetInlineField = <K extends keyof RoomForm>(f: K, v: RoomForm[K]) => {
 		setValidationError(null);
-		let val = v;
+		let val = v as RoomForm[K];
 
 		// Validate price field
 		if (f === "price") {
 			const numValue = Number(v);
 			if (isNaN(numValue)) {
-				val = undefined; // let validation catch it
+				val = undefined as RoomForm[K]; // let validation catch it
 			} else {
-				val = Math.min(MAX_PRICE, Math.max(0, numValue));
+				val = Math.min(MAX_PRICE, Math.max(0, numValue)) as RoomForm[K];
 			}
 		}
 
@@ -378,7 +378,7 @@ export default function StepRoomsBox({ form, setForm, triggerSave, onSaveComplet
 							setValidationError(null);
 						};
 
-						const onError = (err: any) => console.error("[Modal API Error]:", err);
+						const onError = (err: unknown) => console.error("[Modal API Error]:", err);
 
 						if (persisted) updateMutation.mutate(payload, { onSuccess, onError });
 						else createMutation.mutate(payload, { onSuccess, onError });

@@ -10,7 +10,7 @@ interface Props {
 	beds: BedForm[];
 	onAdd: () => void;
 	onRemove: (id: string) => void;
-	onUpdate: (id: string, field: keyof BedForm, value: any) => void;
+	onUpdate: <K extends keyof BedForm>(id: string, field: K, value: BedForm[K]) => void;
 	rentalType?: string;
 }
 
@@ -22,7 +22,7 @@ export default function BedList({ beds, onAdd, onRemove, onUpdate, rentalType }:
 	const showQuantity = rentalType === "SHARED_ROOM" || rentalType === "PRIVATE_ROOM";
 
 	// Validation helper
-	const validateQuantity = (val: any): number => {
+	const validateQuantity = (val: string | number): number => {
 		const num = Number(val);
 		return isNaN(num) || num < 1 ? 1 : num;
 	};

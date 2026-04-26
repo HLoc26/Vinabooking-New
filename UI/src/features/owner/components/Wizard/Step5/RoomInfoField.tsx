@@ -6,7 +6,7 @@ import { StepperField } from "./StepperField";
 
 interface Props {
 	draft: RoomForm;
-	set: (field: keyof RoomForm, value: any) => void;
+	set: <K extends keyof RoomForm>(field: K, value: RoomForm[K]) => void;
 	rentalType?: string;
 }
 
