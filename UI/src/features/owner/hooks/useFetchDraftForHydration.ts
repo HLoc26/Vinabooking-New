@@ -51,9 +51,9 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 						price: bed.price ? Number(bed.price) : undefined,
 					})),
 					amenities: room.amenities.map((a) => ({
-						amenityId: a.amenityId,
-						name: a.amenity.name,
-						type: a.amenity.type as EAmenityType,
+						amenityId: a.id,
+						name: a.name,
+						type: a.type as EAmenityType,
 					})),
 				})) || [];
 

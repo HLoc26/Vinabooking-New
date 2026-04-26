@@ -90,10 +90,22 @@ class OwnerService {
 			}),
 		];
 
+		// Format amenities for the UI
+		const formattedRooms = accDetails.rooms.map((room) => ({
+			...room,
+			amenities: room.amenities.map((a) => ({
+				amenityId: a.amenity.id,
+				name: a.amenity.name,
+				type: a.amenity.type,
+				isAvailable: true,
+			})),
+		}));
+
 		const currentWizardStep = this.calculateWizardStep(accDetails, accommImages.length);
 
 		return {
 			...accDetails,
+			rooms: formattedRooms,
 			currentWizardStep,
 			images: formattedImages,
 		};

@@ -275,19 +275,9 @@ export interface BedSummary {
 
 export interface AmenitySummaryEntry {
 	id: string;
-	note: string | null;
-	createdAt: string;
-	updatedAt: string;
-	roomId: string;
-	amenityId: string;
-	amenity: {
-		id: string;
-		name: string;
-		type: string;
-		description: string;
-		createdAt: string;
-		updatedAt: string;
-	};
+	name: string;
+	type: string;
+	isAvailable: true;
 }
 // ---------- response shape ----------
 
