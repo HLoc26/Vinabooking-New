@@ -83,7 +83,7 @@ const CompactImageGallery = ({ images, height = 80, onImageClick }: CompactImage
 	);
 };
 
-const StepPreviewBox = ({ form }: Props) => {
+const StepPreviewBox = ({ form }: { form: WizardForm }) => {
 	const [galleryState, setGalleryState] = useState<{
 		open: boolean;
 		images: string[];
@@ -110,7 +110,6 @@ const StepPreviewBox = ({ form }: Props) => {
 	};
 
 	const handleCloseGallery = () => setGalleryState((prev) => ({ ...prev, open: false }));
-
 	return (
 		<Box display="flex" flexDirection="column" gap={3}>
 			{/* Header */}
@@ -184,7 +183,7 @@ const StepPreviewBox = ({ form }: Props) => {
 
 								<Box display="flex" flexWrap="wrap" gap={0.5} mb={1}>
 									{room.amenities.map((am) => (
-										<Chip key={am.amenityId} label={am.name} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.7rem" }} />
+										<Chip key={am.id} label={am.name} size="small" variant="outlined" sx={{ height: 20, fontSize: "0.7rem" }} />
 									))}
 								</Box>
 
