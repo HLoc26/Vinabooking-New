@@ -1,9 +1,9 @@
-// components/Wizard/PreWizard/PreWizardPage.tsx
 import { useState } from "react";
 import { Box, Button, Typography, Paper, MobileStepper } from "@mui/material";
 import StepRentalTypeBox from "./StepRentalTypeBox";
 import StepAccommodationTypeBox from "./StepAccommodationTypeBox";
 import { ERentalType, EAccommodationType } from "../../../accommodation/types/accommodation.types";
+import { usePushNotificationContext } from "../../../../context/PushNotification/hook";
 
 interface Props {
 	onComplete: (rentalType: ERentalType, accommodationType: EAccommodationType) => void;
@@ -13,24 +13,22 @@ const PreWizardPage = ({ onComplete }: Props) => {
 	const [preStep, setPreStep] = useState(0);
 	const [rentalType, setRentalType] = useState<ERentalType | "">("");
 	const [accommodationType, setAccommodationType] = useState<EAccommodationType | "">("");
-	const [error, setError] = useState<string | null>(null);
+	const { pushNotification } = usePushNotificationContext();
 
 	const handleNext = () => {
 		if (preStep === 0) {
 			if (!rentalType) {
-				setError("Please select a rental type.");
+				pushNotification("Please select a rental type.", "error");
 				return;
 			}
-			setError(null);
 			setPreStep(1);
 			return;
 		}
 		if (preStep === 1) {
 			if (!accommodationType) {
-				setError("Please select a property type.");
+				pushNotification("Please select a property type.", "error");
 				return;
 			}
-			setError(null);
 			onComplete(rentalType as ERentalType, accommodationType as EAccommodationType);
 		}
 	};
@@ -71,7 +69,6 @@ const PreWizardPage = ({ onComplete }: Props) => {
 						value={rentalType}
 						onChange={(val) => {
 							setRentalType(val);
-							setError(null);
 						}}
 					/>
 				)}
@@ -81,16 +78,8 @@ const PreWizardPage = ({ onComplete }: Props) => {
 						value={accommodationType}
 						onChange={(val) => {
 							setAccommodationType(val);
-							setError(null);
 						}}
 					/>
-				)}
-
-				{/* Error */}
-				{error && (
-					<Typography variant="caption" color="error" mt={2} display="block">
-						{error}
-					</Typography>
 				)}
 
 				{/* Navigation */}
@@ -99,7 +88,6 @@ const PreWizardPage = ({ onComplete }: Props) => {
 						variant="outlined"
 						disabled={preStep === 0}
 						onClick={() => {
-							setError(null);
 							setPreStep(0);
 						}}
 						sx={{ borderRadius: 2, minWidth: 100 }}
