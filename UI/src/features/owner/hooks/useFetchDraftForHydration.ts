@@ -76,7 +76,7 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 					facilities: draftData.facilities?.map(
 						(f) =>
 							({
-								id: f.facilityId,
+								id: f.id,
 								name: f.name,
 								fee: f.fee ? Number(f.fee) : 0,
 								note: f.note || "",
