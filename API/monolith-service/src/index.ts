@@ -97,7 +97,7 @@ const reviewService = new ReviewService({
 });
 bookingService.setAccommodationService(accommodationService);
 
-const ownerService = new OwnerService(ownerRepository, accommodationRepository, imageRepository, accommodationService, bookingService);
+const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);

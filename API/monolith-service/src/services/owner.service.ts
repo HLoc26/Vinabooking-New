@@ -1,7 +1,7 @@
 import BadRequestError from "@/errors/BadRequestError";
 import { NotFoundError } from "@/errors";
-import { AccommodationRepository, ImageRepository, OwnerRepository } from "@/repositories";
-import { AccommodationService, BookingService } from "@/services";
+import { OwnerRepository } from "@/repositories";
+import { AccommodationService, BookingService, ImageService } from "@/services";
 import { DraftAccommodation } from "@/types/accommodation.types";
 import { EEntityType } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
@@ -14,15 +14,13 @@ interface IWizardStepData {
 
 class OwnerService {
 	readonly #ownerRepo: OwnerRepository;
-	readonly #accommodationRepo: AccommodationRepository;
-	readonly #imageRepo: ImageRepository;
+	readonly #imageService: ImageService;
 	readonly #accommodationService: AccommodationService;
 	readonly #bookingService: BookingService;
 
-	constructor(ownerRepo: OwnerRepository, accommodationRepo: AccommodationRepository, imageRepo: ImageRepository, accommodationService: AccommodationService, bookingService: BookingService) {
+	constructor(ownerRepo: OwnerRepository, imageService: ImageService, accommodationService: AccommodationService, bookingService: BookingService) {
 		this.#ownerRepo = ownerRepo;
-		this.#accommodationRepo = accommodationRepo;
-		this.#imageRepo = imageRepo;
+		this.#imageService = imageService;
 		this.#accommodationService = accommodationService;
 		this.#bookingService = bookingService;
 	}
@@ -32,12 +30,12 @@ class OwnerService {
 	}
 
 	public async getDraftAccommodations(ownerId: string): Promise<DraftAccommodation[]> {
-		const accommodations = await this.#accommodationRepo.findDraftByOwnerId(ownerId);
+		const accommodations = await this.#accommodationService.getDraftAccommodationsByOwner(ownerId);
 
 		if (accommodations.length === 0) return [];
 
 		const accIds = accommodations.map((acc) => acc.id);
-		const allImages = await this.#imageRepo.getEntityImageBatch(EEntityType.ACCOMMODATION, accIds);
+		const allImages = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, accIds);
 
 		const imageCountMap = new Map<string, number>();
 		allImages.forEach((img) => {
@@ -76,14 +74,14 @@ class OwnerService {
 	}
 
 	public async getDraftForHydration(ownerId: string, accommodationId: string) {
-		const accDetails = await this.#accommodationRepo.getOwnerDraftDetails(accommodationId, ownerId);
+		const accDetails = await this.#accommodationService.getOwnerDraftDetails(accommodationId, ownerId);
 		if (!accDetails) {
 			throw new NotFoundError("Draft accommodation not found or unauthorized access.");
 		}
 
-		const accommImages = await this.#imageRepo.getEntityImageBatch(EEntityType.ACCOMMODATION, [accommodationId]);
+		const accommImages = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, [accommodationId]);
 		const roomIds = accDetails.rooms.map((r) => r.id);
-		const roomImages = roomIds.length > 0 ? await this.#imageRepo.getEntityImageBatch(EEntityType.ROOM, roomIds) : [];
+		const roomImages = roomIds.length > 0 ? await this.#imageService.getImagesBatch(EEntityType.ROOM, roomIds) : [];
 		const formattedImages = [
 			...accommImages.map((img) => ({ ...img, target: "accommodation" })),
 			...roomImages.map((img) => {

@@ -109,6 +109,14 @@ class AccommodationService {
 		return finalData;
 	}
 
+	async getDraftAccommodationsByOwner(ownerId: string): Promise<AccommodationWithDetails[]> {
+		return this.#accommodationRepository.findDraftByOwnerId(ownerId);
+	}
+
+	async getOwnerDraftDetails(accommodationId: string, ownerId: string) {
+		return this.#accommodationRepository.getOwnerDraftDetails(accommodationId, ownerId);
+	}
+
 	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {
 		// Gọi qua batch để TẬN DỤNG CACHE và tự động map hình ảnh, stats, facilities!
 		const results = await this.getAccommodationsBatch([id]);
