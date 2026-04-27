@@ -24,6 +24,7 @@ import { usePushNotificationContext } from "../../../context/PushNotification/ho
 const validateStep0 = (form: WizardForm): string | null => {
 	if (!form.name) return "Property name is required.";
 	if (!form.description) return "Description is required.";
+	if (form.description.length > 150) return "Description must not exceed 150 characters.";
 	return null;
 };
 
