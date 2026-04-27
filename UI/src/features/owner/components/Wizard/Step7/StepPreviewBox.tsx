@@ -174,7 +174,7 @@ const StepPreviewBox = ({ form }: { form: WizardForm }) => {
 										{room.name}
 									</Typography>
 									<Typography variant="caption" fontWeight={700} color="primary">
-										{room.price ? `${Number(room.price).toLocaleString()} / ${room.pricingType.toLowerCase()}` : "Price not set"}
+										{room.price ? `${Number(room.price).toLocaleString()} / ${room.pricingType.toLowerCase().replace(/_/g, " ")}` : "Price not set"}
 									</Typography>
 								</Box>
 								<Typography variant="caption" color="text.secondary" display="block" mb={1}>
