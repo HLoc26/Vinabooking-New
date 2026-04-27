@@ -142,7 +142,7 @@ const StepPreviewBox = ({ form }: { form: WizardForm }) => {
 					</Box>
 				</Box>
 
-				<Typography variant="body2" sx={{ whiteSpace: "pre-line", mb: 2, color: "text.secondary", fontSize: "0.875rem" }}>
+				<Typography variant="body2" sx={{ whiteSpace: "pre-line", mb: 2, color: "text.secondary", fontSize: "0.875rem", overflowWrap: "break-word" }}>
 					{form.description}
 				</Typography>
 
