@@ -27,7 +27,6 @@ export default tseslint.config([
 			"linebreak-style": ["error", "windows"], // endOfLine: crlf
 			"@typescript-eslint/no-unused-vars": ["warn", { argsIgnorePattern: "^_" }],
 		},
-		prettierConfig,
 	},
 	// UI config
 	globalIgnores(["dist"]),
@@ -49,6 +48,6 @@ export default tseslint.config([
 			"max-len": ["error", { code: 200 }], // printWidth: 200
 			"linebreak-style": ["error", "windows"], // endOfLine: crlf
 		},
-		prettierConfig,
 	},
+	prettierConfig,
 ]);
