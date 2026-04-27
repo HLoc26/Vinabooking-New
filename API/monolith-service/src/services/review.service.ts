@@ -5,6 +5,8 @@ import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
 import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
+import { aiQueue } from "@/clients/queue.client";
+import { EReviewJobName } from "@/types/review.types";
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
@@ -62,7 +64,22 @@ class ReviewService {
 			star: dto.star,
 		};
 
-		return this.#reviewRepository.create(data);
+		const created = await this.#reviewRepository.create(data);
+
+		await aiQueue.add(
+			EReviewJobName.PROCESS_TO_VECTORS,
+			{
+				reviewId: created.id,
+				accommodationId: created.accommodationId,
+				text: created.comment,
+				rating: created.star,
+			},
+			{
+				jobId: `review-${created.id}`,
+			}
+		);
+
+		return created;
 	}
 
 	/**

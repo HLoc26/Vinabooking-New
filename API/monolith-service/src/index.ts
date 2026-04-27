@@ -43,9 +43,16 @@ import OwnerRouter from "./routes/owner.routes";
 import AmenityRouter from "./routes/amenity.routes";
 import AmenityController from "./controllers/amenity.controller";
 import AmenityRepository from "./repositories/amenity.repository";
+import { ReviewWorker } from "./workers/review.worker";
+import { WorkerManager } from "./workers";
 
 const app: Express = express();
 connectRedis();
+
+// Workers
+const reviewWorkerInstance = new ReviewWorker();
+const workerManager = new WorkerManager([reviewWorkerInstance]);
+workerManager.start();
 
 // Clients
 const cognitoClient = CognitoClient.getInstance();
