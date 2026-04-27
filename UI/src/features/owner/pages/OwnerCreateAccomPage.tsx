@@ -38,7 +38,6 @@ const validateStep1 = (form: WizardForm): string | null => {
 };
 
 const validateStep3 = (form: WizardForm): string | null => {
-	if (form.rentalType === "ENTIRE_PLACE") return null;
 	if (form.rooms.length === 0) return "Please add at least one room.";
 
 	if (form.rentalType === "SHARED_ROOM") {
@@ -182,10 +181,13 @@ const OwnerCreateAccomPage = () => {
 	};
 
 	const next = async () => {
-		const error = validateStep(step, form);
-		if (error) {
-			setValidationError(error);
-			return;
+		// Skip validation for Step 3 if ENTIRE_PLACE because it uses internal validation and triggerRoomSave
+		if (step !== 3 || form.rentalType !== "ENTIRE_PLACE") {
+			const error = validateStep(step, form);
+			if (error) {
+				setValidationError(error);
+				return;
+			}
 		}
 
 		setValidationError(null);
