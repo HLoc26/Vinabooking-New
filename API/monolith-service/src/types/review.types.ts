@@ -7,4 +7,5 @@ export interface ReviewJobData {
 
 export enum EReviewJobName {
 	PROCESS_TO_VECTORS = "process-review",
+	SUMMARIZE_REVIEWS = "summarize-review",
 }
