@@ -123,8 +123,6 @@ export interface UpdateStatusDTO {
 
 export interface UpdateAddressDTO {
 	street: string;
-	ward?: string;
-	district?: string;
 	city: string;
 	country: string;
 	countryCode: string;

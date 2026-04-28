@@ -306,6 +306,31 @@ class AccommodationRepository {
 			totalRooms: rooms.reduce((sum, r) => sum + r.quantity, 0),
 		};
 	}
+
+	public async getOwnerDraftDetails(id: string, ownerId: string) {
+		return await this.#prismaClient.accommodation.findFirst({
+			where: {
+				id,
+				ownerId,
+			},
+			include: {
+				address: true,
+				facilities: {
+					include: { facility: true },
+				},
+				rooms: {
+					include: {
+						beds: true,
+						amenities: {
+							include: {
+								amenity: true,
+							},
+						},
+					},
+				},
+			},
+		});
+	}
 }
 
 export default AccommodationRepository;

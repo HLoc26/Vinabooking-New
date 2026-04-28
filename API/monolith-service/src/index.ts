@@ -40,6 +40,9 @@ import FacilityRouter from "./routes/facility.routes";
 import FacilityController from "./controllers/facility.controller";
 import OwnerController from "./controllers/owner.controller";
 import OwnerRouter from "./routes/owner.routes";
+import AmenityRouter from "./routes/amenity.routes";
+import AmenityController from "./controllers/amenity.controller";
+import AmenityRepository from "./repositories/amenity.repository";
 
 const app: Express = express();
 connectRedis();
@@ -58,6 +61,7 @@ const reviewRepository = new ReviewRepository(prismaClient);
 const favouriteRepository = new FavouriteRepository(prismaClient);
 const facilityRepository = new FacilityRepository(prismaClient);
 const ownerRepository = new OwnerRepository(prismaClient);
+const amenityRepository = new AmenityRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -93,7 +97,7 @@ const reviewService = new ReviewService({
 });
 bookingService.setAccommodationService(accommodationService);
 
-const ownerService = new OwnerService(ownerRepository, accommodationRepository, imageRepository, accommodationService, bookingService);
+const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
@@ -105,6 +109,7 @@ const bookingController = new BookingController(bookingService);
 const reviewController = new ReviewController(reviewService);
 const facilityController = new FacilityController(facilityRepository);
 const ownerController = new OwnerController(ownerService);
+const amenityController = new AmenityController(amenityRepository);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -116,7 +121,8 @@ const bookingRouter = new BookingRouter(express.Router(), bookingController);
 const reviewRouter = new ReviewRouter(express.Router(), reviewController);
 const facilityRouter = new FacilityRouter(express.Router(), facilityController);
 const ownerRouter = new OwnerRouter(express.Router(), ownerController, accommodationController, roomController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter);
+const amenityRouter = new AmenityRouter(express.Router(), amenityController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter, amenityRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 

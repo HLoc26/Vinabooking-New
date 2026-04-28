@@ -1,12 +1,10 @@
-import { useQuery } from "@tanstack/react-query";
-import { getDraftAccommodations } from "../services/ownerApi";
-import { type DraftAccommodation } from "../../accommodation/types/accommodation.types";
-import { type ApiResponse } from "../../../types/Response";
+import { useNavigate } from "react-router-dom";
 import { Box, Button, Chip, LinearProgress, Paper, Skeleton, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography } from "@mui/material";
 import { Add, ChevronRight } from "@mui/icons-material";
-import { usePushNotification } from "../../../hooks/usePushNotification";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import { useEffect } from "react";
 import { PageTitleText } from "../components/PageTitleText";
+import { useOwnerDraftAccommodations } from "../hooks/useOwnerDraftAccommodations";
 
 const getStepLabel = (step: number) => {
 	switch (step) {
@@ -67,11 +65,9 @@ const TableSkeleton = () => {
 };
 
 const DraftsPage = () => {
-	const { data, isLoading, isError } = useQuery<ApiResponse<DraftAccommodation[]>, Error>({
-		queryKey: ["draftAccommodations"],
-		queryFn: getDraftAccommodations,
-	});
-	const { pushNotification } = usePushNotification();
+	const { data, isLoading, isError } = useOwnerDraftAccommodations();
+	const { pushNotification } = usePushNotificationContext();
+	const navigate = useNavigate();
 
 	useEffect(() => {
 		if (isError) {
@@ -85,7 +81,7 @@ const DraftsPage = () => {
 		<Box>
 			<Box sx={{ display: "flex", justifyContent: "space-between", alignItems: "center", mb: 2 }}>
 				<PageTitleText>My Draft Accommodations</PageTitleText>
-				<Button variant="contained" startIcon={<Add />} disabled>
+				<Button variant="contained" startIcon={<Add />} onClick={() => navigate("/owner/create")}>
 					Create New
 				</Button>
 			</Box>
@@ -130,7 +126,14 @@ const DraftsPage = () => {
 											</TableCell>
 											<TableCell>{getStepLabel(accommodation.currentWizardStep)}</TableCell>
 											<TableCell align="right">
-												<Button variant="contained" endIcon={<ChevronRight />} disabled>
+												<Button
+													variant="contained"
+													endIcon={<ChevronRight />}
+													onClick={() => {
+														console.log("DraftsPage: Navigating to /owner/create/", accommodation.id);
+														navigate(`/owner/create/${accommodation.id}`);
+													}}
+												>
 													Continue
 												</Button>
 											</TableCell>

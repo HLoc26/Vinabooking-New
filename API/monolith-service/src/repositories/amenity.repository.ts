@@ -6,7 +6,6 @@ class AmenityRepository {
 	constructor(prismaClient: PrismaClient) {
 		this.#prismaClient = prismaClient;
 	}
-
 	// Lấy tất cả tiện nghi để hiển thị dropdown khi tạo phòng
 	public async findAll(): Promise<Amenity[]> {
 		return await this.#prismaClient.amenity.findMany({

@@ -9,6 +9,7 @@ import DashboardPage from "../features/owner/pages/DashboardPage";
 import ManageBookingPage from "../features/owner/pages/ManageBookingPage";
 import ManagePricePage from "../features/owner/pages/ManagePricePage";
 import DraftsPage from "../features/owner/pages/DraftsPage";
+import OwnerCreateAccomPage from "../features/owner/pages/OwnerCreateAccomPage";
 
 export const OwnerRouter = () => (
 	<Routes>
@@ -17,6 +18,7 @@ export const OwnerRouter = () => (
 		<Route path="/login" element={<LoginPage />} />
 		<Route path="/otp" element={<ConfirmOTPPage />} />
 		<Route path="/onboard" element={<OwnerOnboardPage />} />
+		<Route path="/create/:draftId?" element={<OwnerCreateAccomPage />} />
 		<Route
 			path="/dashboard"
 			element={
