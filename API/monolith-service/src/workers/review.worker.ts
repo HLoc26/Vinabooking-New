@@ -1,27 +1,110 @@
-import { getEmbeddingModel } from "@/clients/gemini.client";
+import { getEmbeddingModel, getGeminiModel } from "@/clients/gemini.client";
 import { pineconeIndex } from "@/clients/pinecone.client";
 import { EReviewJobName, ReviewJobData } from "@/types/review.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";
+import { ReviewService, ReviewSummaryService } from "@/services";
+import { AccommodationReviewSummary } from "@/generated/client";
 
 export class ReviewWorker implements IBaseWorker {
 	public readonly queueName = "ai-task";
 	public readonly concurrency = 2;
+	readonly #reviewSummaryService: ReviewSummaryService;
+	readonly #reviewService: ReviewService;
+
+	constructor(reviewSummaryService: ReviewSummaryService, reviewService: ReviewService) {
+		this.#reviewSummaryService = reviewSummaryService;
+		this.#reviewService = reviewService;
+	}
 
 	public async process(job: Job): Promise<void> {
-		// Add more job handlers here in the future
-		// case EReviewJobName.SUMMARIZE_REVIEWS:
-		//     await this.handleSummarization(job.data);
-		//     break;
 		switch (job.name) {
 			case EReviewJobName.PROCESS_TO_VECTORS.toString():
 				await this.#handleReviewIngestion(job.data);
 				break;
-
+			case EReviewJobName.SUMMARIZE_REVIEWS:
+				await this.#handleSummarization(job.data);
+				break;
 			default:
 				console.warn(`[ReviewWorker] Unknown job name: ${job.name}`);
 		}
+	}
+
+	async #handleSummarization(data: ReviewJobData) {
+		const { accommodationId } = data;
+		console.log(`[AI Worker] Starting summary for ${accommodationId}`);
+
+		const summaryInDb: AccommodationReviewSummary | null = await this.#reviewSummaryService.getSummaryByAccommodation(accommodationId);
+
+		if (summaryInDb && this.#isUpdatedWithinLastHour(summaryInDb.updatedAt)) {
+			console.log(`[AI Worker] Summary for ${accommodationId} is still fresh. Skipping.`);
+			return;
+		}
+
+		const reviews: ReviewJobData[] = await this.#reviewService.getRecentParentReviews(accommodationId, 50);
+
+		if (reviews.length < 3) {
+			console.log(`[AI Worker] Not enough reviews to summarize for ${accommodationId}`);
+			return;
+		}
+
+		const reviewsText = reviews.map((r) => `- [${r.rating} stars]: ${r.text.substring(0, 300)}`).join("\n");
+
+		const response = await this.#doSummarizeByAI(reviewsText);
+
+		const textResponse = response.text();
+
+		const parsed: { summary: string } = this.#extractJson(textResponse);
+
+		if (parsed.summary.length > 0) {
+			// 4. Update Database
+			await this.#reviewSummaryService.upsert(accommodationId, parsed.summary);
+			console.log(`[AI Worker] Successfully updated summary for ${accommodationId}`);
+		}
+	}
+
+	async #doSummarizeByAI(reviewsText: string) {
+		const prompt = `
+You are an expert travel analyst. Summarize these reviews for this accommodation. 
+Focus on pros, cons, and the overall vibe. 
+Keep it concise (max 3-4 sentences).
+Output MUST be a concise JSON object: { "summary": "..." }
+
+Reviews:
+${reviewsText}
+	`;
+
+		const result = await aiLimiter(() =>
+			getGeminiModel().generateContent({
+				contents: [{ role: "User", parts: [{ text: prompt }] }],
+				generationConfig: { responseMimeType: "application/json" },
+			})
+		);
+
+		return result.response;
+	}
+
+	#extractJson(text: string): { summary: string } {
+		try {
+			// Extract JSON if AI wrapped it in markdown
+			const jsonMatch = text.match(/\{[\s\S]*\}/);
+			const jsonString = jsonMatch ? jsonMatch[0] : text;
+			const parsed = JSON.parse(jsonString);
+			return parsed;
+		} catch (error) {
+			console.error("[AI Worker] Failed to parse summary JSON", error, text);
+			return { summary: "" };
+		}
+	}
+
+	#isUpdatedWithinLastHour(updatedAt: Date | string | number): boolean {
+		const dateToCheck = new Date(updatedAt).getTime();
+		const now = new Date().getTime();
+
+		const ONE_HOUR_IN_MS = 60 * 60 * 1000;
+
+		return now - dateToCheck <= ONE_HOUR_IN_MS && now - dateToCheck >= 0;
 	}
 
 	async #handleReviewIngestion(data: ReviewJobData): Promise<void> {
