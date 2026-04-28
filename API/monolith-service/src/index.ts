@@ -36,6 +36,8 @@ import ReviewRepository from "@/repositories/review.repository";
 import ReviewService from "@/services/review.service";
 import ReviewController from "@/controllers/review.controller";
 import ReviewRouter from "@/routes/review.routes";
+import ReviewSummaryRepository from "./repositories/review-summary.repository";
+import ReviewSummaryService from "./services/review-summary.service";
 import FacilityRouter from "./routes/facility.routes";
 import FacilityController from "./controllers/facility.controller";
 import OwnerController from "./controllers/owner.controller";
@@ -49,11 +51,6 @@ import { WorkerManager } from "./workers";
 const app: Express = express();
 connectRedis();
 
-// Workers
-const reviewWorkerInstance = new ReviewWorker();
-const workerManager = new WorkerManager([reviewWorkerInstance]);
-workerManager.start();
-
 // Clients
 const cognitoClient = CognitoClient.getInstance();
 
@@ -65,6 +62,7 @@ const imageRepository = new ImageRepository(prismaClient);
 const accommodationRepository = new AccommodationRepository(prismaClient);
 const bookingRepository = new BookingRepository(prismaClient);
 const reviewRepository = new ReviewRepository(prismaClient);
+const reviewSummaryRepository = new ReviewSummaryRepository(prismaClient);
 const favouriteRepository = new FavouriteRepository(prismaClient);
 const facilityRepository = new FacilityRepository(prismaClient);
 const ownerRepository = new OwnerRepository(prismaClient);
@@ -75,7 +73,7 @@ const s3Service = new S3Service();
 const emailService = new EmailService(s3Service);
 const authService = new AuthService({
 	cognitoClient: cognitoClient,
-	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
+	googleClientSecret: process.env.GOOGLE_CLIENT_ID!,
 	emailService: emailService,
 });
 const userService = new UserService(userRepository);
@@ -102,9 +100,15 @@ const reviewService = new ReviewService({
 	bookingService: bookingService,
 	imageService: imageService,
 });
+const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 bookingService.setAccommodationService(accommodationService);
 
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
+
+// Workers
+const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
+const workerManager = new WorkerManager([reviewWorkerInstance]);
+workerManager.start();
 
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
