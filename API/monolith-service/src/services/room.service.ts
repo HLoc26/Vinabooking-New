@@ -132,7 +132,7 @@ export class RoomService {
 		if (!isOwner) throw new BadRequestError("Room not found or unauthorized");
 
 		// 2. Update
-		const updatedRoom = await this.#roomRepository.update(roomId, data);
+		const updatedRoom = await this.#roomRepository.updateRoomAtCreate(roomId, data);
 
 		// 3. Clear Cache
 		await redisClient.del(`${this.CACHE_PREFIX}${updatedRoom.accommodationId}`);
@@ -152,7 +152,10 @@ export class RoomService {
 		const room = await this.getRoomById(roomId);
 		const deletedRoom = await this.#roomRepository.delete(roomId);
 
-		// 3. Clear Cache
+		// 3. Delete Images
+		await this.#imageService.deleteImagesByEntity(EEntityType.ROOM, roomId);
+
+		// 4. Clear Cache
 		await redisClient.del(`${this.CACHE_PREFIX}${room.accommodationId}`);
 
 		return deletedRoom;

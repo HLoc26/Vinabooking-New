@@ -13,7 +13,7 @@ interface RoomDetailModalProps {
 const RoomDetailModal = ({ room }: RoomDetailModalProps) => {
 	const { closeModal } = useModalContext();
 
-	const primaryImages = room.images.filter((img) => img.variant === "ORIGINAL");
+	const primaryImages = room.images.filter((img) => img.variants.some((v) => v.variant === "ORIGINAL"));
 	const price = Math.floor(parseFloat(room.price));
 
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
@@ -31,6 +31,7 @@ const RoomDetailModal = ({ room }: RoomDetailModalProps) => {
 	return (
 		<>
 			<DialogTitle
+				component="div"
 				sx={{
 					display: "flex",
 					alignItems: "center",

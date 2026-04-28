@@ -100,13 +100,21 @@ class AccommodationService {
 						name: f.facility.name,
 						type: f.facility.type,
 						description: f.facility.description,
-						fee: f.fee,
+						fee: Number(f.fee),
 						note: f.note,
 					})),
 			} as unknown as AccommodationFullInfo;
 		});
 
 		return finalData;
+	}
+
+	async getDraftAccommodationsByOwner(ownerId: string): Promise<AccommodationWithDetails[]> {
+		return this.#accommodationRepository.findDraftByOwnerId(ownerId);
+	}
+
+	async getOwnerDraftDetails(accommodationId: string, ownerId: string) {
+		return this.#accommodationRepository.getOwnerDraftDetails(accommodationId, ownerId);
 	}
 
 	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {

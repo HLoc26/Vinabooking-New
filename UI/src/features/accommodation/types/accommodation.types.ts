@@ -61,6 +61,21 @@ export const EAccommodationType = {
 	TOWNHOUSE: "TOWNHOUSE",
 	OTHER: "OTHER",
 } as const;
+
+export const EAmenityType = {
+	COMFORT: "COMFORT",
+	ENTERTAINMENT: "ENTERTAINMENT",
+	BATHROOM: "BATHROOM",
+	KITCHEN: "KITCHEN",
+	SAFETY: "SAFETY",
+	ACCESSIBILITY: "ACCESSIBILITY",
+	WORKSPACE: "WORKSPACE",
+	OUTDOOR: "OUTDOOR",
+	OTHER: "OTHER",
+} as const;
+
+export type EAmenityType = (typeof EAmenityType)[keyof typeof EAmenityType];
+
 export type EAccommodationType = (typeof EAccommodationType)[keyof typeof EAccommodationType];
 
 /* =========================================================================
@@ -70,8 +85,6 @@ export type EAccommodationType = (typeof EAccommodationType)[keyof typeof EAccom
 export type Address = {
 	id: string;
 	street: string;
-	ward: string;
-	district: string;
 	city: string;
 	country: string;
 	fullAddress: string;
@@ -84,7 +97,7 @@ export type Address = {
 
 export type FacilityConfig = {
 	id: string;
-	fee: string;
+	fee: number;
 	note: string | null;
 	name: string;
 	type: EFacilityType;

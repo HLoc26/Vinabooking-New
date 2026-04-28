@@ -31,6 +31,7 @@ export interface CreateBedBatchDTO {
 	name: string;
 	description?: string;
 	bedType: EBedType;
+	quantity?: number;
 	size?: string;
 	price?: number;
 }
@@ -54,4 +55,9 @@ export interface CreateRoomDTO {
 	amenityIds: string[];
 }
 
-export type UpdateRoomDTO = Partial<CreateRoomDTO>;
+export type UpdateBedDTO = Partial<CreateBedBatchDTO> & {
+	id?: string; // id có thể có (update) hoặc không (create)
+};
+export type UpdateRoomDTO = Partial<Omit<CreateRoomDTO, "beds">> & {
+	beds?: UpdateBedDTO[];
+};
