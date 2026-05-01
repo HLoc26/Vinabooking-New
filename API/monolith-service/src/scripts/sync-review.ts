@@ -2,6 +2,7 @@ import "dotenv/config";
 import prismaClient from "../clients/prisma.client";
 import { aiQueue } from "../clients/queue.client";
 import { EReviewJobName } from "../types/review.types";
+import redisClient, { connectRedis } from "@/clients/redis.client";
 
 async function syncExistingReviews() {
 	console.log("Starting sync of existing reviews to Pinecone...");
@@ -30,6 +31,34 @@ async function syncExistingReviews() {
 				continue;
 			}
 
+			const redis = await connectRedis();
+
+			let city = await redis.GET(`accommodation:${review.accommodationId}:city`);
+
+			if (!city) {
+				const accommodation = await prismaClient.accommodation.findUnique({
+					where: {
+						id: review.accommodationId,
+					},
+					select: {
+						address: true,
+					},
+				});
+
+				if (!accommodation || !accommodation.address) {
+					continue;
+				}
+
+				city = accommodation.address.city;
+
+				await redis.SET(`accommodation:${review.accommodationId}:city`, city, {
+					expiration: {
+						type: "EX",
+						value: 604800, //7d
+					},
+				});
+			}
+
 			await aiQueue.add(
 				EReviewJobName.PROCESS_TO_VECTORS,
 				{
@@ -37,6 +66,7 @@ async function syncExistingReviews() {
 					accommodationId: review.accommodationId,
 					text: review.comment,
 					rating: review.star,
+					city: city,
 				},
 				{
 					jobId: `sync-review-${review.id}`, // Prevent duplicate jobs if script is re-run

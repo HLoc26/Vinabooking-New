@@ -1,6 +1,6 @@
 import { getEmbeddingModel, getGeminiModel } from "@/clients/gemini.client";
 import { pineconeIndex } from "@/clients/pinecone.client";
-import { EReviewJobName, ReviewJobData } from "@/types/review.types";
+import { EReviewJobName, ReviewJobData, SummaryReviewJobData } from "@/types/review.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";
@@ -18,7 +18,7 @@ export class ReviewWorker implements IBaseWorker {
 		this.#reviewService = reviewService;
 	}
 
-	public async process(job: Job): Promise<void> {
+	public async process(job: Job<ReviewJobData>): Promise<void> {
 		switch (job.name) {
 			case EReviewJobName.PROCESS_TO_VECTORS.toString():
 				await this.#handleReviewIngestion(job.data);
@@ -31,7 +31,11 @@ export class ReviewWorker implements IBaseWorker {
 		}
 	}
 
-	async #handleSummarization(data: ReviewJobData) {
+	// ==========================
+	// |	Review Summary		|
+	// ==========================
+
+	async #handleSummarization(data: SummaryReviewJobData) {
 		const { accommodationId } = data;
 		console.log(`[AI Worker] Starting summary for ${accommodationId}`);
 
@@ -124,6 +128,10 @@ ${reviewsText}
 		return now - dateToCheck <= ONE_HOUR_IN_MS && now - dateToCheck >= 0;
 	}
 
+	// ==========================
+	// |	Review Upsert		|
+	// ==========================
+
 	async #handleReviewIngestion(data: ReviewJobData): Promise<void> {
 		const { reviewId, accommodationId, text, rating } = data;
 		console.log(`[AI Worker] Start ingesting review ${reviewId}`);
@@ -196,6 +204,7 @@ ${reviewsText}
 					reviewId: data.reviewId,
 					text: data.text.substring(0, 1000),
 					accommodationId: data.accommodationId,
+					city: data.city,
 					rating: data.rating,
 					sentiment: sentiment.toString(),
 					createdAt: new Date().toISOString(),
