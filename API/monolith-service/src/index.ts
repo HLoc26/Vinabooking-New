@@ -99,6 +99,7 @@ const reviewService = new ReviewService({
 	userService: userService,
 	bookingService: bookingService,
 	imageService: imageService,
+	accommodationService: accommodationService,
 });
 const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 bookingService.setAccommodationService(accommodationService);
