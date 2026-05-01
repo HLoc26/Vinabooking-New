@@ -3,6 +3,7 @@ export interface ReviewJobData extends SummaryReviewJobData {
 	text: string;
 	rating: number;
 	city: string;
+	createdAt: number; // timestamp
 }
 
 export interface SummaryReviewJobData {

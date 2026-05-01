@@ -8,7 +8,6 @@ import { ReviewResponse } from "@/types/responses/review.response";
 import { aiQueue } from "@/clients/queue.client";
 import { EReviewJobName } from "@/types/review.types";
 import redisClient from "@/clients/redis.client";
-import { create } from "node:domain";
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
@@ -120,6 +119,7 @@ class ReviewService {
 				text: created.comment,
 				rating: created.star,
 				city: city,
+				createdAt: created.createdAt,
 			},
 			{
 				jobId: `review-${created.id}`,

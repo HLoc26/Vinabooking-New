@@ -73,7 +73,7 @@ const s3Service = new S3Service();
 const emailService = new EmailService(s3Service);
 const authService = new AuthService({
 	cognitoClient: cognitoClient,
-	googleClientSecret: process.env.GOOGLE_CLIENT_ID!,
+	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 	emailService: emailService,
 });
 const userService = new UserService(userRepository);

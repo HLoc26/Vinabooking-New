@@ -22,6 +22,7 @@ async function syncExistingReviews() {
 
 		let addedCount = 0;
 		let skippedCount = 0;
+		const redis = await connectRedis();
 
 		// 2. Push each review into the Queue
 		for (const review of reviews) {
@@ -30,8 +31,6 @@ async function syncExistingReviews() {
 				skippedCount++;
 				continue;
 			}
-
-			const redis = await connectRedis();
 
 			let city = await redis.GET(`accommodation:${review.accommodationId}:city`);
 
