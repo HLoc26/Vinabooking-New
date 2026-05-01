@@ -6,7 +6,7 @@ import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";
 import { ReviewService, ReviewSummaryService } from "@/services";
 import { AccommodationReviewSummary, Review } from "@/generated/client";
-
+import redisClient from "@/clients/redis.client";
 export class ReviewWorker implements IBaseWorker {
 	public readonly queueName = "ai-task";
 	public readonly concurrency = 2;
@@ -42,7 +42,16 @@ export class ReviewWorker implements IBaseWorker {
 			return;
 		}
 
+		const reviewCountRedisKey = `accommodation:${accommodationId}:review:count`;
+
+		const newReviewCountFromRedis = await redisClient.GET(reviewCountRedisKey);
+		if (newReviewCountFromRedis && Number.parseInt(newReviewCountFromRedis) < 10) {
+			console.log(`[AI Worker] Not enough reviews to summarize for ${accommodationId}`);
+			return;
+		}
+
 		const reviews: Review[] = await this.#reviewService.getRecentParentReviews(accommodationId, 50);
+		await redisClient.SET(reviewCountRedisKey, reviews.length);
 
 		if (reviews.length < 10) {
 			console.log(`[AI Worker] Not enough reviews to summarize for ${accommodationId}`);
@@ -130,7 +139,7 @@ ${reviewsText}
 
 		const vectors = await this.#prepareVectors(data, chunkedText, sentiment);
 
-		await pineconeIndex.namespace(accommodationId).upsert({
+		await pineconeIndex.upsert({
 			records: vectors,
 		});
 
@@ -186,6 +195,7 @@ ${reviewsText}
 				metadata: {
 					reviewId: data.reviewId,
 					text: data.text.substring(0, 1000),
+					accommodationId: data.accommodationId,
 					rating: data.rating,
 					sentiment: sentiment.toString(),
 					createdAt: new Date().toISOString(),
