@@ -5,7 +5,7 @@ import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";
 import { ReviewService, ReviewSummaryService } from "@/services";
-import { AccommodationReviewSummary } from "@/generated/client";
+import { AccommodationReviewSummary, Review } from "@/generated/client";
 
 export class ReviewWorker implements IBaseWorker {
 	public readonly queueName = "ai-task";
@@ -42,14 +42,22 @@ export class ReviewWorker implements IBaseWorker {
 			return;
 		}
 
-		const reviews: ReviewJobData[] = await this.#reviewService.getRecentParentReviews(accommodationId, 50);
+		const reviews: Review[] = await this.#reviewService.getRecentParentReviews(accommodationId, 50);
 
-		if (reviews.length < 3) {
+		if (reviews.length < 10) {
 			console.log(`[AI Worker] Not enough reviews to summarize for ${accommodationId}`);
 			return;
 		}
 
-		const reviewsText = reviews.map((r) => `- [${r.rating} stars]: ${r.text.substring(0, 300)}`).join("\n");
+		// If already exists summary in Db, only summarize if new review count >= 10
+		if (summaryInDb) {
+			const newReviewCount = reviews.filter((r) => r.updatedAt > summaryInDb.updatedAt).length;
+			if (newReviewCount < 3) {
+				return;
+			}
+		}
+
+		const reviewsText = reviews.map((r) => `- [${r.star ?? 0} stars]: ${r.comment.substring(0, 300)}`).join("\n");
 
 		const response = await this.#doSummarizeByAI(reviewsText);
 
