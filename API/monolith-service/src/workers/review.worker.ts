@@ -155,10 +155,7 @@ ${reviewsText}
 	}
 
 	#processText(text: string): string {
-		return text
-			.toLowerCase()
-			.trim()
-			.replace(/[^\w\s]/g, "");
+		return text.toLowerCase().trim();
 	}
 
 	#getSentiment(rating: number): ESentiment {
@@ -193,9 +190,11 @@ ${reviewsText}
 	async #prepareVectors(data: ReviewJobData, chunks: string[], sentiment: ESentiment) {
 		const vectors = [];
 
+		const embeddingModel = getEmbeddingModel();
+
 		for (let i = 0; i < chunks.length; i++) {
 			const chunkedText = chunks[i];
-			const embedding = await aiLimiter(() => getEmbeddingModel().embedContent(chunkedText));
+			const embedding = await aiLimiter(() => embeddingModel.embedContent(chunkedText));
 
 			vectors.push({
 				id: chunks.length > 1 ? `${data.reviewId}-${i}` : data.reviewId,
@@ -207,7 +206,7 @@ ${reviewsText}
 					city: data.city,
 					rating: data.rating,
 					sentiment: sentiment.toString(),
-					createdAt: new Date().toISOString(),
+					createdAt: data.createdAt,
 				},
 			});
 		}
