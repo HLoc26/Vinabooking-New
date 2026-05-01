@@ -6,7 +6,7 @@ import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
 import { aiQueue } from "@/clients/queue.client";
-import { EReviewJobName, ReviewJobData } from "@/types/review.types";
+import { EReviewJobName } from "@/types/review.types";
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
@@ -168,15 +168,9 @@ class ReviewService {
 		return this.#reviewRepository.findByBookingAndUser(bookingId, userId);
 	}
 
-	public async getRecentParentReviews(accommodationId: string, top: number): Promise<ReviewJobData[]> {
+	public async getRecentParentReviews(accommodationId: string, top: number): Promise<Review[]> {
 		const reviews: Review[] = await this.#reviewRepository.findRecentParentReviews(accommodationId, top);
-
-		return reviews.map((r) => ({
-			accommodationId: r.accommodationId,
-			rating: r.star ?? 0,
-			reviewId: r.id,
-			text: r.comment,
-		}));
+		return reviews;
 	}
 }
 
