@@ -1,12 +1,14 @@
 import ReviewRepository from "@/repositories/review.repository";
 import UserService from "./user.service";
-import { BookingService, ImageService } from "@/services";
+import { AccommodationService, BookingService, ImageService } from "@/services";
 import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
 import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
 import { aiQueue } from "@/clients/queue.client";
 import { EReviewJobName } from "@/types/review.types";
+import redisClient from "@/clients/redis.client";
+import { create } from "node:domain";
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
@@ -14,6 +16,7 @@ export interface ReviewServiceConfig {
 	userService: UserService;
 	bookingService: BookingService;
 	imageService: ImageService;
+	accommodationService: AccommodationService;
 }
 
 class ReviewService {
@@ -21,12 +24,14 @@ class ReviewService {
 	readonly #userService: UserService;
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
+	readonly #accommodationService: AccommodationService;
 
 	constructor(config: ReviewServiceConfig) {
 		this.#reviewRepository = config.reviewRepository;
 		this.#userService = config.userService;
 		this.#bookingService = config.bookingService;
 		this.#imageService = config.imageService;
+		this.#accommodationService = config.accommodationService;
 	}
 
 	/**
@@ -46,7 +51,6 @@ class ReviewService {
 		}
 
 		// 3. Validate trạng thái (Chỉ cho review khi đã hoàn thành)
-		// Logic cũ: booking.status === "COMPLETED"
 		if (booking.status !== "COMPLETED") {
 			throw new ForbiddenError("You can only review after the booking is completed.");
 		}
@@ -66,6 +70,48 @@ class ReviewService {
 
 		const created = await this.#reviewRepository.create(data);
 
+		const city = await this.#getAccommodationCity(dto.accommodationId);
+
+		await this.#startProcessToVector(created, city);
+		await this.#startSummary(created);
+
+		return created;
+	}
+
+	async #getAccommodationCity(accommodationId: string) {
+		await redisClient.INCR(`accommodation:${accommodationId}:review:count`);
+
+		const cacheKey = `accommodation:${accommodationId}:city`;
+		let city = await redisClient.GET(cacheKey);
+
+		if (!city) {
+			const accommodation = await this.#accommodationService.getAccommodationById(accommodationId);
+
+			city = accommodation?.address!.city;
+
+			if (city) {
+				await redisClient.SET(cacheKey, city, {
+					EX: 604800, // 7 days
+				});
+				console.warn(`Data anomaly: Accommodation ${accommodationId} has reviews but no city.`);
+			}
+		}
+		return city;
+	}
+
+	async #startSummary(created: Review) {
+		await aiQueue.add(
+			EReviewJobName.SUMMARIZE_REVIEWS,
+			{
+				accommodationId: created.accommodationId,
+			},
+			{
+				jobId: `summary-${created.accommodationId}-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
+			}
+		);
+	}
+
+	async #startProcessToVector(created: Review, city: string) {
 		await aiQueue.add(
 			EReviewJobName.PROCESS_TO_VECTORS,
 			{
@@ -73,26 +119,12 @@ class ReviewService {
 				accommodationId: created.accommodationId,
 				text: created.comment,
 				rating: created.star,
+				city: city,
 			},
 			{
 				jobId: `review-${created.id}`,
 			}
 		);
-
-		await aiQueue.add(
-			EReviewJobName.SUMMARIZE_REVIEWS,
-			{
-				accommodationId: created.accommodationId,
-				reviewId: created.id,
-				text: created.comment,
-				rating: created.star,
-			},
-			{
-				jobId: `summary-${created.accommodationId}-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
-			}
-		);
-
-		return created;
 	}
 
 	/**

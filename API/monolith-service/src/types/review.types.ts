@@ -1,8 +1,12 @@
-export interface ReviewJobData {
+export interface ReviewJobData extends SummaryReviewJobData {
 	reviewId: string;
-	accommodationId: string;
 	text: string;
 	rating: number;
+	city: string;
+}
+
+export interface SummaryReviewJobData {
+	accommodationId: string;
 }
 
 export enum EReviewJobName {
