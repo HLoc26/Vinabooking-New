@@ -9,3 +9,4 @@ export { default as RoomRepository } from "./room.repository";
 export { default as UserRepository } from "./user.repository";
 export { default as OwnerRepository } from "./owner.repository";
 export { default as ImageRepository } from "./image.repository";
+export { default as ReviewSummaryRepository } from "./review-summary.repository";

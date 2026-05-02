@@ -11,3 +11,4 @@ export { default as BookingService } from "./booking.service";
 export { default as ReviewService } from "./review.service";
 export { default as FavouriteService } from "./favourite.service";
 export { default as OwnerService } from "./owner.service";
+export { default as ReviewSummaryService } from "./review-summary.service";
