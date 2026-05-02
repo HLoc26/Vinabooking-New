@@ -326,6 +326,7 @@ class AccommodationService {
 		return await this.getAccommodationById(id);
 	}
 
+	// TODO: upload profile vector
 	async publishAccommodation(ownerId: string, id: string): Promise<AccommodationFullInfo> {
 		// Lấy raw data từ DB kèm theo các bảng con
 		const acc = await this.#accommodationRepository.getForPublishValidation(id, ownerId);

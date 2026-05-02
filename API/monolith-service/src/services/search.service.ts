@@ -1,7 +1,7 @@
 import { getEmbeddingModel } from "@/clients/gemini.client";
 import { pineconeIndex, UnifiedRecordMetadata } from "@/clients/pinecone.client";
 import { redisClient } from "@/registry";
-import { AccommodationMatchStats } from "@/types/search.types";
+import { AccommodationMatchStats, MatchReasonType } from "@/types/search.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { QueryResponse, ScoredPineconeRecord } from "@pinecone-database/pinecone";
 
@@ -88,6 +88,7 @@ class SearchService {
 				profileScore: number;
 				maxReviewScore: number;
 				reviewCount: number;
+				bestReviewText: string;
 			}
 		>();
 
@@ -101,6 +102,7 @@ class SearchService {
 					profileScore: 0,
 					maxReviewScore: 0,
 					reviewCount: 0,
+					bestReviewText: "",
 				});
 			}
 
@@ -112,12 +114,20 @@ class SearchService {
 				data.reviewCount += 1;
 				if (score > data.maxReviewScore) {
 					data.maxReviewScore = score;
+					data.bestReviewText = metadata.text ?? "";
 				}
 			}
 		}
 
 		return Array.from(grouped.entries()).map(([accommodationId, data]) => {
 			const finalScore = data.profileScore * WEIGHTS.PROFILE + data.maxReviewScore * WEIGHTS.REVIEW + data.reviewCount * WEIGHTS.REVIEW_COUNT_BONUS;
+
+			const matchReasonType: MatchReasonType = data.maxReviewScore > 0 && data.bestReviewText.trim() !== "" ? "review" : "profile";
+
+			const matchReason =
+				data.maxReviewScore > 0 && data.bestReviewText.trim() !== "" //
+					? `${data.bestReviewText.trim()}`
+					: "Matches accommodation information and amenities";
 
 			return {
 				accommodationId,
@@ -126,6 +136,8 @@ class SearchService {
 					maxReviewScore: data.maxReviewScore,
 					profileScore: data.profileScore,
 					reviewCount: data.reviewCount,
+					matchReason,
+					matchReasonType,
 				},
 			};
 		});
