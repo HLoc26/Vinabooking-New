@@ -1,5 +1,5 @@
 import { getEmbeddingModel, getGeminiModel } from "@/clients/gemini.client";
-import { pineconeIndex, ReviewRecordMetadata } from "@/clients/pinecone.client";
+import { pineconeIndex, ReviewMetadata } from "@/clients/pinecone.client";
 import { EReviewJobName, ReviewJobData, SummaryReviewJobData } from "@/types/review.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
@@ -188,7 +188,7 @@ ${reviewsText}
 	}
 
 	async #prepareVectors(data: ReviewJobData, chunks: string[], sentiment: ESentiment) {
-		const vectors: { id: string; values: number[]; metadata: ReviewRecordMetadata }[] = [];
+		const vectors: { id: string; values: number[]; metadata: ReviewMetadata }[] = [];
 
 		const embeddingModel = getEmbeddingModel();
 

@@ -1,5 +1,5 @@
 import { getEmbeddingModel } from "@/clients/gemini.client";
-import { pineconeIndex, ReviewRecordMetadata } from "@/clients/pinecone.client";
+import { pineconeIndex, UnifiedRecordMetadata } from "@/clients/pinecone.client";
 import { AccommodationMatchStats } from "@/types/search.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { QueryResponse, ScoredPineconeRecord } from "@pinecone-database/pinecone";
@@ -26,7 +26,7 @@ class SearchService {
 		}
 	}
 
-	#aggregateScores(matches: ScoredPineconeRecord<ReviewRecordMetadata>[]): AccommodationMatchStats[] {
+	#aggregateScores(matches: ScoredPineconeRecord<UnifiedRecordMetadata>[]): AccommodationMatchStats[] {
 		const WEIGHTS = {
 			PROFILE: 1.0,
 			REVIEW: 1.5,
@@ -82,7 +82,7 @@ class SearchService {
 		});
 	}
 
-	async #queryVectorDb(vector: number[], location: string): Promise<QueryResponse<ReviewRecordMetadata>> {
+	async #queryVectorDb(vector: number[], location: string): Promise<QueryResponse<UnifiedRecordMetadata>> {
 		return await pineconeIndex.query({
 			vector: vector,
 			topK: 50,
