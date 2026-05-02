@@ -6,7 +6,7 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService } from "@/services";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService } from "@/services";
 import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
@@ -47,6 +47,8 @@ import AmenityController from "./controllers/amenity.controller";
 import AmenityRepository from "./repositories/amenity.repository";
 import { ReviewWorker } from "./workers/review.worker";
 import { WorkerManager } from "./workers";
+import SearchController from "./controllers/search.controller";
+import SearchRouter from "./routes/search.routes";
 
 const app: Express = express();
 connectRedis();
@@ -106,6 +108,8 @@ bookingService.setAccommodationService(accommodationService);
 
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
 
+const searchService = new SearchService();
+
 // Workers
 const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
 const workerManager = new WorkerManager([reviewWorkerInstance]);
@@ -122,6 +126,7 @@ const reviewController = new ReviewController(reviewService);
 const facilityController = new FacilityController(facilityRepository);
 const ownerController = new OwnerController(ownerService);
 const amenityController = new AmenityController(amenityRepository);
+const searchController = new SearchController(searchService, accommodationService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -134,7 +139,8 @@ const reviewRouter = new ReviewRouter(express.Router(), reviewController);
 const facilityRouter = new FacilityRouter(express.Router(), facilityController);
 const ownerRouter = new OwnerRouter(express.Router(), ownerController, accommodationController, roomController);
 const amenityRouter = new AmenityRouter(express.Router(), amenityController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter, amenityRouter);
+const searchRouter = new SearchRouter(express.Router(), searchController);
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter, amenityRouter, searchRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
