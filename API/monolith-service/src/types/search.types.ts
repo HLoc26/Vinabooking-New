@@ -5,5 +5,9 @@ export interface AccommodationMatchStats {
 		maxReviewScore: number;
 		profileScore: number;
 		reviewCount: number;
+		matchReason: string;
+		matchReasonType: MatchReasonType;
 	};
 }
+
+export type MatchReasonType = "review" | "profile";

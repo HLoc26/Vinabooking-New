@@ -1,5 +1,7 @@
 import { AccommodationService, SearchService } from "@/services";
 import { SemanticSearchRequest } from "@/types/requests/search.requests";
+import { ApiResponse } from "@/types/responses";
+import { SemanticSearchResponse } from "@/types/responses/search.response";
 import ResponseHelper from "@/utils/response";
 import { Request, Response } from "express";
 
@@ -12,13 +14,12 @@ class SearchController {
 		this.#accommodationService = accommodationService;
 	}
 
-	public async semanticSearch(req: SemanticSearchRequest, res: Response) {
+	public async semanticSearch(req: SemanticSearchRequest, res: Response<ApiResponse<SemanticSearchResponse>>) {
 		const { q: query, l: location } = req.query;
 
 		const matches = await this.#searchService.semanticSearch(query, location);
 
-		if (!matches) {
-			// Fallback: empty array
+		if (!matches || matches.length === 0) {
 			return ResponseHelper.success(res, []);
 		}
 
@@ -26,7 +27,30 @@ class SearchController {
 
 		const accommodations = await this.#accommodationService.getAccommodationsBatch(ids);
 
-		return ResponseHelper.success(res, accommodations);
+		const accInfoMap = new Map(accommodations.map((acc) => [acc.id, acc]));
+
+		const enrichedResults = matches.reduce((resultArray, match) => {
+			const dbInfo = accInfoMap.get(match.accommodationId);
+
+			if (dbInfo) {
+				resultArray.push({
+					accommodation: dbInfo,
+
+					aiMatchStats: {
+						finalScore: match.finalScore,
+						maxReviewScore: match.stats.maxReviewScore,
+						profileScore: match.stats.profileScore,
+						reviewCount: match.stats.reviewCount,
+						matchReason: match.stats.matchReason,
+						matchReasonType: match.stats.matchReasonType,
+					},
+				});
+			}
+
+			return resultArray;
+		}, [] as SemanticSearchResponse[]);
+
+		return ResponseHelper.success(res, enrichedResults);
 	}
 }
 
