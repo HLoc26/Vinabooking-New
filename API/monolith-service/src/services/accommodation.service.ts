@@ -380,7 +380,8 @@ class AccommodationService {
 			accommodationId: id,
 			name: acc.name,
 			type: acc.type,
-			city: acc.address.city,
+			lat: Number(acc.address.latitude),
+			lon: Number(acc.address.longitude),
 			description: acc.description || "",
 			facilities: acc.facilities.map((f) => f.facility.name),
 		} as PublishJobData);
