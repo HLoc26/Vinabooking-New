@@ -1,10 +1,13 @@
 import type { AccommodationDetail } from "../../accommodation/types/accommodation.types";
 
 export interface SemanticSearchParams {
-  query: string;
-  city: string;
-  lat: number;
-  lng: number;
+	query: string;
+	boundingBox: {
+		minLat: number;
+		maxLat: number;
+		minLon: number;
+		maxLon: number;
+	};
 }
 
 export interface SemanticSearchMatch {

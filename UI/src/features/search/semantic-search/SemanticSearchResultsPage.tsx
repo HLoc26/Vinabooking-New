@@ -42,11 +42,6 @@ export const SemanticSearchResultsPage: React.FC = () => {
 									<Box component="span" fontWeight={600} color="text.primary">
 										"{params.query}"
 									</Box>
-									{params.city && (
-										<Box component="span" sx={{ ml: 1 }}>
-											in {params.city}
-										</Box>
-									)}
 								</Typography>
 							)}
 						</Box>

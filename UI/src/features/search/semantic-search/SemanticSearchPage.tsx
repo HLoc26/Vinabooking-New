@@ -16,6 +16,7 @@ interface NominatimResult {
 	lon: string;
 	type: string;
 	class: string;
+	boundingbox: [string, string, string, string]; // [lat_min, lat_max, lon_min, lon_max]
 	address: {
 		city?: string;
 		town?: string;
@@ -91,9 +92,12 @@ export const SemanticSearchPage: React.FC = () => {
 		if (!canSearch || !selectedCity) return;
 		const params: SemanticSearchParams = {
 			query,
-			city: selectedCity.address.city || selectedCity.address.town || selectedCity.address.municipality || selectedCity.display_name.split(",")[0],
-			lat: parseFloat(selectedCity.lat),
-			lng: parseFloat(selectedCity.lon),
+			boundingBox: {
+				minLat: parseFloat(selectedCity.boundingbox[0]),
+				maxLat: parseFloat(selectedCity.boundingbox[1]),
+				minLon: parseFloat(selectedCity.boundingbox[2]),
+				maxLon: parseFloat(selectedCity.boundingbox[3]),
+			},
 		};
 		navigate("/search/semantic/loading", { state: { params } });
 	};
