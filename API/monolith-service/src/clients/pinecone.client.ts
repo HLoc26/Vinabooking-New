@@ -9,7 +9,8 @@ const pc = new Pinecone({
 interface BaseMetadata extends RecordMetadata {
 	accommodationId: string;
 	text: string; // Nội dung đã được vectorize
-	city: string; // Dùng để filter cứng
+	lat: number;
+	lon: number;
 	createdAt: number; // Timestamp để sort nếu cần
 }
 
