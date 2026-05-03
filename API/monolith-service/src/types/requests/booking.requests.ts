@@ -16,6 +16,7 @@ export interface BookingPayload {
 	startDate: Date; // ISO 8601 string
 	endDate: Date;
 	guestCount: number;
+	totalPrice: number;
 	details: {
 		create: BookingDetailPayload[];
 	};

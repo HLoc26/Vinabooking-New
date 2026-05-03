@@ -26,6 +26,12 @@ class BookingRepository {
 		return bookings as T extends true ? BookingWithDetails[] : Booking[];
 	}
 
+	public async findByReferenceNo(referenceNo: number): Promise<Booking | null> {
+		return this.#prismaClient.booking.findUnique({
+			where: { referenceNo },
+		});
+	}
+
 	public async findByRoomId(roomId: string) {
 		return await this.#prismaClient.booking.findMany({
 			where: { details: { some: { itemId: roomId, itemType: "ROOM" } } },
