@@ -5,7 +5,7 @@ const redisConnection = new Redis(process.env["REDIS_ENDPOINT"]!, {
 	maxRetriesPerRequest: null,
 });
 
-export const aiQueue = new Queue("ai-task", {
+export const reviewQueue = new Queue("review-task", {
 	connection: redisConnection,
 	defaultJobOptions: {
 		attempts: 3,
