@@ -1,3 +1,10 @@
+export interface BoundingBox {
+	minLat: number;
+	maxLat: number;
+	minLon: number;
+	maxLon: number;
+}
+
 export interface AccommodationMatchStats {
 	accommodationId: string;
 	finalScore: number;

@@ -4,7 +4,8 @@ export interface ReviewJobData extends SummaryReviewJobData {
 	reviewId: string;
 	text: string;
 	rating: number;
-	city: string;
+	lat: number;
+	lon: number;
 	createdAt: number; // timestamp
 }
 
@@ -21,7 +22,8 @@ export interface PublishJobData {
 	accommodationId: string;
 	name: string;
 	type: EAccommodationType;
-	city: string;
+	lat: number;
+	lon: number;
 	description: string;
 	facilities: string[];
 }
