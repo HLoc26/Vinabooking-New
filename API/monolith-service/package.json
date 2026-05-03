@@ -7,7 +7,8 @@
 		"dev": "npx nodemon --legacy-watch --exec \"npx ts-node -r tsconfig-paths/register ./src/index.ts\"",
 		"build": "npx tsc",
 		"start": "node -r tsconfig-paths/register dist/src/index.js",
-		"sync:pinecone": "ts-node -r tsconfig-paths/register src/scripts/sync-review.ts"
+		"sync:pinecone:review": "ts-node -r tsconfig-paths/register src/scripts/sync-review.ts",
+		"sync:pinecone:accomm": "ts-node -r tsconfig-paths/register src/scripts/sync-accommodation.ts"
 	},
 	"author": "",
 	"license": "ISC",
