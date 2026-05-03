@@ -46,6 +46,7 @@ import AmenityRouter from "./routes/amenity.routes";
 import AmenityController from "./controllers/amenity.controller";
 import AmenityRepository from "./repositories/amenity.repository";
 import { ReviewWorker } from "./workers/review.worker";
+import { PublishWorker } from "./workers/publish.worker";
 import { WorkerManager } from "./workers";
 import SearchController from "./controllers/search.controller";
 import SearchRouter from "./routes/search.routes";
@@ -112,7 +113,8 @@ const searchService = new SearchService();
 
 // Workers
 const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
-const workerManager = new WorkerManager([reviewWorkerInstance]);
+const publishWorkerInstance = new PublishWorker();
+const workerManager = new WorkerManager([reviewWorkerInstance, publishWorkerInstance]);
 workerManager.start();
 
 // Controllers
