@@ -15,6 +15,16 @@ export const reviewQueue = new Queue("review-task", {
 	},
 });
 
+export const publishQueue = new Queue("publish-task", {
+	connection: redisConnection,
+	defaultJobOptions: {
+		attempts: 3,
+		backoff: { type: "exponential", delay: 5000 },
+		removeOnComplete: 100,
+		removeOnFail: 1000,
+	},
+});
+
 export const getRedisConnection = () => {
 	return redisConnection.duplicate();
 };
