@@ -6,7 +6,7 @@ import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
 import { aiQueue } from "@/clients/queue.client";
-import { EReviewJobName } from "@/types/review.types";
+import { EReviewJobName } from "@/types/queue.types";
 import redisClient from "@/clients/redis.client";
 
 // Định nghĩa Config Interface cho Dependency Injection

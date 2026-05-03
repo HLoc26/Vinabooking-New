@@ -1,6 +1,6 @@
 import { getEmbeddingModel, getGeminiModel } from "@/clients/gemini.client";
 import { pineconeIndex, ReviewMetadata } from "@/clients/pinecone.client";
-import { EReviewJobName, ReviewJobData, SummaryReviewJobData } from "@/types/review.types";
+import { EReviewJobName, ReviewJobData, SummaryReviewJobData } from "@/types/queue.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";

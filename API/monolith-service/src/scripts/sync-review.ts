@@ -1,7 +1,7 @@
 import "dotenv/config";
 import prismaClient from "../clients/prisma.client";
 import { aiQueue } from "../clients/queue.client";
-import { EReviewJobName } from "../types/review.types";
+import { EReviewJobName } from "../types/queue.types";
 import redisClient, { connectRedis } from "@/clients/redis.client";
 
 async function syncExistingReviews() {
