@@ -1,16 +1,18 @@
 import React from "react";
 import { Card, CardMedia, CardContent, Box, Chip, Typography, Rating, Divider } from "@mui/material";
-import { LocationOn } from "@mui/icons-material";
+import { LocationOn, AutoAwesome } from "@mui/icons-material";
 import type { AccommodationDetail } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
 import { standardize } from "../../../../utils/moneyConverter";
-import { ACCOMMODATION_DEFAULT_IMAGES } from "../../types/Const";
+import { ACCOMMODATION_DEFAULT_IMAGES } from "../../types/const";
 
 interface Props {
 	accommodation: AccommodationDetail;
 	variant: "grid" | "list";
 	onClick: (id: string) => void;
+	score?: number;
+	matchReason?: string;
 }
 
 const getTypeLabel = (type: string): string => {
@@ -18,7 +20,7 @@ const getTypeLabel = (type: string): string => {
 	return found ? found.label : type;
 };
 
-export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick }) => {
+export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick, score, matchReason }) => {
 	const minPrice = accommodation.minPrice;
 
 	const avgStar = accommodation.avgStar;
@@ -148,9 +150,30 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 						left: 8,
 					}}
 				/>
+
+				{score !== undefined && (
+					<Box
+						sx={{
+							position: "absolute",
+							bottom: 8,
+							left: 8,
+							zIndex: 2,
+							bgcolor: "secondary.main",
+							color: "white",
+							px: 1,
+							py: 0.5,
+							borderRadius: 1,
+							fontSize: "0.75rem",
+							fontWeight: 700,
+							boxShadow: 2,
+						}}
+					>
+						Score: {score.toFixed(2)}
+					</Box>
+				)}
 			</Box>
 
-			<CardContent sx={{ flexGrow: 1, p: 2.5 }}>
+			<CardContent sx={{ flexGrow: 1, p: 2.5, display: "flex", flexDirection: "column" }}>
 				<Typography
 					variant="h6"
 					component="div"
@@ -193,6 +216,25 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 					)}
 				</Box>
 
+				{matchReason && (
+					<Box
+						sx={{
+							mb: 1.5,
+							px: 1.5,
+							py: 1,
+							background: "rgba(78,205,196,0.06)",
+							border: "1px solid rgba(78,205,196,0.12)",
+							borderRadius: "10px",
+							display: "flex",
+							gap: 1,
+							alignItems: "flex-start",
+						}}
+					>
+						<AutoAwesome sx={{ color: "#4ecdc4", fontSize: "0.85rem", mt: 0.15 }} />
+						<Typography sx={{ fontSize: "0.78rem", color: "text.secondary", lineHeight: 1.5, fontStyle: "italic" }}>"{matchReason}"</Typography>
+					</Box>
+				)}
+
 				<Typography
 					variant="body2"
 					color="text.secondary"
@@ -208,19 +250,21 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 					{accommodation.description}
 				</Typography>
 
-				<Divider sx={{ mb: 1 }} />
+				<Box sx={{ mt: "auto" }}>
+					<Divider sx={{ mb: 1 }} />
 
-				<Box sx={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center" }}>
-					<Box sx={{ display: "flex", alignItems: "baseline" }}>
-						<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
-							From
-						</Typography>{" "}
-						<Typography variant="h6" color="primary" fontWeight="bold">
-							${standardize(minPrice || 100)}
-						</Typography>
-						<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
-							/ night
-						</Typography>
+					<Box sx={{ display: "flex", flexDirection: "row", justifyContent: "end", alignItems: "center" }}>
+						<Box sx={{ display: "flex", alignItems: "baseline" }}>
+							<Typography variant="body2" color="text.secondary" sx={{ mr: 0.5 }}>
+								From
+							</Typography>{" "}
+							<Typography variant="h6" color="primary" fontWeight="bold">
+								${standardize(minPrice || 100)}
+							</Typography>
+							<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
+								/ night
+							</Typography>
+						</Box>
 					</Box>
 				</Box>
 			</CardContent>
