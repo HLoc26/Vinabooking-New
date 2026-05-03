@@ -67,7 +67,13 @@ export const SemanticSearchLoadingPage: React.FC = () => {
 			const startTime = Date.now();
 			try {
 				const res = await apiClient.get("/search/semantic", {
-					params: { q: params.query, l: params.city },
+					params: {
+						q: params.query,
+						minLat: params.boundingBox.minLat,
+						maxLat: params.boundingBox.maxLat,
+						minLon: params.boundingBox.minLon,
+						maxLon: params.boundingBox.maxLon,
+					},
 				});
 				const data: SemanticSearchMatch[] = res.data.data;
 				const took_ms = Date.now() - startTime;
