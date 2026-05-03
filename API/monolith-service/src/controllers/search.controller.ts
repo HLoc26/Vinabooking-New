@@ -15,9 +15,14 @@ class SearchController {
 	}
 
 	public async semanticSearch(req: SemanticSearchRequest, res: Response<ApiResponse<SemanticSearchResponse>>) {
-		const { q: query, l: location } = req.query;
+		const { q: query, minLat, maxLat, minLon, maxLon } = req.query;
 
-		const matches = await this.#searchService.semanticSearch(query, location);
+		const matches = await this.#searchService.semanticSearch(query, {
+			minLat: parseFloat(minLat),
+			maxLat: parseFloat(maxLat),
+			minLon: parseFloat(minLon),
+			maxLon: parseFloat(maxLon),
+		});
 
 		if (!matches || matches.length === 0) {
 			return ResponseHelper.success(res, []);

@@ -1,9 +1,9 @@
 import { getEmbeddingModel } from "@/clients/gemini.client";
 import { pineconeIndex, UnifiedRecordMetadata } from "@/clients/pinecone.client";
 import { redisClient } from "@/registry";
-import { AccommodationMatchStats, MatchReasonType } from "@/types/search.types";
+import { AccommodationMatchStats, BoundingBox, MatchReasonType } from "@/types/search.types";
 import { aiLimiter } from "@/utils/ai-limiter";
-import { QueryResponse, ScoredPineconeRecord } from "@pinecone-database/pinecone";
+import { ScoredPineconeRecord } from "@pinecone-database/pinecone";
 
 import crypto from "crypto";
 
@@ -11,28 +11,28 @@ import crypto from "crypto";
  * Service for semantic search and AI stuff
  */
 class SearchService {
-	async semanticSearch(query: string, location: string): Promise<AccommodationMatchStats[]> {
+	async semanticSearch(query: string, box: BoundingBox): Promise<AccommodationMatchStats[]> {
 		try {
 			if (!query || query.trim() === "") {
 				return [];
 			}
 
-			const queryHash = this.#createQueryHash(query, location);
+			const queryHash = this.#createQueryHash(query, box);
 
 			const cacheKey = `semantic_search:${queryHash}`;
 
 			const cachedResults = await redisClient.GET(cacheKey);
 
 			if (cachedResults) {
-				console.log(`[CACHE HIT] Semantic Search: ${query} in ${location}`);
+				console.log(`[CACHE HIT] Semantic Search: ${query} in [${box.minLat}, ${box.maxLat}, ${box.minLon}, ${box.maxLon}]`);
 				return JSON.parse(cachedResults) as AccommodationMatchStats[];
 			}
 
-			console.log(`[CACHE MISS] Executing full pipeline for: ${query} in ${location}`);
+			console.log(`[CACHE MISS] Executing full pipeline for: ${query} in [${box.minLat}, ${box.maxLat}, ${box.minLon}, ${box.maxLon}]`);
 
 			const vector = await this.#vectorizeIntent(query);
 
-			const matches = await this.#queryVectorDb(vector, location);
+			const matches = await this.#queryVectorDb(vector, box);
 
 			const matchStats = this.#aggregateScores(matches);
 
@@ -45,7 +45,7 @@ class SearchService {
 
 			return matchStats;
 		} catch (error) {
-			console.error(`[Semantic Search] Error when search with query: ${query}\nLocation: ${location}`);
+			console.error(`[Semantic Search] Error when search with query: ${query}\nBox: ${JSON.stringify(box)}`);
 			return [];
 		}
 	}
@@ -53,7 +53,7 @@ class SearchService {
 	/**
 	 * Create unique hash for query:location pair
 	 */
-	#createQueryHash(query: string, location: string): string {
+	#createQueryHash(query: string, box: BoundingBox): string {
 		// Hàm helper để chuẩn hóa chuỗi
 		const sanitize = (str: string) => {
 			if (!str) return "";
@@ -68,9 +68,9 @@ class SearchService {
 		};
 
 		const normalizedQuery = sanitize(query);
-		const normalizedLocation = sanitize(location);
+		const boxString = `${box.minLat},${box.maxLat},${box.minLon},${box.maxLon}`;
 
-		const rawString = `${normalizedLocation}::${normalizedQuery}`;
+		const rawString = `${boxString}::${normalizedQuery}`;
 
 		return crypto.createHash("sha256").update(rawString).digest("hex");
 	}
@@ -143,7 +143,12 @@ class SearchService {
 		});
 	}
 
-	async #queryVectorDb(vector: number[], location: string): Promise<ScoredPineconeRecord<UnifiedRecordMetadata>[]> {
+	async #queryVectorDb(vector: number[], box: BoundingBox): Promise<ScoredPineconeRecord<UnifiedRecordMetadata>[]> {
+		const filter = {
+			lat: { $gte: box.minLat, $lte: box.maxLat },
+			lon: { $gte: box.minLon, $lte: box.maxLon },
+		};
+
 		const [profileResponse, reviewResponse] = await Promise.all([
 			// Query 1: Getting Top 15 Accomm profile
 			pineconeIndex.query({
@@ -151,7 +156,7 @@ class SearchService {
 				topK: 15,
 				includeMetadata: true,
 				filter: {
-					city: location,
+					...filter,
 					type: "accommodation-profile", // only get profile
 				},
 			}),
@@ -162,7 +167,7 @@ class SearchService {
 				topK: 35,
 				includeMetadata: true,
 				filter: {
-					city: location,
+					...filter,
 					type: "review", // only get reviews
 				},
 			}),
