@@ -16,12 +16,11 @@ export class PublishWorker implements IBaseWorker {
 	}
 
 	async #handlePublishAccommodation(data: PublishJobData) {
-		const { accommodationId, name, type, city, description, facilities } = data;
+		const { accommodationId, name, type, lat, lon, description, facilities } = data;
 
 		// 1. Construct text for embedding
 		const textToEmbed = `Accommodation: ${name}
 Type: ${type}
-Location: ${city}
 Description: ${description}
 Facilities: ${facilities.join(", ")}`.trim();
 
@@ -42,7 +41,8 @@ Facilities: ${facilities.join(", ")}`.trim();
 							type: "accommodation-profile",
 							accommodationId,
 							accommodationType: type,
-							city,
+							lat,
+							lon,
 							text: textToEmbed,
 							createdAt: Date.now(),
 						},
