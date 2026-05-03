@@ -8,7 +8,7 @@ import { ReviewService, ReviewSummaryService } from "@/services";
 import { AccommodationReviewSummary, Review } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
 export class ReviewWorker implements IBaseWorker {
-	public readonly queueName = "ai-task";
+	public readonly queueName = "review-task";
 	public readonly concurrency = 2;
 	readonly #reviewSummaryService: ReviewSummaryService;
 	readonly #reviewService: ReviewService;

@@ -5,7 +5,7 @@ import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
 import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
-import { aiQueue } from "@/clients/queue.client";
+import { reviewQueue } from "@/clients/queue.client";
 import { EReviewJobName } from "@/types/queue.types";
 import redisClient from "@/clients/redis.client";
 
@@ -99,7 +99,7 @@ class ReviewService {
 	}
 
 	async #startSummary(created: Review) {
-		await aiQueue.add(
+		await reviewQueue.add(
 			EReviewJobName.SUMMARIZE_REVIEWS,
 			{
 				accommodationId: created.accommodationId,
@@ -111,7 +111,7 @@ class ReviewService {
 	}
 
 	async #startProcessToVector(created: Review, city: string) {
-		await aiQueue.add(
+		await reviewQueue.add(
 			EReviewJobName.PROCESS_TO_VECTORS,
 			{
 				reviewId: created.id,
