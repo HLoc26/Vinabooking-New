@@ -40,7 +40,7 @@ class SearchService {
 			matchStats.sort((a, b) => b.finalScore - a.finalScore);
 
 			await redisClient.SET(cacheKey, JSON.stringify(matchStats), {
-				EX: 3600,
+				EX: 600,
 			});
 
 			return matchStats;
