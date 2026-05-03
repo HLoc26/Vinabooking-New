@@ -18,6 +18,9 @@ import {
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
 
+import { publishQueue } from "@/clients/queue.client";
+import { PUBLISH_ACCOMMODATION_JOB, type PublishJobData } from "@/types/queue.types";
+
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
 	readonly #roomService: RoomService;
@@ -326,7 +329,6 @@ class AccommodationService {
 		return await this.getAccommodationById(id);
 	}
 
-	// TODO: upload profile vector
 	async publishAccommodation(ownerId: string, id: string): Promise<AccommodationFullInfo> {
 		// Lấy raw data từ DB kèm theo các bảng con
 		const acc = await this.#accommodationRepository.getForPublishValidation(id, ownerId);
@@ -340,7 +342,7 @@ class AccommodationService {
 		}
 
 		// ==========================================
-		// 🚨 VALIDATION RULES
+		// VALIDATION RULES
 		// ==========================================
 
 		// 1. Phải có địa chỉ
@@ -367,11 +369,21 @@ class AccommodationService {
 		}
 
 		// ==========================================
-		// ✅ PASS VALIDATION
+		// PASS VALIDATION
 		// ==========================================
 
 		await this.#accommodationRepository.updateStatus(id, "PUBLISHED");
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		// Trigger indexing onto Pinecone for semantic search
+		await publishQueue.add(PUBLISH_ACCOMMODATION_JOB, {
+			accommodationId: id,
+			name: acc.name,
+			type: acc.type,
+			city: acc.address.city,
+			description: acc.description || "",
+			facilities: acc.facilities.map((f) => f.facility.name),
+		} as PublishJobData);
 
 		return await this.getAccommodationById(id);
 	}
