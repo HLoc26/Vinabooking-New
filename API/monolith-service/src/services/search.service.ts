@@ -32,9 +32,9 @@ class SearchService {
 
 			const vector = await this.#vectorizeIntent(query);
 
-			const records = await this.#queryVectorDb(vector, location);
+			const matches = await this.#queryVectorDb(vector, location);
 
-			const matchStats = this.#aggregateScores(records.matches);
+			const matchStats = this.#aggregateScores(matches);
 
 			// Search by finalScore
 			matchStats.sort((a, b) => b.finalScore - a.finalScore);
@@ -143,15 +143,32 @@ class SearchService {
 		});
 	}
 
-	async #queryVectorDb(vector: number[], location: string): Promise<QueryResponse<UnifiedRecordMetadata>> {
-		return await pineconeIndex.query({
-			vector: vector,
-			topK: 50,
-			includeMetadata: true,
-			filter: {
-				city: location,
-			},
-		});
+	async #queryVectorDb(vector: number[], location: string): Promise<ScoredPineconeRecord<UnifiedRecordMetadata>[]> {
+		const [profileResponse, reviewResponse] = await Promise.all([
+			// Query 1: Getting Top 15 Accomm profile
+			pineconeIndex.query({
+				vector: vector,
+				topK: 15,
+				includeMetadata: true,
+				filter: {
+					city: location,
+					type: "accommodation-profile", // only get profile
+				},
+			}),
+
+			// Query 2: Getting Top 35 Review
+			pineconeIndex.query({
+				vector: vector,
+				topK: 35,
+				includeMetadata: true,
+				filter: {
+					city: location,
+					type: "review", // only get reviews
+				},
+			}),
+		]);
+
+		return [...profileResponse.matches, ...reviewResponse.matches];
 	}
 
 	async #vectorizeIntent(intent: string): Promise<number[]> {
