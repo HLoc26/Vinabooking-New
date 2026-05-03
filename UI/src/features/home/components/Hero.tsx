@@ -3,6 +3,7 @@ import { Box, Typography } from "@mui/material";
 import { ACCOMMODATION_LABELS, ACCOMMODATION_QUOTES, ACCOMMODATION_HERO_IMAGES } from "../constants/Const";
 import SearchBar from "../../accommodation/components/search/SearchBar/SearchBar";
 import { EAccommodationType } from "../../accommodation/types/accommodation.types";
+import { AdvancedSearchButton } from "../../search/semantic-search/AdvancedSearchButton";
 
 interface HeroProps {
 	currentType: EAccommodationType;
@@ -59,6 +60,10 @@ export const Hero: React.FC<HeroProps> = ({ currentType }) => {
 			</Box>
 
 			<SearchBar />
+			
+			<Box position="relative" zIndex={5} display="flex" justifyContent="center" mt={4}>
+				<AdvancedSearchButton />
+			</Box>
 		</Box>
 	);
 };
