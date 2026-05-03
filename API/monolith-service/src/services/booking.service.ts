@@ -57,8 +57,10 @@ export default class BookingService {
 	}
 
 	public async createBooking(userId: string, data: BookingPayload) {
+		const { totalPrice, ...rest } = data;
 		const bookingData: Prisma.BookingCreateInput = {
-			...data,
+			...rest,
+			totalPrice: new Prisma.Decimal(totalPrice),
 			user: { connect: { id: userId } },
 			status: "PENDING",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
@@ -68,8 +70,10 @@ export default class BookingService {
 	}
 
 	public async createDraftBooking(userId: string, data: BookingPayload) {
+		const { totalPrice, ...rest } = data;
 		const bookingData: Prisma.BookingCreateInput = {
-			...data,
+			...rest,
+			totalPrice: new Prisma.Decimal(totalPrice),
 			user: { connect: { id: userId } },
 			status: "DRAFT",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
