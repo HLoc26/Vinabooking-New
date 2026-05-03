@@ -6,8 +6,8 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository } from "@/repositories";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, PaymentService, PayosService } from "@/services";
+import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -43,6 +43,8 @@ import OwnerRouter from "./routes/owner.routes";
 import AmenityRouter from "./routes/amenity.routes";
 import AmenityController from "./controllers/amenity.controller";
 import AmenityRepository from "./repositories/amenity.repository";
+import PaymentController from "./controllers/payment.controller";
+import PaymentRouter from "./routes/payment.routes";
 
 const app: Express = express();
 connectRedis();
@@ -62,6 +64,7 @@ const favouriteRepository = new FavouriteRepository(prismaClient);
 const facilityRepository = new FacilityRepository(prismaClient);
 const ownerRepository = new OwnerRepository(prismaClient);
 const amenityRepository = new AmenityRepository(prismaClient);
+const paymentRepository = new PaymentRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -99,6 +102,9 @@ bookingService.setAccommodationService(accommodationService);
 
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
 
+const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
+const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService);
+
 // Controllers
 const authController = new AuthController(authService, userService, oauthService, authRepository);
 const userController = new UserController(userService, favouriteService);
@@ -110,6 +116,7 @@ const reviewController = new ReviewController(reviewService);
 const facilityController = new FacilityController(facilityRepository);
 const ownerController = new OwnerController(ownerService);
 const amenityController = new AmenityController(amenityRepository);
+const paymentController = new PaymentController(paymentService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -122,7 +129,9 @@ const reviewRouter = new ReviewRouter(express.Router(), reviewController);
 const facilityRouter = new FacilityRouter(express.Router(), facilityController);
 const ownerRouter = new OwnerRouter(express.Router(), ownerController, accommodationController, roomController);
 const amenityRouter = new AmenityRouter(express.Router(), amenityController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter, amenityRouter);
+const paymentRouter = new PaymentRouter(express.Router(), paymentController);
+
+const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter, amenityRouter, paymentRouter);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
