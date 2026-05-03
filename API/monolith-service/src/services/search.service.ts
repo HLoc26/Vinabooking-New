@@ -1,5 +1,5 @@
 import { getEmbeddingModel } from "@/clients/gemini.client";
-import { pineconeIndex, UnifiedRecordMetadata } from "@/clients/pinecone.client";
+import { pineconeIndex, ReviewMetadata, UnifiedRecordMetadata } from "@/clients/pinecone.client";
 import { redisClient } from "@/registry";
 import { AccommodationMatchStats, BoundingBox, MatchReasonType } from "@/types/search.types";
 import { aiLimiter } from "@/utils/ai-limiter";
@@ -34,7 +34,7 @@ class SearchService {
 
 			const matches = await this.#queryVectorDb(vector, box);
 
-			const matchStats = this.#aggregateScores(matches);
+			const matchStats = this.#aggregateScores(matches).filter((m) => m.finalScore >= 1);
 
 			// Search by finalScore
 			matchStats.sort((a, b) => b.finalScore - a.finalScore);
@@ -78,7 +78,8 @@ class SearchService {
 	#aggregateScores(matches: ScoredPineconeRecord<UnifiedRecordMetadata>[]): AccommodationMatchStats[] {
 		const WEIGHTS = {
 			PROFILE: 1.0,
-			REVIEW: 1.5,
+			POSITIVE_REVIEW: 1.5,
+			NEGATIVE_REVIEW_PENALTY: 2.5, // Strong penalty for matching negative context
 			REVIEW_COUNT_BONUS: 0.05,
 		};
 
@@ -86,7 +87,8 @@ class SearchService {
 			string,
 			{
 				profileScore: number;
-				maxReviewScore: number;
+				maxPositiveReviewScore: number;
+				totalNegativePenalty: number;
 				reviewCount: number;
 				bestReviewText: string;
 			}
@@ -100,7 +102,8 @@ class SearchService {
 			if (!grouped.has(accId)) {
 				grouped.set(accId, {
 					profileScore: 0,
-					maxReviewScore: 0,
+					maxPositiveReviewScore: 0,
+					totalNegativePenalty: 0,
 					reviewCount: 0,
 					bestReviewText: "",
 				});
@@ -112,20 +115,30 @@ class SearchService {
 				data.profileScore = Math.max(data.profileScore, score);
 			} else if (metadata.type === "review") {
 				data.reviewCount += 1;
-				if (score > data.maxReviewScore) {
-					data.maxReviewScore = score;
-					data.bestReviewText = metadata.text ?? "";
+				const reviewMeta = metadata as ReviewMetadata;
+				const sentiment = reviewMeta.sentiment;
+				const isNegative = sentiment === "negative" || sentiment === "highly_negative";
+
+				if (isNegative) {
+					// If a negative review highly matches the query, it's a strong penalty.
+					// e.g. Query: "quiet room", Review: "extremely noisy" (Negative sentiment)
+					data.totalNegativePenalty += score * WEIGHTS.NEGATIVE_REVIEW_PENALTY;
+				} else {
+					if (score > data.maxPositiveReviewScore) {
+						data.maxPositiveReviewScore = score;
+						data.bestReviewText = reviewMeta.text ?? "";
+					}
 				}
 			}
 		}
 
 		return Array.from(grouped.entries()).map(([accommodationId, data]) => {
-			const finalScore = data.profileScore * WEIGHTS.PROFILE + data.maxReviewScore * WEIGHTS.REVIEW + data.reviewCount * WEIGHTS.REVIEW_COUNT_BONUS;
+			const finalScore = data.profileScore * WEIGHTS.PROFILE + data.maxPositiveReviewScore * WEIGHTS.POSITIVE_REVIEW - data.totalNegativePenalty + data.reviewCount * WEIGHTS.REVIEW_COUNT_BONUS;
 
-			const matchReasonType: MatchReasonType = data.maxReviewScore > 0 && data.bestReviewText.trim() !== "" ? "review" : "profile";
+			const matchReasonType: MatchReasonType = data.maxPositiveReviewScore > 0 && data.bestReviewText.trim() !== "" ? "review" : "profile";
 
 			const matchReason =
-				data.maxReviewScore > 0 && data.bestReviewText.trim() !== "" //
+				data.maxPositiveReviewScore > 0 && data.bestReviewText.trim() !== "" //
 					? `${data.bestReviewText.trim()}`
 					: "Matches accommodation information and amenities";
 
@@ -133,7 +146,7 @@ class SearchService {
 				accommodationId,
 				finalScore,
 				stats: {
-					maxReviewScore: data.maxReviewScore,
+					maxReviewScore: data.maxPositiveReviewScore,
 					profileScore: data.profileScore,
 					reviewCount: data.reviewCount,
 					matchReason,
