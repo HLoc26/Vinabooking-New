@@ -112,10 +112,9 @@ model Booking {
     userId String // who made the booking (traveler)
     user   User   @relation(fields: [userId], references: [id])
 
-    createdAt       DateTime          @default(now())
-    updatedAt       DateTime          @updatedAt
-    reviews         Review[]
-    PaymentTransfer PaymentTransfer[]
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+    reviews   Review[]
 }
 
 model BookingDetail {
@@ -225,6 +224,7 @@ model Accommodation {
     @@index([rentalType])
     @@index([ownerId])
     @@map("accommodations")
+    accommodationReviewSummaries AccommodationReviewSummary?
 }
 
 model Address {
@@ -527,36 +527,10 @@ model ImageVariant {
     @@index([variant, imageId])
 }
 
-// Payment
-
-enum PaymentTransfer_status {
-    PENDING
-    DISMISSED
-    FAILED
-    COMPLETED
-    PARTIALLY_HALFED
-    PARTIALLY_THIRDED
-    PARTIALLY_QUARTERED
-    //Note lại cái policy xíu
-}
-
-model PaymentTransfer {
-    id                String    @id @default(uuid())
-    bookingId         String
-    transferReference String?   @unique
-    amount            Decimal   @db.Decimal(12, 2)
-    currency          String    @default("VND")
-    transferContent   String
-    bankName          String?
-    receiverAccount   String?
-    paymentLinkId     String?
-    status            PaymentTransfer_status @default(PENDING)
-    receivedAt        DateTime?
-    completedAt       DateTime?
-    createdAt         DateTime  @default(now())
-    updatedAt         DateTime  @updatedAt
-
-    Booking Booking @relation(fields: [bookingId], references: [id])
-
-    @@index([bookingId])
+model AccommodationReviewSummary {
+    id              String        @id @default(uuid())
+    content         String        @db.Text
+    updatedAt       DateTime      @updatedAt
+    accommodationId String        @unique
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
 }

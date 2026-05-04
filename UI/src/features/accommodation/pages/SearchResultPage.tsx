@@ -16,6 +16,7 @@ import { syncFromUrl } from "../../search/searchSlice";
 import { parseSearchParamsToQuery } from "../../../utils/search";
 import useFacilityList from "../hooks/useFacilityList";
 import { EAccommodationType } from "../types/accommodation.types";
+import { AdvancedSearchButton } from "../../search/semantic-search/AdvancedSearchButton";
 
 export default function SearchResultPage() {
 	const navigate = useNavigate();
@@ -145,6 +146,11 @@ export default function SearchResultPage() {
 
 					{/* Right Content - Results */}
 					<Grid size={{ xs: 12, md: 9 }}>
+						{/* Advanced Search Entry */}
+						<Box mb={2} display="flex" justifyContent="flex-end">
+							<AdvancedSearchButton />
+						</Box>
+
 						{/* Active Filters Bar */}
 						<ActiveFiltersBar filters={activeFilters} onRemoveFilter={handleRemoveFilter} onClearAllFilters={handleClearAllFilters} />
 
