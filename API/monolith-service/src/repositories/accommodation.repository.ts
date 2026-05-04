@@ -234,6 +234,9 @@ class AccommodationRepository {
 			where: { id, ownerId },
 			include: {
 				address: true,
+				facilities: {
+					include: { facility: true },
+				},
 				rooms: {
 					include: { beds: true },
 				},

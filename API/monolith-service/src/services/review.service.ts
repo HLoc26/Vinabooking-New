@@ -1,10 +1,13 @@
 import ReviewRepository from "@/repositories/review.repository";
 import UserService from "./user.service";
-import { BookingService, ImageService } from "@/services";
+import { AccommodationService, BookingService, ImageService } from "@/services";
 import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
 import { EEntityType, Prisma, Review } from "@/generated/client";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
+import { reviewQueue } from "@/clients/queue.client";
+import { EReviewJobName } from "@/types/queue.types";
+import redisClient from "@/clients/redis.client";
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
@@ -12,6 +15,7 @@ export interface ReviewServiceConfig {
 	userService: UserService;
 	bookingService: BookingService;
 	imageService: ImageService;
+	accommodationService: AccommodationService;
 }
 
 class ReviewService {
@@ -19,12 +23,14 @@ class ReviewService {
 	readonly #userService: UserService;
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
+	readonly #accommodationService: AccommodationService;
 
 	constructor(config: ReviewServiceConfig) {
 		this.#reviewRepository = config.reviewRepository;
 		this.#userService = config.userService;
 		this.#bookingService = config.bookingService;
 		this.#imageService = config.imageService;
+		this.#accommodationService = config.accommodationService;
 	}
 
 	/**
@@ -44,7 +50,6 @@ class ReviewService {
 		}
 
 		// 3. Validate trạng thái (Chỉ cho review khi đã hoàn thành)
-		// Logic cũ: booking.status === "COMPLETED"
 		if (booking.status !== "COMPLETED") {
 			throw new ForbiddenError("You can only review after the booking is completed.");
 		}
@@ -62,7 +67,72 @@ class ReviewService {
 			star: dto.star,
 		};
 
-		return this.#reviewRepository.create(data);
+		const created = await this.#reviewRepository.create(data);
+
+		const { lat, lon } = await this.#getAccommodationCoords(dto.accommodationId);
+
+		await this.#startProcessToVector(created, lat, lon);
+		await this.#startSummary(created);
+
+		return created;
+	}
+
+	async #getAccommodationCoords(accommodationId: string) {
+		await redisClient.INCR(`accommodation:${accommodationId}:review:count`);
+
+		const cacheKey = `accommodation:${accommodationId}:coords`;
+		const cached = await redisClient.GET(cacheKey);
+
+		if (cached) {
+			return JSON.parse(cached) as { lat: number; lon: number };
+		}
+
+		const accommodation = await this.#accommodationService.getAccommodationById(accommodationId);
+
+		const coords = {
+			lat: Number(accommodation.address?.latitude || 0),
+			lon: Number(accommodation.address?.longitude || 0),
+		};
+
+		if (coords.lat !== 0 || coords.lon !== 0) {
+			await redisClient.SET(cacheKey, JSON.stringify(coords), {
+				EX: 604800, // 7 days
+			});
+		} else {
+			console.warn(`Data anomaly: Accommodation ${accommodationId} has reviews but no coordinates.`);
+		}
+
+		return coords;
+	}
+
+	async #startSummary(created: Review) {
+		await reviewQueue.add(
+			EReviewJobName.SUMMARIZE_REVIEWS,
+			{
+				accommodationId: created.accommodationId,
+			},
+			{
+				jobId: `summary-${created.accommodationId}-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
+			}
+		);
+	}
+
+	async #startProcessToVector(created: Review, lat: number, lon: number) {
+		await reviewQueue.add(
+			EReviewJobName.PROCESS_TO_VECTORS,
+			{
+				reviewId: created.id,
+				accommodationId: created.accommodationId,
+				text: created.comment,
+				rating: created.star!,
+				lat,
+				lon,
+				createdAt: created.createdAt.getTime(),
+			},
+			{
+				jobId: `review-${created.id}`,
+			}
+		);
 	}
 
 	/**
@@ -136,6 +206,11 @@ class ReviewService {
 	}
 	public async findByBookingAndUser(bookingId: string, userId: string) {
 		return this.#reviewRepository.findByBookingAndUser(bookingId, userId);
+	}
+
+	public async getRecentParentReviews(accommodationId: string, top: number): Promise<Review[]> {
+		const reviews: Review[] = await this.#reviewRepository.findRecentParentReviews(accommodationId, top);
+		return reviews;
 	}
 }
 

@@ -11,6 +11,7 @@ import FacilityRouter from "./facility.routes";
 import OwnerRouter from "./owner.routes";
 import AmenityRouter from "./amenity.routes";
 import PaymentRouter from "./payment.routes";
+import SearchRouter from "./search.routes";
 
 class AppRouter {
 	#router: Router;
@@ -26,7 +27,8 @@ class AppRouter {
 		private facilityRouter: FacilityRouter,
 		private ownerRouter: OwnerRouter,
 		private amenityRouter: AmenityRouter,
-		private paymentRouter: PaymentRouter
+		private paymentRouter: PaymentRouter,
+		private searchRouter: SearchRouter
 	) {
 		this.#router = express.Router();
 		this.#registerRoutes();
@@ -47,6 +49,7 @@ class AppRouter {
 		this.#router.use("/owners", this.ownerRouter.router);
 		this.#router.use("/amenities", this.amenityRouter.router);
 		this.#router.use("/payment", this.paymentRouter.router);
+		this.#router.use("/search", this.searchRouter.router);
 	}
 
 	public get router(): Router {

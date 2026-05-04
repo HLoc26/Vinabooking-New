@@ -1,4 +1,5 @@
 import { PrismaClient, Prisma, Review } from "@/generated/client";
+import { SortOrder } from "@/generated/internal/prismaNamespace";
 
 class ReviewRepository {
 	readonly #prisma: PrismaClient;
@@ -59,6 +60,19 @@ class ReviewRepository {
 			include: {
 				user: true,
 			},
+		});
+	}
+
+	public async findRecentParentReviews(accommodationId: string, top: number) {
+		return this.#prisma.review.findMany({
+			where: {
+				accommodationId,
+				parent: null,
+			},
+			orderBy: {
+				createdAt: SortOrder.desc,
+			},
+			take: top,
 		});
 	}
 }
