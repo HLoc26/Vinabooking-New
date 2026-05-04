@@ -225,6 +225,7 @@ model Accommodation {
     @@index([rentalType])
     @@index([ownerId])
     @@map("accommodations")
+    accommodationReviewSummaries AccommodationReviewSummary?
 }
 
 model Address {
@@ -559,4 +560,11 @@ model PaymentTransfer {
     Booking Booking @relation(fields: [bookingId], references: [id])
 
     @@index([bookingId])
+}
+model AccommodationReviewSummary {
+    id              String        @id @default(uuid())
+    content         String        @db.Text
+    updatedAt       DateTime      @updatedAt
+    accommodationId String        @unique
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
 }

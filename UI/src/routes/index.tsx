@@ -7,6 +7,10 @@ import { AuthRouter } from "./auth";
 import { BookingRouter } from "./booking";
 import { UserRouter } from "./user";
 
+import { SemanticSearchPage } from "../features/search/semantic-search/SemanticSearchPage";
+import { SemanticSearchLoadingPage } from "../features/search/semantic-search/SemanticSearchLoadingPage";
+import { SemanticSearchResultsPage } from "../features/search/semantic-search/SemanticSearchResultsPage";
+
 import { TravelerLayout } from "../components/layout/TravelerLayout";
 import { OAuthRouter } from "./oauth";
 import { OwnerRouter } from "./owner";
@@ -32,6 +36,11 @@ export const AppRouter = () => (
 					</TravelerLayout>
 				}
 			/>
+
+			{/* Semantic Search Pages */}
+			<Route path="/search/semantic" element={<TravelerLayout><SemanticSearchPage /></TravelerLayout>} />
+			<Route path="/search/semantic/loading" element={<SemanticSearchLoadingPage />} />
+			<Route path="/search/semantic/results" element={<TravelerLayout><SemanticSearchResultsPage /></TravelerLayout>} />
 
 			<Route
 				path="/accommodation/:accommodationId"
