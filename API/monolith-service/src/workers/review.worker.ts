@@ -1,6 +1,6 @@
 import { getEmbeddingModel, getGeminiModel } from "@/clients/gemini.client";
-import { pineconeIndex } from "@/clients/pinecone.client";
-import { EReviewJobName, ReviewJobData, SummaryReviewJobData } from "@/types/review.types";
+import { pineconeIndex, ReviewMetadata } from "@/clients/pinecone.client";
+import { EReviewJobName, ReviewJobData, SummaryReviewJobData } from "@/types/queue.types";
 import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";
@@ -8,7 +8,7 @@ import { ReviewService, ReviewSummaryService } from "@/services";
 import { AccommodationReviewSummary, Review } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
 export class ReviewWorker implements IBaseWorker {
-	public readonly queueName = "ai-task";
+	public readonly queueName = "review-task";
 	public readonly concurrency = 2;
 	readonly #reviewSummaryService: ReviewSummaryService;
 	readonly #reviewService: ReviewService;
@@ -188,7 +188,7 @@ ${reviewsText}
 	}
 
 	async #prepareVectors(data: ReviewJobData, chunks: string[], sentiment: ESentiment) {
-		const vectors = [];
+		const vectors: { id: string; values: number[]; metadata: ReviewMetadata }[] = [];
 
 		const embeddingModel = getEmbeddingModel();
 
@@ -203,7 +203,9 @@ ${reviewsText}
 					reviewId: data.reviewId,
 					text: data.text.substring(0, 1000),
 					accommodationId: data.accommodationId,
-					city: data.city,
+					type: "review",
+					lat: data.lat,
+					lon: data.lon,
 					rating: data.rating,
 					sentiment: sentiment.toString(),
 					createdAt: data.createdAt,
