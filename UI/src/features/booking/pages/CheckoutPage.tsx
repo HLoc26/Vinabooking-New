@@ -1,7 +1,7 @@
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useConfirmBooking } from "../hooks/useConfirmBooking";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
-import { Box, Typography, Button, Paper, List, ListItem, Divider, Stack, Chip } from "@mui/material";
+import { Box, Typography, Button, Paper, List, ListItem, Divider, Stack, Chip, Dialog, DialogTitle, DialogContent, DialogActions } from "@mui/material";
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../../app/store";
 import { resetBooking } from "../../../features/booking/bookingSlice";
@@ -36,6 +36,12 @@ export default function CheckoutPage() {
 
 	const [checkoutUrl, setCheckoutUrl] = useState("");
 
+	const [createdBookingId, setCreatedBookingId] = useState<string | null>(null);
+
+	const [isCancelModalOpen, setIsCancelModalOpen] = useState(false);
+
+	const [loadingCancelBooking, setLoadingCancelBooking] = useState(false);
+
 	const returnUrl = `${window.location.origin}/booking/payment-success`;
 
 	const cancelUrl = `${window.location.origin}/booking/checkout?failed=true`;
@@ -64,9 +70,7 @@ export default function CheckoutPage() {
 		},
 
 		onCancel: () => {
-			setIsPaymentOpen(false);
-
-			navigate("/booking/checkout?failed=true");
+			setIsCancelModalOpen(true);
 		},
 	});
 
@@ -92,9 +96,15 @@ export default function CheckoutPage() {
 		try {
 			setIsCreatingLink(true);
 
-			const bookingRes = await confirmBooking(bookingInfo);
+			let bookingId = createdBookingId;
 
-			const bookingId = bookingRes.data.id;
+			if (!bookingId) {
+				const bookingRes = await confirmBooking(bookingInfo);
+
+				bookingId = bookingRes.data.id;
+
+				setCreatedBookingId(bookingId);
+			}
 
 			const paymentRes = await bookingApi.createPaymentLink(bookingId, returnUrl, cancelUrl);
 
@@ -112,6 +122,40 @@ export default function CheckoutPage() {
 		} finally {
 			setIsCreatingLink(false);
 		}
+	};
+
+	const handleCancelBooking = async () => {
+		if (!createdBookingId) return;
+
+		setLoadingCancelBooking(true);
+
+		try {
+			await bookingApi.cancel(createdBookingId);
+
+			pushNotification("Booking cancelled successfully.", "info");
+
+			exit();
+
+			dispatch(resetBooking());
+
+			navigate("/");
+		} catch (err) {
+			console.error(err);
+
+			pushNotification("Failed to cancel booking.", "error");
+		} finally {
+			setLoadingCancelBooking(false);
+
+			setIsCancelModalOpen(false);
+		}
+	};
+
+	const handleSkipPayment = () => {
+		exit();
+
+		dispatch(resetBooking());
+
+		navigate("/");
 	};
 
 	if (paymentFailed) {
@@ -340,9 +384,7 @@ export default function CheckoutPage() {
 							color="secondary"
 							size="large"
 							onClick={() => {
-								exit();
-
-								setIsPaymentOpen(false);
+								setIsCancelModalOpen(true);
 							}}
 							sx={{
 								mt: 1.5,
@@ -357,6 +399,25 @@ export default function CheckoutPage() {
 					</Box>
 				</Paper>
 			</Box>
+
+			{/* CANCELLATION MODAL */}
+			<Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth>
+				<DialogTitle fontWeight={700}>Leave Payment?</DialogTitle>
+				<DialogContent>
+					<Typography variant="body1">Are you sure you want to leave payment? You can always come back and pay later from your profile.</Typography>
+				</DialogContent>
+				<DialogActions sx={{ flexDirection: "column", gap: 1, p: 3 }}>
+					<Button variant="contained" fullWidth onClick={() => setIsCancelModalOpen(false)} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>
+						Back to Payment
+					</Button>
+					<Button variant="outlined" color="error" fullWidth onClick={handleCancelBooking} disabled={loadingCancelBooking} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>
+						{loadingCancelBooking ? "Cancelling..." : "Cancel this booking"}
+					</Button>
+					<Button variant="text" color="inherit" fullWidth onClick={handleSkipPayment} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>
+						Skip payment for now
+					</Button>
+				</DialogActions>
+			</Dialog>
 		</Box>
 	);
 }
