@@ -96,7 +96,7 @@ const oauthService = new OAuthService(
 	userRepository
 );
 const imageService = new ImageService(imageRepository, s3Service);
-const bookingService = new BookingService(bookingRepository, userService, emailService);
+const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService);
 const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
 const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service);
@@ -113,7 +113,7 @@ bookingService.setAccommodationService(accommodationService);
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
 
 const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
-const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService);
+const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
 
 // Workers
@@ -149,7 +149,20 @@ const ownerRouter = new OwnerRouter(express.Router(), ownerController, accommoda
 const amenityRouter = new AmenityRouter(express.Router(), amenityController);
 const paymentRouter = new PaymentRouter(express.Router(), paymentController);
 const searchRouter = new SearchRouter(express.Router(), searchController);
-const appRouter = new AppRouter(authRouter, userRouter, imageRouter, roomRouter, accommodationRouter, bookingRouter, reviewRouter, facilityRouter, ownerRouter, amenityRouter, paymentRouter, searchRouter);
+const appRouter = new AppRouter(
+	authRouter,
+	userRouter,
+	imageRouter,
+	roomRouter,
+	accommodationRouter,
+	bookingRouter,
+	reviewRouter,
+	facilityRouter,
+	ownerRouter,
+	amenityRouter,
+	paymentRouter,
+	searchRouter
+);
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
 
