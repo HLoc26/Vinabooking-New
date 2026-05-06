@@ -3,16 +3,19 @@ import { NotFoundError, BadRequestError } from "@/errors";
 import { Prisma } from "@/generated/client";
 import { PayosWebhookData } from "@/types/requests/payment.requests";
 import PayosService from "./payos.service";
+import BookingService from "./booking.service";
 
 export default class PaymentService {
 	readonly #paymentRepository: PaymentRepository;
 	readonly #bookingRepository: BookingRepository;
 	readonly #payosService: PayosService;
+	readonly #bookingService: BookingService;
 
-	constructor(paymentRepository: PaymentRepository, bookingRepository: BookingRepository, payosService: PayosService) {
+	constructor(paymentRepository: PaymentRepository, bookingRepository: BookingRepository, payosService: PayosService, bookingService: BookingService) {
 		this.#paymentRepository = paymentRepository;
 		this.#bookingRepository = bookingRepository;
 		this.#payosService = payosService;
+		this.#bookingService = bookingService;
 	}
 
 	public async createPaymentLink(bookingId: string, returnUrl: string, cancelUrl: string) {
@@ -27,7 +30,7 @@ export default class PaymentService {
 
 		const orderCode = booking.referenceNo;
 		const amount = Math.round(Number(booking.totalPrice));
-		
+
 		if (isNaN(amount) || amount <= 0) {
 			throw new BadRequestError(`Invalid booking amount: ${booking.totalPrice}`);
 		}
@@ -76,17 +79,20 @@ export default class PaymentService {
 				// PayOS getPaymentLinkInformation returns 'transactions' array
 				const transactions = (paymentInfo as any).transactions;
 				const lastTransaction = transactions && transactions.length > 0 ? transactions[transactions.length - 1] : null;
-				
+
 				if (lastTransaction) {
-					return await this.processPayosPayment({
-						orderCode: (paymentInfo as any).orderCode,
-						amount: lastTransaction.amount,
-						description: lastTransaction.description,
-						reference: lastTransaction.reference,
-						transactionDateTime: lastTransaction.transactionDateTime,
-						currency: (paymentInfo as any).currency || "VND",
-						paymentLinkId: (paymentInfo as any).id,
-					} as unknown as PayosWebhookData, booking.id);
+					return await this.processPayosPayment(
+						{
+							orderCode: (paymentInfo as any).orderCode,
+							amount: lastTransaction.amount,
+							description: lastTransaction.description,
+							reference: lastTransaction.reference,
+							transactionDateTime: lastTransaction.transactionDateTime,
+							currency: (paymentInfo as any).currency || "VND",
+							paymentLinkId: (paymentInfo as any).id,
+						} as unknown as PayosWebhookData,
+						booking.id
+					);
 				}
 			}
 
@@ -162,7 +168,7 @@ export default class PaymentService {
 			});
 		}
 
-		await this.#bookingRepository.confirm(bookingId);
+		await this.#bookingService.confirmBooking(bookingId);
 
 		return {
 			bookingId,

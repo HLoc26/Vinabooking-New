@@ -80,6 +80,14 @@ class RoomRepository {
 		});
 	}
 
+	public async findBedsByIds(ids: string[]) {
+		if (!ids || ids.length === 0) return [];
+
+		return this.#prismaClient.bed.findMany({
+			where: { id: { in: ids } },
+		});
+	}
+
 	/**
 	 * (R) Tìm TẤT CẢ Rooms thuộc một Accommodation.
 	 */
