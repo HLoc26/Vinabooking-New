@@ -116,18 +116,18 @@ export default class PaymentService {
 			throw new BadRequestError("Invalid webhook signature");
 		}
 
-		const { orderCode, code } = verifiedData;
+		const { data: webhookData, code } = verifiedData;
 
 		if (code !== "00") {
-			return { status: "NOT_PAID", orderCode, code };
+			return { status: "NOT_PAID", orderCode: webhookData.orderCode, code };
 		}
 
-		const booking = await this.#bookingRepository.findByReferenceNo(orderCode);
+		const booking = await this.#bookingRepository.findByReferenceNo(webhookData.orderCode);
 		if (!booking) {
-			throw new NotFoundError(`Booking with reference ${orderCode} not found`);
+			throw new NotFoundError(`Booking with reference ${webhookData.orderCode} not found`);
 		}
 
-		return await this.processPayosPayment(verifiedData as unknown as PayosWebhookData, booking.id);
+		return await this.processPayosPayment(webhookData as unknown as PayosWebhookData, booking.id);
 	}
 
 	private async processPayosPayment(data: PayosWebhookData, bookingId: string) {
