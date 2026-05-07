@@ -160,8 +160,8 @@ const appRouter = new AppRouter(
 	facilityRouter,
 	ownerRouter,
 	amenityRouter,
-	paymentRouter,
-	searchRouter
+	searchRouter,
+	paymentRouter
 );
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
