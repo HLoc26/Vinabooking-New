@@ -93,7 +93,7 @@ class BookingRepository {
 	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
 		const booking = await this.#prismaClient.booking.findUnique({
 			where,
-			include: withDetails ? { details: true, PaymentTransfer: true } : { PaymentTransfer: true },
+			include: withDetails ? { details: true, paymentTransfers: true } : { paymentTransfers: true },
 		});
 
 		return booking as (T extends true ? BookingWithDetails : Booking) | null;
