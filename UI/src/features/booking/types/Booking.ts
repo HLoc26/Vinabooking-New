@@ -7,6 +7,21 @@ export type BookingDetail = {
 	itemType: "ROOM" | "BED";
 };
 
+export type PaymentTransfer = {
+	id: string;
+	bookingId: string;
+	transferReference: string | null;
+	amount: string;
+	currency: string;
+	transferContent: string;
+	paymentLinkId: string | null;
+	status: "PENDING" | "DISMISSED" | "FAILED" | "COMPLETED" | "PARTIALLY_HALFED" | "PARTIALLY_THIRDED" | "PARTIALLY_QUARTERED";
+	receivedAt: string | null;
+	completedAt: string | null;
+	createdAt: string;
+	updatedAt: string;
+};
+
 export type Booking = {
 	id: string;
 	startDate: Date | string;
@@ -20,4 +35,5 @@ export type Booking = {
 	status: "DRAFT" | "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
 	userId: string;
 	details: BookingDetail[];
+	PaymentTransfer: PaymentTransfer[];
 };
