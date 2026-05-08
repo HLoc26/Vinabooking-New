@@ -18,17 +18,13 @@ class PaymentRepository {
 		return this.#prismaClient.paymentTransfer.findUnique({ where: { id } });
 	}
 	public async deletePendingByBookingId(bookingId: string) {
-		// Log it to see if the method is actually called and with what ID
-		console.log("Attempting to delete pending payments for Booking ID:", bookingId);
-
 		const result = await this.#prismaClient.paymentTransfer.deleteMany({
 			where: {
-				bookingId: bookingId, // Ensure this matches your schema field name exactly
-				status: "PENDING", // Ensure this is uppercase if that's how it's stored
+				bookingId,
+				status: "PENDING", // already scoped to pending only
 			},
 		});
-
-		console.log(`Deleted ${result.count} old pending records.`);
+		console.log(`Deleted ${result.count} pending records for booking ${bookingId}`);
 		return result;
 	}
 

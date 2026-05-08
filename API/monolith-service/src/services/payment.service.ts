@@ -20,8 +20,10 @@ export default class PaymentService {
 
 	public async createPaymentLink(bookingId: string, returnUrl: string, cancelUrl: string) {
 		// 1. Logic: Cleanup old attempts via Repo
-		await this.#paymentRepository.deletePendingByBookingId(bookingId);
-
+		const latest = await this.#paymentRepository.findLatestByBookingId(bookingId);
+		if (latest && latest.status === "PENDING") {
+			await this.#paymentRepository.deletePendingByBookingId(bookingId);
+		}
 		const booking = await this.#bookingRepository.findById(bookingId);
 		if (!booking) {
 			throw new NotFoundError(`Booking with ID ${bookingId} not found`);
