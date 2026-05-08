@@ -10,6 +10,7 @@ import ManageBookingPage from "../features/owner/pages/ManageBookingPage";
 import ManagePricePage from "../features/owner/pages/ManagePricePage";
 import DraftsPage from "../features/owner/pages/DraftsPage";
 import OwnerCreateAccomPage from "../features/owner/pages/OwnerCreateAccomPage";
+import ManageAccommodationPage from "../features/owner/pages/ManageAccommodationPage";
 
 export const OwnerRouter = () => (
 	<Routes>
@@ -48,6 +49,14 @@ export const OwnerRouter = () => (
 			element={
 				<OwnerLayout>
 					<DraftsPage />
+				</OwnerLayout>
+			}
+		/>
+		<Route
+			path="/accommodations/:accommodationId"
+			element={
+				<OwnerLayout>
+					<ManageAccommodationPage />
 				</OwnerLayout>
 			}
 		/>

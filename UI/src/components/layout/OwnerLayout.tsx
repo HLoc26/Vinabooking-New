@@ -1,15 +1,14 @@
 import { useEffect, type ReactNode } from "react";
-import { useNavigate, useLocation } from "react-router-dom";
+import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
 import { setOwnerProfile } from "../../features/auth/authSlice";
 import { useOwnerInfo } from "../../features/owner/hooks/useOwnerInfo";
-import { CircularProgress, Box, Drawer, List, ListItem, ListItemIcon, ListItemText, Typography, Divider, Button, ListItemButton, Avatar, Tooltip, Chip } from "@mui/material";
-import type { AxiosError } from "axios";
+import { CircularProgress, Box, Drawer, Typography, Divider, Button, Avatar, Tooltip, Chip } from "@mui/material";
 import { usePushNotificationContext } from "../../context/PushNotification/hook";
-import DashboardIcon from "@mui/icons-material/Dashboard";
-import BookingIcon from "@mui/icons-material/BookOnline";
-import PriceIcon from "@mui/icons-material/PriceChange";
+import { NavigationMenu } from "./NavigationMenu";
+
+// Icons
 import LogoutIcon from "@mui/icons-material/Logout";
 import HotelIcon from "@mui/icons-material/Hotel";
 import AdminPanelSettingsIcon from "@mui/icons-material/AdminPanelSettings";
@@ -18,23 +17,16 @@ interface OwnerLayoutProps {
 	children: ReactNode;
 }
 
-const drawerWidth = 260;
-
-const navItems = [
-	{ label: "Dashboard", icon: <DashboardIcon fontSize="small" />, path: "/owner/dashboard" },
-	{ label: "Manage Booking", icon: <BookingIcon fontSize="small" />, path: "/owner/manage-booking" },
-	{ label: "Manage Price", icon: <PriceIcon fontSize="small" />, path: "/owner/manage-price" },
-];
+const drawerWidth = 280;
 
 export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 	const navigate = useNavigate();
-	const location = useLocation();
 	const dispatch = useDispatch();
 	const user = useSelector((root: RootState) => root.auth.user);
 	const { pushNotification } = usePushNotificationContext();
 	const { data: ownerInfo, isLoading, isError, error } = useOwnerInfo();
 
-	const isNotOwner = !user || user.role !== "ACCOMMODATION_OWNER";
+	const isNotOwner = user?.role !== "ACCOMMODATION_OWNER";
 
 	useEffect(() => {
 		if (isNotOwner) {
@@ -42,12 +34,12 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 			return;
 		}
 		if (isLoading) return;
-		if (isError && (error as AxiosError)?.response?.status === 404) {
+		if (isError && error?.response?.status === 404) {
 			pushNotification("Please complete your profile to continue.", "info");
 			navigate("/owner/onboard", { replace: true });
 			return;
 		}
-		if (isError && (error as AxiosError)?.response?.status === 403) {
+		if (isError && error?.response?.status === 403) {
 			pushNotification("Access denied. Please check your permissions.", "error");
 			navigate("/owner/landing", { replace: true });
 			return;
@@ -59,15 +51,13 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 
 	if (isNotOwner) return null;
 
-	if (isLoading) {
+	if (isLoading || !ownerInfo) {
 		return (
 			<Box display="flex" justifyContent="center" alignItems="center" minHeight="100vh">
 				<CircularProgress />
 			</Box>
 		);
 	}
-
-	if (!ownerInfo) return null;
 
 	const handleLogout = () => {
 		console.log("Logout clicked");
@@ -179,66 +169,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 						Navigation
 					</Typography>
 				</Box>
-				<List sx={{ px: 1.5, pt: 0.5 }}>
-					{navItems.map(({ label, icon, path }) => {
-						const isActive = location.pathname === path;
-						return (
-							<ListItem key={path} disablePadding sx={{ mb: 0.5 }}>
-								<ListItemButton
-									onClick={() => navigate(path)}
-									selected={isActive}
-									sx={{
-										borderRadius: 2,
-										py: 1,
-										"&.Mui-selected": {
-											bgcolor: "primary.main",
-											color: "primary.contrastText",
-											"& .MuiListItemIcon-root": {
-												color: "primary.contrastText",
-											},
-											"&:hover": {
-												bgcolor: "primary.dark",
-											},
-										},
-										"&:hover:not(.Mui-selected)": {
-											bgcolor: "action.hover",
-										},
-									}}
-								>
-									<ListItemIcon
-										sx={{
-											minWidth: 36,
-											color: isActive ? "inherit" : "text.secondary",
-										}}
-									>
-										{icon}
-									</ListItemIcon>
-									<ListItemText
-										primary={label}
-										primaryTypographyProps={{
-											fontSize: 14,
-											fontWeight: isActive ? 600 : 400,
-										}}
-									/>
-									{isActive && (
-										<Box
-											sx={{
-												width: 6,
-												height: 6,
-												borderRadius: "50%",
-												bgcolor: "primary.contrastText",
-												opacity: 0.7,
-												flexShrink: 0,
-											}}
-										/>
-									)}
-								</ListItemButton>
-							</ListItem>
-						);
-					})}
-				</List>
-
-				<Box sx={{ flexGrow: 1 }} />
+				<NavigationMenu />
 
 				{/* Logout */}
 				<Divider />
