@@ -17,7 +17,44 @@ class PaymentRepository {
 	public async findById(id: string): Promise<PaymentTransfer | null> {
 		return this.#prismaClient.paymentTransfer.findUnique({ where: { id } });
 	}
+	public async deletePendingByBookingId(bookingId: string) {
+		// Log it to see if the method is actually called and with what ID
+		console.log("Attempting to delete pending payments for Booking ID:", bookingId);
 
+		const result = await this.#prismaClient.paymentTransfer.deleteMany({
+			where: {
+				bookingId: bookingId, // Ensure this matches your schema field name exactly
+				status: "PENDING", // Ensure this is uppercase if that's how it's stored
+			},
+		});
+
+		console.log(`Deleted ${result.count} old pending records.`);
+		return result;
+	}
+
+	public async createPendingRecord(data: { bookingId: string; amount: number; description: string; paymentLinkId: string }) {
+		return await this.#prismaClient.paymentTransfer.create({
+			data: {
+				Booking: { connect: { id: data.bookingId } },
+				amount: data.amount, // Prisma handles the Decimal conversion if the schema matches
+				currency: "VND",
+				transferContent: data.description,
+				paymentLinkId: data.paymentLinkId,
+				status: "PENDING",
+			},
+		});
+	}
+	public async updateByPaymentLinkId(linkId: string, data: any) {
+		return await this.#prismaClient.paymentTransfer.updateMany({
+			where: { paymentLinkId: linkId },
+			data: {
+				status: "COMPLETED",
+				transferReference: data.reference,
+				receivedAt: new Date(data.transactionDateTime),
+				completedAt: new Date(),
+			},
+		});
+	}
 	/**
 	 * Find a payment transfer by its unique transaction reference.
 	 * Used for idempotency to ensure a transaction is only processed once.
@@ -29,7 +66,12 @@ class PaymentRepository {
 	public async findByPaymentLinkId(paymentLinkId: string): Promise<PaymentTransfer | null> {
 		return this.#prismaClient.paymentTransfer.findFirst({ where: { paymentLinkId } });
 	}
-
+	public async findLatestByBookingId(bookingId: string): Promise<PaymentTransfer | null> {
+		return this.#prismaClient.paymentTransfer.findFirst({
+			where: { bookingId },
+			orderBy: { createdAt: "desc" },
+		});
+	}
 	public async update(id: string, data: UpdatePaymentTransferInput): Promise<PaymentTransfer> {
 		return this.#prismaClient.paymentTransfer.update({ where: { id }, data });
 	}

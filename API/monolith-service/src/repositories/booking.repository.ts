@@ -29,6 +29,7 @@ class BookingRepository {
 	public async findByReferenceNo(referenceNo: number): Promise<Booking | null> {
 		return this.#prismaClient.booking.findUnique({
 			where: { referenceNo },
+			include: { details: true },
 		});
 	}
 
@@ -89,16 +90,14 @@ class BookingRepository {
 		});
 	}
 
-	// ---------- internal shared finder ----------
 	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
 		const booking = await this.#prismaClient.booking.findUnique({
 			where,
-			include: withDetails ? { details: true } : undefined,
+			include: withDetails ? { details: true, PaymentTransfer: true } : { PaymentTransfer: true },
 		});
 
 		return booking as (T extends true ? BookingWithDetails : Booking) | null;
 	}
-
 	// ---------- create ----------
 	public async create(data: Prisma.BookingCreateInput): Promise<BookingWithDetails> {
 		return this.#prismaClient.booking.create({

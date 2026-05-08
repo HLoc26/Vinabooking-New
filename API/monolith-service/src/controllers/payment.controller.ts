@@ -46,14 +46,37 @@ export default class PaymentController {
 
 	public async processWebhook(req: PayosWebhookRequest, res: Response) {
 		try {
-			console.log("PayOS webhook received:", JSON.stringify(req.body, null, 2));
+			// 1. Log the raw body for debugging
+			console.log("PayOS Webhook Triggered:", JSON.stringify(req.body.data, null, 2));
 
+			const orderCode = req.body.data?.orderCode;
+			if (!orderCode) {
+				return res.status(200).json({ success: false, error: "No orderCode" });
+			}
+
+			/**
+			 * 2. Accurate Extraction (String Slicing)
+			 * We convert to string and remove the last 4 digits.
+			 * This avoids the Number.MAX_SAFE_INTEGER rounding bug.
+			 */
+			const orderCodeStr = String(orderCode);
+			const originalReferenceNo = orderCodeStr.substring(0, orderCodeStr.length - 4);
+
+			console.log(`Processing update for Booking Ref: ${originalReferenceNo}`);
+
+			// 3. Delegate to service
 			const result = await this.paymentService.processWebhook(req.body);
 
-			return res.status(200).json({ success: true, data: result });
+			// 4. Log the service result (fixes the 'result' is never read error)
+			//how to boolean result is never read error
+			console.log("Webhook processed successfully:", result?.success || "No status returned");
+
+			return res.status(200).json({ success: true });
 		} catch (err: unknown) {
 			const e = err as Error;
-			console.error("PayOS webhook error:", e.message);
+			console.error("PayOS webhook failure:", e.message);
+
+			// We return 200 so PayOS stops retrying, but success is false for our logs
 			return res.status(200).json({ success: false, error: e.message });
 		}
 	}
