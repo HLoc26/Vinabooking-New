@@ -26,6 +26,13 @@ class BookingRepository {
 		return bookings as T extends true ? BookingWithDetails[] : Booking[];
 	}
 
+	public async findByReferenceNo(referenceNo: number): Promise<Booking | null> {
+		return this.#prismaClient.booking.findUnique({
+			where: { referenceNo },
+			include: { details: true },
+		});
+	}
+
 	public async findByRoomId(roomId: string) {
 		return await this.#prismaClient.booking.findMany({
 			where: { details: { some: { itemId: roomId, itemType: "ROOM" } } },
@@ -83,16 +90,14 @@ class BookingRepository {
 		});
 	}
 
-	// ---------- internal shared finder ----------
 	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
 		const booking = await this.#prismaClient.booking.findUnique({
 			where,
-			include: withDetails ? { details: true } : undefined,
+			include: withDetails ? { details: true, PaymentTransfer: true } : { PaymentTransfer: true },
 		});
 
 		return booking as (T extends true ? BookingWithDetails : Booking) | null;
 	}
-
 	// ---------- create ----------
 	public async create(data: Prisma.BookingCreateInput): Promise<BookingWithDetails> {
 		return this.#prismaClient.booking.create({
