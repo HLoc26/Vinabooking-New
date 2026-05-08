@@ -9,6 +9,7 @@ const BOOKING_ENDPOINT = "/bookings";
 const IMAGE_ENDPOINT = "/images";
 const ROOM_ENDPOINT = "/rooms";
 const ACCOM_ENDPOINT = "/accommodations";
+const PAYMENT_ENDPOINT = "/payments";
 
 export const bookingApi = {
 	async getByUserId(userId: string) {
@@ -144,7 +145,7 @@ export const bookingApi = {
 	async createPaymentLink(bookingId: string, returnUrl: string, cancelUrl: string) {
 		const token = Cookies.get(ACCESS_TOKEN_KEY);
 		const res = await axioInstance.post(
-			"/payment/create",
+			`${PAYMENT_ENDPOINT}/create`,
 			{ bookingId, returnUrl, cancelUrl },
 			{
 				headers: {
