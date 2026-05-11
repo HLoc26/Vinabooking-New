@@ -10,6 +10,7 @@ import AspectRatioOutlinedIcon from "@mui/icons-material/AspectRatioOutlined";
 import LandscapeOutlinedIcon from "@mui/icons-material/LandscapeOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import type { RoomForm } from "../../../types/owner.types";
+import { formatVND } from "../../../../../utils/moneyConverter";
 
 interface Props {
 	room: RoomForm;
@@ -77,7 +78,7 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 					<SummaryItem icon={<BathtubOutlinedIcon />} label={`${room.bathroomCount} bath${room.bathroomCount !== 1 ? "s" : ""}`} />
 					{room.size ? <SummaryItem icon={<AspectRatioOutlinedIcon />} label={`${room.size} m²`} /> : null}
 					{room.viewType !== "NONE" ? <SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replace(/_/g, " ")} view`} /> : null}
-					{room.price ? <SummaryItem icon={<SellOutlinedIcon />} label={`${room.price.toLocaleString("vi-VN")} VND / ${room.pricingType.replace(/_/g, " ").toLowerCase()}`} /> : null}
+					{room.price ? <SummaryItem icon={<SellOutlinedIcon />} label={`${formatVND(room.price)} / ${room.pricingType.replace(/_/g, " ").toLowerCase()}`} /> : null}
 				</Box>
 			</Box>
 

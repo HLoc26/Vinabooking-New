@@ -2,9 +2,9 @@ import { useState } from "react";
 import { Place, StarRounded } from "@mui/icons-material";
 import { Box, Card, CardContent, CardMedia, IconButton, Typography, Dialog, DialogTitle, DialogContent, DialogActions, Button, Stack } from "@mui/material";
 import type { AccommodationDetail } from "../../../../accommodation/types/accommodation.types";
-import { standardize } from "../../../../../utils/moneyConverter";
 import { useNavigate } from "react-router-dom";
 import { getThumbnailUrl } from "../../../../../utils/image";
+import { useCurrency } from "../../../../../hooks/useCurrency";
 
 type AccommodationCardProps = {
 	accommodation: AccommodationDetail;
@@ -13,6 +13,7 @@ type AccommodationCardProps = {
 
 const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, onRemove }) => {
 	const navigate = useNavigate();
+	const { format } = useCurrency();
 	const [confirmOpen, setConfirmOpen] = useState(false);
 
 	const images = accommodation?.images || [];
@@ -87,7 +88,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 
 						<Stack direction="row" sx={{ textAlign: "right" }} alignItems={"end"} spacing={0.5}>
 							<Typography color="primary" fontWeight={700}>
-								{minPrice > 0 ? `$${standardize(minPrice)}` : "N/A"}
+								{minPrice > 0 ? format(minPrice) : "N/A"}
 							</Typography>
 							{minPrice > 0 && (
 								<Typography variant="caption" color="text.secondary">

@@ -20,11 +20,10 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 	// Get data from Redux (url synced by parent)
 	const criteria = useSelector((state: RootState) => state.search);
 
-	// Local state only used for smooth UI slibar
-	const [localPrice, setLocalPrice] = useState<number[]>([criteria.price.min, criteria.price.max]);
+	// Local state for smooth UI slider, always in current currency
+	const [localPrice, setLocalPrice] = useState<number[]>([]);
 
 	// Sync: when Redux changes due to URL change, update local state
-	// to make sure back/forward works
 	useEffect(() => {
 		setLocalPrice([criteria.price.min, criteria.price.max]);
 	}, [criteria.price.min, criteria.price.max]);
@@ -57,8 +56,6 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 	};
 
 	// Slider logic:
-	// - onChange: only update UI local
-	// - onChangeCommitted: Update URL (to fetch data)
 	const handleSliderChange = (_: Event, newValue: number | number[]) => {
 		if (Array.isArray(newValue)) {
 			setLocalPrice(newValue);
@@ -68,8 +65,8 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 	const handleSliderCommit = (_: Event | React.SyntheticEvent | null, newValue: number | number[]) => {
 		if (Array.isArray(newValue)) {
 			updateFilter({
-				minPrice: newValue[0].toString(),
-				maxPrice: newValue[1].toString(),
+				minPrice: Math.round(newValue[0]).toString(),
+				maxPrice: Math.round(newValue[1]).toString(),
 			});
 		}
 	};
@@ -78,14 +75,13 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 	const handleInputChange = (type: "min" | "max", value: string) => {
 		const numVal = Number(value);
 		const newRange = type === "min" ? [numVal, localPrice[1]] : [localPrice[0], numVal];
-
 		setLocalPrice(newRange);
 	};
 
 	const handleInputCommit = () => {
 		updateFilter({
-			minPrice: localPrice[0].toString(),
-			maxPrice: localPrice[1].toString(),
+			minPrice: Math.round(localPrice[0]).toString(),
+			maxPrice: Math.round(localPrice[1]).toString(),
 		});
 	};
 
@@ -175,19 +171,27 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 							label="Min"
 							size="small"
 							type="number"
-							value={localPrice[0]}
+							value={localPrice[0] || 0}
 							onChange={(e) => handleInputChange("min", e.target.value)}
 							onBlur={handleInputCommit}
-							slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }}
+							slotProps={{
+								input: {
+									startAdornment: <InputAdornment position="start">VND</InputAdornment>,
+								},
+							}}
 						/>
 						<TextField
 							label="Max"
 							size="small"
 							type="number"
-							value={localPrice[1]}
+							value={localPrice[1] || 0}
 							onChange={(e) => handleInputChange("max", e.target.value)}
 							onBlur={handleInputCommit}
-							slotProps={{ input: { startAdornment: <InputAdornment position="start">$</InputAdornment> } }}
+							slotProps={{
+								input: {
+									startAdornment: <InputAdornment position="start">VND</InputAdornment>,
+								},
+							}}
 						/>
 					</Box>
 				</Box>

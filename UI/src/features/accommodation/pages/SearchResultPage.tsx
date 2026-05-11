@@ -6,7 +6,6 @@ import { SearchFiltersSidebar, ActiveFiltersBar, ResultsHeader, AccommodationCar
 
 import { useScrollToTopOnMount } from "../../../hooks/useScrollToTopMount";
 import { PRICE_FILTER_CONFIG } from "../constants/searchFilters";
-import { standardize } from "../../../utils/moneyConverter";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import { useDispatch, useSelector } from "react-redux";
@@ -17,12 +16,14 @@ import { parseSearchParamsToQuery } from "../../../utils/search";
 import useFacilityList from "../hooks/useFacilityList";
 import { EAccommodationType } from "../types/accommodation.types";
 import { AdvancedSearchButton } from "../../search/semantic-search/AdvancedSearchButton";
+import { useCurrency } from "../../../hooks/useCurrency";
 
 export default function SearchResultPage() {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
 	const dispatch = useDispatch();
 	const { pushNotification } = usePushNotificationContext();
+	const { format } = useCurrency();
 
 	const [viewMode, setViewMode] = useState<"grid" | "list">("grid");
 
@@ -117,7 +118,7 @@ export default function SearchResultPage() {
 			filters.push({
 				key: "price",
 				label: "Khoảng giá",
-				value: `${standardize(min)} - ${standardize(max)}`,
+				value: `${format(min)} - ${format(max)}`,
 			});
 		}
 
@@ -130,7 +131,7 @@ export default function SearchResultPage() {
 		}
 
 		return filters;
-	}, [criteria, facilities]);
+	}, [criteria, facilities, format]);
 
 	useScrollToTopOnMount();
 

@@ -12,7 +12,7 @@ const initialState: Query = {
 	keyword: "",
 	dates: { checkIn: tomorrow, checkOut: dayAfter },
 	guests: { adults: 2, children: 0, rooms: 1 },
-	price: { min: 0, max: 500 },
+	price: { min: 0, max: 100000 },
 	type: EAccommodationType.HOTEL,
 	sortBy: "price_asc",
 	facilities: [],

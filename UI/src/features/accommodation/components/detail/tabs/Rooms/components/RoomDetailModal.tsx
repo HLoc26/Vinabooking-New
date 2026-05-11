@@ -5,6 +5,7 @@ import { Close, Person, Hotel, SquareFoot, Bathtub, Visibility, ChevronLeft, Che
 import { getViewTypeLabel } from "../../../../../constants/viewTypes";
 import useModalContext from "../../../../../../../context/ModalContext/hook";
 import type { Room } from "../../../../../types/room.types";
+import { useCurrency } from "../../../../../../../hooks/useCurrency";
 
 interface RoomDetailModalProps {
 	room: Room;
@@ -12,9 +13,10 @@ interface RoomDetailModalProps {
 
 const RoomDetailModal = ({ room }: RoomDetailModalProps) => {
 	const { closeModal } = useModalContext();
+	const { format } = useCurrency();
 
 	const primaryImages = room.images.filter((img) => img.variants.some((v) => v.variant === "ORIGINAL"));
-	const price = Math.floor(parseFloat(room.price));
+	const price = parseFloat(room.price);
 
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
@@ -182,7 +184,7 @@ const RoomDetailModal = ({ room }: RoomDetailModalProps) => {
 				>
 					<Box>
 						<Typography variant="h5" fontWeight={700} color="primary.main">
-							${price}
+							{format(price)}
 						</Typography>
 						<Typography variant="caption" color="text.secondary">
 							per night

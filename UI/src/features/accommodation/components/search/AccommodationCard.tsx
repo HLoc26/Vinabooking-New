@@ -4,7 +4,7 @@ import { LocationOn, AutoAwesome } from "@mui/icons-material";
 import type { AccommodationDetail } from "../../types/accommodation.types";
 import { ACCOMMODATION_TYPE_OPTIONS } from "../../constants/searchFilters";
 import FavouriteButton from "../../../../components/shared/FavouriteButton";
-import { standardize } from "../../../../utils/moneyConverter";
+import { useCurrency } from "../../../../hooks/useCurrency";
 import { ACCOMMODATION_DEFAULT_IMAGES } from "../../types/const";
 
 interface Props {
@@ -21,6 +21,7 @@ const getTypeLabel = (type: string): string => {
 };
 
 export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onClick, score, matchReason }) => {
+	const { format } = useCurrency();
 	const minPrice = accommodation.minPrice;
 
 	const avgStar = accommodation.avgStar;
@@ -102,7 +103,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 										Starting from
 									</Typography>
 									<Typography variant="h5" color="primary" fontWeight="bold">
-										${standardize(minPrice || 100)}
+										{format(minPrice || 100)}
 									</Typography>
 									<Typography variant="caption" color="text.secondary">
 										per night
@@ -259,7 +260,7 @@ export const AccommodationCard: React.FC<Props> = ({ accommodation, variant, onC
 								From
 							</Typography>{" "}
 							<Typography variant="h6" color="primary" fontWeight="bold">
-								${standardize(minPrice || 100)}
+								{format(minPrice || 100)}
 							</Typography>
 							<Typography variant="body2" color="text.secondary" sx={{ ml: 0.5 }}>
 								/ night
