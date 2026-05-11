@@ -176,7 +176,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 							onBlur={handleInputCommit}
 							slotProps={{
 								input: {
-									startAdornment: <InputAdornment position="start">VND</InputAdornment>,
+									endAdornment: <InputAdornment position="end">VND</InputAdornment>,
 								},
 							}}
 						/>
