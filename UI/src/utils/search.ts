@@ -3,7 +3,7 @@ import type { Query, SortOption } from "../features/search/types/Query";
 import { parseInputDate, toInputDate } from "./dateFormatter";
 
 const DEFAULT_GUESTS = { adults: 2, children: 0, rooms: 1 };
-const DEFAULT_PRICE = { min: 0, max: 100 };
+const DEFAULT_PRICE = { min: 0, max: 1000000 };
 const DEFAULT_PAGE = 1;
 const DEFAULT_LIMIT = 18;
 
