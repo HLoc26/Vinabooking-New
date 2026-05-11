@@ -9,6 +9,7 @@ import { useAccommodationDetailManage } from "../hooks/useAccommodationDetailMan
 import { ManageBasicInfoCard } from "../components/dashboard/overview/ManageBasicInfoCard";
 import { ManageAddressCard } from "../components/dashboard/overview/ManageAddressCard";
 import { GlobalHeader } from "../components/dashboard/shared/GlobalHeader";
+import { ManageFacilitiesCard } from "../components/dashboard/facilities/ManageFacilitiesCard";
 
 export default function ManageAccommodationPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
@@ -119,11 +120,9 @@ export default function ManageAccommodationPage() {
 				)}
 
 				{currentTab === "facilities" && (
-					<Paper sx={{ p: 4, borderRadius: 3, minHeight: 600 }}>
-						<Typography variant="h5" fontWeight={700}>
-							Facilities Configuration
-						</Typography>
-					</Paper>
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+						<ManageFacilitiesCard accommodationId={accommodationId!} initialFacilities={accommodation.facilities} />
+					</Box>
 				)}
 
 				{(currentTab === "rooms" || currentTab === "roomDetail") && (
