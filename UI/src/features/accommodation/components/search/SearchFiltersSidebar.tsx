@@ -21,8 +21,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 	const criteria = useSelector((state: RootState) => state.search);
 
 	// Local state for smooth UI slider, always in current currency
-	const [localPrice, setLocalPrice] = useState<number[]>([]);
-
+	const [localPrice, setLocalPrice] = useState<number[]>([criteria.price.min, criteria.price.max]);
 	// Sync: when Redux changes due to URL change, update local state
 	useEffect(() => {
 		setLocalPrice([criteria.price.min, criteria.price.max]);
