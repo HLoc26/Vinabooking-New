@@ -10,13 +10,13 @@ import { ManageBasicInfoCard } from "../components/dashboard/overview/ManageBasi
 import { ManageAddressCard } from "../components/dashboard/overview/ManageAddressCard";
 import { GlobalHeader } from "../components/dashboard/shared/GlobalHeader";
 import { ManageFacilitiesCard } from "../components/dashboard/facilities/ManageFacilitiesCard";
+import { ManageRoomsCard } from "../components/dashboard/rooms/ManageRoomsCard";
 
 export default function ManageAccommodationPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
 	const [searchParams, setSearchParams] = useSearchParams();
 
 	const currentTab = searchParams.get("tab") || "overview";
-	const selectedRoomId = searchParams.get("roomId");
 
 	const { data: accommodation, isLoading, isError, refetch } = useAccommodationDetailManage(accommodationId);
 
@@ -96,7 +96,7 @@ export default function ManageAccommodationPage() {
 				>
 					<Tab label="Overview" value="overview" />
 					<Tab label="Facilities" value="facilities" />
-					<Tab label="Rooms & Pricing" value="rooms" />
+					<Tab label="Rooms" value="rooms" />
 					<Tab label="Photo Gallery" value="gallery" />
 					<Tab label="Guest Reviews" value="reviews" />
 				</Tabs>
@@ -126,11 +126,9 @@ export default function ManageAccommodationPage() {
 				)}
 
 				{(currentTab === "rooms" || currentTab === "roomDetail") && (
-					<Paper sx={{ p: 4, borderRadius: 3, minHeight: 600 }}>
-						<Typography variant="h5" fontWeight={700}>
-							{selectedRoomId ? `Detailed Room Editor: ${selectedRoomId}` : "Rooms Dashboard (List & Add)"}
-						</Typography>
-					</Paper>
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+						<ManageRoomsCard accommodationId={accommodationId!} accommodationData={accommodation} />
+					</Box>
 				)}
 
 				{currentTab === "gallery" && (
