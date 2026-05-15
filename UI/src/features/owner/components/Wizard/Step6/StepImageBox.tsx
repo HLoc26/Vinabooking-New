@@ -15,9 +15,10 @@ interface Props {
 	triggerSubmit: boolean;
 	resetTrigger: () => void;
 	onSuccess: () => void;
+	isManageMode?: boolean;
 }
 
-const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
+const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess, isManageMode = false }: Props) => {
 	const { pushNotification } = usePushNotificationContext();
 	const [isUploading, setIsUploading] = useState(false);
 	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
@@ -151,16 +152,18 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 				</Box>
 			)}
 
-			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
-				<Box>
-					<Typography variant="h6" fontWeight={700}>
-						Properties Photos
-					</Typography>
-					<Typography variant="body2" color="text.secondary" mt={0.5}>
-						Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
-					</Typography>
+			{!isManageMode && (
+				<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
+					<Box>
+						<Typography variant="h6" fontWeight={700}>
+							Properties Photos
+						</Typography>
+						<Typography variant="body2" color="text.secondary" mt={0.5}>
+							Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
+						</Typography>
+					</Box>
 				</Box>
-			</Box>
+			)}
 
 			{/* Section 1: General Accommodation Gallery */}
 			<Box sx={{ mb: 4 }}>

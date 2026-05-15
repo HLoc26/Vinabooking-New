@@ -11,6 +11,7 @@ import { ManageAddressCard } from "../components/dashboard/overview/ManageAddres
 import { GlobalHeader } from "../components/dashboard/shared/GlobalHeader";
 import { ManageFacilitiesCard } from "../components/dashboard/facilities/ManageFacilitiesCard";
 import { ManageRoomsCard } from "../components/dashboard/rooms/ManageRoomsCard";
+import { ManageGalleryCard } from "../components/dashboard/gallery/ManageGalleryCard";
 
 export default function ManageAccommodationPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
@@ -132,11 +133,9 @@ export default function ManageAccommodationPage() {
 				)}
 
 				{currentTab === "gallery" && (
-					<Paper sx={{ p: 4, borderRadius: 3, minHeight: 600 }}>
-						<Typography variant="h5" fontWeight={700}>
-							Photo Gallery Manager
-						</Typography>
-					</Paper>
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+						<ManageGalleryCard accommodationId={accommodationId!} accommodationData={accommodation} />
+					</Box>
 				)}
 
 				{currentTab === "reviews" && (
