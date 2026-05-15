@@ -31,6 +31,9 @@ export const GlobalHeader = ({ accommodation }: GlobalHeaderProps) => {
 
 	const formattedLastUpdated = accommodation.updatedAt ? formatDate(accommodation.updatedAt) : "Unknown";
 
+	const firstGalleryImage = accommodation.images?.find((img) => img.target === "accommodation")?.url;
+	const bannerImageUrl = accommodation.thumbnail || firstGalleryImage || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80";
+
 	return (
 		<Box sx={{ mb: 4, display: "flex", flexDirection: "column", gap: 2 }}>
 			{/* HERO BANNER */}
@@ -40,7 +43,7 @@ export const GlobalHeader = ({ accommodation }: GlobalHeaderProps) => {
 					height: 200,
 					borderRadius: 3,
 					bgcolor: "action.hover",
-					backgroundImage: `url(${accommodation.thumbnail || "https://images.unsplash.com/photo-1566073771259-6a8506099945?auto=format&fit=crop&w=1200&q=80"})`,
+					backgroundImage: `url(${bannerImageUrl})`,
 					backgroundSize: "cover",
 					backgroundPosition: "center",
 					position: "relative",
