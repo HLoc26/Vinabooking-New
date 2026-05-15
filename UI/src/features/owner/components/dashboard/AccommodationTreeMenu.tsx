@@ -1,127 +1,62 @@
-import { useState, useEffect } from "react";
-import { List, ListItemButton, ListItemIcon, ListItemText, Collapse, Box, Typography } from "@mui/material";
-import { InfoOutlined, WeekendOutlined, MeetingRoomOutlined, StarBorderOutlined, ExpandLess, ExpandMore, SubdirectoryArrowRight } from "@mui/icons-material";
+import { Box, Typography } from "@mui/material";
+import { InfoOutlined, WeekendOutlined, MeetingRoomOutlined, StarBorderOutlined, PhotoLibraryOutlined } from "@mui/icons-material";
 
-interface AccommodationTreeMenuProps {
-	rooms?: { id: string; name: string }[];
+type Props = Readonly<{
 	activeTab: string;
-	activeRoomId: string | null;
-	onTabChange: (tab: string, roomId?: string) => void;
-}
+	onTabChange: (tab: string) => void;
+}>;
 
-export const AccommodationTreeMenu = ({ rooms = [], activeTab, activeRoomId, onTabChange }: AccommodationTreeMenuProps) => {
-	const [openRooms, setOpenRooms] = useState(false);
-
-	useEffect(() => {
-		if (activeTab === "rooms" || activeTab === "roomDetail") {
-			setOpenRooms(true);
-		}
-	}, [activeTab]);
-
-	const handleToggleRooms = (e: React.MouseEvent) => {
-		e.stopPropagation();
-		setOpenRooms(!openRooms);
-	};
-
-	const getListItemStyle = (isNested: boolean = false) => ({
-		borderRadius: 2,
-		mb: 0.5,
-		pl: isNested ? 4 : 2,
-		py: 1,
-		"&.Mui-selected": {
-			bgcolor: "primary.main",
-			color: "primary.contrastText",
-			"& .MuiListItemIcon-root": { color: "primary.contrastText" },
-			"&:hover": { bgcolor: "primary.dark" },
-		},
-		"&:hover:not(.Mui-selected)": {
-			bgcolor: "action.hover",
+export const AccommodationTreeMenu = ({ activeTab, onTabChange }: Props) => {
+	const getLeafStyle = (isActive: boolean) => ({
+		display: "flex",
+		alignItems: "center",
+		gap: 1.25,
+		pl: 1.5,
+		pr: 1.5,
+		py: 0.6,
+		mb: 0.25,
+		borderRadius: "6px",
+		cursor: "pointer",
+		transition: "all 0.15s ease",
+		color: isActive ? "primary.main" : "text.secondary",
+		bgcolor: isActive ? "rgba(var(--mui-palette-primary-mainChannel) / 0.1)" : "transparent",
+		"&:hover": {
+			bgcolor: isActive ? "rgba(var(--mui-palette-primary-mainChannel) / 0.15)" : "rgba(255,255,255,0.03)",
+			color: isActive ? "primary.main" : "text.primary",
 		},
 	});
 
 	return (
-		<List sx={{ px: 0, pt: 0 }}>
+		<Box sx={{ display: "flex", flexDirection: "column" }}>
 			{/* 1. OVERVIEW */}
-			<ListItemButton selected={activeTab === "overview"} onClick={() => onTabChange("overview")} sx={getListItemStyle()}>
-				<ListItemIcon sx={{ minWidth: 36, color: activeTab === "overview" ? "inherit" : "text.secondary" }}>
-					<InfoOutlined fontSize="small" />
-				</ListItemIcon>
-				<ListItemText
-					primary={
-						<Typography fontSize={14} fontWeight={activeTab === "overview" ? 600 : 500}>
-							Overview
-						</Typography>
-					}
-				/>
-			</ListItemButton>
+			<Box onClick={() => onTabChange("overview")} sx={getLeafStyle(activeTab === "overview")}>
+				<InfoOutlined sx={{ fontSize: 16 }} />
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "overview" ? 600 : 500, userSelect: "none" }}>Overview</Typography>
+			</Box>
 
 			{/* 2. FACILITIES */}
-			<ListItemButton selected={activeTab === "facilities"} onClick={() => onTabChange("facilities")} sx={getListItemStyle()}>
-				<ListItemIcon sx={{ minWidth: 36, color: activeTab === "facilities" ? "inherit" : "text.secondary" }}>
-					<WeekendOutlined fontSize="small" />
-				</ListItemIcon>
-				<ListItemText
-					primary={
-						<Typography fontSize={14} fontWeight={activeTab === "facilities" ? 600 : 500}>
-							Facilities
-						</Typography>
-					}
-				/>
-			</ListItemButton>
+			<Box onClick={() => onTabChange("facilities")} sx={getLeafStyle(activeTab === "facilities")}>
+				<WeekendOutlined sx={{ fontSize: 16 }} />
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "facilities" ? 600 : 500, userSelect: "none" }}>Facilities</Typography>
+			</Box>
 
 			{/* 3. ROOMS */}
-			<ListItemButton selected={activeTab === "rooms"} onClick={() => onTabChange("rooms")} sx={getListItemStyle()}>
-				<ListItemIcon sx={{ minWidth: 36, color: activeTab === "rooms" ? "inherit" : "text.secondary" }}>
-					<MeetingRoomOutlined fontSize="small" />
-				</ListItemIcon>
-				<ListItemText
-					primary={
-						<Typography fontSize={14} fontWeight={activeTab === "rooms" ? 600 : 500}>
-							Rooms Management
-						</Typography>
-					}
-				/>
-				<Box onClick={handleToggleRooms} sx={{ display: "flex", alignItems: "center", p: 0.5, borderRadius: "50%", "&:hover": { bgcolor: "rgba(0,0,0,0.1)" } }}>
-					{openRooms ? <ExpandLess fontSize="small" /> : <ExpandMore fontSize="small" />}
-				</Box>
-			</ListItemButton>
+			<Box onClick={() => onTabChange("rooms")} sx={getLeafStyle(activeTab === "rooms")}>
+				<MeetingRoomOutlined sx={{ fontSize: 16 }} />
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "rooms" ? 600 : 500, userSelect: "none", flexGrow: 1 }}>Rooms</Typography>
+			</Box>
 
-			{/* Danh sách các phòng cụ thể */}
-			<Collapse in={openRooms} timeout="auto" unmountOnExit>
-				<List component="div" disablePadding>
-					{rooms.map((room) => {
-						const isRoomActive = activeTab === "roomDetail" && activeRoomId === room.id;
-						return (
-							<ListItemButton key={room.id} selected={isRoomActive} onClick={() => onTabChange("roomDetail", room.id)} sx={getListItemStyle(true)}>
-								<ListItemIcon sx={{ minWidth: 32, color: isRoomActive ? "inherit" : "text.disabled" }}>
-									<SubdirectoryArrowRight sx={{ fontSize: 18 }} />
-								</ListItemIcon>
-								<ListItemText
-									primary={
-										<Typography fontSize={13} fontWeight={isRoomActive ? 600 : 400} noWrap>
-											{room.name}
-										</Typography>
-									}
-								/>
-							</ListItemButton>
-						);
-					})}
-				</List>
-			</Collapse>
+			{/* 4. PHOTO GALLERY */}
+			<Box onClick={() => onTabChange("gallery")} sx={getLeafStyle(activeTab === "gallery")}>
+				<PhotoLibraryOutlined sx={{ fontSize: 16 }} />
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "gallery" ? 600 : 500, userSelect: "none" }}>Photo Gallery</Typography>
+			</Box>
 
-			{/* 4. REVIEWS */}
-			<ListItemButton selected={activeTab === "reviews"} onClick={() => onTabChange("reviews")} sx={getListItemStyle()}>
-				<ListItemIcon sx={{ minWidth: 36, color: activeTab === "reviews" ? "inherit" : "text.secondary" }}>
-					<StarBorderOutlined fontSize="small" />
-				</ListItemIcon>
-				<ListItemText
-					primary={
-						<Typography fontSize={14} fontWeight={activeTab === "reviews" ? 600 : 500}>
-							Guest Reviews
-						</Typography>
-					}
-				/>
-			</ListItemButton>
-		</List>
+			{/* 5. GUEST REVIEWS */}
+			<Box onClick={() => onTabChange("reviews")} sx={getLeafStyle(activeTab === "reviews")}>
+				<StarBorderOutlined sx={{ fontSize: 16 }} />
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "reviews" ? 600 : 500, userSelect: "none" }}>Guest Reviews</Typography>
+			</Box>
+		</Box>
 	);
 };
