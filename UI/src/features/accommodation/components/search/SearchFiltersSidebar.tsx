@@ -173,6 +173,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 							value={localPrice[0] || 0}
 							onChange={(e) => handleInputChange("min", e.target.value)}
 							onBlur={handleInputCommit}
+							inputProps={{ step: 1000 }}
 							slotProps={{
 								input: {
 									endAdornment: <InputAdornment position="end">VND</InputAdornment>,
@@ -186,9 +187,10 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 							value={localPrice[1] || 0}
 							onChange={(e) => handleInputChange("max", e.target.value)}
 							onBlur={handleInputCommit}
+							inputProps={{ step: 1000 }}
 							slotProps={{
 								input: {
-									startAdornment: <InputAdornment position="start">VND</InputAdornment>,
+									endAdornment: <InputAdornment position="end">VND</InputAdornment>,
 								},
 							}}
 						/>
