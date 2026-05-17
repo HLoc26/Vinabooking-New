@@ -3,7 +3,7 @@ import { alpha } from "@mui/material/styles";
 import { AccountBalanceWalletRounded, BedRounded, EventNoteRounded, ArrowForwardIosRounded } from "@mui/icons-material";
 import { useNavigate } from "react-router-dom";
 import { useDashboardStats } from "../../hooks/useDashboardStats";
-import { standardize } from "../../../../utils/moneyConverter";
+import { formatVND } from "../../../../utils/moneyConverter";
 
 export const DashboardStatsRow = () => {
 	const { data: stats, isLoading, isError } = useDashboardStats();
@@ -69,10 +69,7 @@ export const DashboardStatsRow = () => {
 						</Box>
 
 						<Typography variant="h3" color="text.primary" sx={{ fontWeight: 700, fontSize: "2rem", mb: 0.5, display: "flex", alignItems: "baseline" }}>
-							{standardize(stats?.revenue || 0)}
-							<Typography component="span" variant="h5" sx={{ ml: 0.5, fontWeight: 600, color: "text.secondary" }}>
-								đ
-							</Typography>
+							{formatVND(stats?.revenue || 0)}
 						</Typography>
 
 						<Typography variant="caption" color="text.secondary" sx={{ opacity: 0.7, mt: "auto" }}>

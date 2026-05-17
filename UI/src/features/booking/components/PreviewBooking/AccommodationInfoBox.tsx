@@ -7,6 +7,7 @@ import type { RoomFullDetail } from "../../../accommodation/types/room.types";
 import useAccommodation from "../../../accommodation/hooks/useAccommodation";
 import type { RootState } from "../../../../app/store";
 import { useSelector } from "react-redux";
+import { useCurrency } from "../../../../hooks/useCurrency";
 
 type BookingRoom = RoomFullDetail & {
 	count: number;
@@ -26,6 +27,7 @@ interface Props {
 const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
 	const bookingContext = useSelector((state: RootState) => state.booking);
 	const { data: accomImages, isLoading: accomImagesLoading } = useAccommodation(accommInfo?.id ?? "");
+	const { format } = useCurrency();
 
 	if (!accommInfo) {
 		return <Typography>Accommodation not found</Typography>;
@@ -174,7 +176,7 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 						Total Price
 					</Typography>
 					<Typography variant="h4" fontWeight="bold" color="primary">
-						${totalPrice.toLocaleString("en-US", { minimumFractionDigits: 2 })}
+						{format(totalPrice)}
 					</Typography>
 				</Box>
 

@@ -116,8 +116,8 @@ export const FACILITY_FILTER_OPTIONS: FacilityFilterOption[] = [
 
 export const PRICE_FILTER_CONFIG = {
 	MIN: 0,
-	MAX: 2000,
-	STEP: 10,
+	MAX: 5000000,
+	STEP: 100000,
 };
 
 export const SORT_OPTIONS: SortOptionItem[] = [

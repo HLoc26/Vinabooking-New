@@ -1,13 +1,14 @@
 import { Paper, Stack, Typography, Box } from "@mui/material";
 import type { Booking } from "../../../../booking/types/Booking";
 import { WalletOutlined, LuggageOutlined, NightsStayOutlined, StarRateRounded } from "@mui/icons-material";
-import { standardize } from "../../../../../utils/moneyConverter";
+import { useCurrency } from "../../../../../hooks/useCurrency";
 
 type BookingStatsOverviewProps = {
 	bookings: Booking[];
 };
 
 const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings }) => {
+	const { format } = useCurrency();
 	const totalSpent = bookings.reduce((sum, b) => sum + Number(b.totalPrice), 0);
 	const upcomingBookings = bookings.filter((b) => b.status === "BOOKED" && new Date(b.startDate) > new Date());
 
@@ -26,7 +27,7 @@ const BookingStatsOverview: React.FC<BookingStatsOverviewProps> = ({ bookings })
 		{
 			label: "Total Spent",
 			icon: <WalletOutlined fontSize="large" />,
-			value: `$${standardize(totalSpent)}`,
+			value: format(totalSpent),
 			bgColor: "#d1f3d1", // xanh USD
 		},
 		{

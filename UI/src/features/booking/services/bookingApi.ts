@@ -9,6 +9,7 @@ const BOOKING_ENDPOINT = "/bookings";
 const IMAGE_ENDPOINT = "/images";
 const ROOM_ENDPOINT = "/rooms";
 const ACCOM_ENDPOINT = "/accommodations";
+const PAYMENT_ENDPOINT = "/payments";
 
 export const bookingApi = {
 	async getByUserId(userId: string) {
@@ -33,10 +34,22 @@ export const bookingApi = {
 			})
 		);
 
+		const startDate = new Date(booking.startDate);
+		const endDate = new Date(booking.endDate);
+		const nights = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+
+		let totalPrice = 0;
+		rooms.forEach((room, index) => {
+			const item = booking.items[index];
+			const price = parseFloat(room.price) || 0;
+			totalPrice += price * item.count * nights;
+		});
+
 		const payload = {
 			startDate: booking.startDate,
 			endDate: booking.endDate,
 			guestCount: booking.guestCount,
+			totalPrice: totalPrice,
 			details: {
 				create: rooms.map((room) => ({
 					itemId: room.id,
@@ -127,5 +140,20 @@ export const bookingApi = {
 	async getAccomm(id: string) {
 		const res = await axioInstance.get(`${ACCOM_ENDPOINT}/${id}`);
 		return res.data.data;
+	},
+
+	async createPaymentLink(bookingId: string, returnUrl: string, cancelUrl: string) {
+		const token = Cookies.get(ACCESS_TOKEN_KEY);
+		const res = await axioInstance.post(
+			`${PAYMENT_ENDPOINT}/create`,
+			{ bookingId, returnUrl, cancelUrl },
+			{
+				headers: {
+					Authorization: `Bearer ${token ?? "mock-jwt-token"}`,
+					"Content-Type": "application/json",
+				},
+			}
+		);
+		return res.data;
 	},
 };

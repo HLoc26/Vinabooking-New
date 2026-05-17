@@ -2,6 +2,7 @@ import { Box, Typography, Modal, Chip } from "@mui/material";
 import React, { useState, type Dispatch, type SetStateAction } from "react";
 import type { Image } from "../../../../types/Image";
 import type { RoomFullDetail } from "../../../accommodation/types/room.types";
+import { useCurrency } from "../../../../hooks/useCurrency";
 
 type RoomReviewCardProps = {
 	room: RoomFullDetail & { count: number };
@@ -15,6 +16,7 @@ type RoomReviewCardProps = {
 
 const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images, loading, setGalleryImages, openImageGallery, amenities }) => {
 	const [open, setOpen] = useState(false);
+	const { format } = useCurrency();
 
 	// Flat mapping logic remains consistent with the new Amenity interface
 	const flatAmenities = (amenities || [])
@@ -105,11 +107,7 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 					</Box>
 
 					<Typography variant="h6" fontWeight="bold" color="primary.main" textAlign="right">
-						$
-						{Number.parseFloat(room.price).toLocaleString("en-US", {
-							minimumFractionDigits: 2,
-							maximumFractionDigits: 2,
-						})}
+						{format(Number.parseFloat(room.price))}
 					</Typography>
 				</Box>
 			</Box>

@@ -7,6 +7,7 @@ import { getViewTypeLabel } from "../../../../../constants/viewTypes";
 import useModalContext from "../../../../../../../context/ModalContext/hook";
 import RoomDetailModal from "./RoomDetailModal";
 import type { Room } from "../../../../../types/room.types";
+import { useCurrency } from "../../../../../../../hooks/useCurrency";
 
 interface RoomCardProps {
 	room: Room;
@@ -17,6 +18,7 @@ interface RoomCardProps {
 }
 
 export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecrease }: RoomCardProps) => {
+	const { format } = useCurrency();
 	const isLowStock = availableRooms <= 3;
 	const price = parseFloat(room.price);
 
@@ -246,7 +248,7 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 									fontSize: { xs: "1.75rem", sm: "2rem" },
 								}}
 							>
-								${price}
+								{format(price)}
 							</Typography>
 							<Typography
 								variant="caption"

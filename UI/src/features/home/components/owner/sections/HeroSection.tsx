@@ -5,6 +5,7 @@ import FiberManualRecordIcon from "@mui/icons-material/FiberManualRecord";
 import StarRoundedIcon from "@mui/icons-material/StarRounded";
 import AddHomeWorkRoundedIcon from "@mui/icons-material/AddHomeWorkRounded";
 import AmbientBlobs from "../AmbientBlobs";
+import { useCurrency } from "../../../../../hooks/useCurrency";
 
 interface HeroSectionProps {
 	scrollY: number;
@@ -13,6 +14,8 @@ interface HeroSectionProps {
 }
 
 const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, onGetStarted, exampleImage }) => {
+	const { format } = useCurrency();
+
 	return (
 		<Box
 			sx={{
@@ -176,7 +179,7 @@ const HeroSection: React.FC<HeroSectionProps> = ({ scrollY, onGetStarted, exampl
 							}}
 						>
 							<Typography sx={{ color: "#080d1a", fontSize: "0.65rem", fontWeight: 700, letterSpacing: "0.08em" }}>THIS MONTH</Typography>
-							<Typography sx={{ color: "#080d1a", fontSize: "1.5rem", fontWeight: 800 }}>$2,840</Typography>
+							<Typography sx={{ color: "#080d1a", fontSize: "1.5rem", fontWeight: 800 }}>{format(28400000)}</Typography>
 						</Box>
 
 						<Box

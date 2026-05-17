@@ -4,6 +4,7 @@ import type { WizardForm, ImageItem, RoomForm } from "../../../types/owner.types
 import LocationOnOutlinedIcon from "@mui/icons-material/LocationOnOutlined";
 import MeetingRoomOutlinedIcon from "@mui/icons-material/MeetingRoomOutlined";
 import CheckCircleOutlineIcon from "@mui/icons-material/CheckCircleOutline";
+import { formatVND } from "../../../../../utils/moneyConverter";
 
 const ImageGallery = lazy(() => import("../../../../../components/shared/ImageGallery"));
 
@@ -174,7 +175,7 @@ const StepPreviewBox = ({ form }: { form: WizardForm }) => {
 										{room.name}
 									</Typography>
 									<Typography variant="caption" fontWeight={700} color="primary">
-										{room.price ? `${Number(room.price).toLocaleString()} / ${room.pricingType.toLowerCase().replace(/_/g, " ")}` : "Price not set"}
+										{room.price ? `${formatVND(room.price)} / ${room.pricingType.toLowerCase().replace(/_/g, " ")}` : "Price not set"}
 									</Typography>
 								</Box>
 								<Typography variant="caption" color="text.secondary" display="block" mb={1}>

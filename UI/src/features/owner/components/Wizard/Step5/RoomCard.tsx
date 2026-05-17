@@ -11,6 +11,7 @@ import LandscapeOutlinedIcon from "@mui/icons-material/LandscapeOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import type { RoomForm } from "../../../types/owner.types";
 import React from "react";
+import { formatVND } from "../../../../../utils/moneyConverter";
 
 type Props = Readonly<{
 	room: RoomForm;
@@ -92,9 +93,12 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 					<SummaryItem icon={<KingBedOutlinedIcon />} label={`${room.bedroomCount} bedroom${room.bedroomCount === 1 ? "" : "s"}`} />
 					<SummaryItem icon={<BathtubOutlinedIcon />} label={`${room.bathroomCount} bath${room.bathroomCount === 1 ? "" : "s"}`} />
 					{room.size ? <SummaryItem icon={<AspectRatioOutlinedIcon />} label={`${room.size} m²`} /> : null}
-
-					{room.viewType === "NONE" ? null : <SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replaceAll("_", " ")} view`} />}
-					{room.price ? <SummaryItem icon={<SellOutlinedIcon />} label={`${room.price.toLocaleString("vi-VN")} VND / ${room.pricingType.replaceAll("_", " ").toLowerCase()}`} /> : null}
+          {room.viewType !== "NONE" && (
+						<SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replace(/_/g, " ")} view`} />
+					)}
+          {room.price && (
+						<SummaryItem icon={<SellOutlinedIcon />} label={`${formatVND(room.price)} / ${room.pricingType.replace(/_/g, " ").toLowerCase()}`} />
+					)}
 				</Box>
 			</Box>
 

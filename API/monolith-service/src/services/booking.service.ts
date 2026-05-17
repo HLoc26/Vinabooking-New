@@ -1,5 +1,5 @@
-import { BookingRepository } from "@/repositories";
-import { NotFoundError } from "@/errors";
+import { BookingRepository, RoomRepository } from "@/repositories";
+import { NotFoundError, BadRequestError } from "@/errors";
 import UserService from "./user.service";
 import EmailService from "./email.service";
 import AccommodationService from "./accommodation.service";
@@ -9,12 +9,19 @@ import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.type
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
+	readonly #roomRepository: RoomRepository;
 	readonly #userService: UserService;
 	readonly #emailService: EmailService;
 	#accommodationService?: AccommodationService;
 
-	constructor(bookingRepository: BookingRepository, userService: UserService, emailService: EmailService) {
+	constructor(
+		bookingRepository: BookingRepository,
+		roomRepository: RoomRepository,
+		userService: UserService,
+		emailService: EmailService
+	) {
 		this.#bookingRepository = bookingRepository;
+		this.#roomRepository = roomRepository;
 		this.#userService = userService;
 		this.#emailService = emailService;
 	}
@@ -56,9 +63,48 @@ export default class BookingService {
 		}));
 	}
 
+	private async _calculateTotalPrice(data: BookingPayload): Promise<Prisma.Decimal> {
+		const { startDate, endDate, details } = data;
+		const start = new Date(startDate);
+		const end = new Date(endDate);
+		const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
+
+		if (nights <= 0) {
+			throw new BadRequestError("End date must be after start date");
+		}
+
+		let total = new Prisma.Decimal(0);
+
+		const roomIds = details.create.filter((d) => d.itemType === "ROOM").map((d) => d.itemId);
+		const bedIds = details.create.filter((d) => d.itemType === "BED").map((d) => d.itemId);
+
+		const [rooms, beds] = await Promise.all([this.#roomRepository.findManyByIds(roomIds), this.#roomRepository.findBedsByIds(bedIds)]);
+
+		for (const detail of details.create) {
+			if (detail.itemType === "ROOM") {
+				const room = rooms.find((r) => r.id === detail.itemId);
+				if (!room || !room.price) {
+					throw new NotFoundError(`Room with id ${detail.itemId} not found or has no price`);
+				}
+				total = total.add(new Prisma.Decimal(room.price).mul(detail.count).mul(nights));
+			} else if (detail.itemType === "BED") {
+				const bed = beds.find((b) => b.id === detail.itemId);
+				if (!bed || !bed.price) {
+					throw new NotFoundError(`Bed with id ${detail.itemId} not found or has no price`);
+				}
+				total = total.add(new Prisma.Decimal(bed.price).mul(detail.count).mul(nights));
+			}
+		}
+
+		return total;
+	}
+
 	public async createBooking(userId: string, data: BookingPayload) {
+		const totalPrice = await this._calculateTotalPrice(data);
+		const { totalPrice: _, ...rest } = data;
 		const bookingData: Prisma.BookingCreateInput = {
-			...data,
+			...rest,
+			totalPrice: totalPrice,
 			user: { connect: { id: userId } },
 			status: "PENDING",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
@@ -68,8 +114,11 @@ export default class BookingService {
 	}
 
 	public async createDraftBooking(userId: string, data: BookingPayload) {
+		const totalPrice = await this._calculateTotalPrice(data);
+		const { totalPrice: _, ...rest } = data;
 		const bookingData: Prisma.BookingCreateInput = {
-			...data,
+			...rest,
+			totalPrice: totalPrice,
 			user: { connect: { id: userId } },
 			status: "DRAFT",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
