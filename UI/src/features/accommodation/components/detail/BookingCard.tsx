@@ -9,6 +9,7 @@ import { useDispatch, useSelector } from "react-redux";
 import { useSearchParams } from "react-router-dom";
 import type { RootState } from "../../../../app/store";
 import { setBookingField } from "../../../booking/bookingSlice";
+import { useCurrency } from "../../../../hooks/useCurrency";
 
 interface Props {
 	rooms: ItemInfo[];
@@ -21,6 +22,7 @@ export const BookingCard = ({ rooms, nights, totalPrice }: Props) => {
 	const dispatch = useDispatch();
 	const [searchParams, setSearchParams] = useSearchParams();
 	const bookingInfo = useSelector((state: RootState) => state.booking);
+	const { format } = useCurrency();
 
 	const [menuAnchor, setMenuAnchor] = useState<HTMLElement | null>(null);
 	const [dates, setDates] = useState<Dates>({
@@ -53,7 +55,7 @@ export const BookingCard = ({ rooms, nights, totalPrice }: Props) => {
 					Total for {nights} {nights === 1 ? "night" : "nights"}
 				</Typography>
 				<Typography variant="h4" fontWeight="bold" color="primary">
-					${totalPrice.toLocaleString("en-US", { minimumFractionDigits: 2, maximumFractionDigits: 2 })}
+					{format(totalPrice)}
 				</Typography>
 			</Box>
 			<Divider sx={{ my: 2 }} />

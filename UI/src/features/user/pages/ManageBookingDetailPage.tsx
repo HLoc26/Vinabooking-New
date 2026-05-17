@@ -10,6 +10,7 @@ import { bookingApi } from "../../booking/services/bookingApi";
 import { usePayOS } from "@payos/payos-checkout";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import type { Booking, PaymentTransfer } from "../../booking/types/Booking";
+import { formatVND } from "../../../utils/moneyConverter";
 
 const ManageBookingDetailPage = () => {
 	const { bookingId } = useParams<{ bookingId: string }>();
@@ -93,8 +94,6 @@ const ManageBookingDetailPage = () => {
 			minute: "2-digit",
 		});
 	};
-
-	const formatAmount = (amount: string, currency: string) => `${Number(amount).toLocaleString("vi-VN")} ${currency}`;
 
 	const getStatusConfig = (status: string) => {
 		switch (status) {
@@ -235,7 +234,7 @@ const ManageBookingDetailPage = () => {
 														Amount Paid
 													</Typography>
 													<Typography variant="body2" fontWeight={700} color="success.main">
-														{formatAmount(completedPayment.amount, completedPayment.currency)}
+														{formatVND(completedPayment.amount)}
 													</Typography>
 												</Stack>
 												<Stack direction="row" justifyContent="space-between" alignItems="center" sx={{ px: 2, py: 1.5 }}>

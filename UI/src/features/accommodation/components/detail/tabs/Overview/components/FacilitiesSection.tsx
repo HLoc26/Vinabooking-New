@@ -1,12 +1,15 @@
 import { Paper, Typography, Grid, Box } from "@mui/material";
 import { facilityIcons } from "../../../../../constants/facilityIcons";
 import type { AccommodationDetail } from "../../../../../types/accommodation.types";
+import { useCurrency } from "../../../../../../../hooks/useCurrency";
 
 interface Props {
 	accommodation: AccommodationDetail;
 }
 
 export const FacilitiesSection = ({ accommodation }: Props) => {
+	const { format } = useCurrency();
+
 	return (
 		<Paper sx={{ p: 4, mb: 3, borderRadius: 2, border: "1px solid", borderColor: "divider", boxShadow: "none" }}>
 			<Typography variant="h6" fontWeight="600" sx={{ mb: 3 }}>
@@ -35,7 +38,7 @@ export const FacilitiesSection = ({ accommodation }: Props) => {
 									</Typography>
 									{parseFloat(f.fee) > 0 && (
 										<Typography variant="caption" fontWeight="700" color="primary.main">
-											${f.fee}
+											{format(parseFloat(f.fee))}
 										</Typography>
 									)}
 								</Box>

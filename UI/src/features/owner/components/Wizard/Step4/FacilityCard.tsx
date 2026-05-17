@@ -5,6 +5,7 @@ import type { FacilityDto } from "../../../types/owner.types";
 import type { FacilityConfig } from "../../../../accommodation/types/accommodation.types";
 import type React from "react";
 import { EDIT_BG, EDIT_BORDER, getFacilityIcon } from "../../../const/FacilityConst";
+import { formatVND } from "../../../../../utils/moneyConverter";
 
 interface FacilityCardProps {
 	facility: FacilityDto;
@@ -92,7 +93,7 @@ const FacilityCard: React.FC<FacilityCardProps> = ({ facility, entry, isSelected
 				</Typography>
 				{entry && (entry.fee ?? 0) > 0 && !isEditing && (
 					<Typography variant="caption" sx={{ mt: 0.5, color: "warning.main", fontSize: "0.68rem", fontWeight: 700 }}>
-						{entry.fee!.toLocaleString()}₫
+						{formatVND(entry.fee!)}
 					</Typography>
 				)}
 			</Box>
