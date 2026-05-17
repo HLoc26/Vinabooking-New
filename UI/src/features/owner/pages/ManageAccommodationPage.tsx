@@ -12,6 +12,7 @@ import { GlobalHeader } from "../components/dashboard/shared/GlobalHeader";
 import { ManageFacilitiesCard } from "../components/dashboard/facilities/ManageFacilitiesCard";
 import { ManageRoomsCard } from "../components/dashboard/rooms/ManageRoomsCard";
 import { ManageGalleryCard } from "../components/dashboard/gallery/ManageGalleryCard";
+import { ManageReviewsCard } from "../components/dashboard/reviews/ManageReviewsCard";
 
 export default function ManageAccommodationPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
@@ -139,11 +140,9 @@ export default function ManageAccommodationPage() {
 				)}
 
 				{currentTab === "reviews" && (
-					<Paper sx={{ p: 4, borderRadius: 3, minHeight: 600 }}>
-						<Typography variant="h5" fontWeight={700}>
-							Guest Reviews Manager
-						</Typography>
-					</Paper>
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+						<ManageReviewsCard accommodationId={accommodationId!} />
+					</Box>
 				)}
 			</Box>
 		</Box>
