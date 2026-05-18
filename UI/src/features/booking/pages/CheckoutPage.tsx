@@ -11,6 +11,8 @@ import { useState, useEffect } from "react";
 import { usePayOS } from "@payos/payos-checkout";
 import { bookingApi } from "../services/bookingApi";
 
+const SESSION_KEY = "current_booking_checkout";
+
 export default function CheckoutPage() {
 	const navigate = useNavigate();
 
@@ -42,6 +44,10 @@ export default function CheckoutPage() {
 
 	const [loadingCancelBooking, setLoadingCancelBooking] = useState(false);
 
+	const [timeLeft, setTimeLeft] = useState<number | null>(null);
+
+	const [isRecovering, setIsRecovering] = useState(() => !!sessionStorage.getItem(SESSION_KEY));
+
 	const returnUrl = `${window.location.origin}/booking/payment-success`;
 
 	const cancelUrl = `${window.location.origin}/booking/checkout?failed=true`;
@@ -57,6 +63,7 @@ export default function CheckoutPage() {
 
 		onSuccess: () => {
 			setIsPaymentOpen(false);
+			sessionStorage.removeItem(SESSION_KEY);
 
 			pushNotification("Payment successful! Booking confirmed.", "success");
 
@@ -74,13 +81,83 @@ export default function CheckoutPage() {
 		},
 	});
 
+	// Load from session storage on mount
+	useEffect(() => {
+		const savedData = sessionStorage.getItem(SESSION_KEY);
+		if (savedData) {
+			try {
+				const { bookingId, url } = JSON.parse(savedData);
+
+				bookingApi
+					.getById(bookingId)
+					.then((res) => {
+						if (res.success && res.data && res.data.status === "PENDING") {
+							const createdAt = new Date(res.data.createdAt).getTime();
+							const elapsed = Math.floor((Date.now() - createdAt) / 1000);
+							const remaining = 15 * 60 - elapsed;
+
+							if (remaining > 0) {
+								setCreatedBookingId(bookingId);
+								setCheckoutUrl(url);
+								setIsPaymentOpen(true);
+								setTimeLeft(remaining);
+							} else {
+								sessionStorage.removeItem(SESSION_KEY);
+							}
+						} else {
+							sessionStorage.removeItem(SESSION_KEY);
+						}
+					})
+					.catch(() => {
+						sessionStorage.removeItem(SESSION_KEY);
+					})
+					.finally(() => {
+						setIsRecovering(false);
+					});
+			} catch (e) {
+				console.error("Failed to parse session storage", e);
+				sessionStorage.removeItem(SESSION_KEY);
+				setIsRecovering(false);
+			}
+		} else {
+			setIsRecovering(false);
+		}
+	}, []);
+
+	// Countdown timer
+	useEffect(() => {
+		if (timeLeft === null || timeLeft <= 0) return;
+
+		const timer = setInterval(() => {
+			setTimeLeft((prev) => {
+				if (prev && prev <= 1) {
+					clearInterval(timer);
+					handleTimeout();
+					return 0;
+				}
+				return prev ? prev - 1 : 0;
+			});
+		}, 1000);
+
+		return () => clearInterval(timer);
+	}, [timeLeft]);
+
+	const handleTimeout = () => {
+		exit();
+		setIsPaymentOpen(false);
+		pushNotification("Payment time expired. Your booking has been released.", "warning");
+		sessionStorage.removeItem(SESSION_KEY);
+		dispatch(resetBooking());
+		navigate("/");
+	};
+
 	useEffect(() => {
 		if (isPaymentOpen && checkoutUrl) {
 			open();
 		}
 	}, [isPaymentOpen, checkoutUrl, open]);
 
-	if (!bookingInfo || bookingInfo.items.length === 0) {
+	if ((!bookingInfo || bookingInfo.items.length === 0) && !isRecovering && !isPaymentOpen) {
 		if (paymentFailed) {
 			return <PaymentFailureView />;
 		}
@@ -114,7 +191,30 @@ export default function CheckoutPage() {
 
 			setCheckoutUrl(paymentRes.data.checkoutUrl);
 
+			// Fetch true time from server
+			try {
+				const bookingResData = await bookingApi.getById(bookingId);
+				if (bookingResData.success && bookingResData.data) {
+					const createdAt = new Date(bookingResData.data.createdAt).getTime();
+					const elapsed = Math.floor((Date.now() - createdAt) / 1000);
+					const remaining = 15 * 60 - elapsed;
+					setTimeLeft(remaining > 0 ? remaining : 0);
+				} else {
+					setTimeLeft(15 * 60);
+				}
+			} catch (e) {
+				setTimeLeft(15 * 60);
+			}
+
 			setIsPaymentOpen(true);
+
+			sessionStorage.setItem(
+				SESSION_KEY,
+				JSON.stringify({
+					bookingId,
+					url: paymentRes.data.checkoutUrl,
+				})
+			);
 		} catch (err) {
 			console.error(err);
 
@@ -134,7 +234,10 @@ export default function CheckoutPage() {
 
 			pushNotification("Booking cancelled successfully.", "info");
 
-			exit();
+			try {
+				exit();
+			} catch (e) {}
+			sessionStorage.removeItem(SESSION_KEY);
 
 			dispatch(resetBooking());
 
@@ -148,14 +251,6 @@ export default function CheckoutPage() {
 
 			setIsCancelModalOpen(false);
 		}
-	};
-
-	const handleSkipPayment = () => {
-		exit();
-
-		dispatch(resetBooking());
-
-		navigate("/");
 	};
 
 	if (paymentFailed) {
@@ -335,6 +430,12 @@ export default function CheckoutPage() {
 						<Typography variant="body2" color="text.secondary">
 							Scan the QR code or complete the transfer below
 						</Typography>
+
+						{timeLeft !== null && (
+							<Typography variant="h6" color="error" sx={{ mt: 1, fontWeight: "bold" }}>
+								Time remaining: {Math.floor(timeLeft / 60)}:{(timeLeft % 60).toString().padStart(2, "0")}
+							</Typography>
+						)}
 					</Box>
 
 					{/* PAYMENT CONTENT */}
@@ -404,7 +505,7 @@ export default function CheckoutPage() {
 			<Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth>
 				<DialogTitle fontWeight={700}>Leave Payment?</DialogTitle>
 				<DialogContent>
-					<Typography variant="body1">Are you sure you want to leave payment? You can always come back and pay later from your profile.</Typography>
+					<Typography variant="body1">Are you sure you want to leave payment? Your room is only reserved for 15 minutes before being released.</Typography>
 				</DialogContent>
 				<DialogActions sx={{ flexDirection: "column", gap: 1, p: 3 }}>
 					<Button variant="contained" fullWidth onClick={() => setIsCancelModalOpen(false)} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>
@@ -412,9 +513,6 @@ export default function CheckoutPage() {
 					</Button>
 					<Button variant="outlined" color="error" fullWidth onClick={handleCancelBooking} disabled={loadingCancelBooking} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>
 						{loadingCancelBooking ? "Cancelling..." : "Cancel this booking"}
-					</Button>
-					<Button variant="text" color="inherit" fullWidth onClick={handleSkipPayment} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>
-						Skip payment for now
 					</Button>
 				</DialogActions>
 			</Dialog>
