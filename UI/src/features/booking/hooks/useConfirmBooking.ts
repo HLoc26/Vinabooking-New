@@ -4,6 +4,7 @@ import { useState } from "react";
 import { bookingApi } from "../services/bookingApi";
 import type { BookingContextInfo } from "../types/BookingContextInfo";
 
+// TODO: Update to useQuery
 export function useConfirmBooking() {
 	const [loading, setLoading] = useState(false);
 	const [error, setError] = useState<string | null>(null);
