@@ -6,6 +6,7 @@ import AccommodationService from "./accommodation.service";
 import { BookingPayload } from "@/types/requests";
 import { Prisma } from "@/generated/client";
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
+import { bookingTimeoutQueue } from "@/clients/queue.client";
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
@@ -14,12 +15,7 @@ export default class BookingService {
 	readonly #emailService: EmailService;
 	#accommodationService?: AccommodationService;
 
-	constructor(
-		bookingRepository: BookingRepository,
-		roomRepository: RoomRepository,
-		userService: UserService,
-		emailService: EmailService
-	) {
+	constructor(bookingRepository: BookingRepository, roomRepository: RoomRepository, userService: UserService, emailService: EmailService) {
 		this.#bookingRepository = bookingRepository;
 		this.#roomRepository = roomRepository;
 		this.#userService = userService;
@@ -100,6 +96,16 @@ export default class BookingService {
 	}
 
 	public async createBooking(userId: string, data: BookingPayload) {
+		const requestedItems = data.details.create.map((d) => ({
+			itemId: d.itemId,
+			itemType: d.itemType,
+			count: d.count,
+		}));
+		const isAvailable = await this.#bookingRepository.checkAvailability(requestedItems, new Date(data.startDate), new Date(data.endDate));
+		if (!isAvailable) {
+			throw new BadRequestError("One or more selected rooms are no longer available for these dates.");
+		}
+
 		const totalPrice = await this._calculateTotalPrice(data);
 		const { totalPrice: _, ...rest } = data;
 		const bookingData: Prisma.BookingCreateInput = {
@@ -110,7 +116,9 @@ export default class BookingService {
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
 		};
 
-		return await this.#bookingRepository.create(bookingData);
+		const newBooking = await this.#bookingRepository.create(bookingData);
+		await bookingTimeoutQueue.add("timeout", { bookingId: newBooking.id }, { delay: 15 * 60 * 1000 });
+		return newBooking;
 	}
 
 	public async createDraftBooking(userId: string, data: BookingPayload) {
@@ -126,6 +134,7 @@ export default class BookingService {
 		return await this.#bookingRepository.create(bookingData);
 	}
 
+	// TODO: xoá job trong queue khi thành công
 	public async confirmBooking(id: string) {
 		if (!this.#accommodationService) throw new Error("AccommodationService not initialized in BookingService");
 

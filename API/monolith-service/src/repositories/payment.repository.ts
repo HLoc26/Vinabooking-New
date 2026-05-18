@@ -28,6 +28,13 @@ class PaymentRepository {
 		return result;
 	}
 
+	public async markAsFailedByBookingId(bookingId: string) {
+		return this.#prismaClient.paymentTransfer.updateMany({
+			where: { bookingId, status: "PENDING" },
+			data: { status: "FAILED" }
+		});
+	}
+
 	public async createPendingRecord(data: { bookingId: string; amount: number; description: string; paymentLinkId: string }) {
 		return await this.#prismaClient.paymentTransfer.create({
 			data: {

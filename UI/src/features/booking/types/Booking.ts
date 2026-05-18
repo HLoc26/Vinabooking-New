@@ -36,4 +36,5 @@ export type Booking = {
 	userId: string;
 	details: BookingDetail[];
 	PaymentTransfer: PaymentTransfer[];
+	createdAt: Date;
 };

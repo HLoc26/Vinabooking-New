@@ -82,10 +82,13 @@ export const BookingCard = ({ rooms, nights, totalPrice }: Props) => {
 					onFail={() => pushNotification("Please choose at least one room", "error")}
 				>
 					<Button variant="contained" size="large" fullWidth sx={{ mt: 2 }}>
-						Reserve Now
+						Proceed to Booking
 					</Button>
 				</ProtectedLink>
 			</Stack>
+			<Typography variant="caption" color="error" sx={{ display: "block", mt: 1, textAlign: "center" }}>
+				* Rooms are not locked until checkout
+			</Typography>
 			<Typography variant="caption" color="text.secondary" sx={{ display: "block", mt: 2, textAlign: "center" }}>
 				✓ Free cancellation available
 			</Typography>

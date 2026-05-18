@@ -126,6 +126,37 @@ class BookingRepository {
 	}
 
 	// ---------- room availability ----------
+	public async checkAvailability(requestedItems: { itemId: string; count: number; itemType: string }[], startDate: Date, endDate: Date): Promise<boolean> {
+		for (const reqItem of requestedItems) {
+			const overlappingDetails = await this.#prismaClient.bookingDetail.findMany({
+				where: {
+					itemId: reqItem.itemId,
+					Booking: {
+						status: { in: ["PENDING", "BOOKED"] },
+						startDate: { lt: endDate },
+						endDate: { gt: startDate },
+					},
+				},
+			});
+
+			const bookedCount = overlappingDetails.reduce((sum, detail) => sum + detail.count, 0);
+
+			let totalQuantity = 0;
+			if (reqItem.itemType === "ROOM") {
+				const room = await this.#prismaClient.room.findUnique({ where: { id: reqItem.itemId } });
+				if (room) totalQuantity = room.quantity;
+			} else if (reqItem.itemType === "BED") {
+				const bed = await this.#prismaClient.bed.findUnique({ where: { id: reqItem.itemId } });
+				if (bed) totalQuantity = bed.quantity;
+			}
+
+			if (bookedCount + reqItem.count > totalQuantity) {
+				return false;
+			}
+		}
+		return true;
+	}
+
 	public async countBookedRooms(roomIds: string[], startDate: Date, endDate: Date): Promise<Record<string, number>> {
 		const counts: Record<string, number> = {};
 
