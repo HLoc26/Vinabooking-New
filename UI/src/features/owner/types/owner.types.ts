@@ -301,7 +301,8 @@ export interface UpdateRoomDTO {
 	bathroomCount?: number;
 	viewType?: EViewType;
 	viewDescription?: string;
-	price?: number;
+	basePrice?: number;
+	floorPrice?: number;
 	pricingType?: EPricingType;
 	isActive?: boolean;
 

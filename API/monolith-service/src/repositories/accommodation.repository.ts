@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO, CreateAccommodationDTO } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/types/accommodation.types";
+import type { DynamicPricingSettings } from "@/types/pricing.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -127,7 +128,7 @@ class AccommodationRepository {
                 (
                     SELECT MIN(
                         COALESCE(
-                            CAST(NULLIF(r.price, '') AS DECIMAL(10,2)),
+                            CAST(NULLIF(r.base_price, '') AS DECIMAL(10,2)),
                             (SELECT MIN(CAST(b.price AS DECIMAL(10,2))) FROM ${Prisma.raw(bedTable)} b WHERE b.roomId = r.id)
                         )
                     )
@@ -203,23 +204,22 @@ class AccommodationRepository {
 		});
 	}
 
-	public async create(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationWithDetails> {
-		return await this.#prismaClient.accommodation.create({
-			data: {
-				name: data.name,
-				description: data.description,
-				type: data.type,
-				rentalType: data.rentalType,
-				status: "DRAFT",
-				owner: {
-					connect: { id: ownerId },
-				},
-			},
-			include: {
-				address: true,
-				facilities: { include: { facility: true } },
-			},
+	public async updatePricingSettings(id: string, settings: DynamicPricingSettings | null) {
+		const value: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+		return await this.#prismaClient.accommodation.update({
+			where: { id },
+			data: { dynamicPricingSettings: value },
+			select: { id: true, dynamicPricingSettings: true },
 		});
+	}
+
+	public async getRoomIds(accommodationId: string): Promise<string[]> {
+		const rooms = await this.#prismaClient.room.findMany({
+			where: { accommodationId },
+			select: { id: true },
+		});
+		return rooms.map((r) => r.id);
 	}
 
 	public async checkOwnership(id: string, ownerId: string): Promise<boolean> {

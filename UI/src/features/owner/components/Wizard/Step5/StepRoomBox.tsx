@@ -82,7 +82,9 @@ function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardF
 		bathroomCount: room.bathroomCount || 0,
 		viewType: toEViewType(room.viewType),
 		viewDescription: room.viewDescription || undefined,
-		price: Number(room.price) || 0,
+		basePrice: Number(room.price) || 0,
+		// Default floor = base on create; owner will lower it later from Settings notice / Manage page.
+		floorPrice: Number(room.price) || 0,
 		pricingType: toEPricingType(room.pricingType),
 		isActive: true,
 		beds: mappedBeds,

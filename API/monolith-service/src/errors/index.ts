@@ -8,3 +8,4 @@ export { default as IdentityProviderError } from "./IdentityProviderError";
 export { default as NotFoundError } from "./NotFoundError";
 export { default as RedisClientError } from "./RedisClientError";
 export { default as S3ClientError } from "./S3ClientError";
+export { default as ConflictError } from "./ConflictError";

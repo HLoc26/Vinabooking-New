@@ -12,6 +12,7 @@ import OwnerRouter from "./owner.routes";
 import AmenityRouter from "./amenity.routes";
 import SearchRouter from "./search.routes";
 import PaymentRouter from "./payment.routes";
+import PricingRouter from "./pricing.routes";
 
 class AppRouter {
 	#router: Router;
@@ -28,7 +29,8 @@ class AppRouter {
 		private ownerRouter: OwnerRouter,
 		private amenityRouter: AmenityRouter,
 		private searchRouter: SearchRouter,
-		private paymentRouter: PaymentRouter
+		private paymentRouter: PaymentRouter,
+		private pricingRouter: PricingRouter
 	) {
 		this.#router = express.Router();
 		this.#registerRoutes();
@@ -50,6 +52,7 @@ class AppRouter {
 		this.#router.use("/amenities", this.amenityRouter.router);
 		this.#router.use("/search", this.searchRouter.router);
 		this.#router.use("/payments", this.paymentRouter.router);
+		this.#router.use("/pricing", this.pricingRouter.router);
 	}
 
 	public get router(): Router {

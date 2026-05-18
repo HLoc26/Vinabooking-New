@@ -9,6 +9,7 @@ import StepAddressBox from "../components/Wizard/Step3/StepAddressBox";
 import StepFacilityBox from "../components/Wizard/Step4/StepFacilityBox";
 import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
 import StepImageBox from "../components/Wizard/Step6/StepImageBox";
+import StepPricingBox from "../components/Wizard/StepPricing/StepPricingBox";
 import StepPreviewBox from "../components/Wizard/Step7/StepPreviewBox";
 
 import { type WizardForm } from "../types/owner.types";
@@ -193,13 +194,13 @@ const OwnerCreateAccomPage = () => {
 
 		setValidationError(null);
 
-		// Các bước 0, 1, 2, 4 dùng triggerSubmit chung
-		if (step === 0 || step === 1 || step === 2 || step === 4) {
+		// Các bước 0, 1, 2, 4, 5 dùng triggerSubmit chung (5 là Pricing)
+		if (step === 0 || step === 1 || step === 2 || step === 4 || step === 5) {
 			setTriggerSubmit(true);
 			return;
 		}
 
-		if (step === 5) {
+		if (step === 6) {
 			if (!form.accommodationId) {
 				pushNotification("Could not find accommodation ID to publish.", "error");
 				return;
@@ -311,6 +312,19 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 5:
+				return (
+					<StepPricingBox
+						accommodationId={form.accommodationId}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(5));
+							setStep(6);
+						}}
+						onError={(msg) => setValidationError(msg)}
+					/>
+				);
+			case 6:
 				return <StepPreviewBox form={form} />;
 			default:
 				return null;

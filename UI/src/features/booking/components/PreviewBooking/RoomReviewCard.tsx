@@ -107,7 +107,7 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 					</Box>
 
 					<Typography variant="h6" fontWeight="bold" color="primary.main" textAlign="right">
-						{format(Number.parseFloat(room.price))}
+						{format(Number.parseFloat(room.basePrice ?? room.price ?? "0"))}
 					</Typography>
 				</Box>
 			</Box>

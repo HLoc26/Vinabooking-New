@@ -39,7 +39,7 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 	const nights = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
 
 	// Calculate total price
-	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) * (room.count || 0) * nights || 0), 0);
+	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.basePrice ?? room.price ?? "0") * (room.count || 0) * nights || 0), 0);
 
 	// FIX: Extract WEBP URLs properly
 	const webpUrls: string[] = (accomImages?.images || []).map((img) => {

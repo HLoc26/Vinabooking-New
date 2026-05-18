@@ -3,20 +3,27 @@ import { NotFoundError, BadRequestError } from "@/errors";
 import { EEntityType } from "@/generated/client";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
+import PricingService from "./pricing.service";
 import { ImageFullInfo } from "@/types/image.types";
 import { RoomFullDetail, CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
+import type { QuoteItemPricing } from "@/types/pricing.types";
 import redisClient from "@/clients/redis.client";
 
 export class RoomService {
 	readonly #roomRepository: RoomRepository;
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
+	#pricingService?: PricingService;
 	readonly CACHE_PREFIX = "acc:detail:";
 
 	constructor(roomRepository: RoomRepository, bookingService: BookingService, imageService: ImageService) {
 		this.#roomRepository = roomRepository;
 		this.#bookingService = bookingService;
 		this.#imageService = imageService;
+	}
+
+	public setPricingService(pricingService: PricingService) {
+		this.#pricingService = pricingService;
 	}
 
 	// --- Helpers ---
@@ -33,11 +40,24 @@ export class RoomService {
 	/**
 	 * (R) Lấy thông tin chi tiết một phòng (gồm beds, amenities)
 	 */
-	async getRoomById(roomId: string) {
+	async getRoomById(roomId: string, checkIn?: Date, checkOut?: Date) {
 		const room = await this.#roomRepository.findById(roomId);
 
 		if (!room) {
 			throw new NotFoundError(`Room with ID ${roomId} not found`);
+		}
+		if (checkIn && checkOut && this.#pricingService) {
+			try {
+				const quote = await this.#pricingService.quote({
+					checkIn,
+					checkOut,
+					items: [{ itemType: "ROOM", itemId: roomId, count: 1 }],
+				});
+				const pricing: QuoteItemPricing | undefined = quote.items[0]?.pricing;
+				return { ...room, pricing };
+			} catch (err) {
+				console.error("[RoomService] pricing.quote failed:", err);
+			}
 		}
 		return room;
 	}
@@ -85,6 +105,21 @@ export class RoomService {
 		bookedCounts.forEach((item) => bookedMap.set(item.roomId, item.bookedCount));
 		const imagesMap = new Map<string, ImageFullInfo[]>();
 		imagesMapList.forEach((item) => imagesMap.set(item.roomId, item.images));
+
+		const pricingMap = new Map<string, QuoteItemPricing>();
+		if (startDate && endDate && this.#pricingService) {
+			try {
+				const quote = await this.#pricingService.quote({
+					checkIn: startDate,
+					checkOut: endDate,
+					items: roomIds.map((id) => ({ itemType: "ROOM" as const, itemId: id, count: 1 })),
+				});
+				for (const it of quote.items) pricingMap.set(it.itemId, it.pricing);
+			} catch (err) {
+				console.error("[RoomService] batch pricing.quote failed:", err);
+			}
+		}
+
 		const result = rooms.map((room) => {
 			const totalQuantity = room.quantity;
 			const bookedCount = bookedMap.get(room.id) || 0;
@@ -95,6 +130,7 @@ export class RoomService {
 				...room,
 				remainingQuantity,
 				images,
+				pricing: pricingMap.get(room.id),
 				amenities: room.amenities.map((config) => ({
 					id: config.id, //  amenity id (NOT config.id)
 					name: config.amenity.name,

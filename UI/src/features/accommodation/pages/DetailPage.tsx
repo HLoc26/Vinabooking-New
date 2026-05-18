@@ -129,7 +129,7 @@ export default function DetailPage() {
 		return bookingInfo.items.reduce((sum, item) => {
 			const room = rooms.find((r) => r.id === item.id);
 			if (!room) return sum;
-			return sum + item.count * parseFloat(room.price) * nights;
+			return sum + item.count * parseFloat(room.basePrice ?? room.price ?? "0") * nights;
 		}, 0);
 	}, [accommodation, bookingInfo.items, nights, rooms]);
 

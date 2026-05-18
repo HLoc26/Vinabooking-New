@@ -1,6 +1,6 @@
 import { useState } from "react";
 import { Paper, Box, Typography, IconButton, Chip, Button } from "@mui/material";
-import { Person, Hotel, SquareFoot, Bathtub, Visibility, Remove, Add, ChevronLeft, ChevronRight, ExpandMore, ExpandLess } from "@mui/icons-material";
+import { Person, Hotel, SquareFoot, Bathtub, Visibility, Remove, Add, ChevronLeft, ChevronRight, ExpandMore, ExpandLess, LocalFireDepartment, LocalOffer } from "@mui/icons-material";
 
 import { getViewTypeLabel } from "../../../../../constants/viewTypes";
 
@@ -20,7 +20,13 @@ interface RoomCardProps {
 export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecrease }: RoomCardProps) => {
 	const { format } = useCurrency();
 	const isLowStock = availableRooms <= 3;
-	const price = parseFloat(room.price);
+	const basePriceStr = room.basePrice ?? room.price ?? "0";
+	const price = parseFloat(basePriceStr);
+	const pricing = room.pricing;
+	const showDiscount = pricing?.discountApplied && pricing.payablePrice < pricing.listPrice;
+	const showHoliday = pricing?.holidayApplied ?? false;
+	const displayList = pricing ? pricing.listPrice / Math.max(1, pricing.nightBreakdown.length || 1) : price;
+	const displayPay = pricing ? pricing.payablePrice / Math.max(1, pricing.nightBreakdown.length || 1) : price;
 
 	const { openModal } = useModalContext();
 
@@ -239,17 +245,38 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 						</Box>
 
 						<Box sx={{ textAlign: "right", pl: 2 }}>
+							{showDiscount && (
+								<Typography
+									variant="body2"
+									sx={{
+										color: "text.secondary",
+										textDecoration: "line-through",
+										fontSize: "0.95rem",
+										lineHeight: 1,
+									}}
+								>
+									{format(displayList)}
+								</Typography>
+							)}
 							<Typography
 								variant="h4"
 								fontWeight={700}
-								color="primary.main"
 								sx={{
+									color: showDiscount ? "#e53e3e" : "primary.main",
 									lineHeight: 1,
 									fontSize: { xs: "1.75rem", sm: "2rem" },
 								}}
 							>
-								{format(price)}
+								{format(displayPay)}
 							</Typography>
+							<Box display="flex" gap={0.5} justifyContent="flex-end" mt={0.5} flexWrap="wrap">
+								{showHoliday && (
+									<Chip icon={<LocalFireDepartment fontSize="small" />} label="Holiday rate" size="small" color="warning" />
+								)}
+								{showDiscount && (
+									<Chip icon={<LocalOffer fontSize="small" />} label="Promotion applied" size="small" color="success" />
+								)}
+							</Box>
 							<Typography
 								variant="caption"
 								color="text.secondary"

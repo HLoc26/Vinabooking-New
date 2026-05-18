@@ -1,0 +1,108 @@
+import { useEffect, useState } from "react";
+import { Alert, Box, CircularProgress, Stack, Typography } from "@mui/material";
+import OwnerSettingsForm from "../components/Settings/OwnerSettingsForm";
+import OwnerHolidayForm from "../components/Settings/OwnerHolidayForm";
+import { getHolidayCatalog, getOwnerHolidays, getOwnerSettings, replaceOwnerHolidays, updateOwnerSettings } from "../services/ownerPricingApi";
+import { usePushNotificationContext } from "../../../context/PushNotification/hook";
+import type { DynamicPricingSettings, HolidayDto, HolidayOptIn, OwnerHolidayRow, OwnerSettingsResponse } from "../types/pricing.types";
+
+const SettingsPage = () => {
+	const { pushNotification } = usePushNotificationContext();
+
+	const [loading, setLoading] = useState(true);
+	const [saving, setSaving] = useState(false);
+	const [settings, setSettings] = useState<OwnerSettingsResponse | null>(null);
+	const [catalog, setCatalog] = useState<HolidayDto[]>([]);
+	const [optIns, setOptIns] = useState<OwnerHolidayRow[]>([]);
+
+	useEffect(() => {
+		const load = async () => {
+			try {
+				const [s, c, h] = await Promise.all([getOwnerSettings(), getHolidayCatalog(), getOwnerHolidays()]);
+				setSettings(s);
+				setCatalog(c);
+				setOptIns(h);
+			} catch (err) {
+				const message = err instanceof Error ? err.message : "Failed to load settings";
+				pushNotification(message, "error");
+			} finally {
+				setLoading(false);
+			}
+		};
+		load();
+	}, [pushNotification]);
+
+	const saveSettings = async (next: DynamicPricingSettings | null) => {
+		setSaving(true);
+		try {
+			const saved = await updateOwnerSettings(next);
+			setSettings(saved);
+			pushNotification("Default pricing settings saved.", "success");
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Failed to save settings";
+			pushNotification(message, "error");
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	const saveHolidays = async (items: HolidayOptIn[]) => {
+		setSaving(true);
+		try {
+			const saved = await replaceOwnerHolidays(items);
+			setOptIns(saved);
+			pushNotification("Default holidays saved.", "success");
+		} catch (err) {
+			const message = err instanceof Error ? err.message : "Failed to save holidays";
+			pushNotification(message, "error");
+		} finally {
+			setSaving(false);
+		}
+	};
+
+	if (loading) {
+		return (
+			<Box display="flex" justifyContent="center" alignItems="center" minHeight={300}>
+				<CircularProgress />
+			</Box>
+		);
+	}
+
+	const hasFloorPriceMatch = false; // backend room-floor-audit is owned by Manage Accommodation page; banner stays advisory
+
+	return (
+		<Box p={3}>
+			<Stack spacing={3} maxWidth={900} mx="auto">
+				<Typography variant="h4">Owner settings</Typography>
+				<Alert severity="info">
+					These defaults apply only to <strong>newly created</strong> accommodations. To edit an existing one, open its Manage Accommodation page.
+				</Alert>
+				{!hasFloorPriceMatch && (
+					<Alert severity="warning">
+						Each room now has a <strong>floor price</strong> that prevents discounts from going below it. We auto-filled it to match each room's base
+						price — please review and lower it per room before your promotions take effect.
+					</Alert>
+				)}
+
+				<Box>
+					<Typography variant="h5" gutterBottom>
+						Default discount rules
+					</Typography>
+					<OwnerSettingsForm defaults={settings?.dynamicPricingSettings ?? null} disabled={saving} onSubmit={saveSettings} />
+				</Box>
+
+				<Box>
+					<Typography variant="h5" gutterBottom>
+						Default holiday pricing
+					</Typography>
+					<Typography variant="body2" color="text.secondary" mb={2}>
+						Pick holidays that apply a price multiplier on the night. Recurring holidays are matched every year.
+					</Typography>
+					<OwnerHolidayForm catalog={catalog} current={optIns} disabled={saving} onSubmit={saveHolidays} />
+				</Box>
+			</Stack>
+		</Box>
+	);
+};
+
+export default SettingsPage;

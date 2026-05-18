@@ -6,8 +6,8 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService } from "@/services";
-import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository } from "@/repositories";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService } from "@/services";
+import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository, HolidayRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
 
@@ -53,6 +53,8 @@ import { BookingTimeoutWorker } from "./workers/booking-timeout.worker";
 import { WorkerManager } from "./workers";
 import SearchController from "./controllers/search.controller";
 import SearchRouter from "./routes/search.routes";
+import PricingController from "./controllers/pricing.controller";
+import PricingRouter from "./routes/pricing.routes";
 
 const app: Express = express();
 connectRedis();
@@ -74,6 +76,7 @@ const facilityRepository = new FacilityRepository(prismaClient);
 const ownerRepository = new OwnerRepository(prismaClient);
 const amenityRepository = new AmenityRepository(prismaClient);
 const paymentRepository = new PaymentRepository(prismaClient);
+const holidayRepository = new HolidayRepository(prismaClient);
 
 // Services
 const s3Service = new S3Service();
@@ -100,7 +103,7 @@ const imageService = new ImageService(imageRepository, s3Service);
 const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService);
 const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
-const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service);
+const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service, ownerRepository, holidayRepository);
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
@@ -116,6 +119,10 @@ const ownerService = new OwnerService(ownerRepository, imageService, accommodati
 const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
 const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
+const pricingService = new PricingService(prismaClient, holidayRepository);
+const ownerPricingService = new OwnerPricingService(ownerRepository, holidayRepository);
+roomService.setPricingService(pricingService);
+bookingService.setPricingService(pricingService);
 
 // Workers
 const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
@@ -137,6 +144,7 @@ const ownerController = new OwnerController(ownerService);
 const amenityController = new AmenityController(amenityRepository);
 const paymentController = new PaymentController(paymentService);
 const searchController = new SearchController(searchService, accommodationService);
+const pricingController = new PricingController(pricingService, ownerPricingService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
@@ -151,6 +159,7 @@ const ownerRouter = new OwnerRouter(express.Router(), ownerController, accommoda
 const amenityRouter = new AmenityRouter(express.Router(), amenityController);
 const paymentRouter = new PaymentRouter(express.Router(), paymentController);
 const searchRouter = new SearchRouter(express.Router(), searchController);
+const pricingRouter = new PricingRouter(express.Router(), pricingController);
 const appRouter = new AppRouter(
 	authRouter,
 	userRouter,
@@ -163,7 +172,8 @@ const appRouter = new AppRouter(
 	ownerRouter,
 	amenityRouter,
 	searchRouter,
-	paymentRouter
+	paymentRouter,
+	pricingRouter
 );
 
 const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];

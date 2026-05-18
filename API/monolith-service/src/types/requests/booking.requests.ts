@@ -16,7 +16,9 @@ export interface BookingPayload {
 	startDate: Date; // ISO 8601 string
 	endDate: Date;
 	guestCount: number;
-	totalPrice: number;
+	// Anti-tamper: FE echoes back the hash from POST /pricing/quote.
+	// BE re-quotes and rejects 409 if the hash doesn't match (price changed).
+	quoteHash: string;
 	details: {
 		create: BookingDetailPayload[];
 	};

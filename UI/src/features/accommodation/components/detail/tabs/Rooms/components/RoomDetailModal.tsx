@@ -16,7 +16,7 @@ const RoomDetailModal = ({ room }: RoomDetailModalProps) => {
 	const { format } = useCurrency();
 
 	const primaryImages = room.images.filter((img) => img.variants.some((v) => v.variant === "ORIGINAL"));
-	const price = parseFloat(room.price);
+	const price = parseFloat(room.basePrice ?? room.price ?? "0");
 
 	const [currentImageIndex, setCurrentImageIndex] = useState(0);
 
