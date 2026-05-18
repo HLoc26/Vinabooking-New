@@ -35,6 +35,6 @@ export type Booking = {
 	status: "DRAFT" | "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
 	userId: string;
 	details: BookingDetail[];
-	PaymentTransfer: PaymentTransfer[];
+	paymentTransfers: PaymentTransfer[];
 	createdAt: Date;
 };

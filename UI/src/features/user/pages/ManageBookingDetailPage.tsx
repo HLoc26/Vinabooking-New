@@ -110,7 +110,7 @@ const ManageBookingDetailPage = () => {
 
 	const getPaymentStatusConfig = (b: Booking) => {
 		if (b.status === "CANCELLED") return { color: "error" as const, label: "N/A" };
-		const isPaid = b.PaymentTransfer?.some((p: PaymentTransfer) => p.status === "COMPLETED");
+		const isPaid = b.paymentTransfers?.some((p: PaymentTransfer) => p.status === "COMPLETED");
 		if (isPaid) return { color: "success" as const, label: "Payment completed" };
 		return { color: "warning" as const, label: "Not yet paid" };
 	};
@@ -144,8 +144,8 @@ const ManageBookingDetailPage = () => {
 
 	const statusConfig = getStatusConfig(booking.status);
 	const paymentStatusConfig = getPaymentStatusConfig(booking);
-	const isPaid = booking.PaymentTransfer?.some((p: PaymentTransfer) => p.status === "COMPLETED");
-	const completedPayment = booking.PaymentTransfer?.find((p: PaymentTransfer) => p.status === "COMPLETED");
+	const isPaid = booking.paymentTransfers?.some((p: PaymentTransfer) => p.status === "COMPLETED");
+	const completedPayment = booking.paymentTransfers?.find((p: PaymentTransfer) => p.status === "COMPLETED");
 
 	return (
 		<Box sx={{ minHeight: "100vh", py: 6, pt: 2, px: 2 }}>

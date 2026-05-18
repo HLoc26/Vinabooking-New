@@ -10,6 +10,7 @@ import useRooms from "../../accommodation/hooks/useRooms";
 import { useState, useEffect } from "react";
 import { usePayOS } from "@payos/payos-checkout";
 import { bookingApi } from "../services/bookingApi";
+import { BOOKING_TIMEOUT_SECONDS, BOOKING_TIMEOUT_MINUTES } from "../../../constants/booking";
 
 const SESSION_KEY = "current_booking_checkout";
 
@@ -94,7 +95,7 @@ export default function CheckoutPage() {
 						if (res.success && res.data && res.data.status === "PENDING") {
 							const createdAt = new Date(res.data.createdAt).getTime();
 							const elapsed = Math.floor((Date.now() - createdAt) / 1000);
-							const remaining = 15 * 60 - elapsed;
+							const remaining = BOOKING_TIMEOUT_SECONDS - elapsed;
 
 							if (remaining > 0) {
 								setCreatedBookingId(bookingId);
@@ -174,11 +175,13 @@ export default function CheckoutPage() {
 			setIsCreatingLink(true);
 
 			let bookingId = createdBookingId;
+			let createdAtRaw: string | undefined;
 
 			if (!bookingId) {
 				const bookingRes = await confirmBooking(bookingInfo);
 
 				bookingId = bookingRes.data.id;
+				createdAtRaw = bookingRes.data.createdAt;
 
 				setCreatedBookingId(bookingId);
 			}
@@ -191,19 +194,11 @@ export default function CheckoutPage() {
 
 			setCheckoutUrl(paymentRes.data.checkoutUrl);
 
-			// Fetch true time from server
-			try {
-				const bookingResData = await bookingApi.getById(bookingId);
-				if (bookingResData.success && bookingResData.data) {
-					const createdAt = new Date(bookingResData.data.createdAt).getTime();
-					const elapsed = Math.floor((Date.now() - createdAt) / 1000);
-					const remaining = 15 * 60 - elapsed;
-					setTimeLeft(remaining > 0 ? remaining : 0);
-				} else {
-					setTimeLeft(15 * 60);
-				}
-			} catch (e) {
-				setTimeLeft(15 * 60);
+			if (createdAtRaw) {
+				const createdAt = new Date(createdAtRaw).getTime();
+				const elapsed = Math.floor((Date.now() - createdAt) / 1000);
+				const remaining = BOOKING_TIMEOUT_SECONDS - elapsed;
+				setTimeLeft(remaining > 0 ? remaining : 0);
 			}
 
 			setIsPaymentOpen(true);
@@ -505,7 +500,7 @@ export default function CheckoutPage() {
 			<Dialog open={isCancelModalOpen} onClose={() => setIsCancelModalOpen(false)} maxWidth="xs" fullWidth>
 				<DialogTitle fontWeight={700}>Leave Payment?</DialogTitle>
 				<DialogContent>
-					<Typography variant="body1">Are you sure you want to leave payment? Your room is only reserved for 15 minutes before being released.</Typography>
+					<Typography variant="body1">Are you sure you want to leave payment? Your room is only reserved for {BOOKING_TIMEOUT_MINUTES} minutes before being released.</Typography>
 				</DialogContent>
 				<DialogActions sx={{ flexDirection: "column", gap: 1, p: 3 }}>
 					<Button variant="contained" fullWidth onClick={() => setIsCancelModalOpen(false)} sx={{ borderRadius: 2, py: 1.2, fontWeight: 700 }}>

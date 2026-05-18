@@ -120,7 +120,7 @@ const searchService = new SearchService();
 // Workers
 const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
 const publishWorkerInstance = new PublishWorker();
-const bookingTimeoutWorker = new BookingTimeoutWorker(bookingRepository, paymentRepository);
+const bookingTimeoutWorker = new BookingTimeoutWorker(bookingRepository);
 const workerManager = new WorkerManager([reviewWorkerInstance, publishWorkerInstance, bookingTimeoutWorker]);
 workerManager.start();
 

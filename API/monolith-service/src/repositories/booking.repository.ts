@@ -125,29 +125,58 @@ class BookingRepository {
 		});
 	}
 
+	public async cancelWithTransaction(id: string): Promise<BookingWithDetails> {
+		const [booking] = await this.#prismaClient.$transaction([
+			this.#prismaClient.booking.update({
+				where: { id },
+				data: { status: "CANCELLED" },
+				include: { details: true },
+			}),
+			this.#prismaClient.paymentTransfer.updateMany({
+				where: { bookingId: id, status: "PENDING" },
+				data: { status: "FAILED" }
+			})
+		]);
+		return booking as BookingWithDetails;
+	}
+
 	// ---------- room availability ----------
 	public async checkAvailability(requestedItems: { itemId: string; count: number; itemType: string }[], startDate: Date, endDate: Date): Promise<boolean> {
-		for (const reqItem of requestedItems) {
-			const overlappingDetails = await this.#prismaClient.bookingDetail.findMany({
+		const itemIds = requestedItems.map((item) => item.itemId);
+		const roomIds = requestedItems.filter((item) => item.itemType === "ROOM").map((item) => item.itemId);
+		const bedIds = requestedItems.filter((item) => item.itemType === "BED").map((item) => item.itemId);
+
+		const [overlappingDetails, rooms, beds] = await Promise.all([
+			this.#prismaClient.bookingDetail.findMany({
 				where: {
-					itemId: reqItem.itemId,
+					itemId: { in: itemIds },
 					Booking: {
 						status: { in: ["PENDING", "BOOKED"] },
 						startDate: { lt: endDate },
 						endDate: { gt: startDate },
 					},
 				},
-			});
+			}),
+			roomIds.length > 0 ? this.#prismaClient.room.findMany({ where: { id: { in: roomIds } } }) : Promise.resolve([]),
+			bedIds.length > 0 ? this.#prismaClient.bed.findMany({ where: { id: { in: bedIds } } }) : Promise.resolve([]),
+		]);
 
-			const bookedCount = overlappingDetails.reduce((sum, detail) => sum + detail.count, 0);
+		const bookedCountMap = overlappingDetails.reduce((acc, detail) => {
+			acc[detail.itemId] = (acc[detail.itemId] || 0) + detail.count;
+			return acc;
+		}, {} as Record<string, number>);
+
+		const roomMap = new Map(rooms.map((room) => [room.id, room.quantity]));
+		const bedMap = new Map(beds.map((bed) => [bed.id, bed.quantity]));
+
+		for (const reqItem of requestedItems) {
+			const bookedCount = bookedCountMap[reqItem.itemId] || 0;
 
 			let totalQuantity = 0;
 			if (reqItem.itemType === "ROOM") {
-				const room = await this.#prismaClient.room.findUnique({ where: { id: reqItem.itemId } });
-				if (room) totalQuantity = room.quantity;
+				totalQuantity = roomMap.get(reqItem.itemId) || 0;
 			} else if (reqItem.itemType === "BED") {
-				const bed = await this.#prismaClient.bed.findUnique({ where: { id: reqItem.itemId } });
-				if (bed) totalQuantity = bed.quantity;
+				totalQuantity = bedMap.get(reqItem.itemId) || 0;
 			}
 
 			if (bookedCount + reqItem.count > totalQuantity) {
@@ -158,23 +187,28 @@ class BookingRepository {
 	}
 
 	public async countBookedRooms(roomIds: string[], startDate: Date, endDate: Date): Promise<Record<string, number>> {
-		const counts: Record<string, number> = {};
-
-		for (const roomId of roomIds) {
-			const details = await this.#prismaClient.bookingDetail.findMany({
-				where: {
-					itemId: roomId,
-					itemType: "ROOM",
-					Booking: {
-						status: "BOOKED",
-						startDate: { lte: endDate },
-						endDate: { gte: startDate },
-					},
+		const details = await this.#prismaClient.bookingDetail.findMany({
+			where: {
+				itemId: { in: roomIds },
+				itemType: "ROOM",
+				Booking: {
+					status: "BOOKED",
+					startDate: { lte: endDate },
+					endDate: { gte: startDate },
 				},
-				select: { count: true },
-			});
+			},
+			select: { itemId: true, count: true },
+		});
 
-			counts[roomId] = details.reduce((sum, d) => sum + d.count, 0);
+		const counts: Record<string, number> = {};
+		for (const roomId of roomIds) {
+			counts[roomId] = 0;
+		}
+
+		for (const d of details) {
+			if (counts[d.itemId] !== undefined) {
+				counts[d.itemId] += d.count;
+			}
 		}
 
 		return counts;

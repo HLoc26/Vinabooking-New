@@ -7,6 +7,7 @@ import { BookingPayload } from "@/types/requests";
 import { Prisma } from "@/generated/client";
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
 import { bookingTimeoutQueue } from "@/clients/queue.client";
+import { BOOKING_TIMEOUT_MS } from "@/constants/booking";
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
@@ -117,7 +118,7 @@ export default class BookingService {
 		};
 
 		const newBooking = await this.#bookingRepository.create(bookingData);
-		await bookingTimeoutQueue.add("timeout", { bookingId: newBooking.id }, { delay: 15 * 60 * 1000 });
+		await bookingTimeoutQueue.add("timeout", { bookingId: newBooking.id }, { delay: BOOKING_TIMEOUT_MS, jobId: newBooking.id });
 		return newBooking;
 	}
 
@@ -134,9 +135,11 @@ export default class BookingService {
 		return await this.#bookingRepository.create(bookingData);
 	}
 
-	// TODO: xoá job trong queue khi thành công
 	public async confirmBooking(id: string) {
 		if (!this.#accommodationService) throw new Error("AccommodationService not initialized in BookingService");
+
+		// Remove timeout job from queue if it exists
+		await bookingTimeoutQueue.remove(id);
 
 		// 1. Confirm booking
 		const booking = await this.#bookingRepository.confirm(id);
