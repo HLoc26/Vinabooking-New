@@ -5,6 +5,7 @@ import { OwnerService } from "@/services";
 import { UpgradeOwnerRequest } from "@/types/requests";
 import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/types/responses";
 import { DraftAccommodation } from "@/types/accommodation.types";
+import type { OwnerBookingFilters, OwnerBookingSort, OwnerBookingStatus } from "@/repositories/booking.repository";
 
 class OwnerController {
 	readonly #ownerService: OwnerService;
@@ -72,6 +73,31 @@ class OwnerController {
 
 		const stats = await this.#ownerService.getDashboardStats(userId);
 		return ResponseHelper.success<DashboardStatsResponse>(res, stats);
+	}
+
+	public async getBookings(req: Request, res: Response) {
+		const userId = req.userId;
+		if (!userId) throw new BadRequestError("Missing user identity");
+
+		const { status, accommodationId, fromDay, toDay, sort } = req.query;
+		const filters: OwnerBookingFilters = {
+			status: status as OwnerBookingStatus | undefined,
+			accommodationId: accommodationId as string | undefined,
+			fromDay: fromDay as string | undefined,
+			toDay: toDay as string | undefined,
+			sort: sort as OwnerBookingSort | undefined,
+		};
+
+		const bookings = await this.#ownerService.getBookings(userId, filters);
+		return ResponseHelper.success(res, bookings);
+	}
+
+	public async revokeBooking(req: Request<{ bookingId: string }>, res: Response) {
+		const userId = req.userId;
+		if (!userId) throw new BadRequestError("Missing user identity");
+
+		const result = await this.#ownerService.revokeBooking(userId, req.params.bookingId);
+		return ResponseHelper.success(res, result);
 	}
 }
 

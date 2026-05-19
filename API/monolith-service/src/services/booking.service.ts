@@ -8,6 +8,7 @@ import { Prisma } from "@/generated/client";
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
 import { bookingTimeoutQueue } from "@/clients/queue.client";
 import { BOOKING_TIMEOUT_MS } from "@/constants/booking";
+import type { OwnerBookingFilters } from "@/repositories/booking.repository";
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
@@ -49,6 +50,71 @@ export default class BookingService {
 		const bookings = await this.#bookingRepository.findByRoomId(roomId);
 		if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for room ${roomId}`);
 		return bookings;
+	}
+
+	public async getOwnerBookings(ownerId: string, filters: OwnerBookingFilters) {
+		const { bookings, itemMap } = await this.#bookingRepository.findOwnerBookings(ownerId, filters);
+
+		return bookings.map((booking) => {
+			const nights = Math.max(1, Math.ceil((booking.endDate.getTime() - booking.startDate.getTime()) / (1000 * 60 * 60 * 24)));
+			const items = booking.details.map((detail) => {
+				const meta = itemMap[detail.itemId];
+				return {
+					id: detail.itemId,
+					type: detail.itemType,
+					name: meta?.name ?? detail.itemType,
+					count: detail.count,
+					note: detail.note,
+				};
+			});
+			const firstMeta = booking.details.map((detail) => itemMap[detail.itemId]).find(Boolean);
+			const latestPayment = booking.paymentTransfers[0] ?? null;
+
+			return {
+				id: booking.id,
+				referenceNo: booking.referenceNo,
+				status: booking.status,
+				startDate: booking.startDate,
+				endDate: booking.endDate,
+				guestCount: booking.guestCount,
+				nights,
+				totalPrice: booking.totalPrice?.toString() ?? null,
+				phone: booking.phone,
+				leaderName: booking.leaderName,
+				leaderEmail: booking.leaderEmail,
+				createdAt: booking.createdAt,
+				updatedAt: booking.updatedAt,
+				paymentStatus: latestPayment?.status ?? null,
+				guest: {
+					id: booking.user.id,
+					name: booking.user.name,
+					email: booking.user.email,
+					phone: booking.user.phone,
+				},
+				accommodation: firstMeta
+					? {
+							id: firstMeta.accommodationId,
+							name: firstMeta.accommodationName,
+						}
+					: null,
+				items,
+			};
+		});
+	}
+
+	public async revokeOwnerBooking(ownerId: string, bookingId: string) {
+		const booking = await this.getBookingById(bookingId);
+
+		if (booking.status !== "PENDING" && booking.status !== "BOOKED") {
+			throw new BadRequestError("Only pending or booked bookings can be revoked");
+		}
+
+		const isOwned = await this.#bookingRepository.isOwnedByOwner(bookingId, ownerId);
+		if (!isOwned) {
+			throw new BadRequestError("Booking does not belong to this owner");
+		}
+
+		return this.cancelBooking(bookingId);
 	}
 
 	public async getBookedCounts(roomIds: string[], startDate: Date, endDate: Date) {

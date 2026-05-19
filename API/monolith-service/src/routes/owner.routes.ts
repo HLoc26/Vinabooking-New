@@ -39,6 +39,14 @@ class OwnerRouter {
 			return this.ownerController.upgradeRole(req as UpgradeOwnerRequest, res);
 		});
 
+		this.router.get("/bookings", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.getBookings(req, res);
+		});
+
+		this.router.patch("/bookings/:bookingId/revoke", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.ownerController.revokeBooking(req as Request<{ bookingId: string }>, res);
+		});
+
 		this.router.get("/accommodations/drafts", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.ownerController.getDraftAccommodations(req, res);
 		});
