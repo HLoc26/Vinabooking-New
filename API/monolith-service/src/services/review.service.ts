@@ -9,6 +9,8 @@ import { reviewQueue } from "@/clients/queue.client";
 import { EReviewJobName } from "@/types/queue.types";
 import redisClient from "@/clients/redis.client";
 
+type ReviewWithReplies = Review & { replies?: Review[] };
+
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
 	reviewRepository: ReviewRepository;
@@ -150,6 +152,11 @@ class ReviewService {
 		}
 
 		// 2. Create Reply
+		const accommodation = await this.#accommodationService.getAccommodationById(parent.accommodationId);
+		if (accommodation.ownerId !== userId) {
+			throw new ForbiddenError("You can only reply to reviews for your own accommodations.");
+		}
+
 		const data: Prisma.ReviewUncheckedCreateInput = {
 			userId,
 			accommodationId: parent.accommodationId,
@@ -168,8 +175,7 @@ class ReviewService {
 		const rawReviews = await this.#reviewRepository.findByAccommodationId(accommodationId);
 		if (!rawReviews.length) return [];
 
-		const reviews = rawReviews.flatMap((r: any) => [r, ...(r.replies || [])]);
-
+		const reviews = rawReviews.flatMap((r: ReviewWithReplies) => [r, ...(r.replies || [])]);
 		const userIds = [...new Set(reviews.map((r) => r.userId))];
 
 		const usersData = await Promise.all(
@@ -215,8 +221,7 @@ class ReviewService {
 	}
 
 	public async getRecentParentReviews(accommodationId: string, top: number): Promise<Review[]> {
-		const reviews: Review[] = await this.#reviewRepository.findRecentParentReviews(accommodationId, top);
-		return reviews;
+		return this.#reviewRepository.findRecentParentReviews(accommodationId, top);
 	}
 }
 
