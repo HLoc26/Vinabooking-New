@@ -27,9 +27,8 @@ const navItems = [
 ];
 
 const bookingStatusItems = [
-	{ label: "Pending", status: "PENDING" },
+	{ label: "Incoming", status: "BOOKED" },
 	{ label: "Cancelled", status: "CANCELLED" },
-	{ label: "Booked", status: "BOOKED" },
 	{ label: "Completed", status: "COMPLETED" },
 ];
 
@@ -81,7 +80,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 	};
 
 	const avatarLetter = user?.email?.[0]?.toUpperCase() ?? "O";
-	const activeBookingStatus = new URLSearchParams(location.search).get("status") ?? "PENDING";
+	const activeBookingStatus = new URLSearchParams(location.search).get("status") ?? "BOOKED";
 
 	return (
 		<Box sx={{ display: "flex" }}>
@@ -195,7 +194,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 							<Box key={path}>
 								<ListItem disablePadding sx={{ mb: 0.5 }}>
 									<ListItemButton
-										onClick={() => navigate(isBookingItem ? `${path}?status=PENDING` : path)}
+										onClick={() => navigate(isBookingItem ? `${path}?status=BOOKED` : path)}
 										selected={isActive}
 										sx={{
 											borderRadius: 2,
