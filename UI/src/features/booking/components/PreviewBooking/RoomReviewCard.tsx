@@ -1,4 +1,5 @@
 import { Box, Typography, Modal, Chip } from "@mui/material";
+import { LocalFireDepartment, LocalOffer } from "@mui/icons-material";
 import React, { useState, type Dispatch, type SetStateAction } from "react";
 import type { Image } from "../../../../types/Image";
 import type { RoomFullDetail } from "../../../accommodation/types/room.types";
@@ -8,13 +9,14 @@ type RoomReviewCardProps = {
 	room: RoomFullDetail & { count: number };
 	thumbnail: string;
 	images: Image[];
+	nights?: number;
 	loading?: boolean; // Added missing prop
 	setGalleryImages: Dispatch<SetStateAction<string[]>>;
 	openImageGallery: (index: number) => void;
 	amenities: RoomFullDetail["amenities"]; // Updated to match the actual structure
 };
 
-const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images, loading, setGalleryImages, openImageGallery, amenities }) => {
+const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images, nights, loading, setGalleryImages, openImageGallery, amenities }) => {
 	const [open, setOpen] = useState(false);
 	const { format } = useCurrency();
 
@@ -106,9 +108,44 @@ const RoomReviewCard: React.FC<RoomReviewCardProps> = ({ room, thumbnail, images
 						</Box>
 					</Box>
 
-					<Typography variant="h6" fontWeight="bold" color="primary.main" textAlign="right">
-						{format(Number.parseFloat(room.basePrice ?? room.price ?? "0"))}
-					</Typography>
+					{/* BE owns money math (dynamic-pricing.md §4). Render quote-supplied
+					    per-line totals; the `listPrice`/`payablePrice` from quote are
+					    per-unit for `count=1` of this room across the stay — multiply
+					    by `room.count` (unit count) to get the line subtotal. */}
+					{(() => {
+						const pricing = room.pricing;
+						if (!pricing) {
+							return (
+								<Typography variant="caption" color="text.secondary" textAlign="right">
+									Calculating…
+								</Typography>
+							);
+						}
+						const lineList = pricing.listPrice * room.count;
+						const linePay = pricing.payablePrice * room.count;
+						const showDiscount = pricing.discountApplied && linePay < lineList;
+						return (
+							<Box textAlign="right">
+								{showDiscount && (
+									<Typography variant="caption" color="text.secondary" sx={{ textDecoration: "line-through", display: "block", lineHeight: 1.2 }}>
+										{format(lineList)}
+									</Typography>
+								)}
+								<Typography variant="h6" fontWeight="bold" sx={{ color: showDiscount ? "#e53e3e" : "primary.main" }}>
+									{format(linePay)}
+								</Typography>
+								{nights !== undefined && (
+									<Typography variant="caption" color="text.secondary" sx={{ display: "block" }}>
+										{format(pricing.averagePricePerNight)} / night × {nights} × {room.count}
+									</Typography>
+								)}
+								<Box display="flex" gap={0.5} justifyContent="flex-end" mt={0.5} flexWrap="wrap">
+									{pricing.holidayApplied && <Chip icon={<LocalFireDepartment fontSize="small" />} label="Holiday rate" size="small" color="warning" />}
+									{showDiscount && <Chip icon={<LocalOffer fontSize="small" />} label="Promotion applied" size="small" color="success" />}
+								</Box>
+							</Box>
+						);
+					})()}
 				</Box>
 			</Box>
 

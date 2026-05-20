@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import type { BookingContextInfo } from "../types/BookingContextInfo";
 import type { Booking } from "../types/Booking";
 import type { ApiResponse } from "../../../types/Response";
+import type { QuoteRequestInput, QuoteResponse } from "../types/pricing.types";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const BOOKING_ENDPOINT = "/bookings";
@@ -12,6 +13,14 @@ const ACCOM_ENDPOINT = "/accommodations";
 const PAYMENT_ENDPOINT = "/payments";
 
 export const bookingApi = {
+	async getQuote(input: QuoteRequestInput): Promise<QuoteResponse> {
+		const res = await axioInstance.post<ApiResponse<QuoteResponse>>("/pricing/quote", input);
+		if (!res.data.success || !res.data.data) {
+			throw new Error(res.data.error || "Failed to fetch price quote");
+		}
+		return res.data.data;
+	},
+
 	async getByUserId(userId: string) {
 		return axioInstance.get<ApiResponse<Booking[]>>("/bookings", { params: { entity: "user", id: userId } }).then((r) => r.data);
 	},
