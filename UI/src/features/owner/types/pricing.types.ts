@@ -64,6 +64,7 @@ export interface QuoteItemPricing {
 	listPrice: number;
 	payablePrice: number;
 	averagePricePerNight: number;
+	averageListPricePerNight: number;
 	discountApplied: boolean;
 	holidayApplied: boolean;
 	nightBreakdown: NightBreakdownEntry[];

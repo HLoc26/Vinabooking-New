@@ -1,6 +1,6 @@
 import { Box, Button, Card, CardContent, FormControlLabel, Stack, Switch, TextField, Typography } from "@mui/material";
 import { Controller, useForm } from "react-hook-form";
-import { useEffect } from "react";
+import { useEffect, useRef } from "react";
 import type { DynamicPricingSettings, EarlyBirdConfig, LongStayConfig } from "../../types/pricing.types";
 
 type FormValues = {
@@ -13,9 +13,10 @@ type FormValues = {
 };
 
 interface Props {
-	defaults?: DynamicPricingSettings | null;
+	value: DynamicPricingSettings | null;
+	onChange?: (next: DynamicPricingSettings | null) => void;
+	onSubmit?: (next: DynamicPricingSettings | null) => void | Promise<void>;
 	disabled?: boolean;
-	onSubmit: (settings: DynamicPricingSettings | null) => void | Promise<void>;
 	submitLabel?: string;
 	hideSubmit?: boolean;
 }
@@ -48,20 +49,34 @@ const toSettings = (v: FormValues): DynamicPricingSettings | null => {
 	return { longStayConfig: longStay, earlyBirdConfig: earlyBird };
 };
 
-export const OwnerSettingsForm = ({ defaults, disabled, onSubmit, submitLabel = "Save settings", hideSubmit }: Props) => {
+export const OwnerSettingsForm = ({ value, onChange, onSubmit, disabled, submitLabel = "Save settings", hideSubmit }: Props) => {
 	const { control, handleSubmit, watch, reset } = useForm<FormValues>({
-		defaultValues: fromSettings(defaults),
+		defaultValues: fromSettings(value),
 	});
 
+	// Re-sync when parent pushes a different value (e.g., after a save round-trip).
+	const lastExternal = useRef(value);
 	useEffect(() => {
-		reset(fromSettings(defaults));
-	}, [defaults, reset]);
+		if (lastExternal.current !== value) {
+			lastExternal.current = value;
+			reset(fromSettings(value));
+		}
+	}, [value, reset]);
+
+	// Emit every change up to the parent so the wizard cannot lose user input.
+	useEffect(() => {
+		if (!onChange) return;
+		const sub = watch((v) => {
+			onChange(toSettings(v as FormValues));
+		});
+		return () => sub.unsubscribe();
+	}, [watch, onChange]);
 
 	const longStayEnabled = watch("longStayEnabled");
 	const earlyBirdEnabled = watch("earlyBirdEnabled");
 
 	return (
-		<Box component="form" onSubmit={handleSubmit((v) => onSubmit(toSettings(v)))} noValidate>
+		<Box component="form" onSubmit={onSubmit ? handleSubmit((v) => onSubmit(toSettings(v))) : (e) => e.preventDefault()} noValidate>
 			<Stack spacing={3}>
 				<Card variant="outlined">
 					<CardContent>
@@ -185,7 +200,7 @@ export const OwnerSettingsForm = ({ defaults, disabled, onSubmit, submitLabel = 
 					</CardContent>
 				</Card>
 
-				{!hideSubmit && (
+				{!hideSubmit && onSubmit && (
 					<Box display="flex" justifyContent="flex-end">
 						<Button type="submit" variant="contained" disabled={disabled}>
 							{submitLabel}

@@ -42,9 +42,14 @@ export const bookingApi = {
 		}));
 
 		// Quote-then-book: BE re-computes pricing and verifies the hash matches.
+		// Capture bookedAt once and reuse for the quote AND the booking payload so
+		// BE re-quote uses the same lead-day basis (avoids hash drift around HCM
+		// midnight).
+		const bookedAt = new Date().toISOString();
 		const quoteRes = await axioInstance.post(`/pricing/quote`, {
 			checkIn: booking.startDate,
 			checkOut: booking.endDate,
+			bookedAt,
 			items,
 		});
 		const quote = quoteRes.data?.data;
@@ -57,6 +62,7 @@ export const bookingApi = {
 			endDate: booking.endDate,
 			guestCount: booking.guestCount,
 			quoteHash: quote.quoteHash,
+			bookedAt,
 			details: {
 				create: rooms.map((room) => ({
 					itemId: room.id,

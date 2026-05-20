@@ -172,6 +172,9 @@ class PricingService {
 		if (Number.isNaN(checkIn.getTime()) || Number.isNaN(checkOut.getTime())) {
 			throw new BadRequestError("Invalid checkIn or checkOut date");
 		}
+		if (req.bookedAt !== undefined && Number.isNaN(bookedAt.getTime())) {
+			throw new BadRequestError("Invalid bookedAt date");
+		}
 
 		const nightYmds = enumerateNights(checkIn, checkOut);
 		const nights = nightYmds.length;
@@ -282,6 +285,7 @@ class PricingService {
 						listPrice: Number(listTotal.toFixed(2)),
 						payablePrice: Number(payTotal.toFixed(2)),
 						averagePricePerNight: Number(payTotal.dividedBy(nights).dividedBy(item.count).toFixed(2)),
+						averageListPricePerNight: Number(listTotal.dividedBy(nights).dividedBy(item.count).toFixed(2)),
 						discountApplied: false,
 						holidayApplied: false,
 						nightBreakdown: [],
@@ -328,6 +332,7 @@ class PricingService {
 				listPrice: Number(listForItem.toFixed(2)),
 				payablePrice: Number(payForItem.toFixed(2)),
 				averagePricePerNight: Number(payForItem.dividedBy(nights).dividedBy(item.count).toFixed(2)),
+				averageListPricePerNight: Number(listForItem.dividedBy(nights).dividedBy(item.count).toFixed(2)),
 				discountApplied: itemHadDiscount,
 				holidayApplied: itemHadHoliday,
 				nightBreakdown: breakdown,

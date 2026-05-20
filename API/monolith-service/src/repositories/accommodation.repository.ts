@@ -214,13 +214,6 @@ class AccommodationRepository {
 		});
 	}
 
-	public async getRoomIds(accommodationId: string): Promise<string[]> {
-		const rooms = await this.#prismaClient.room.findMany({
-			where: { accommodationId },
-			select: { id: true },
-		});
-		return rooms.map((r) => r.id);
-	}
 
 	public async checkOwnership(id: string, ownerId: string): Promise<boolean> {
 		const count = await this.#prismaClient.accommodation.count({

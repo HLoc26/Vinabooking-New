@@ -1,51 +1,60 @@
-import { useEffect, useState } from "react";
+import { useMemo, useState } from "react";
 import { Box, Button, Checkbox, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
-import type { HolidayDto, HolidayOptIn, OwnerHolidayRow } from "../../types/pricing.types";
+import type { HolidayDto, HolidayOptIn } from "../../types/pricing.types";
 
 interface Props {
 	catalog: HolidayDto[];
-	current: OwnerHolidayRow[];
+	value: HolidayOptIn[];
+	onChange?: (items: HolidayOptIn[]) => void;
+	onSubmit?: (items: HolidayOptIn[]) => void | Promise<void>;
 	disabled?: boolean;
-	onSubmit: (items: HolidayOptIn[]) => void | Promise<void>;
 	submitLabel?: string;
 	hideSubmit?: boolean;
 }
 
 type Row = { holidayId: number; enabled: boolean; priceMultiplier: number };
 
-const buildRows = (catalog: HolidayDto[], current: OwnerHolidayRow[]): Map<number, Row> => {
+// Merge catalog with the parent-supplied opt-in list so every catalog row is
+// rendered (disabled rows just have enabled=false).
+const buildRows = (catalog: HolidayDto[], value: HolidayOptIn[]): Map<number, Row> => {
 	const map = new Map<number, Row>();
 	for (const h of catalog) {
 		map.set(h.id, { holidayId: h.id, enabled: false, priceMultiplier: 1.5 });
 	}
-	for (const c of current) {
-		map.set(c.holidayId, { holidayId: c.holidayId, enabled: c.enabled, priceMultiplier: c.priceMultiplier });
+	for (const c of value) {
+		map.set(c.holidayId, {
+			holidayId: c.holidayId,
+			enabled: c.enabled ?? true,
+			priceMultiplier: c.priceMultiplier,
+		});
 	}
 	return map;
 };
 
-export const OwnerHolidayForm = ({ catalog, current, disabled, onSubmit, submitLabel = "Save holidays", hideSubmit }: Props) => {
-	const [rows, setRows] = useState<Map<number, Row>>(() => buildRows(catalog, current));
+const rowsToItems = (rows: Map<number, Row>): HolidayOptIn[] =>
+	Array.from(rows.values())
+		.filter((r) => r.enabled)
+		.map((r) => ({ holidayId: r.holidayId, priceMultiplier: r.priceMultiplier, enabled: true }));
+
+export const OwnerHolidayForm = ({ catalog, value, onChange, onSubmit, disabled, submitLabel = "Save holidays", hideSubmit }: Props) => {
+	const rows = useMemo(() => buildRows(catalog, value), [catalog, value]);
 	const [error, setError] = useState<string | null>(null);
 
-	useEffect(() => {
-		setRows(buildRows(catalog, current));
-	}, [catalog, current]);
+	const emit = (next: Map<number, Row>) => {
+		onChange?.(rowsToItems(next));
+	};
 
 	const updateRow = (holidayId: number, patch: Partial<Row>) => {
-		setRows((prev) => {
-			const next = new Map(prev);
-			const existing = next.get(holidayId) ?? { holidayId, enabled: false, priceMultiplier: 1.5 };
-			next.set(holidayId, { ...existing, ...patch });
-			return next;
-		});
+		const existing = rows.get(holidayId) ?? { holidayId, enabled: false, priceMultiplier: 1.5 };
+		const next = new Map(rows);
+		next.set(holidayId, { ...existing, ...patch });
+		emit(next);
 	};
 
 	const submit = async () => {
+		if (!onSubmit) return;
 		setError(null);
-		const items: HolidayOptIn[] = Array.from(rows.values())
-			.filter((r) => r.enabled)
-			.map((r) => ({ holidayId: r.holidayId, priceMultiplier: r.priceMultiplier, enabled: true }));
+		const items = rowsToItems(rows);
 		for (const item of items) {
 			if (item.priceMultiplier < 1 || item.priceMultiplier > 5) {
 				setError("Each multiplier must be between 1.0 and 5.0");
@@ -100,7 +109,7 @@ export const OwnerHolidayForm = ({ catalog, current, disabled, onSubmit, submitL
 				</Table>
 			</TableContainer>
 			{error && <Typography color="error">{error}</Typography>}
-			{!hideSubmit && (
+			{!hideSubmit && onSubmit && (
 				<Box display="flex" justifyContent="flex-end">
 					<Button variant="contained" onClick={submit} disabled={disabled}>
 						{submitLabel}

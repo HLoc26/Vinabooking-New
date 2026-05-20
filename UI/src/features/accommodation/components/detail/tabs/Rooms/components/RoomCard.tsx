@@ -25,8 +25,9 @@ export const RoomCard = ({ room, quantity, availableRooms, onIncrease, onDecreas
 	const pricing = room.pricing;
 	const showDiscount = pricing?.discountApplied && pricing.payablePrice < pricing.listPrice;
 	const showHoliday = pricing?.holidayApplied ?? false;
-	const displayList = pricing ? pricing.listPrice / Math.max(1, pricing.nightBreakdown.length || 1) : price;
-	const displayPay = pricing ? pricing.payablePrice / Math.max(1, pricing.nightBreakdown.length || 1) : price;
+	// BE owns the math; FE only renders. See dynamic-pricing.md §3.1 / §4.
+	const displayList = pricing ? pricing.averageListPricePerNight : price;
+	const displayPay = pricing ? pricing.averagePricePerNight : price;
 
 	const { openModal } = useModalContext();
 

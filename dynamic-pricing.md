@@ -153,7 +153,7 @@ night(d) = max(night(d), floorPrice)     // floor clamp
 
 ### 3.1. Quote endpoint (new)
 
-`POST /api/v1/pricing/quote`
+`POST /pricing/quote`
 
 Request:
 ```json

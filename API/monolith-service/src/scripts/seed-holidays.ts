@@ -65,7 +65,7 @@ async function seedHolidays() {
 	for (const h of all) {
 		try {
 			await prismaClient.holiday.upsert({
-				where: { date: new Date(h.date) },
+				where: { date_isRecurring: { date: new Date(h.date), isRecurring: h.isRecurring } },
 				create: {
 					name: h.name,
 					date: new Date(h.date),
@@ -73,7 +73,6 @@ async function seedHolidays() {
 				},
 				update: {
 					name: h.name,
-					isRecurring: h.isRecurring,
 				},
 			});
 			inserted++;

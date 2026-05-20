@@ -16,24 +16,22 @@ interface Props {
 const StepPricingBox: React.FC<Props> = ({ accommodationId, triggerSubmit, resetTrigger, onSuccess, onError }) => {
 	const [mode, setMode] = useState<"inherit" | "customize">("inherit");
 	const [loading, setLoading] = useState(true);
-	const [ownerSettings, setOwnerSettings] = useState<DynamicPricingSettings | null>(null);
 	const [catalog, setCatalog] = useState<HolidayDto[]>([]);
-	const [ownerHolidays, setOwnerHolidays] = useState<OwnerHolidayRow[]>([]);
 
-	// Drafts of the override forms (only used when mode === "customize").
+	// Customize-mode drafts. Initialized from owner-wide defaults after the
+	// initial fetch so toggling to customize starts from a sensible baseline.
 	const [overrideSettings, setOverrideSettings] = useState<DynamicPricingSettings | null>(null);
-	const [overrideHolidays, setOverrideHolidays] = useState<HolidayOptIn[] | null>(null);
+	const [overrideHolidays, setOverrideHolidays] = useState<HolidayOptIn[]>([]);
 
 	useEffect(() => {
 		const load = async () => {
 			try {
 				const [s, c, h] = await Promise.all([getOwnerSettings(), getHolidayCatalog(), getOwnerHolidays()]);
-				setOwnerSettings(s.dynamicPricingSettings);
 				setCatalog(c);
-				setOwnerHolidays(h);
-				// Pre-populate the customize forms with owner defaults so toggling to customize starts there.
 				setOverrideSettings(s.dynamicPricingSettings);
-				setOverrideHolidays(h.map((row) => ({ holidayId: row.holidayId, priceMultiplier: row.priceMultiplier, enabled: row.enabled })));
+				setOverrideHolidays(
+					h.map((row: OwnerHolidayRow) => ({ holidayId: row.holidayId, priceMultiplier: row.priceMultiplier, enabled: row.enabled }))
+				);
 			} catch (err) {
 				const message = err instanceof Error ? err.message : "Failed to load pricing settings";
 				onError(message);
@@ -49,14 +47,13 @@ const StepPricingBox: React.FC<Props> = ({ accommodationId, triggerSubmit, reset
 		const submit = async () => {
 			try {
 				if (!accommodationId) throw new Error("Accommodation not created yet. Go back to Basic Info.");
-				if (mode === "inherit") {
-					// Backend already inherited at create-time. Nothing to do.
-				} else {
+				if (mode === "customize") {
 					await updateAccommodationPricingSettings(accommodationId, {
 						dynamicPricingSettings: overrideSettings,
 						holidayOptIns: overrideHolidays,
 					});
 				}
+				// Inherit branch: backend already snapshotted owner defaults at create-time.
 				onSuccess();
 			} catch (err) {
 				const message = err instanceof Error ? err.message : "Failed to save pricing settings";
@@ -86,7 +83,7 @@ const StepPricingBox: React.FC<Props> = ({ accommodationId, triggerSubmit, reset
 			</Box>
 
 			<FormControl>
-				<RadioGroup value={mode} onChange={(_, v) => setMode(v as "inherit" | "customize")}>
+				<RadioGroup value={mode} onChange={(_: unknown, v: string) => setMode(v as "inherit" | "customize")}>
 					<FormControlLabel value="inherit" control={<Radio />} label="Use my default settings" />
 					<FormControlLabel value="customize" control={<Radio />} label="Customize for this property" />
 				</RadioGroup>
@@ -103,11 +100,7 @@ const StepPricingBox: React.FC<Props> = ({ accommodationId, triggerSubmit, reset
 						<Typography variant="subtitle1" gutterBottom>
 							Discount rules
 						</Typography>
-						<OwnerSettingsForm
-							defaults={overrideSettings ?? ownerSettings}
-							hideSubmit
-							onSubmit={(next) => setOverrideSettings(next)}
-						/>
+						<OwnerSettingsForm value={overrideSettings} onChange={setOverrideSettings} hideSubmit />
 						<Typography variant="caption" color="text.secondary">
 							Changes apply when you click Next.
 						</Typography>
@@ -116,22 +109,7 @@ const StepPricingBox: React.FC<Props> = ({ accommodationId, triggerSubmit, reset
 						<Typography variant="subtitle1" gutterBottom>
 							Holiday pricing
 						</Typography>
-						<OwnerHolidayForm
-							catalog={catalog}
-							current={
-								overrideHolidays
-									? overrideHolidays.map((o) => ({
-											id: String(o.holidayId),
-											holidayId: o.holidayId,
-											priceMultiplier: o.priceMultiplier,
-											enabled: o.enabled ?? true,
-											holiday: catalog.find((c) => c.id === o.holidayId) ?? { id: o.holidayId, name: "—", date: "", isRecurring: false },
-										}))
-									: ownerHolidays
-							}
-							hideSubmit
-							onSubmit={(items) => setOverrideHolidays(items)}
-						/>
+						<OwnerHolidayForm catalog={catalog} value={overrideHolidays} onChange={setOverrideHolidays} hideSubmit />
 					</Box>
 				</Stack>
 			)}

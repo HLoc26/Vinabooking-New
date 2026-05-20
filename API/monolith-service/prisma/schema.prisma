@@ -105,6 +105,9 @@ model Booking {
     guestCount  Int            @default(1)
     leaderName  String?
     leaderEmail String?
+    // Denormalized mirror of pricingSnapshot.totals.payablePrice — kept for
+    // dashboard/email queries that don't want to deserialize the JSON snapshot.
+    // pricingSnapshot is the authoritative record of the transaction (§1.4).
     totalPrice  Decimal?       @db.Decimal(10, 2)
     pricingSnapshot Json?      @map("pricing_snapshot")
     phone       String?
@@ -598,7 +601,10 @@ model Holiday {
     ownerHolidays         OwnerHoliday[]
     accommodationHolidays AccommodationHoliday[]
 
-    @@unique([date])
+    // Compound key lets a year-2000 recurring row coexist with an explicit
+    // 2000-MM-DD non-recurring row (defensive — no current data needs it,
+    // but the original @@unique([date]) blocked it as a side effect).
+    @@unique([date, isRecurring])
     @@index([date])
     @@map("holidays")
 }

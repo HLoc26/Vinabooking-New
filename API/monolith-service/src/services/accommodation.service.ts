@@ -381,12 +381,10 @@ class AccommodationService {
 			}
 		}
 
-		// Bust cache: accommodation detail + all room caches under it (spec §2.4).
+		// Spec §2.4 mentions `room:{id}` cache keys, but no code writes them today.
+		// Bust the accommodation-detail cache only — re-add per-room invalidation
+		// at the same site if/when a room-level cache is introduced.
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
-		const roomIds = await this.#accommodationRepository.getRoomIds(id);
-		if (roomIds.length > 0) {
-			await Promise.all(roomIds.map((rid) => redisClient.del(`room:${rid}`)));
-		}
 
 		return await this.getAccommodationById(id);
 	}

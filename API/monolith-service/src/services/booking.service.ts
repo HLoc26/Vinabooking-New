@@ -54,6 +54,7 @@ export default class BookingService {
 		const req: QuoteRequest = {
 			checkIn: new Date(data.startDate),
 			checkOut: new Date(data.endDate),
+			bookedAt: data.bookedAt ? new Date(data.bookedAt) : undefined,
 			items: data.details.create.map((d) => ({
 				itemType: d.itemType,
 				itemId: d.itemId,
@@ -168,11 +169,17 @@ export default class BookingService {
 		if (data.quoteHash !== quote.quoteHash) {
 			throw new ConflictError("Price changed since the quote — please re-quote and try again", "PRICE_CHANGED");
 		}
-		const { quoteHash: _, ...rest } = data;
+		const { quoteHash: _, bookedAt: __, ...rest } = data;
+		const snapshot = {
+			...quote,
+			checkIn: new Date(data.startDate).toISOString(),
+			checkOut: new Date(data.endDate).toISOString(),
+			bookedAt: data.bookedAt,
+		};
 		const bookingData: Prisma.BookingCreateInput = {
 			...rest,
 			totalPrice: new Prisma.Decimal(quote.totals.payablePrice),
-			pricingSnapshot: quote as unknown as Prisma.InputJsonValue,
+			pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
 			user: { connect: { id: userId } },
 			status: "PENDING",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
@@ -186,11 +193,17 @@ export default class BookingService {
 	public async createDraftBooking(userId: string, data: BookingPayload) {
 		// Draft booking: compute snapshot but skip the hash check (FE may not have it yet).
 		const quote = await this._quoteForBooking(data);
-		const { quoteHash: _, ...rest } = data;
+		const { quoteHash: _, bookedAt: __, ...rest } = data;
+		const snapshot = {
+			...quote,
+			checkIn: new Date(data.startDate).toISOString(),
+			checkOut: new Date(data.endDate).toISOString(),
+			bookedAt: data.bookedAt,
+		};
 		const bookingData: Prisma.BookingCreateInput = {
 			...rest,
 			totalPrice: new Prisma.Decimal(quote.totals.payablePrice),
-			pricingSnapshot: quote as unknown as Prisma.InputJsonValue,
+			pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
 			user: { connect: { id: userId } },
 			status: "DRAFT",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),

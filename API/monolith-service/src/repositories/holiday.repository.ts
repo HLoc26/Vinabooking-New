@@ -16,23 +16,6 @@ class HolidayRepository {
 		});
 	}
 
-	/**
-	 * Return all Holiday rows that could match any date in the given array:
-	 *  - explicit (isRecurring=false) where `date` is exactly in the array
-	 *  - all recurring (isRecurring=true) rows; the caller will filter by MM-DD match
-	 * Combine into Map<YYYY-MM-DD, Holiday> in the service layer.
-	 */
-	public async findRelevantForDates(dates: Date[]) {
-		if (!dates || dates.length === 0) return [];
-		const explicit = await this.#prismaClient.holiday.findMany({
-			where: { date: { in: dates }, isRecurring: false },
-		});
-		const recurring = await this.#prismaClient.holiday.findMany({
-			where: { isRecurring: true },
-		});
-		return [...explicit, ...recurring];
-	}
-
 	// ----- Owner opt-ins -----
 
 	public async findByOwner(ownerProfileId: string) {
