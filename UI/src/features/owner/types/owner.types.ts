@@ -52,7 +52,7 @@ export type OwnerBookingSort = "newest" | "oldest" | "price_desc" | "price_asc";
 export type OwnerPaymentStatus = "PENDING" | "DISMISSED" | "FAILED" | "COMPLETED" | "PARTIALLY_HALFED" | "PARTIALLY_THIRDED" | "PARTIALLY_QUARTERED" | null;
 
 export type OwnerBookingFilters = {
-	status: OwnerBookingStatus;
+	status?: OwnerBookingStatus;
 	accommodationId?: string;
 	fromDay?: string;
 	toDay?: string;
