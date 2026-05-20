@@ -2,7 +2,8 @@ import { useEffect, useState, useRef, useCallback, type ReactNode } from "react"
 import { useNavigate } from "react-router-dom";
 import { useDispatch, useSelector } from "react-redux";
 import type { RootState } from "../../app/store";
-import { setOwnerProfile } from "../../features/auth/authSlice";
+import { setOwnerProfile, logoutSuccess } from "../../features/auth/authSlice";
+import { authStorage } from "../../features/auth/utils/authStorage";
 import { useOwnerInfo } from "../../features/owner/hooks/useOwnerInfo";
 import { CircularProgress, Box, Drawer, Typography, Divider, Button, Avatar, Tooltip, Chip } from "@mui/material";
 import { usePushNotificationContext } from "../../context/PushNotification/hook";
@@ -35,35 +36,42 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 		return savedWidth ? Number.parseInt(savedWidth, 10) : MIN_DRAWER_WIDTH;
 	});
 	const isResizing = useRef(false);
-	const widthRef = useRef(drawerWidth);
+	const drawerRef = useRef<HTMLDivElement>(null);
 
 	const handleMouseDown = useCallback((e: React.MouseEvent) => {
 		e.preventDefault();
 		isResizing.current = true;
 		document.body.style.cursor = "col-resize";
 		document.body.style.userSelect = "none";
+	}, []);
 
-		const handleMouseMove = (moveEvent: MouseEvent) => {
+	useEffect(() => {
+		const handleMouseMove = (e: MouseEvent) => {
 			if (!isResizing.current) return;
-			let newWidth = moveEvent.clientX;
-			if (newWidth < MIN_DRAWER_WIDTH) newWidth = MIN_DRAWER_WIDTH;
-			if (newWidth > MAX_DRAWER_WIDTH) newWidth = MAX_DRAWER_WIDTH;
-
-			widthRef.current = newWidth;
-			setDrawerWidth(newWidth);
+			const newWidth = Math.min(MAX_DRAWER_WIDTH, Math.max(MIN_DRAWER_WIDTH, e.clientX));
+			if (drawerRef.current) {
+				drawerRef.current.style.setProperty("--drawer-width", `${newWidth}px`);
+			}
 		};
 
-		const handleMouseUp = () => {
+		const handleMouseUp = (e: MouseEvent) => {
+			if (!isResizing.current) return;
 			isResizing.current = false;
 			document.body.style.cursor = "default";
 			document.body.style.userSelect = "auto";
-			localStorage.setItem("vinabooking_sidebar_width", widthRef.current.toString()); // Lưu trạng thái
-			document.removeEventListener("mousemove", handleMouseMove);
-			document.removeEventListener("mouseup", handleMouseUp);
+
+			// Commit state only on release
+			const finalWidth = Math.min(MAX_DRAWER_WIDTH, Math.max(MIN_DRAWER_WIDTH, e.clientX));
+			setDrawerWidth(finalWidth);
+			localStorage.setItem("vinabooking_sidebar_width", finalWidth.toString());
 		};
 
 		document.addEventListener("mousemove", handleMouseMove);
 		document.addEventListener("mouseup", handleMouseUp);
+		return () => {
+			document.removeEventListener("mousemove", handleMouseMove);
+			document.removeEventListener("mouseup", handleMouseUp);
+		};
 	}, []);
 	// -------------------------------------------
 
@@ -99,7 +107,10 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 	}
 
 	const handleLogout = () => {
-		console.log("Logout clicked");
+		authStorage.clearAccessToken();
+		authStorage.clearUser();
+		dispatch(logoutSuccess());
+		navigate("/owner/login");
 	};
 
 	const avatarLetter = user?.email?.[0]?.toUpperCase() ?? "O";
@@ -107,17 +118,21 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 	return (
 		<Box sx={{ display: "flex" }}>
 			<Drawer
+				variant="permanent"
+				anchor="left"
+				slotProps={{ paper: { ref: drawerRef } }}
 				sx={{
-					width: drawerWidth,
+					"--drawer-width": `${drawerWidth}px`,
+					width: "var(--drawer-width)",
 					flexShrink: 0,
 					"& .MuiDrawer-paper": {
-						width: drawerWidth,
+						width: "var(--drawer-width)",
 						boxSizing: "border-box",
 						display: "flex",
 						flexDirection: "column",
 						borderRight: "1px solid",
 						borderColor: "divider",
-						transition: isResizing.current ? "none" : "width 0.2s ease", // Tắt animation khi đang kéo để mượt hơn
+						transition: "width 0.1s ease",
 						overflow: "visible", // Để thanh kéo thò ra ngoài một xíu dễ nắm
 						"& ::-webkit-scrollbar": { width: "4px" },
 						"& ::-webkit-scrollbar-track": { background: "transparent" },
@@ -125,8 +140,6 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 						"& ::-webkit-scrollbar-thumb:hover": { background: "rgba(255,255,255,0.2)" },
 					},
 				}}
-				variant="permanent"
-				anchor="left"
 			>
 				{/* Brand */}
 				<Box
