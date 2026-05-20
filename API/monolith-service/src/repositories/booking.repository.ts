@@ -201,12 +201,12 @@ class BookingRepository {
 
 		const orderBy: Prisma.BookingOrderByWithRelationInput =
 			filters.sort === "oldest"
-				? { createdAt: "asc" }
+				? { startDate: "asc" }
 				: filters.sort === "price_desc"
 					? { totalPrice: "desc" }
 					: filters.sort === "price_asc"
 						? { totalPrice: "asc" }
-						: { createdAt: "desc" };
+						: { startDate: "desc" };
 
 		const bookings = await this.#prismaClient.booking.findMany({
 			where,
