@@ -138,7 +138,7 @@ const GalleryViewMode = ({ data }: { data: AccommodationHydrateResponse }) => {
 						openGallery={galleryIndex !== null}
 						galleryImages={imageUrls}
 						currentIndex={galleryIndex}
-						setCurrentIndex={(idx) => setGalleryIndex(typeof idx === "function" ? idx(galleryIndex) : idx)}
+						setCurrentIndex={(idx: number | ((prev: number) => number)) => setGalleryIndex((prev) => (prev === null ? null : typeof idx === "function" ? idx(prev) : idx))}
 						closeGallery={() => setGalleryIndex(null)}
 						handleNextImage={() => setGalleryIndex((prev) => (prev === null ? null : (prev + 1) % imageUrls.length))}
 						handlePrevImage={() => setGalleryIndex((prev) => (prev === null ? null : (prev - 1 + imageUrls.length) % imageUrls.length))}

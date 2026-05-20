@@ -10,7 +10,7 @@ import AspectRatioOutlinedIcon from "@mui/icons-material/AspectRatioOutlined";
 import LandscapeOutlinedIcon from "@mui/icons-material/LandscapeOutlined";
 import SellOutlinedIcon from "@mui/icons-material/SellOutlined";
 import type { RoomForm } from "../../../types/owner.types";
-import React from "react";
+import type { ReactNode } from "react";
 import { formatVND } from "../../../../../utils/moneyConverter";
 
 type Props = Readonly<{
@@ -19,7 +19,7 @@ type Props = Readonly<{
 	onDelete: () => void;
 }>;
 
-function SummaryItem({ icon, label }: Readonly<{ icon: React.ReactNode; label: string }>) {
+function SummaryItem({ icon, label }: Readonly<{ icon: ReactNode; label: string }>) {
 	return (
 		<Box display="flex" alignItems="center" gap={0.75}>
 			<Box sx={{ color: "text.secondary", display: "flex", alignItems: "center", "& svg": { fontSize: 16 } }}>{icon}</Box>
@@ -31,8 +31,6 @@ function SummaryItem({ icon, label }: Readonly<{ icon: React.ReactNode; label: s
 }
 
 export default function RoomCard({ room, onEdit, onDelete }: Props) {
-	const hasAmenities = room.amenities.length > 0;
-
 	return (
 		<Paper
 			elevation={0}
@@ -92,20 +90,16 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 					<SummaryItem icon={<ChildCareOutlinedIcon />} label={`${room.maxChildren} children`} />
 					<SummaryItem icon={<KingBedOutlinedIcon />} label={`${room.bedroomCount} bedroom${room.bedroomCount === 1 ? "" : "s"}`} />
 					<SummaryItem icon={<BathtubOutlinedIcon />} label={`${room.bathroomCount} bath${room.bathroomCount === 1 ? "" : "s"}`} />
-					{room.size ? <SummaryItem icon={<AspectRatioOutlinedIcon />} label={`${room.size} m²`} /> : null}
-          {room.viewType !== "NONE" && (
-						<SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replace(/_/g, " ")} view`} />
-					)}
-          {room.price && (
-						<SummaryItem icon={<SellOutlinedIcon />} label={`${formatVND(room.price)} / ${room.pricingType.replace(/_/g, " ").toLowerCase()}`} />
-					)}
+					{room.size && <SummaryItem icon={<AspectRatioOutlinedIcon />} label={`${room.size} m²`} />}
+					{room.viewType !== "NONE" && <SummaryItem icon={<LandscapeOutlinedIcon />} label={`${room.viewType.replaceAll("_", " ")} view`} />}
+					{room.price && <SummaryItem icon={<SellOutlinedIcon />} label={`${formatVND(room.price)} / ${room.pricingType.replaceAll("_", " ").toLowerCase()}`} />}
 				</Box>
 			</Box>
 
 			{/* Beds & Amenities chips */}
-			{hasAmenities && (
-				<Stack direction="row" spacing={1} mt={2} flexWrap="wrap" useFlexGap>
-					{room.beds.map((b) => (
+			<Stack direction="row" spacing={1} mt={2} flexWrap="wrap" useFlexGap>
+				{room.beds.length > 0 &&
+					room.beds.map((b) => (
 						<Chip
 							key={b.id}
 							icon={<KingBedOutlinedIcon style={{ fontSize: 14 }} />}
@@ -114,19 +108,23 @@ export default function RoomCard({ room, onEdit, onDelete }: Props) {
 							sx={{ bgcolor: "transparent", border: "1px solid rgba(255,255,255,0.1)", borderRadius: "6px" }}
 						/>
 					))}
-					<Box sx={{ width: "1px", bgcolor: "rgba(255,255,255,0.1)", mx: 1 }} />
-					{room.amenities.slice(0, 4).map((a) => (
-						<Chip
-							key={a.id}
-							icon={<WifiOutlinedIcon style={{ fontSize: 14 }} />}
-							label={a.name}
-							size="small"
-							sx={{ bgcolor: "transparent", color: "text.secondary", "& .MuiChip-icon": { color: "text.disabled" } }}
-						/>
-					))}
-					{room.amenities.length > 4 && <Chip label={`+${room.amenities.length - 4} more`} size="small" sx={{ bgcolor: "transparent", color: "text.disabled" }} />}
-				</Stack>
-			)}
+
+				{room.beds.length > 0 && room.amenities.length > 0 && <Box sx={{ width: "1px", bgcolor: "rgba(255,255,255,0.1)", mx: 1 }} />}
+
+				{room.amenities.length > 0 &&
+					room.amenities
+						.slice(0, 4)
+						.map((a) => (
+							<Chip
+								key={a.id}
+								icon={<WifiOutlinedIcon style={{ fontSize: 14 }} />}
+								label={a.name}
+								size="small"
+								sx={{ bgcolor: "transparent", color: "text.secondary", "& .MuiChip-icon": { color: "text.disabled" } }}
+							/>
+						))}
+				{room.amenities.length > 4 && <Chip label={`+${room.amenities.length - 4} more`} size="small" sx={{ bgcolor: "transparent", color: "text.disabled" }} />}
+			</Stack>
 		</Paper>
 	);
 }

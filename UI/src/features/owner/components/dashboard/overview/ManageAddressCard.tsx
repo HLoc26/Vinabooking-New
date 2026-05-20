@@ -235,23 +235,19 @@ export const ManageAddressCard = ({ accommodationId, initialAddress }: Props) =>
 		});
 	};
 
-	const confirmSave = () => {
-		closeModal();
-		executeSave();
-	};
-	const onPendingSave = () => {
-		openModal(<SaveConfirmModal onCancel={closeModal} onConfirm={confirmSave} />);
-	};
-	const discardChanges = () => {
-		setAddress(initialAddress || {});
-		setIsDirty(false);
-		setIsEditing(false);
-		closeModal();
-	};
-
 	const handleCancel = () => {
 		if (!isDirty) return setIsEditing(false);
-		openModal(<DiscardConfirmModal onCancel={closeModal} onConfirm={discardChanges} />);
+		openModal(
+			<DiscardConfirmModal
+				onCancel={closeModal}
+				onConfirm={() => {
+					setAddress(initialAddress || {});
+					setIsDirty(false);
+					setIsEditing(false);
+					closeModal();
+				}}
+			/>
+		);
 	};
 
 	const hasCoords = checkCoords(address);
@@ -302,7 +298,17 @@ export const ManageAddressCard = ({ accommodationId, initialAddress }: Props) =>
 							color="primary"
 							startIcon={isPending ? <CircularProgress size={13} color="inherit" /> : <Check sx={{ fontSize: "0.9rem !important" }} />}
 							disabled={!canSave}
-							onClick={onPendingSave}
+							onClick={() =>
+								openModal(
+									<SaveConfirmModal
+										onCancel={closeModal}
+										onConfirm={() => {
+											closeModal();
+											executeSave();
+										}}
+									/>
+								)
+							}
 							sx={{ borderRadius: "10px", fontWeight: 700, textTransform: "none", fontSize: "0.8rem", px: 2, boxShadow: "none", "&:hover": { boxShadow: "none" } }}
 						>
 							Save changes

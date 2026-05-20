@@ -1,23 +1,16 @@
-import { useState, useMemo, useRef } from "react";
-import { Box, Typography, Button, Paper, CircularProgress, Grid, Chip } from "@mui/material";
+import { useState, useMemo, useRef, useEffect } from "react";
+import { Box, Typography, Button, Paper, CircularProgress, Grid, Chip, Popover } from "@mui/material";
 import { EditOutlined, Close, Check, SpaOutlined } from "@mui/icons-material";
 import { useQueryClient } from "@tanstack/react-query";
 
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import useModalContext from "../../../../../context/ModalContext/hook";
-
-// Hooks
 import { useOwnerFacilities } from "../../../hooks/useOwnerFacilities";
 import { useUpdateFacilities } from "../../../hooks/useUpdateFacilities";
-
-// Shared UI & Const
 import { FieldLabel, getCardSx, getHeaderSx } from "../shared/CardSharedUI";
 import { getFacilityIcon } from "../../../const/FacilityConst";
-
-// Re-use components from Wizard (Tái sử dụng code của team sếp)
 import FacilityCard from "../../Wizard/Step4/FacilityCard";
 import FacilityEditPopout from "../../Wizard/Step4/FacilityEditPopout";
-
 import type { AccommodationSummary } from "../../../types/owner.types";
 import type { FacilityConfig } from "../../../../accommodation/types/accommodation.types";
 
@@ -45,9 +38,14 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 	// State
 	const [isEditing, setIsEditing] = useState(false);
 	const [isDirty, setIsDirty] = useState(false);
-	const [selectedFacs, setSelectedFacs] = useState<FormFacility[]>(() => initialFacilities.map((f) => ({ facilityId: f.id, fee: f.fee, note: f.note || "", name: f.name })));
+	const [selectedFacilities, setSelectedFacilities] = useState<FormFacility[]>([]);
 
-	// Trạng thái cho Popout (Inline Edit)
+	useEffect(() => {
+		setSelectedFacilities(initialFacilities.map((f) => ({ facilityId: f.id, fee: f.fee, note: f.note || "", name: f.name })));
+		setIsDirty(false);
+	}, [initialFacilities]);
+
+	const [anchorEl, setAnchorEl] = useState<HTMLElement | null>(null);
 	const [editFacilityId, setEditFacilityId] = useState<string | null>(null);
 	const [editFee, setEditFee] = useState<number>(0);
 	const [editNote, setEditNote] = useState<string>("");
@@ -57,23 +55,27 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 	// =========================================================================
 	// LOGIC FOR EDIT MODE
 	// =========================================================================
-	const openEditInline = (f: FormFacility) => {
+	const openEditInline = (f: FormFacility, event: React.MouseEvent<HTMLElement>) => {
+		setAnchorEl(event.currentTarget);
 		setEditFacilityId(f.facilityId);
 		setEditFee(f.fee);
 		setEditNote(f.note);
 	};
 
-	const closeEditInline = () => setEditFacilityId(null);
+	const closeEditInline = () => {
+		setAnchorEl(null);
+		setEditFacilityId(null);
+	};
 
 	const handleSelect = (id: string, name: string) => {
-		if (selectedFacs.some((f) => f.facilityId === id)) return;
+		if (selectedFacilities.some((f) => f.facilityId === id)) return;
 		const pastEdits = facilityHistoryRef.current[id];
-		setSelectedFacs((prev) => [...prev, { facilityId: id, name, fee: pastEdits?.fee ?? 0, note: pastEdits?.note ?? "" }]);
+		setSelectedFacilities((prev) => [...prev, { facilityId: id, name, fee: pastEdits?.fee ?? 0, note: pastEdits?.note ?? "" }]);
 		setIsDirty(true);
 	};
 
 	const handleDeselect = (id: string) => {
-		setSelectedFacs((prev) => prev.filter((f) => f.facilityId !== id));
+		setSelectedFacilities((prev) => prev.filter((f) => f.facilityId !== id));
 		setIsDirty(true);
 		if (editFacilityId === id) closeEditInline();
 	};
@@ -81,7 +83,7 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 	const handleSaveInline = () => {
 		if (editFacilityId) {
 			facilityHistoryRef.current[editFacilityId] = { fee: editFee, note: editNote };
-			setSelectedFacs((prev) => prev.map((f) => (f.facilityId === editFacilityId ? { ...f, fee: editFee, note: editNote } : f)));
+			setSelectedFacilities((prev) => prev.map((f) => (f.facilityId === editFacilityId ? { ...f, fee: editFee, note: editNote } : f)));
 			setIsDirty(true);
 		}
 		closeEditInline();
@@ -92,7 +94,7 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 	// =========================================================================
 	const executeSave = () => {
 		const payload = {
-			facilities: selectedFacs.map((f) => ({
+			facilities: selectedFacilities.map((f) => ({
 				facilityId: f.facilityId,
 				fee: f.fee,
 				note: f.note || null,
@@ -131,7 +133,7 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 						variant="contained"
 						color="error"
 						onClick={() => {
-							setSelectedFacs(initialFacilities.map((f) => ({ facilityId: f.id, fee: f.fee, note: f.note || "", name: f.name })));
+							setSelectedFacilities(initialFacilities.map((f) => ({ facilityId: f.id, fee: f.fee, note: f.note || "", name: f.name })));
 							setIsEditing(false);
 							setIsDirty(false);
 							closeModal();
@@ -150,14 +152,14 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 	// =========================================================================
 	const groupedSelected = useMemo(() => {
 		const result: Record<string, FormFacility[]> = {};
-		selectedFacs.forEach((f) => {
+		selectedFacilities.forEach((f) => {
 			const master = masterFacilities.find((m) => m.id === f.facilityId);
 			const type = master ? master.type : "OTHER";
 			if (!result[type]) result[type] = [];
 			result[type].push(f);
 		});
 		return result;
-	}, [selectedFacs, masterFacilities]);
+	}, [selectedFacilities, masterFacilities]);
 
 	if (isMasterLoading) {
 		return (
@@ -250,32 +252,12 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 							<Typography variant="body2" color="text.secondary">
 								Click a tile to select it. Hover selected items to configure fees and notes.
 							</Typography>
-							<Chip label={`${selectedFacs.length} selected`} color="primary" size="small" sx={{ fontWeight: 600 }} />
+							<Chip label={`${selectedFacilities.length} selected`} color="primary" size="small" sx={{ fontWeight: 600 }} />
 						</Box>
 
-						<Grid
-							container
-							spacing={2}
-							sx={{
-								"@media (max-width: 599px)": {
-									"& > div:nth-of-type(2n+1) .facility-popout": { left: 0, width: "calc(200% + 16px)", borderTopLeftRadius: 0, borderTopRightRadius: 12 },
-									"& > div:nth-of-type(2n) .facility-popout": { left: "calc(-100% - 16px)", width: "calc(200% + 16px)", borderTopLeftRadius: 12, borderTopRightRadius: 0 },
-								},
-								"@media (min-width: 600px) and (max-width: 899px)": {
-									"& > div:nth-of-type(3n+1) .facility-popout": { left: 0, width: "calc(300% + 32px)", borderTopLeftRadius: 0, borderTopRightRadius: 12 },
-									"& > div:nth-of-type(3n+2) .facility-popout": { left: "calc(-100% - 16px)", width: "calc(300% + 32px)", borderTopLeftRadius: 12, borderTopRightRadius: 12 },
-									"& > div:nth-of-type(3n) .facility-popout": { left: "calc(-200% - 32px)", width: "calc(300% + 32px)", borderTopLeftRadius: 12, borderTopRightRadius: 0 },
-								},
-								"@media (min-width: 900px)": {
-									"& > div:nth-of-type(4n+1) .facility-popout": { left: 0, width: "calc(400% + 48px)", borderTopLeftRadius: 0, borderTopRightRadius: 12 },
-									"& > div:nth-of-type(4n+2) .facility-popout": { left: "calc(-100% - 16px)", width: "calc(400% + 48px)", borderTopLeftRadius: 12, borderTopRightRadius: 12 },
-									"& > div:nth-of-type(4n+3) .facility-popout": { left: "calc(-200% - 32px)", width: "calc(400% + 48px)", borderTopLeftRadius: 12, borderTopRightRadius: 12 },
-									"& > div:nth-of-type(4n) .facility-popout": { left: "calc(-300% - 48px)", width: "calc(400% + 48px)", borderTopLeftRadius: 12, borderTopRightRadius: 0 },
-								},
-							}}
-						>
+						<Grid container spacing={2}>
 							{masterFacilities.map((facility) => {
-								const selectedEntry = selectedFacs.find((f) => f.facilityId === facility.id);
+								const selectedEntry = selectedFacilities.find((f) => f.facilityId === facility.id);
 								const isSelected = !!selectedEntry;
 								const isEditingPopout = editFacilityId === facility.id;
 
@@ -284,32 +266,31 @@ export const ManageFacilitiesCard = ({ accommodationId, initialFacilities }: Pro
 									: undefined;
 
 								return (
-									<Grid size={{ xs: 6, sm: 4, md: 3 }} key={facility.id} sx={{ zIndex: isEditingPopout ? 10 : 1 }}>
-										<Box sx={{ position: "relative" }}>
-											<FacilityCard
-												facility={facility}
-												entry={mappedEntry}
-												isSelected={isSelected}
-												isEditing={isEditingPopout}
-												onSelect={() => handleSelect(facility.id, facility.name)}
-												onDeselect={() => handleDeselect(facility.id)}
-												onEdit={() => selectedEntry && openEditInline(selectedEntry)}
-											/>
-											{isEditingPopout && (
-												<FacilityEditPopout
-													fee={editFee}
-													onFeeChange={setEditFee}
-													note={editNote}
-													onNoteChange={setEditNote}
-													onSave={handleSaveInline}
-													onCancel={closeEditInline}
-												/>
-											)}
-										</Box>
+									<Grid size={{ xs: 6, sm: 4, md: 3 }} key={facility.id}>
+										<FacilityCard
+											facility={facility}
+											entry={mappedEntry}
+											isSelected={isSelected}
+											isEditing={isEditingPopout}
+											onSelect={() => handleSelect(facility.id, facility.name)}
+											onDeselect={() => handleDeselect(facility.id)}
+											onEdit={(e) => selectedEntry && openEditInline(selectedEntry, e)}
+										/>
 									</Grid>
 								);
 							})}
 						</Grid>
+
+						<Popover
+							open={Boolean(anchorEl)}
+							anchorEl={anchorEl}
+							onClose={closeEditInline}
+							anchorOrigin={{ vertical: "bottom", horizontal: "center" }}
+							transformOrigin={{ vertical: "top", horizontal: "center" }}
+							slotProps={{ paper: { sx: { mt: 1, overflow: "visible", borderRadius: 2, bgcolor: "background.paper", backgroundImage: "none" } } }}
+						>
+							<FacilityEditPopout fee={editFee} onFeeChange={setEditFee} note={editNote} onNoteChange={setEditNote} onSave={handleSaveInline} onCancel={closeEditInline} />
+						</Popover>
 					</Box>
 				) : (
 					/* ================= VIEW MODE ================= */
