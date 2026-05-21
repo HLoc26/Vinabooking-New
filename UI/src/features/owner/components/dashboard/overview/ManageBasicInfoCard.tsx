@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import { Box, TextField, CircularProgress, Typography, Button, Paper, Divider, Chip, MenuItem, Grid } from "@mui/material";
 import { useForm, Controller } from "react-hook-form";
 import { useQueryClient } from "@tanstack/react-query";
@@ -22,7 +22,7 @@ interface Props {
 	initialData: BasicInfoFormValues;
 }
 
-const LIMIT = 150;
+const LIMIT = 1000;
 
 export const ManageBasicInfoCard = ({ accommodationId, initialData }: Props) => {
 	const queryClient = useQueryClient();
@@ -31,6 +31,10 @@ export const ManageBasicInfoCard = ({ accommodationId, initialData }: Props) => 
 	const { mutate: updateMutate, isPending } = useUpdateBasicAccom(accommodationId);
 
 	const [isEditing, setIsEditing] = useState(false);
+
+	const [isDescExpanded, setIsDescExpanded] = useState(false);
+	const [needsReadMore, setNeedsReadMore] = useState(false);
+	const descriptionRef = useRef<HTMLElement>(null);
 
 	const {
 		handleSubmit,
@@ -45,7 +49,23 @@ export const ManageBasicInfoCard = ({ accommodationId, initialData }: Props) => 
 
 	useEffect(() => {
 		reset(initialData);
+		setIsDescExpanded(false);
 	}, [initialData, reset]);
+
+	useEffect(() => {
+		const checkOverflow = () => {
+			if (descriptionRef.current && !isDescExpanded) {
+				const isOverflowing = descriptionRef.current.scrollHeight > descriptionRef.current.clientHeight;
+				setNeedsReadMore(isOverflowing);
+			}
+		};
+		const timer = setTimeout(checkOverflow, 50);
+		window.addEventListener("resize", checkOverflow);
+		return () => {
+			clearTimeout(timer);
+			window.removeEventListener("resize", checkOverflow);
+		};
+	}, [initialData.description, isDescExpanded]);
 
 	const watchedDescription = watch("description");
 	const currentCount = watchedDescription?.length || 0;
@@ -303,19 +323,48 @@ export const ManageBasicInfoCard = ({ accommodationId, initialData }: Props) => 
 
 						<Grid size={{ xs: 12 }}>
 							<FieldLabel icon={<DescriptionOutlined />}>Description</FieldLabel>
-							<Typography
-								variant="body2"
-								sx={{
-									whiteSpace: "pre-line",
-									color: initialData.description ? "text.secondary" : "text.disabled",
-									lineHeight: 1.75,
-									fontStyle: initialData.description ? "normal" : "italic",
-									fontSize: "0.9rem",
-									maxWidth: "72ch",
-								}}
-							>
-								{initialData.description || "No description provided yet. Click Edit to add one."}
-							</Typography>
+							<Box sx={{ mt: 1.5, p: 2.5, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 3, border: "1px solid rgba(255,255,255,0.05)" }}>
+								<Typography
+									ref={descriptionRef}
+									variant="body2"
+									sx={{
+										whiteSpace: "pre-line",
+										color: initialData.description ? "text.secondary" : "text.disabled",
+										lineHeight: 1.75,
+										fontStyle: initialData.description ? "normal" : "italic",
+										fontSize: "0.9rem",
+										display: isDescExpanded ? "block" : "-webkit-box",
+										WebkitLineClamp: isDescExpanded ? "unset" : 3,
+										WebkitBoxOrient: "vertical",
+										overflow: "hidden",
+										textOverflow: "ellipsis",
+										transition: "all 0.3s ease",
+									}}
+								>
+									{initialData.description || "No description provided yet. Click Edit to add one."}
+								</Typography>
+
+								{(needsReadMore || isDescExpanded) && (
+									<Button
+										disableRipple
+										variant="text"
+										size="small"
+										onClick={() => setIsDescExpanded(!isDescExpanded)}
+										sx={{
+											mt: 1,
+											p: 0,
+											minWidth: 0,
+											textTransform: "none",
+											fontSize: "0.8rem",
+											fontWeight: 600,
+											color: "primary.main",
+											"&:hover": { bgcolor: "transparent", textDecoration: "underline" },
+										}}
+									>
+										{isDescExpanded ? "Show less" : "Read more"}
+									</Button>
+								)}
+							</Box>
 						</Grid>
 					</Grid>
 				)}
