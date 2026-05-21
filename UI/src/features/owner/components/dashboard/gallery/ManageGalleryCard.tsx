@@ -93,6 +93,14 @@ const GalleryViewMode = ({ data }: { data: AccommodationHydrateResponse }) => {
 		);
 	};
 
+	const handleSetCurrentIndex = (idx: number | ((prev: number) => number)) => {
+		setGalleryIndex((prev) => {
+			if (prev === null) return null;
+			if (typeof idx === "function") return idx(prev);
+			return idx;
+		});
+	};
+
 	return (
 		<Box sx={{ display: "flex", flexDirection: "column", gap: 4 }}>
 			<Box>
@@ -138,7 +146,7 @@ const GalleryViewMode = ({ data }: { data: AccommodationHydrateResponse }) => {
 						openGallery={galleryIndex !== null}
 						galleryImages={imageUrls}
 						currentIndex={galleryIndex}
-						setCurrentIndex={(idx: number | ((prev: number) => number)) => setGalleryIndex((prev) => (prev === null ? null : typeof idx === "function" ? idx(prev) : idx))}
+						setCurrentIndex={handleSetCurrentIndex}
 						closeGallery={() => setGalleryIndex(null)}
 						handleNextImage={() => setGalleryIndex((prev) => (prev === null ? null : (prev + 1) % imageUrls.length))}
 						handlePrevImage={() => setGalleryIndex((prev) => (prev === null ? null : (prev - 1 + imageUrls.length) % imageUrls.length))}
