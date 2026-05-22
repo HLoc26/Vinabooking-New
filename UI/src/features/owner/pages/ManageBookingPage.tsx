@@ -138,6 +138,13 @@ const paymentLabel = (status: OwnerPaymentStatus) => {
 	return status.replaceAll("_", " ");
 };
 
+const cancellationSourceLabel = (source: OwnerBookingListItem["noteBy"]) => {
+	if (source === "OWNER") return "host";
+	if (source === "TRAVELLER") return "traveller";
+	if (source === "SYSTEM") return "system";
+	return "user";
+};
+
 const toDateInputValue = (date: Date) => {
 	const year = date.getFullYear();
 	const month = `${date.getMonth() + 1}`.padStart(2, "0");
@@ -361,6 +368,20 @@ const BookingCard = ({ booking, onRevoke }: { booking: OwnerBookingListItem; onR
 						</Typography>
 					</Box>
 				</Stack>
+
+				{booking.status === "CANCELLED" && booking.note && (
+					<>
+						<Divider sx={{ my: 2 }} />
+						<Box>
+							<Typography variant="caption" color="text.secondary">
+								Cancellation reason from {cancellationSourceLabel(booking.noteBy)}
+							</Typography>
+							<Typography variant="body2" sx={{ mt: 0.5 }}>
+								{booking.note}
+							</Typography>
+						</Box>
+					</>
+				)}
 			</CardContent>
 		</Card>
 	);
@@ -377,21 +398,23 @@ const ManageBookingPage = () => {
 	const [sort, setSort] = useState<OwnerBookingSort>("newest");
 	const [page, setPage] = useState(1);
 	const [bookingToRevoke, setBookingToRevoke] = useState<OwnerBookingListItem | null>(null);
+	const [revokeNote, setRevokeNote] = useState("");
 	const [dayAnchorEl, setDayAnchorEl] = useState<HTMLElement | null>(null);
 	const [monthOffset, setMonthOffset] = useState(0);
 
 	const { pushNotification } = usePushNotificationContext();
 	const { data: accommodations = [] } = useOwnerAccommodations();
 	const incomingToDay = useMemo(() => toDateInputValue(addTimelineToDate(new Date(), Math.max(0, incomingAmount), incomingUnit)), [incomingAmount, incomingUnit]);
+	const shouldUseCheckInRange = status !== "BOOKED";
 	const filters = useMemo(
 		() => ({
 			status: status === "ALL" ? undefined : status,
 			accommodationId: accommodationIds.length === 1 ? accommodationIds[0] : undefined,
-			fromDay: status === "BOOKED" ? getTodayInputValue() : fromDay || undefined,
-			toDay: status === "BOOKED" ? incomingToDay : toDay || undefined,
+			fromDay: status === "BOOKED" ? getTodayInputValue() : shouldUseCheckInRange ? fromDay || undefined : undefined,
+			toDay: status === "BOOKED" ? incomingToDay : shouldUseCheckInRange ? toDay || undefined : undefined,
 			sort,
 		}),
-		[status, accommodationIds, fromDay, toDay, incomingToDay, sort]
+		[status, accommodationIds, fromDay, toDay, incomingToDay, shouldUseCheckInRange, sort]
 	);
 	const { data: bookings = [], isLoading, isError, refetch } = useOwnerBookings(filters);
 	const revokeBooking = useRevokeOwnerBooking();
@@ -419,12 +442,18 @@ const ManageBookingPage = () => {
 		if (!bookingToRevoke) return;
 
 		try {
-			await revokeBooking.mutateAsync(bookingToRevoke.id);
+			await revokeBooking.mutateAsync({ bookingId: bookingToRevoke.id, note: revokeNote.trim() || undefined });
 			pushNotification("Booking revoked successfully.", "success");
 			setBookingToRevoke(null);
+			setRevokeNote("");
 		} catch (error) {
 			pushNotification(error instanceof Error ? error.message : "Failed to revoke booking.", "error");
 		}
+	};
+
+	const closeRevokeDialog = () => {
+		setBookingToRevoke(null);
+		setRevokeNote("");
 	};
 
 	const clearFilters = () => {
@@ -715,7 +744,7 @@ const ManageBookingPage = () => {
 				</Stack>
 			)}
 
-			<Dialog open={!!bookingToRevoke} onClose={() => setBookingToRevoke(null)} maxWidth="xs" fullWidth>
+			<Dialog open={!!bookingToRevoke} onClose={closeRevokeDialog} maxWidth="xs" fullWidth>
 				<DialogTitle>Revoke booking</DialogTitle>
 				<DialogContent>
 					<Typography>Are you sure you want to revoke this booking?</Typography>
@@ -724,9 +753,19 @@ const ManageBookingPage = () => {
 							Booking {bookingToRevoke.referenceNo} will be moved to cancelled.
 						</Typography>
 					)}
+					<TextField
+						label="Cancellation note"
+						placeholder="Optional reason for the traveller"
+						value={revokeNote}
+						onChange={(event) => setRevokeNote(event.target.value)}
+						fullWidth
+						multiline
+						minRows={3}
+						margin="normal"
+					/>
 				</DialogContent>
 				<DialogActions>
-					<Button onClick={() => setBookingToRevoke(null)}>Cancel</Button>
+					<Button onClick={closeRevokeDialog}>Cancel</Button>
 					<Button color="error" variant="contained" onClick={handleRevoke} disabled={revokeBooking.isPending}>
 						Revoke
 					</Button>

@@ -2,7 +2,7 @@ import { useParams, useNavigate } from "react-router-dom";
 import useUserBookingDetail from "../../booking/hooks/useUserBookingDetail";
 import { useState, useEffect } from "react";
 
-import { Box, Card, CardContent, Typography, Button, Divider, CircularProgress, Chip, Stack, Paper, Dialog, DialogContent, DialogTitle, IconButton } from "@mui/material";
+import { Box, Card, CardContent, Typography, Button, Divider, CircularProgress, Chip, Stack, Paper, Dialog, DialogActions, DialogContent, DialogTitle, IconButton, TextField } from "@mui/material";
 import { EventAvailable, ConfirmationNumber, Cancel, CheckCircle, Pending, Block, ArrowBack, Close, Payment, ReceiptLong } from "@mui/icons-material";
 
 import BookingDetailItem from "../components/tabs/BookingsTab/BookingDetailItem";
@@ -19,6 +19,8 @@ const ManageBookingDetailPage = () => {
 	const { pushNotification } = usePushNotificationContext();
 
 	const [loadingCancel, setLoadingCancel] = useState(false);
+	const [isCancelDialogOpen, setIsCancelDialogOpen] = useState(false);
+	const [cancelNote, setCancelNote] = useState("");
 	const [isCreatingLink, setIsCreatingLink] = useState(false);
 	const [isPaymentOpen, setIsPaymentOpen] = useState(false);
 	const [checkoutUrl, setCheckoutUrl] = useState("");
@@ -57,7 +59,9 @@ const ManageBookingDetailPage = () => {
 		if (!bookingId) return;
 		setLoadingCancel(true);
 		try {
-			await bookingApi.cancel(bookingId);
+			await bookingApi.cancel(bookingId, cancelNote.trim() || undefined);
+			setIsCancelDialogOpen(false);
+			setCancelNote("");
 		} catch (e) {
 			console.log(e);
 		} finally {
@@ -203,6 +207,22 @@ const ManageBookingDetailPage = () => {
 
 							<Divider />
 
+							{booking.status === "CANCELLED" && booking.note && (
+								<>
+									<Box>
+										<Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
+											Reason why booking was cancelled
+										</Typography>
+										<Paper variant="outlined" sx={{ borderRadius: 2, borderColor: "error.light", bgcolor: "#fff5f5", p: 2 }}>
+											<Typography variant="body2" color="text.primary">
+												{booking.note}
+											</Typography>
+										</Paper>
+									</Box>
+									<Divider />
+								</>
+							)}
+
 							{/* Reference Number */}
 							<Box>
 								<Typography variant="caption" color="text.secondary" sx={{ mb: 1, display: "block", textTransform: "uppercase", letterSpacing: 1 }}>
@@ -303,7 +323,7 @@ const ManageBookingDetailPage = () => {
 												size="large"
 												fullWidth
 												disabled={loadingCancel}
-												onClick={handleCancel}
+												onClick={() => setIsCancelDialogOpen(true)}
 												startIcon={loadingCancel ? null : <Cancel />}
 												sx={{ py: 1.5, fontWeight: 600, borderRadius: 2, textTransform: "none", fontSize: "1rem" }}
 											>
@@ -355,6 +375,30 @@ const ManageBookingDetailPage = () => {
 						<div id="payos-embedded-container" style={{ width: "100%", height: "100%" }} />
 					</Box>
 				</DialogContent>
+			</Dialog>
+
+			<Dialog open={isCancelDialogOpen} onClose={() => setIsCancelDialogOpen(false)} maxWidth="xs" fullWidth>
+				<DialogTitle>Cancel booking</DialogTitle>
+				<DialogContent>
+					<Typography variant="body2" color="text.secondary" sx={{ mb: 2 }}>
+						You can add an optional reason for cancelling this booking.
+					</Typography>
+					<TextField
+						label="Cancellation note"
+						placeholder="Optional reason"
+						value={cancelNote}
+						onChange={(event) => setCancelNote(event.target.value)}
+						fullWidth
+						multiline
+						minRows={3}
+					/>
+				</DialogContent>
+				<DialogActions>
+					<Button onClick={() => setIsCancelDialogOpen(false)}>Keep booking</Button>
+					<Button color="error" variant="contained" onClick={handleCancel} disabled={loadingCancel}>
+						{loadingCancel ? <CircularProgress size={20} color="inherit" /> : "Cancel booking"}
+					</Button>
+				</DialogActions>
 			</Dialog>
 		</Box>
 	);

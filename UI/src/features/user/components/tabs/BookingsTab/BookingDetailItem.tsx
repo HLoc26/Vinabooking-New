@@ -220,6 +220,17 @@ const BookingDetailItem: React.FC<BookingDetailItemProps> = ({ booking, hideMana
 
 				<Divider sx={{ my: 1 }} />
 
+				{status === "CANCELLED" && booking.note && (
+					<Box sx={{ mb: 1 }}>
+						<Typography variant="caption" color="text.secondary" sx={{ display: "block", textTransform: "uppercase", letterSpacing: 0.8, mb: 0.5 }}>
+							Reason why booking was cancelled
+						</Typography>
+						<Typography variant="body2" color="text.primary">
+							{booking.note}
+						</Typography>
+					</Box>
+				)}
+
 				{/* Footer */}
 				<Box
 					sx={{
