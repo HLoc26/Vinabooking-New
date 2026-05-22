@@ -1,4 +1,4 @@
-import { PrismaClient, Prisma, Booking, BookingDetail, PaymentTransfer, User } from "@/generated/client";
+import { PrismaClient, Prisma, Booking, BookingDetail, PaymentTransfer, User, ECancellationSource } from "@/generated/client";
 
 export type BookingWithDetails = Booking & {
 	details: BookingDetail[];
@@ -288,10 +288,14 @@ class BookingRepository {
 		});
 	}
 
-	public async cancel(id: string): Promise<BookingWithDetails> {
+	public async cancel(id: string, note?: string, noteBy?: ECancellationSource): Promise<BookingWithDetails> {
 		return this.#prismaClient.booking.update({
 			where: { id },
-			data: { status: "CANCELLED" },
+			data: {
+				status: "CANCELLED",
+				note: note || null,
+				noteBy: noteBy || null,
+			},
 			include: { details: true },
 		});
 	}

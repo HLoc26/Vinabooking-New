@@ -4,11 +4,25 @@ import UserService from "./user.service";
 import EmailService from "./email.service";
 import AccommodationService from "./accommodation.service";
 import { BookingPayload } from "@/types/requests";
-import { Prisma } from "@/generated/client";
+import { ECancellationSource, Prisma } from "@/generated/client";
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
 import { bookingTimeoutQueue } from "@/clients/queue.client";
 import { BOOKING_TIMEOUT_MS } from "@/constants/booking";
 import type { OwnerBookingFilters } from "@/repositories/booking.repository";
+
+type CancelBookingActor = "owner" | "traveller" | "system";
+
+type CancelBookingOptions = {
+	note?: string;
+	cancelledBy?: CancelBookingActor;
+	requestedByUserId?: string;
+};
+
+const cancellationSourceMap: Record<CancelBookingActor, ECancellationSource> = {
+	owner: "OWNER",
+	traveller: "TRAVELLER",
+	system: "SYSTEM",
+};
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
@@ -82,6 +96,8 @@ export default class BookingService {
 				phone: booking.phone,
 				leaderName: booking.leaderName,
 				leaderEmail: booking.leaderEmail,
+				note: booking.note,
+				noteBy: booking.noteBy,
 				createdAt: booking.createdAt,
 				updatedAt: booking.updatedAt,
 				paymentStatus: latestPayment?.status ?? null,
@@ -102,7 +118,7 @@ export default class BookingService {
 		});
 	}
 
-	public async revokeOwnerBooking(ownerId: string, bookingId: string) {
+	public async revokeOwnerBooking(ownerId: string, bookingId: string, note?: string) {
 		const booking = await this.getBookingById(bookingId);
 
 		if (booking.status !== "PENDING" && booking.status !== "BOOKED") {
@@ -114,7 +130,7 @@ export default class BookingService {
 			throw new BadRequestError("Booking does not belong to this owner");
 		}
 
-		return this.cancelBooking(bookingId);
+		return this.cancelBooking(bookingId, { note, cancelledBy: "owner" });
 	}
 
 	public async getBookedCounts(roomIds: string[], startDate: Date, endDate: Date) {
@@ -283,11 +299,16 @@ export default class BookingService {
 		return booking;
 	}
 
-	public async cancelBooking(id: string) {
+	public async cancelBooking(id: string, options: CancelBookingOptions = {}) {
 		if (!this.#accommodationService) throw new Error("AccommodationService not initialized in BookingService");
 
-		// Confirm booking
-		const booking = await this.#bookingRepository.cancel(id);
+		const existingBooking = await this.getBookingById(id);
+		if (options.requestedByUserId && existingBooking.userId !== options.requestedByUserId) {
+			throw new BadRequestError("Booking does not belong to this traveller");
+		}
+
+		const cancellationNote = options.note?.trim() || undefined;
+		const booking = await this.#bookingRepository.cancel(id, cancellationNote, options.cancelledBy ? cancellationSourceMap[options.cancelledBy] : undefined);
 		if (!booking) throw new NotFoundError("Booking not found");
 
 		// Ensure the necessary fields for email are present on the booking object
@@ -315,6 +336,8 @@ export default class BookingService {
 			referenceNo: booking.referenceNo,
 			roomType: firstDetail.itemType,
 			nights: firstDetail.count,
+			cancellationReason: cancellationNote,
+			cancelledBy: options.cancelledBy === "owner" ? "the host" : options.cancelledBy === "traveller" ? "the traveller" : undefined,
 		};
 
 		const leaderEmailData: CancellationEmailData = {
@@ -324,6 +347,8 @@ export default class BookingService {
 			referenceNo: booking.referenceNo,
 			roomType: firstDetail.itemType,
 			nights: firstDetail.count,
+			cancellationReason: cancellationNote,
+			cancelledBy: options.cancelledBy === "owner" ? "the host" : options.cancelledBy === "traveller" ? "the traveller" : undefined,
 		};
 
 		// 5. Send email

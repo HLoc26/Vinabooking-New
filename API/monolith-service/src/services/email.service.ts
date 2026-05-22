@@ -12,6 +12,10 @@ export class EmailService {
 		this.#s3Service = s3Service;
 	}
 
+	private escapeHtml(value: string) {
+		return value.replaceAll("&", "&amp;").replaceAll("<", "&lt;").replaceAll(">", "&gt;").replaceAll('"', "&quot;").replaceAll("'", "&#039;");
+	}
+
 	/**
 	 * Gửi OTP xác thực
 	 */
@@ -184,11 +188,13 @@ export class EmailService {
 	}
 
 	public async sendCancellationEmail(data: CancellationEmailData): Promise<void> {
-		const { to, accommodation, guestName, referenceNo, roomType, nights } = data;
+		const { to, accommodation, guestName, referenceNo, roomType, nights, cancellationReason, cancelledBy } = data;
 		const accomData = accommodation;
 
 		const subject = "Booking Cancellation";
-		const message = `Your booking at ${accomData?.name || "the property"} has been cancelled.`;
+		const reasonText = cancellationReason ? ` Reason: ${cancellationReason}` : "";
+		const safeCancellationReason = cancellationReason ? this.escapeHtml(cancellationReason) : "";
+		const message = `Your booking at ${accomData?.name || "the property"} has been cancelled.${reasonText}`;
 
 		/* eslint-disable max-len, indent */
 		const html = `
@@ -222,6 +228,18 @@ export class EmailService {
 								</div>
 							</td>
 						</tr>
+						${
+							cancellationReason
+								? `<tr>
+							<td style="padding-bottom:18px;">
+								<div style="background:#fff7ed; padding:16px; border-radius:8px; border:1px solid #fed7aa;">
+									<p style="margin:0 0 6px; color:#9a3412; font-weight:700;">Cancellation reason${cancelledBy ? ` from ${cancelledBy}` : ""}</p>
+									<p style="margin:0; color:#431407; line-height:1.5;">${safeCancellationReason}</p>
+								</div>
+							</td>
+						</tr>`
+								: ""
+						}
 
 						<tr>
 							<td style="padding:0 0 22px; text-align:center;">

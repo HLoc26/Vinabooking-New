@@ -96,7 +96,8 @@ class OwnerController {
 		const userId = req.userId;
 		if (!userId) throw new BadRequestError("Missing user identity");
 
-		const result = await this.#ownerService.revokeBooking(userId, req.params.bookingId);
+		const { note } = req.body as { note?: string };
+		const result = await this.#ownerService.revokeBooking(userId, req.params.bookingId, note);
 		return ResponseHelper.success(res, result);
 	}
 }

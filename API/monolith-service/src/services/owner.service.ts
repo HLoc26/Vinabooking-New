@@ -172,8 +172,8 @@ class OwnerService {
 		return this.#bookingService.getOwnerBookings(ownerId, filters);
 	}
 
-	public async revokeBooking(ownerId: string, bookingId: string) {
-		return this.#bookingService.revokeOwnerBooking(ownerId, bookingId);
+	public async revokeBooking(ownerId: string, bookingId: string, note?: string) {
+		return this.#bookingService.revokeOwnerBooking(ownerId, bookingId, note);
 	}
 }
 
