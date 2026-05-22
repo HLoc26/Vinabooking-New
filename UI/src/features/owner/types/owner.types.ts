@@ -50,6 +50,7 @@ export interface DashboardStats {
 export type OwnerBookingStatus = "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
 export type OwnerBookingSort = "newest" | "oldest" | "price_desc" | "price_asc";
 export type OwnerPaymentStatus = "PENDING" | "DISMISSED" | "FAILED" | "COMPLETED" | "PARTIALLY_HALFED" | "PARTIALLY_THIRDED" | "PARTIALLY_QUARTERED" | null;
+export type OwnerCancellationSource = "OWNER" | "TRAVELLER" | "SYSTEM" | null;
 
 export type OwnerBookingFilters = {
 	status?: OwnerBookingStatus;
@@ -71,6 +72,8 @@ export type OwnerBookingListItem = {
 	phone: string | null;
 	leaderName: string | null;
 	leaderEmail: string | null;
+	note: string | null;
+	noteBy: OwnerCancellationSource;
 	createdAt: string;
 	updatedAt: string;
 	paymentStatus: OwnerPaymentStatus;

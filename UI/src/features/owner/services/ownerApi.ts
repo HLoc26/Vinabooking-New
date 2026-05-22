@@ -41,7 +41,8 @@ export const getOwnerBookings = async (filters: OwnerBookingFilters) =>
 		})
 		.then((res) => res.data.data);
 
-export const revokeOwnerBooking = async (bookingId: string) => apiClient.patch<ApiResponse<{ success: boolean }>>(`/owners/bookings/${bookingId}/revoke`).then((res) => res.data.data);
+export const revokeOwnerBooking = async ({ bookingId, note }: { bookingId: string; note?: string }) =>
+	apiClient.patch<ApiResponse<{ success: boolean }>>(`/owners/bookings/${bookingId}/revoke`, { note }).then((res) => res.data.data);
 
 export const getDraftAccommodations = async (): Promise<ApiResponse<DraftAccommodation[]>> => {
 	const response = await apiClient.get<ApiResponse<DraftAccommodation[]>>("/owners/accommodations/drafts");
