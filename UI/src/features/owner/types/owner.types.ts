@@ -46,6 +46,55 @@ export interface DashboardStats {
 	occupancyRate: number;
 	pendingBookings: number;
 }
+
+export type OwnerBookingStatus = "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
+export type OwnerBookingSort = "newest" | "oldest" | "price_desc" | "price_asc";
+export type OwnerPaymentStatus = "PENDING" | "DISMISSED" | "FAILED" | "COMPLETED" | "PARTIALLY_HALFED" | "PARTIALLY_THIRDED" | "PARTIALLY_QUARTERED" | null;
+export type OwnerCancellationSource = "OWNER" | "TRAVELLER" | "SYSTEM" | null;
+
+export type OwnerBookingFilters = {
+	status?: OwnerBookingStatus;
+	accommodationId?: string;
+	fromDay?: string;
+	toDay?: string;
+	sort?: OwnerBookingSort;
+};
+
+export type OwnerBookingListItem = {
+	id: string;
+	referenceNo: number;
+	status: OwnerBookingStatus;
+	startDate: string;
+	endDate: string;
+	guestCount: number;
+	nights: number;
+	totalPrice: string | null;
+	phone: string | null;
+	leaderName: string | null;
+	leaderEmail: string | null;
+	note: string | null;
+	noteBy: OwnerCancellationSource;
+	createdAt: string;
+	updatedAt: string;
+	paymentStatus: OwnerPaymentStatus;
+	guest: {
+		id: string;
+		name: string | null;
+		email: string;
+		phone: string | null;
+	};
+	accommodation: {
+		id: string;
+		name: string;
+	} | null;
+	items: {
+		id: string;
+		type: "ROOM" | "BED";
+		name: string;
+		count: number;
+		note: string | null;
+	}[];
+};
 /* ────────────────────────────────────────────────────────
    API Payloads (Not sorted yet)
 ──────────────────────────────────────────────────────── */

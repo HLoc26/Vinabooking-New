@@ -33,6 +33,8 @@ export type Booking = {
 	phone: string;
 	referenceNo: number;
 	status: "DRAFT" | "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
+	note: string | null;
+	noteBy: "OWNER" | "TRAVELLER" | "SYSTEM" | null;
 	userId: string;
 	details: BookingDetail[];
 	paymentTransfers: PaymentTransfer[];

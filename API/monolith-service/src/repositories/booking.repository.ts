@@ -1,7 +1,37 @@
-import { PrismaClient, Prisma, Booking, BookingDetail } from "@/generated/client";
+import { PrismaClient, Prisma, Booking, BookingDetail, PaymentTransfer, User, ECancellationSource } from "@/generated/client";
 
 export type BookingWithDetails = Booking & {
 	details: BookingDetail[];
+};
+
+export type OwnerBookingStatus = "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
+export type OwnerBookingSort = "newest" | "oldest" | "price_desc" | "price_asc";
+
+export type OwnerBookingFilters = {
+	status?: OwnerBookingStatus;
+	accommodationId?: string;
+	fromDay?: string;
+	toDay?: string;
+	sort?: OwnerBookingSort;
+};
+
+export type OwnerBookingRecord = Booking & {
+	details: BookingDetail[];
+	user: Pick<User, "id" | "name" | "email" | "phone">;
+	paymentTransfers: PaymentTransfer[];
+};
+
+export type OwnerBookingItemMeta = {
+	id: string;
+	name: string;
+	type: "ROOM" | "BED";
+	accommodationId: string;
+	accommodationName: string;
+};
+
+export type OwnerBookingQueryResult = {
+	bookings: OwnerBookingRecord[];
+	itemMap: Record<string, OwnerBookingItemMeta>;
 };
 
 class BookingRepository {
@@ -90,6 +120,147 @@ class BookingRepository {
 		});
 	}
 
+	public async findOwnerBookings(ownerId: string, filters: OwnerBookingFilters): Promise<OwnerBookingQueryResult> {
+		const accommodationWhere: Prisma.AccommodationWhereInput = {
+			ownerId,
+			...(filters.accommodationId ? { id: filters.accommodationId } : {}),
+		};
+
+		const rooms = await this.#prismaClient.room.findMany({
+			where: {
+				accommodation: accommodationWhere,
+			},
+			select: {
+				id: true,
+				name: true,
+				accommodationId: true,
+				accommodation: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+				beds: {
+					select: {
+						id: true,
+						name: true,
+					},
+				},
+			},
+		});
+
+		if (rooms.length === 0) return { bookings: [], itemMap: {} };
+
+		const roomIds = rooms.map((room) => room.id);
+		const bedIds = rooms.flatMap((room) => room.beds.map((bed) => bed.id));
+		const itemMap: Record<string, OwnerBookingItemMeta> = {};
+
+		rooms.forEach((room) => {
+			itemMap[room.id] = {
+				id: room.id,
+				name: room.name,
+				type: "ROOM",
+				accommodationId: room.accommodationId,
+				accommodationName: room.accommodation.name,
+			};
+			room.beds.forEach((bed) => {
+				itemMap[bed.id] = {
+					id: bed.id,
+					name: bed.name ?? "Bed",
+					type: "BED",
+					accommodationId: room.accommodationId,
+					accommodationName: room.accommodation.name,
+				};
+			});
+		});
+
+		const where: Prisma.BookingWhereInput = {
+			status: filters.status ? filters.status : { in: ["PENDING", "CANCELLED", "BOOKED", "COMPLETED"] },
+			details: {
+				some: {
+					OR: [
+						{ itemType: "ROOM", itemId: { in: roomIds } },
+						{ itemType: "BED", itemId: { in: bedIds } },
+					],
+				},
+			},
+		};
+
+		if (filters.fromDay || filters.toDay) {
+			const startDateFilter: Prisma.DateTimeFilter = {};
+			if (filters.fromDay) {
+				startDateFilter.gte = new Date(`${filters.fromDay}T00:00:00.000Z`);
+			}
+			if (filters.toDay) {
+				const end = new Date(`${filters.toDay}T00:00:00.000Z`);
+				end.setUTCDate(end.getUTCDate() + 1);
+				startDateFilter.lt = end;
+			}
+			where.startDate = startDateFilter;
+		}
+
+		const orderBy: Prisma.BookingOrderByWithRelationInput =
+			filters.sort === "oldest"
+				? { startDate: "asc" }
+				: filters.sort === "price_desc"
+					? { totalPrice: "desc" }
+					: filters.sort === "price_asc"
+						? { totalPrice: "asc" }
+						: { startDate: "desc" };
+
+		const bookings = await this.#prismaClient.booking.findMany({
+			where,
+			orderBy,
+			include: {
+				details: true,
+				user: {
+					select: {
+						id: true,
+						name: true,
+						email: true,
+						phone: true,
+					},
+				},
+				paymentTransfers: {
+					orderBy: { createdAt: "desc" },
+					take: 1,
+				},
+			},
+		});
+
+		return { bookings, itemMap };
+	}
+
+	public async isOwnedByOwner(bookingId: string, ownerId: string): Promise<boolean> {
+		const booking = await this.#prismaClient.booking.findUnique({
+			where: { id: bookingId },
+			select: {
+				details: {
+					select: {
+						itemId: true,
+						itemType: true,
+					},
+				},
+			},
+		});
+
+		if (!booking) return false;
+
+		const roomIds = booking.details.filter((detail) => detail.itemType === "ROOM").map((detail) => detail.itemId);
+		const bedIds = booking.details.filter((detail) => detail.itemType === "BED").map((detail) => detail.itemId);
+
+		const matchingRooms = await this.#prismaClient.room.count({
+			where: {
+				OR: [
+					{ id: { in: roomIds }, accommodation: { ownerId } },
+					{ beds: { some: { id: { in: bedIds } } }, accommodation: { ownerId } },
+				],
+			},
+		});
+
+		return matchingRooms > 0;
+	}
+
 	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
 		const booking = await this.#prismaClient.booking.findUnique({
 			where,
@@ -117,10 +288,14 @@ class BookingRepository {
 		});
 	}
 
-	public async cancel(id: string): Promise<BookingWithDetails> {
+	public async cancel(id: string, note?: string, noteBy?: ECancellationSource): Promise<BookingWithDetails> {
 		return this.#prismaClient.booking.update({
 			where: { id },
-			data: { status: "CANCELLED" },
+			data: {
+				status: "CANCELLED",
+				note: note || null,
+				noteBy: noteBy || null,
+			},
 			include: { details: true },
 		});
 	}

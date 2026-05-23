@@ -93,7 +93,12 @@ export default class BookingController {
 			const { id } = req.query;
 			if (!id) return ResponseHelper.error(res, "Missing booking ID in request query");
 
-			const result = await this.bookingService.cancelBooking(id as string);
+			const { note } = req.body as { note?: string };
+			const result = await this.bookingService.cancelBooking(id as string, {
+				note,
+				cancelledBy: "traveller",
+				requestedByUserId: req.userId,
+			});
 
 			return ResponseHelper.success(res, result);
 		} catch (err: unknown) {

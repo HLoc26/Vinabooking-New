@@ -23,4 +23,6 @@ export interface CancellationEmailData {
 	referenceNo?: number;
 	roomType?: EItemType | string;
 	nights?: number;
+	cancellationReason?: string;
+	cancelledBy?: string;
 }

@@ -135,9 +135,9 @@ export const DashboardStatsRow = () => {
 
 			{/* CARD 3: PENDING BOOKINGS */}
 			<Grid size={{ xs: 12, md: 4 }}>
-				<Tooltip title="Click to review pending bookings" placement="top" arrow>
+				<Tooltip title="Click to review all bookings" placement="top" arrow>
 					<Card
-						onClick={() => navigate("/owner/manage-booking?tab=pending")}
+						onClick={() => navigate("/owner/manage-booking?status=ALL")}
 						sx={{
 							height: "100%",
 							borderRadius: "16px",

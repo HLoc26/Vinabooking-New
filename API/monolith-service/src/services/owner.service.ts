@@ -5,6 +5,7 @@ import { AccommodationService, BookingService, ImageService } from "@/services";
 import { DraftAccommodation } from "@/types/accommodation.types";
 import { EEntityType } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
+import type { OwnerBookingFilters } from "@/repositories/booking.repository";
 
 interface IWizardStepData {
 	address: unknown;
@@ -165,6 +166,14 @@ class OwnerService {
 			occupancyRate: Number(occupancyRate.toFixed(1)),
 			pendingBookings: stats.pendingBookings,
 		};
+	}
+
+	public async getBookings(ownerId: string, filters: OwnerBookingFilters) {
+		return this.#bookingService.getOwnerBookings(ownerId, filters);
+	}
+
+	public async revokeBooking(ownerId: string, bookingId: string, note?: string) {
+		return this.#bookingService.revokeOwnerBooking(ownerId, bookingId, note);
 	}
 }
 

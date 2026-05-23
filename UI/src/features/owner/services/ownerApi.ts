@@ -16,6 +16,8 @@ import type {
 	UpdateFacilitiesPayload,
 	UpdateRoomDTO,
 	RoomSummary,
+	OwnerBookingFilters,
+	OwnerBookingListItem,
 } from "../types/owner.types";
 
 export const getOwnerInfo = async () => apiClient.get<ApiResponse<OwnerProfileData>>("/owners/profile/me").then((res) => res.data.data);
@@ -25,6 +27,22 @@ export const upgradeToOwner = async (info: UpgradeOwnerPayload) => apiClient.pos
 export const getOwnerAccommodations = async () => apiClient.get<ApiResponse<OwnerAccommodationCard[]>>("/owners/accommodations").then((res) => res.data.data);
 
 export const getDashboardStats = async () => apiClient.get<ApiResponse<DashboardStats>>("/owners/dashboard/stats").then((res) => res.data.data);
+
+export const getOwnerBookings = async (filters: OwnerBookingFilters) =>
+	apiClient
+		.get<ApiResponse<OwnerBookingListItem[]>>("/owners/bookings", {
+			params: {
+				status: filters.status,
+				accommodationId: filters.accommodationId || undefined,
+				fromDay: filters.fromDay || undefined,
+				toDay: filters.toDay || undefined,
+				sort: filters.sort || undefined,
+			},
+		})
+		.then((res) => res.data.data);
+
+export const revokeOwnerBooking = async ({ bookingId, note }: { bookingId: string; note?: string }) =>
+	apiClient.patch<ApiResponse<{ success: boolean }>>(`/owners/bookings/${bookingId}/revoke`, { note }).then((res) => res.data.data);
 
 export const getDraftAccommodations = async (): Promise<ApiResponse<DraftAccommodation[]>> => {
 	const response = await apiClient.get<ApiResponse<DraftAccommodation[]>>("/owners/accommodations/drafts");

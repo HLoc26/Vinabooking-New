@@ -105,6 +105,8 @@ model Booking {
     phone       String?
     referenceNo Int            @unique
     status      EBookingStatus @default(BOOKED)
+    note        String?        @db.Text
+    noteBy      ECancellationSource?
 
     // Relations
     details BookingDetail[]
@@ -138,6 +140,12 @@ enum EBookingStatus {
     CANCELLED
     BOOKED // successfully paid and confirmed
     COMPLETED // stay completed, review can be left
+}
+
+enum ECancellationSource {
+    OWNER
+    TRAVELLER
+    SYSTEM
 }
 
 enum EItemType {

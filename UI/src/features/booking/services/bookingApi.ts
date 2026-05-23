@@ -20,8 +20,8 @@ export const bookingApi = {
 		return axioInstance.get<ApiResponse<Booking>>("/bookings", { params: { entity: "id", id: bookingId } }).then((r) => r.data);
 	},
 
-	async cancel(bookingId: string) {
-		return axioInstance.patch(`/bookings/cancel?id=${bookingId}`).then((r) => r.data);
+	async cancel(bookingId: string, note?: string) {
+		return axioInstance.patch(`/bookings/cancel?id=${bookingId}`, { note }).then((r) => r.data);
 	},
 
 	async createBooking(booking: BookingContextInfo) {
