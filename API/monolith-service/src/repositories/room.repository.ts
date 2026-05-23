@@ -313,6 +313,30 @@ class RoomRepository {
 		});
 	}
 
+	/**
+	 * Bulk update floor prices for all rooms in an accommodation.
+	 */
+	public async bulkUpdateFloorPrices(accommodationId: string, rule: { percent: number; minAmount: number }) {
+		const rooms = await this.#prismaClient.room.findMany({
+			where: { accommodationId },
+			select: { id: true, basePrice: true },
+		});
+
+		return await this.#prismaClient.$transaction(async (tx) => {
+			for (const room of rooms) {
+				const base = Number(room.basePrice);
+				const calculated = Math.max(base * (rule.percent / 100), rule.minAmount);
+				const finalFloor = Math.min(calculated, base);
+
+				await tx.room.update({
+					where: { id: room.id },
+					data: { floorPrice: new Prisma.Decimal(finalFloor) },
+				});
+			}
+			return { updatedCount: rooms.length };
+		});
+	}
+
 	public async delete(roomId: string): Promise<Room> {
 		return await this.#prismaClient.room.delete({
 			where: { id: roomId },

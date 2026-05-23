@@ -221,6 +221,45 @@ class AccommodationRepository {
 		});
 	}
 
+	/**
+	 * Force-apply global settings to all accommodations owned by a user.
+	 */
+	public async syncAllWithGlobalSettings(
+		ownerId: string,
+		settings: DynamicPricingSettings | null,
+		holidays: { holidayCode: string; priceMultiplier: number; preDays: number; postDays: number; enabled: boolean }[]
+	) {
+		const accommodations = await this.findAllByOwnerId(ownerId);
+		const settingsValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+
+		return await this.#prismaClient.$transaction(async (tx) => {
+			for (const acc of accommodations) {
+				// 1. Update JSON settings
+				await tx.accommodation.update({
+					where: { id: acc.id },
+					data: { dynamicPricingSettings: settingsValue },
+				});
+
+				// 2. Update Holiday Opt-ins
+				await tx.accommodationHoliday.deleteMany({ where: { accommodationId: acc.id } });
+				if (holidays.length > 0) {
+					await tx.accommodationHoliday.createMany({
+						data: holidays.map((h) => ({
+							accommodationId: acc.id,
+							holidayCode: h.holidayCode,
+							priceMultiplier: new Prisma.Decimal(h.priceMultiplier),
+							preDays: h.preDays,
+							postDays: h.postDays,
+							enabled: h.enabled,
+						})),
+					});
+				}
+			}
+			return { updatedCount: accommodations.length };
+		});
+	}
+
 	public async checkOwnership(id: string, ownerId: string): Promise<boolean> {
 		const count = await this.#prismaClient.accommodation.count({
 			where: { id, ownerId },

@@ -120,7 +120,7 @@ const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", pr
 const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
 const pricingService = new PricingService(prismaClient, holidayRepository);
-const ownerPricingService = new OwnerPricingService(prismaClient, ownerRepository, holidayRepository, accommodationRepository);
+const ownerPricingService = new OwnerPricingService(ownerRepository, holidayRepository, accommodationRepository, roomRepository);
 roomService.setPricingService(pricingService);
 bookingService.setPricingService(pricingService);
 
