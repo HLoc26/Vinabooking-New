@@ -47,10 +47,11 @@ class OwnerPricingService {
 		const rows = await this.#holidayRepository.findByOwner(ownerProfileId);
 		return rows.map((r) => ({
 			id: r.id,
-			holidayId: r.holidayId,
+			holidayCode: r.holidayCode,
 			priceMultiplier: Number(r.priceMultiplier),
+			preDays: r.preDays,
+			postDays: r.postDays,
 			enabled: r.enabled,
-			holiday: r.holiday,
 		}));
 	}
 
@@ -60,10 +61,11 @@ class OwnerPricingService {
 		const rows = await this.#holidayRepository.replaceForOwner(ownerProfileId, items);
 		return rows.map((r) => ({
 			id: r.id,
-			holidayId: r.holidayId,
+			holidayCode: r.holidayCode,
 			priceMultiplier: Number(r.priceMultiplier),
+			preDays: r.preDays,
+			postDays: r.postDays,
 			enabled: r.enabled,
-			holiday: r.holiday,
 		}));
 	}
 }

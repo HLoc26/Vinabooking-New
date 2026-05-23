@@ -1,5 +1,6 @@
 import { useMemo, useState } from "react";
-import { Box, Button, Checkbox, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, TextField, Typography } from "@mui/material";
+import { Box, Button, Checkbox, Paper, Stack, Table, TableBody, TableCell, TableContainer, TableHead, TableRow, Typography, IconButton } from "@mui/material";
+import { AddRounded, RemoveRounded } from "@mui/icons-material";
 import type { HolidayDto, HolidayOptIn } from "../../types/pricing.types";
 
 interface Props {
@@ -12,42 +13,101 @@ interface Props {
 	hideSubmit?: boolean;
 }
 
-type Row = { holidayId: number; enabled: boolean; priceMultiplier: number };
+type Row = { holidayCode: string; enabled: boolean; priceMultiplier: number; preDays: number; postDays: number };
 
 // Merge catalog with the parent-supplied opt-in list so every catalog row is
 // rendered (disabled rows just have enabled=false).
-const buildRows = (catalog: HolidayDto[], value: HolidayOptIn[]): Map<number, Row> => {
-	const map = new Map<number, Row>();
+const buildRows = (catalog: HolidayDto[], value: HolidayOptIn[]): Map<string, Row> => {
+	const map = new Map<string, Row>();
 	for (const h of catalog) {
-		map.set(h.id, { holidayId: h.id, enabled: false, priceMultiplier: 1.5 });
+		map.set(h.code, { holidayCode: h.code, enabled: false, priceMultiplier: 1.5, preDays: 0, postDays: 0 });
 	}
 	for (const c of value) {
-		map.set(c.holidayId, {
-			holidayId: c.holidayId,
-			enabled: c.enabled ?? true,
-			priceMultiplier: c.priceMultiplier,
-		});
+		const existing = map.get(c.holidayCode);
+		if (existing) {
+			map.set(c.holidayCode, {
+				...existing,
+				enabled: c.enabled ?? true,
+				priceMultiplier: c.priceMultiplier,
+				preDays: c.preDays,
+				postDays: c.postDays,
+			});
+		}
 	}
 	return map;
 };
 
-const rowsToItems = (rows: Map<number, Row>): HolidayOptIn[] =>
+const rowsToItems = (rows: Map<string, Row>): HolidayOptIn[] =>
 	Array.from(rows.values())
 		.filter((r) => r.enabled)
-		.map((r) => ({ holidayId: r.holidayId, priceMultiplier: r.priceMultiplier, enabled: true }));
+		.map((r) => ({ 
+			holidayCode: r.holidayCode, 
+			priceMultiplier: r.priceMultiplier, 
+			preDays: r.preDays, 
+			postDays: r.postDays,
+			enabled: true 
+		}));
+
+const TinySpinner = ({ 
+	value, 
+	onChange, 
+	min, 
+	max, 
+	step = 1,
+	disabled,
+	format = (v: number) => v.toString()
+}: { 
+	value: number; 
+	onChange: (v: number) => void; 
+	min: number; 
+	max?: number; 
+	step?: number;
+	disabled?: boolean;
+	format?: (v: number) => string;
+}) => (
+	<Stack direction="row" alignItems="center" spacing={0.5}>
+		<IconButton 
+			size="small" 
+			disabled={disabled || value <= min} 
+			onClick={() => onChange(Number((value - step).toFixed(2)))}
+			sx={{ border: "1px solid", borderColor: "divider", p: 0.25 }}
+		>
+			<RemoveRounded sx={{ fontSize: 14 }} />
+		</IconButton>
+		<Typography variant="body2" sx={{ minWidth: 24, textAlign: "center", fontWeight: 600 }}>
+			{format(value)}
+		</Typography>
+		<IconButton 
+			size="small" 
+			disabled={disabled || (max !== undefined && value >= max)} 
+			onClick={() => onChange(Number((value + step).toFixed(2)))}
+			sx={{ border: "1px solid", borderColor: "divider", p: 0.25 }}
+		>
+			<AddRounded sx={{ fontSize: 14 }} />
+		</IconButton>
+	</Stack>
+);
 
 export const OwnerHolidayForm = ({ catalog, value, onChange, onSubmit, disabled, submitLabel = "Save holidays", hideSubmit }: Props) => {
 	const rows = useMemo(() => buildRows(catalog, value), [catalog, value]);
 	const [error, setError] = useState<string | null>(null);
 
-	const emit = (next: Map<number, Row>) => {
+	const formatDate = (dateStr: string, isRecurring: boolean) => {
+		const date = new Date(dateStr);
+		if (isRecurring) {
+			return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short" }).format(date);
+		}
+		return new Intl.DateTimeFormat("en-GB", { day: "2-digit", month: "short", year: "numeric" }).format(date);
+	};
+
+	const emit = (next: Map<string, Row>) => {
 		onChange?.(rowsToItems(next));
 	};
 
-	const updateRow = (holidayId: number, patch: Partial<Row>) => {
-		const existing = rows.get(holidayId) ?? { holidayId, enabled: false, priceMultiplier: 1.5 };
+	const updateRow = (holidayCode: string, patch: Partial<Row>) => {
+		const existing = rows.get(holidayCode) ?? { holidayCode, enabled: false, priceMultiplier: 1.5, preDays: 0, postDays: 0 };
 		const next = new Map(rows);
-		next.set(holidayId, { ...existing, ...patch });
+		next.set(holidayCode, { ...existing, ...patch });
 		emit(next);
 	};
 
@@ -71,35 +131,55 @@ export const OwnerHolidayForm = ({ catalog, value, onChange, onSubmit, disabled,
 					<TableHead>
 						<TableRow>
 							<TableCell width={48}>Opt in</TableCell>
-							<TableCell>Holiday</TableCell>
-							<TableCell>Date</TableCell>
-							<TableCell>Recurring</TableCell>
-							<TableCell width={180}>Price multiplier (×)</TableCell>
+							<TableCell>Holiday (Anchor)</TableCell>
+							<TableCell>Anchor Date</TableCell>
+							<TableCell>Multiplier</TableCell>
+							<TableCell>Days Before</TableCell>
+							<TableCell>Days After</TableCell>
 						</TableRow>
 					</TableHead>
 					<TableBody>
 						{catalog.map((h) => {
-							const r = rows.get(h.id) ?? { holidayId: h.id, enabled: false, priceMultiplier: 1.5 };
+							const r = rows.get(h.code) ?? { holidayCode: h.code, enabled: false, priceMultiplier: 1.5, preDays: 0, postDays: 0 };
 							return (
-								<TableRow key={h.id}>
+								<TableRow key={h.code} sx={{ height: 60 }}>
 									<TableCell>
 										<Checkbox
 											checked={r.enabled}
 											disabled={disabled}
-											onChange={(e) => updateRow(h.id, { enabled: e.target.checked })}
+											onChange={(e) => updateRow(h.code, { enabled: e.target.checked })}
 										/>
 									</TableCell>
-									<TableCell>{h.name}</TableCell>
-									<TableCell>{h.isRecurring ? h.date.slice(5) : h.date.slice(0, 10)}</TableCell>
-									<TableCell>{h.isRecurring ? "Yes" : "No"}</TableCell>
 									<TableCell>
-										<TextField
-											type="number"
-											size="small"
-											value={r.priceMultiplier}
+										<Typography variant="body2" fontWeight={600}>{h.name}</Typography>
+										{h.isRecurring && <Typography variant="caption" color="text.secondary">Recurring</Typography>}
+									</TableCell>
+									<TableCell>
+										<Typography variant="body2">{formatDate(h.date, h.isRecurring)}</Typography>
+									</TableCell>
+									<TableCell>
+										<TinySpinner 
+											value={r.priceMultiplier} 
+											onChange={(v) => updateRow(h.code, { priceMultiplier: v })}
+											min={1} max={5} step={0.1}
 											disabled={disabled || !r.enabled}
-											inputProps={{ min: 1, max: 5, step: 0.1 }}
-											onChange={(e) => updateRow(h.id, { priceMultiplier: Number(e.target.value) })}
+											format={(v) => v.toFixed(1) + "x"}
+										/>
+									</TableCell>
+									<TableCell>
+										<TinySpinner 
+											value={r.preDays} 
+											onChange={(v) => updateRow(h.code, { preDays: v })}
+											min={0} max={30}
+											disabled={disabled || !r.enabled}
+										/>
+									</TableCell>
+									<TableCell>
+										<TinySpinner 
+											value={r.postDays} 
+											onChange={(v) => updateRow(h.code, { postDays: v })}
+											min={0} max={30}
+											disabled={disabled || !r.enabled}
 										/>
 									</TableCell>
 								</TableRow>
@@ -108,7 +188,7 @@ export const OwnerHolidayForm = ({ catalog, value, onChange, onSubmit, disabled,
 					</TableBody>
 				</Table>
 			</TableContainer>
-			{error && <Typography color="error">{error}</Typography>}
+			{error && <Typography color="error" variant="caption">{error}</Typography>}
 			{!hideSubmit && onSubmit && (
 				<Box display="flex" justifyContent="flex-end">
 					<Button variant="contained" onClick={submit} disabled={disabled}>
@@ -121,3 +201,4 @@ export const OwnerHolidayForm = ({ catalog, value, onChange, onSubmit, disabled,
 };
 
 export default OwnerHolidayForm;
+

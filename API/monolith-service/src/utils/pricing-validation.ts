@@ -38,21 +38,27 @@ export function validateDynamicPricingSettings(settings: DynamicPricingSettings 
 }
 
 export function validateHolidayOptIn(item: HolidayOptIn): void {
-	if (!Number.isInteger(item.holidayId) || item.holidayId <= 0) {
-		throw new BadRequestError("holidayOptIn.holidayId must be a positive integer");
+	if (typeof item.holidayCode !== "string" || item.holidayCode.trim().length === 0) {
+		throw new BadRequestError("holidayOptIn.holidayCode must be a non-empty string");
 	}
 	if (!isFiniteNumber(item.priceMultiplier) || item.priceMultiplier < MIN_HOLIDAY_MULTIPLIER || item.priceMultiplier > MAX_HOLIDAY_MULTIPLIER) {
 		throw new BadRequestError(`holidayOptIn.priceMultiplier must be in [${MIN_HOLIDAY_MULTIPLIER}, ${MAX_HOLIDAY_MULTIPLIER}]`);
 	}
+	if (!isFiniteNumber(item.preDays) || item.preDays < 0 || item.preDays > 30 || !Number.isInteger(item.preDays)) {
+		throw new BadRequestError("holidayOptIn.preDays must be an integer in [0, 30]");
+	}
+	if (!isFiniteNumber(item.postDays) || item.postDays < 0 || item.postDays > 30 || !Number.isInteger(item.postDays)) {
+		throw new BadRequestError("holidayOptIn.postDays must be an integer in [0, 30]");
+	}
 }
 
 export function validateHolidayOptIns(items: HolidayOptIn[]): void {
-	const seen = new Set<number>();
+	const seen = new Set<string>();
 	for (const item of items) {
 		validateHolidayOptIn(item);
-		if (seen.has(item.holidayId)) {
-			throw new BadRequestError(`Duplicate holidayId in opt-in list: ${item.holidayId}`);
+		if (seen.has(item.holidayCode)) {
+			throw new BadRequestError(`Duplicate holidayCode in opt-in list: ${item.holidayCode}`);
 		}
-		seen.add(item.holidayId);
+		seen.add(item.holidayCode);
 	}
 }

@@ -85,11 +85,12 @@ export function hashQuote(payload: Omit<QuoteResponse, "quoteHash">): string {
 	return crypto.createHash("sha256").update(canonicalize(payload)).digest("hex");
 }
 
-type AccommodationHolidayRow = {
-	holidayId: number;
+type HolidayOptInRow = {
+	holidayCode: string;
 	priceMultiplier: Prisma.Decimal;
+	preDays: number;
+	postDays: number;
 	enabled: boolean;
-	holiday: { id: number; name: string; date: Date; isRecurring: boolean };
 };
 
 class PricingService {
@@ -103,7 +104,7 @@ class PricingService {
 
 	/**
 	 * Build a per-night holiday-multiplier map for a single accommodation.
-	 * Returns Map<YYYY-MM-DD, Decimal>; missing nights default to 1.0 in the caller.
+	 * Implements the Anchor + Window model (§1.3).
 	 */
 	public async buildHolidayMapForAccommodation(
 		accommodationId: string,
@@ -112,31 +113,66 @@ class PricingService {
 		const map = new Map<string, Prisma.Decimal>();
 		if (nightYmds.length === 0) return map;
 
-		const optIns = (await this.#holidayRepository.findByAccommodation(accommodationId)) as AccommodationHolidayRow[];
-		if (optIns.length === 0) return map;
+		// 1. Fetch owner/accommodation opt-ins.
+		const optIns = (await this.#holidayRepository.findByAccommodation(accommodationId)) as HolidayOptInRow[];
+		const enabledConfigs = optIns.filter((o) => o.enabled);
+		if (enabledConfigs.length === 0) return map;
 
-		const enabled = optIns.filter((o) => o.enabled);
-		const explicitByDate = new Map<string, Prisma.Decimal>();
-		const recurringByMmDd = new Map<string, Prisma.Decimal>();
+		const configByCode = new Map(enabledConfigs.map((c) => [c.holidayCode, c]));
 
-		for (const o of enabled) {
-			const holidayYmd = toHcmYmd(o.holiday.date);
-			if (o.holiday.isRecurring) {
-				recurringByMmDd.set(ymdMmDd(holidayYmd), o.priceMultiplier);
-			} else {
-				explicitByDate.set(holidayYmd, o.priceMultiplier);
+		// 2. Fetch all holiday anchors that could potentially cover our stay.
+		// We need to fetch anchors even slightly outside the range because pre/post windows
+		// might pull them into the stay. Let's fetch anchors within [min - 31, max + 31] for safety.
+		const startMs = ymdToHcmMidnightUtc(nightYmds[0]).getTime();
+		const endMs = ymdToHcmMidnightUtc(nightYmds[nightYmds.length - 1]).getTime();
+		const pad = 31 * DAY_MS;
+
+		const anchors = await this.#prismaClient.holiday.findMany({
+			where: {
+				OR: [
+					{ isRecurring: false, date: { gte: new Date(startMs - pad), lte: new Date(endMs + pad) } },
+					{ isRecurring: true }, // recurring (year 2000) we always fetch and match by MM-DD
+				],
+				code: { in: Array.from(configByCode.keys()) },
+			},
+		});
+
+		// 3. For each night, check if it falls within ANY expanded holiday window.
+		for (const nightYmd of nightYmds) {
+			const nightMs = ymdToHcmMidnightUtc(nightYmd).getTime();
+			const nightMmDd = ymdMmDd(nightYmd);
+			const nightYear = parseInt(nightYmd.split("-")[0], 10);
+
+			let highestMultiplier = ONE;
+
+			for (const anchor of anchors) {
+				const config = configByCode.get(anchor.code);
+				if (!config) continue;
+
+				let anchorMs: number;
+				if (anchor.isRecurring) {
+					// Map recurring year 2000 anchor to the current night's year.
+					anchorMs = ymdToHcmMidnightUtc(`${nightYear}-${ymdMmDd(toHcmYmd(anchor.date))}`).getTime();
+				} else {
+					anchorMs = anchor.date.getTime();
+				}
+
+				const startRange = anchorMs - config.preDays * DAY_MS;
+				const endRange = anchorMs + config.postDays * DAY_MS;
+
+				if (nightMs >= startRange && nightMs <= endRange) {
+					// Night falls in window! If multiple holidays overlap, the highest multiplier wins.
+					if (config.priceMultiplier.greaterThan(highestMultiplier)) {
+						highestMultiplier = config.priceMultiplier;
+					}
+				}
+			}
+
+			if (highestMultiplier.greaterThan(ONE)) {
+				map.set(nightYmd, highestMultiplier);
 			}
 		}
 
-		for (const night of nightYmds) {
-			const exp = explicitByDate.get(night);
-			if (exp) {
-				map.set(night, exp);
-				continue;
-			}
-			const rec = recurringByMmDd.get(ymdMmDd(night));
-			if (rec) map.set(night, rec);
-		}
 		return map;
 	}
 

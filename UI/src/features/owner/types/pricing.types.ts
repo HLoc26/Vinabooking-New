@@ -20,22 +20,26 @@ export interface DynamicPricingSettings {
 export interface HolidayDto {
 	id: number;
 	name: string;
-	date: string; // ISO date
+	code: string;
+	date: string; // ISO date (anchor)
 	isRecurring: boolean;
 }
 
 export interface HolidayOptIn {
-	holidayId: number;
+	holidayCode: string;
 	priceMultiplier: number; // [1, 5]
+	preDays: number;
+	postDays: number;
 	enabled?: boolean;
 }
 
 export interface OwnerHolidayRow {
 	id: string;
-	holidayId: number;
+	holidayCode: string;
 	priceMultiplier: number;
+	preDays: number;
+	postDays: number;
 	enabled: boolean;
-	holiday: HolidayDto;
 }
 
 export interface OwnerSettingsResponse {

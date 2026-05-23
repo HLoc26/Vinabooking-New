@@ -30,7 +30,13 @@ const StepPricingBox: React.FC<Props> = ({ accommodationId, triggerSubmit, reset
 				setCatalog(c);
 				setOverrideSettings(s.dynamicPricingSettings);
 				setOverrideHolidays(
-					h.map((row: OwnerHolidayRow) => ({ holidayId: row.holidayId, priceMultiplier: row.priceMultiplier, enabled: row.enabled }))
+					h.map((row: OwnerHolidayRow) => ({ 
+						holidayCode: row.holidayCode, 
+						priceMultiplier: row.priceMultiplier, 
+						preDays: row.preDays,
+						postDays: row.postDays,
+						enabled: row.enabled 
+					}))
 				);
 			} catch (err) {
 				const message = err instanceof Error ? err.message : "Failed to load pricing settings";

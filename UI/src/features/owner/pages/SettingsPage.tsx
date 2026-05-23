@@ -25,8 +25,10 @@ const SettingsPage = () => {
 				setCatalog(c);
 				setOptIns(
 					h.map((row: OwnerHolidayRow) => ({
-						holidayId: row.holidayId,
+						holidayCode: row.holidayCode,
 						priceMultiplier: row.priceMultiplier,
+						preDays: row.preDays,
+						postDays: row.postDays,
 						enabled: row.enabled,
 					}))
 				);
@@ -61,8 +63,10 @@ const SettingsPage = () => {
 			const saved = await replaceOwnerHolidays(items);
 			setOptIns(
 				saved.map((row: OwnerHolidayRow) => ({
-					holidayId: row.holidayId,
+					holidayCode: row.holidayCode,
 					priceMultiplier: row.priceMultiplier,
+					preDays: row.preDays,
+					postDays: row.postDays,
 					enabled: row.enabled,
 				}))
 			);
@@ -86,20 +90,27 @@ const SettingsPage = () => {
 	return (
 		<Box p={3}>
 			<Stack spacing={3} maxWidth={900} mx="auto">
-				<Typography variant="h4">Owner settings</Typography>
+				<Box>
+					<Typography variant="h4" fontWeight={800} color="primary.main">
+						Owner settings
+					</Typography>
+					<Typography variant="body2" color="text.secondary">
+						Manage default pricing behavior and holiday surcharges.
+					</Typography>
+				</Box>
 				<Alert severity="info">
 					These defaults apply only to <strong>newly created</strong> accommodations. To edit an existing one, open its Manage Accommodation page.
 				</Alert>
 
 				<Box>
-					<Typography variant="h5" gutterBottom>
+					<Typography variant="h5" fontWeight={700} color="primary.main" gutterBottom>
 						Default discount rules
 					</Typography>
-					<OwnerSettingsForm value={settings} onChange={setSettings} onSubmit={saveSettings} disabled={saving} />
+					<OwnerSettingsForm value={settings} onSubmit={saveSettings} disabled={saving} />
 				</Box>
 
 				<Box>
-					<Typography variant="h5" gutterBottom>
+					<Typography variant="h5" fontWeight={700} color="primary.main" gutterBottom>
 						Default holiday pricing
 					</Typography>
 					<Typography variant="body2" color="text.secondary" mb={2}>

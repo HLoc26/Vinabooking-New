@@ -20,8 +20,10 @@ export interface DynamicPricingSettings {
 }
 
 export interface HolidayOptIn {
-	holidayId: number;
+	holidayCode: string;
 	priceMultiplier: number; // [1, 5]
+	preDays: number; // [0, 30]
+	postDays: number; // [0, 30]
 	enabled?: boolean;
 }
 

@@ -11,8 +11,17 @@ class HolidayRepository {
 	// ----- Catalog (read-only, seeded) -----
 
 	public async findAll() {
-		return await this.#prismaClient.holiday.findMany({
+		// Return distinct codes for the catalog, picking the first name and date found
+		// for each code. The UI only needs one row per logical holiday.
+		const holidays = await this.#prismaClient.holiday.findMany({
 			orderBy: [{ date: "asc" }],
+		});
+		
+		const uniqueCodes = new Set<string>();
+		return holidays.filter(h => {
+			if (uniqueCodes.has(h.code)) return false;
+			uniqueCodes.add(h.code);
+			return true;
 		});
 	}
 
@@ -21,7 +30,6 @@ class HolidayRepository {
 	public async findByOwner(ownerProfileId: string) {
 		return await this.#prismaClient.ownerHoliday.findMany({
 			where: { ownerProfileId },
-			include: { holiday: true },
 		});
 	}
 
@@ -35,14 +43,15 @@ class HolidayRepository {
 			await tx.ownerHoliday.createMany({
 				data: items.map((i) => ({
 					ownerProfileId,
-					holidayId: i.holidayId,
+					holidayCode: i.holidayCode,
 					priceMultiplier: new Prisma.Decimal(i.priceMultiplier),
+					preDays: i.preDays ?? 0,
+					postDays: i.postDays ?? 0,
 					enabled: i.enabled ?? true,
 				})),
 			});
 			return await tx.ownerHoliday.findMany({
 				where: { ownerProfileId },
-				include: { holiday: true },
 			});
 		});
 	}
@@ -52,7 +61,6 @@ class HolidayRepository {
 	public async findByAccommodation(accommodationId: string) {
 		return await this.#prismaClient.accommodationHoliday.findMany({
 			where: { accommodationId },
-			include: { holiday: true },
 		});
 	}
 
@@ -68,14 +76,15 @@ class HolidayRepository {
 			await c.accommodationHoliday.createMany({
 				data: items.map((i) => ({
 					accommodationId,
-					holidayId: i.holidayId,
+					holidayCode: i.holidayCode,
 					priceMultiplier: new Prisma.Decimal(i.priceMultiplier),
+					preDays: i.preDays ?? 0,
+					postDays: i.postDays ?? 0,
 					enabled: i.enabled ?? true,
 				})),
 			});
 			return await c.accommodationHoliday.findMany({
 				where: { accommodationId },
-				include: { holiday: true },
 			});
 		};
 		if (tx) return run(tx);
@@ -83,8 +92,7 @@ class HolidayRepository {
 	}
 
 	/**
-	 * Snapshot owner opt-ins into a fresh accommodation. Used at accommodation create
-	 * when DTO omits holidayOptIns (inherit from owner defaults).
+	 * Snapshot owner opt-ins into a fresh accommodation.
 	 */
 	public async snapshotOwnerToAccommodation(
 		ownerProfileId: string,
@@ -96,14 +104,15 @@ class HolidayRepository {
 		await tx.accommodationHoliday.createMany({
 			data: ownerRows.map((r) => ({
 				accommodationId,
-				holidayId: r.holidayId,
+				holidayCode: r.holidayCode,
 				priceMultiplier: r.priceMultiplier,
+				preDays: r.preDays,
+				postDays: r.postDays,
 				enabled: r.enabled,
 			})),
 		});
 		return await tx.accommodationHoliday.findMany({
 			where: { accommodationId },
-			include: { holiday: true },
 		});
 	}
 }
