@@ -81,6 +81,18 @@ class PricingController {
 		}
 	}
 
+	public async updateAccommodationFloorPrices(req: Request<{ id: string }>, res: Response) {
+		try {
+			const userId = req.userId!;
+			const { id: accommodationId } = req.params;
+			const { percent, minAmount } = req.body;
+			const data = await this.#ownerPricingService.bulkUpdateRoomFloorPrices(userId, accommodationId, { percent, minAmount });
+			return ResponseHelper.success(res, data);
+		} catch (err) {
+			return this.#handle(err, res);
+		}
+	}
+
 	// ----- Quote (Phase 5 endpoint, controller method ready) -----
 
 	public async quote(req: Request, res: Response) {

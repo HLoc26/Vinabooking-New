@@ -44,6 +44,10 @@ class PricingRouter {
 		this.router.post("/owners/me/sync-accommodations", ...ownerGuard, (req: Request, res: Response) => {
 			return this.pricingController.syncAllAccommodations(req, res);
 		});
+
+		this.router.post("/accommodations/:id/sync-floor-prices", ...ownerGuard, (req: Request, res: Response) => {
+			return this.pricingController.updateAccommodationFloorPrices(req as any, res);
+		});
 	}
 }
 
