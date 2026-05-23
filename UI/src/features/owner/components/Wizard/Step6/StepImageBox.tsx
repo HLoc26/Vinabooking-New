@@ -1,5 +1,5 @@
 import { Box, Typography, Accordion, AccordionSummary, AccordionDetails, Divider, CircularProgress } from "@mui/material";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import type { WizardForm, ImageItem } from "../../../types/owner.types";
 import { ExpandMore as ExpandMoreIcon, PhotoLibrary as PhotoLibraryIcon, MeetingRoom as MeetingRoomIcon } from "@mui/icons-material";
 import ImageUploader from "./ImageUploader";
@@ -15,9 +15,10 @@ interface Props {
 	triggerSubmit: boolean;
 	resetTrigger: () => void;
 	onSuccess: () => void;
+	isManageMode?: boolean;
 }
 
-const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess }: Props) => {
+const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigger, onSuccess, isManageMode = false }: Props) => {
 	const { pushNotification } = usePushNotificationContext();
 	const [isUploading, setIsUploading] = useState(false);
 	const [expandedAccordion, setExpandedAccordion] = useState<string | false>(false);
@@ -27,7 +28,11 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 	const roomIds = form.rooms.map((r) => r.id).filter(Boolean) as string[];
 	const { data: dbImages, isLoading: isFetching, refetch } = useGetImages(form.accommodationId, roomIds);
 
-	// 1. FIXED MERGE LOGIC
+	const formRef = useRef(form);
+	useEffect(() => {
+		formRef.current = form;
+	}, [form]);
+
 	useEffect(() => {
 		if (!dbImages) return;
 
@@ -84,18 +89,17 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 		onFieldChange?.();
 	};
 
-	// 2. FIXED UPLOAD LOGIC
 	useEffect(() => {
 		if (triggerSubmit) {
 			const performUpload = async () => {
 				setIsUploading(true);
 				try {
-					// Filter out DB images so we only upload new files
-					const imagesToUpload = form.images.filter((img) => !!img.file);
+					const currentForm = formRef.current;
+					const imagesToUpload = currentForm.images.filter((img) => !!img.file);
 
-					if (form.accommodationId && imagesToUpload.length > 0) {
+					if (currentForm.accommodationId && imagesToUpload.length > 0) {
 						await uploadImages({
-							accommodationId: form.accommodationId,
+							accommodationId: currentForm.accommodationId,
 							images: imagesToUpload,
 						});
 
@@ -119,7 +123,7 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 
 			performUpload();
 		}
-	}, [triggerSubmit]); // Removed aggressive dependencies that could cause multi-renders
+	}, [triggerSubmit, uploadImages, refetch, setForm, onSuccess, resetTrigger, pushNotification]);
 
 	if (isFetching && form.images.length === 0) {
 		return (
@@ -151,16 +155,18 @@ const StepImageBox = ({ form, setForm, onFieldChange, triggerSubmit, resetTrigge
 				</Box>
 			)}
 
-			<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
-				<Box>
-					<Typography variant="h6" fontWeight={700}>
-						Properties Photos
-					</Typography>
-					<Typography variant="body2" color="text.secondary" mt={0.5}>
-						Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
-					</Typography>
+			{!isManageMode && (
+				<Box display="flex" justifyContent="space-between" alignItems="flex-start" mb={4}>
+					<Box>
+						<Typography variant="h6" fontWeight={700}>
+							Properties Photos
+						</Typography>
+						<Typography variant="body2" color="text.secondary" mt={0.5}>
+							Great photos invite guests in. Upload high-quality images of your property's exterior, common areas, and specific rooms.
+						</Typography>
+					</Box>
 				</Box>
-			</Box>
+			)}
 
 			{/* Section 1: General Accommodation Gallery */}
 			<Box sx={{ mb: 4 }}>
