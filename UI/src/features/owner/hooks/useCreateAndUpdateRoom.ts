@@ -11,8 +11,8 @@ export const useCreateRoom = (accommodationId: string) => {
 		mutationFn: (payload) => createRoom(accommodationId, payload),
 
 		onSuccess: (data) => {
-			// Append the new room into the cached room list for this accommodation
 			queryClient.setQueryData(["accommodation", accommodationId, "rooms"], (old: RoomSummary[] | undefined) => [...(old ?? []), data]);
+			queryClient.invalidateQueries({ queryKey: ["accommodationManage", accommodationId] });
 		},
 
 		onError: (err) => {
@@ -30,8 +30,8 @@ export const useUpdateRoom = (accommodationId: string, roomId: string) => {
 		mutationFn: (payload) => updateRoom(roomId, payload),
 
 		onSuccess: (data) => {
-			// Replace the updated room in the cached list
 			queryClient.setQueryData(["accommodation", accommodationId, "rooms"], (old: RoomSummary[] | undefined) => (old ?? []).map((r) => (r.id === data.id ? data : r)));
+			queryClient.invalidateQueries({ queryKey: ["accommodationManage", accommodationId] });
 		},
 
 		onError: (err) => {

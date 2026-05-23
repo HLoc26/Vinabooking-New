@@ -9,8 +9,8 @@ export const useDeleteRoom = (accommodationId: string) => {
 		mutationFn: (roomId) => deleteRoomApi(roomId),
 
 		onSuccess: (_, roomId) => {
-			// Update the cached room list for this accommodation
 			queryClient.setQueryData(["accommodation", accommodationId, "rooms"], (old: RoomForm[] | undefined) => (old ?? []).filter((r) => r.id !== roomId));
+			queryClient.invalidateQueries({ queryKey: ["accommodationManage", accommodationId] });
 		},
 
 		onError: (err) => {

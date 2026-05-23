@@ -6,13 +6,25 @@ import MyLocationIcon from "@mui/icons-material/MyLocation";
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import type { WizardForm } from "../../../types/owner.types";
 
-type Props = {
+type Props = Readonly<{
 	lat: number | null;
 	lng: number | null;
 	onChange: (data: Partial<WizardForm["address"]>) => void;
-};
+	readOnly?: boolean;
+}>;
 
-function ClickHandler({ onChange }: { onChange: (data: Partial<WizardForm["address"]>) => void }) {
+function MapSizeFixer() {
+	const map = useMap();
+	useEffect(() => {
+		const timer = setTimeout(() => {
+			map.invalidateSize();
+		}, 250);
+		return () => clearTimeout(timer);
+	}, [map]);
+	return null;
+}
+
+function ClickHandler({ onChange }: Readonly<{ onChange: (data: Partial<WizardForm["address"]>) => void }>) {
 	const { pushNotification } = usePushNotificationContext();
 
 	useMapEvents({
@@ -52,7 +64,7 @@ function ClickHandler({ onChange }: { onChange: (data: Partial<WizardForm["addre
 	return null;
 }
 
-function Recenter({ lat, lng }: { lat: number | null; lng: number | null }) {
+function Recenter({ lat, lng }: Readonly<{ lat: number | null; lng: number | null }>) {
 	const map = useMap();
 	useEffect(() => {
 		if (lat && lng) map.setView([lat, lng] as LatLngExpression, 14);
@@ -60,7 +72,7 @@ function Recenter({ lat, lng }: { lat: number | null; lng: number | null }) {
 	return null;
 }
 
-export default function MapPicker({ lat, lng, onChange }: Props) {
+export default function MapPicker({ lat, lng, onChange, readOnly = false }: Props) {
 	const defaultPosition: LatLngExpression = [10.7769, 106.7009];
 	const position: LatLngExpression = lat && lng ? [lat, lng] : defaultPosition;
 
@@ -78,31 +90,34 @@ export default function MapPicker({ lat, lng, onChange }: Props) {
 			}}
 		>
 			{/* Overlay hint */}
-			<Box
-				sx={{
-					position: "absolute",
-					top: 10,
-					left: "50%",
-					transform: "translateX(-50%)",
-					zIndex: 1000,
-					bgcolor: "rgba(0,0,0,0.55)",
-					color: "#fff",
-					px: 1.5,
-					py: 0.5,
-					borderRadius: 5,
-					display: "flex",
-					alignItems: "center",
-					gap: 0.5,
-					pointerEvents: "none",
-				}}
-			>
-				<MyLocationIcon sx={{ fontSize: 14 }} />
-				<Typography variant="caption">Click to set pin</Typography>
-			</Box>
+			{!readOnly && (
+				<Box
+					sx={{
+						position: "absolute",
+						top: 10,
+						left: "50%",
+						transform: "translateX(-50%)",
+						zIndex: 1000,
+						bgcolor: "rgba(0,0,0,0.55)",
+						color: "#fff",
+						px: 1.5,
+						py: 0.5,
+						borderRadius: 5,
+						display: "flex",
+						alignItems: "center",
+						gap: 0.5,
+						pointerEvents: "none",
+					}}
+				>
+					<MyLocationIcon sx={{ fontSize: 14 }} />
+					<Typography variant="caption">Click to set pin</Typography>
+				</Box>
+			)}
 
-			<MapContainer center={position} zoom={13} style={{ height: "100%", width: "100%" }} scrollWheelZoom={true}>
+			<MapContainer center={position} zoom={13} style={{ height: "100%", width: "100%", zIndex: 1 }} scrollWheelZoom={true}>
 				<TileLayer attribution='&copy; <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>' url="https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png" />
-				<ClickHandler onChange={onChange} />
+				<MapSizeFixer />
+				{!readOnly && <ClickHandler onChange={onChange} />}
 				<Recenter lat={lat} lng={lng} />
 				{lat && lng && <Marker position={[lat, lng] as LatLngExpression} />}
 			</MapContainer>
