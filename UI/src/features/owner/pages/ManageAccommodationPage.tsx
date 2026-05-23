@@ -15,6 +15,7 @@ import { ManageGalleryCard } from "../components/dashboard/gallery/ManageGallery
 import { ManageReviewsCard } from "../components/dashboard/reviews/ManageReviewsCard";
 import { ManagePricingRulesCard } from "../components/dashboard/pricing/ManagePricingRulesCard";
 import { ManageHolidayPricingCard } from "../components/dashboard/pricing/ManageHolidayPricingCard";
+import { MassUpdateFloorPriceCard } from "../components/dashboard/pricing/MassUpdateFloorPriceCard";
 
 export default function ManageAccommodationPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
@@ -140,6 +141,7 @@ export default function ManageAccommodationPage() {
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 						<ManagePricingRulesCard accommodationId={accommodationId!} initialSettings={accommodation.dynamicPricingSettings ?? null} />
 						<ManageHolidayPricingCard accommodationId={accommodationId!} initialOptIns={accommodation.holidayOptIns ?? []} />
+						<MassUpdateFloorPriceCard accommodationId={accommodationId!} rooms={accommodation.rooms as any} />
 					</Box>
 				)}
 
