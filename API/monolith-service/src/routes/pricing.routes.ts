@@ -40,6 +40,10 @@ class PricingRouter {
 		this.router.put("/owners/me/holidays", ...ownerGuard, (req: Request, res: Response) => {
 			return this.pricingController.replaceOwnerHolidays(req, res);
 		});
+
+		this.router.post("/owners/me/sync-accommodations", ...ownerGuard, (req: Request, res: Response) => {
+			return this.pricingController.syncAllAccommodations(req, res);
+		});
 	}
 }
 

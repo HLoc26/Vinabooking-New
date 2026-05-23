@@ -71,6 +71,16 @@ class PricingController {
 		}
 	}
 
+	public async syncAllAccommodations(req: Request, res: Response) {
+		try {
+			const userId = req.userId!;
+			const data = await this.#ownerPricingService.forceApplyGlobalSettingsToAll(userId);
+			return ResponseHelper.success(res, data);
+		} catch (err) {
+			return this.#handle(err, res);
+		}
+	}
+
 	// ----- Quote (Phase 5 endpoint, controller method ready) -----
 
 	public async quote(req: Request, res: Response) {
