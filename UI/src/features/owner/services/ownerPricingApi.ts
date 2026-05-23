@@ -43,6 +43,12 @@ export const syncAllAccommodations = async () =>
 		return r.data.data;
 	});
 
+export const syncAccommodationFloorPrices = async (accommodationId: string, rule: { percent: number; minAmount: number }) =>
+	apiClient.post<ApiResponse<{ updatedCount: number }>>(`/pricing/accommodations/${accommodationId}/sync-floor-prices`, rule).then((r) => {
+		if (!r.data.success || !r.data.data) throw new Error(r.data.error || "Failed to sync floor prices");
+		return r.data.data;
+	});
+
 // Per-accommodation settings (edit endpoint — backend ready in this PR; FE-side edit page is teammate's scope)
 export const updateAccommodationPricingSettings = async (
 	accommodationId: string,
