@@ -37,6 +37,12 @@ export const replaceOwnerHolidays = async (items: HolidayOptIn[]) =>
 		return r.data.data;
 	});
 
+export const syncAllAccommodations = async () =>
+	apiClient.post<ApiResponse<{ updatedCount: number }>>("/pricing/owners/me/sync-accommodations").then((r) => {
+		if (!r.data.success || !r.data.data) throw new Error(r.data.error || "Failed to sync accommodations");
+		return r.data.data;
+	});
+
 // Per-accommodation settings (edit endpoint — backend ready in this PR; FE-side edit page is teammate's scope)
 export const updateAccommodationPricingSettings = async (
 	accommodationId: string,
