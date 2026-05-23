@@ -1,16 +1,27 @@
 import { NotFoundError } from "@/errors";
+import type { PrismaClient } from "@/generated/client";
+import AccommodationRepository from "@/repositories/accommodation.repository";
 import HolidayRepository from "@/repositories/holiday.repository";
 import OwnerRepository from "@/repositories/owner.repository";
 import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
 import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
 
 class OwnerPricingService {
+	readonly #prismaClient: PrismaClient;
 	readonly #ownerRepository: OwnerRepository;
 	readonly #holidayRepository: HolidayRepository;
+	readonly #accommodationRepository: AccommodationRepository;
 
-	constructor(ownerRepository: OwnerRepository, holidayRepository: HolidayRepository) {
+	constructor(
+		prismaClient: PrismaClient,
+		ownerRepository: OwnerRepository,
+		holidayRepository: HolidayRepository,
+		accommodationRepository: AccommodationRepository
+	) {
+		this.#prismaClient = prismaClient;
 		this.#ownerRepository = ownerRepository;
 		this.#holidayRepository = holidayRepository;
+		this.#accommodationRepository = accommodationRepository;
 	}
 
 	private async resolveOwnerProfileId(userId: string): Promise<string> {
@@ -67,6 +78,37 @@ class OwnerPricingService {
 			postDays: r.postDays,
 			enabled: r.enabled,
 		}));
+	}
+
+	/**
+	 * Force-apply owner-wide settings to all existing accommodations.
+	 * IRREVERSIBLE ACTION.
+	 */
+	public async forceApplyGlobalSettingsToAll(userId: string) {
+		const ownerProfileId = await this.resolveOwnerProfileId(userId);
+		const globalSettings = await this.#ownerRepository.getDynamicPricingSettings(ownerProfileId);
+		const globalHolidays = await this.#holidayRepository.findByOwner(ownerProfileId);
+
+		const accommodations = await this.#accommodationRepository.findAllByOwnerId(userId);
+
+		await this.#prismaClient.$transaction(async (tx) => {
+			for (const acc of accommodations) {
+				// 1. Sync Dynamic Pricing Settings (JSON)
+				await this.#accommodationRepository.updatePricingSettings(acc.id, globalSettings);
+
+				// 2. Sync Holiday Opt-ins (Rows)
+				const optIns: HolidayOptIn[] = globalHolidays.map((h) => ({
+					holidayCode: h.holidayCode,
+					priceMultiplier: Number(h.priceMultiplier),
+					preDays: h.preDays,
+					postDays: h.postDays,
+					enabled: h.enabled,
+				}));
+				await this.#holidayRepository.replaceForAccommodation(acc.id, optIns, tx);
+			}
+		});
+
+		return { updatedCount: accommodations.length };
 	}
 }
 

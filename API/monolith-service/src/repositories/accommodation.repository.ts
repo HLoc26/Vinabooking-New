@@ -214,6 +214,12 @@ class AccommodationRepository {
 		});
 	}
 
+	public async findAllByOwnerId(ownerId: string) {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			select: { id: true },
+		});
+	}
 
 	public async checkOwnership(id: string, ownerId: string): Promise<boolean> {
 		const count = await this.#prismaClient.accommodation.count({
@@ -324,6 +330,7 @@ class AccommodationRepository {
 						},
 					},
 				},
+				holidayOptIns: true,
 			},
 		});
 	}
