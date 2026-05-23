@@ -6,20 +6,31 @@ export const MAX_PRICE = 100000000; // 100 Million VND
 export const validateRoomForSave = (room: RoomForm, rentalType: ERentalType, accommodationType: EAccommodationType): { isValid: boolean; errors: string[] } => {
 	const isEntirePlace = rentalType === "ENTIRE_PLACE" ? true : false;
 	const nameToCheck = (isEntirePlace ? accommodationType : room.name)?.trim();
-	const priceToCheck = Number(room.price);
+	
+	const basePrice = Number(room.basePrice ?? room.price);
+	const floorPrice = Number(room.floorPrice ?? basePrice);
 
 	const errors: string[] = [];
 
 	// Name
 	if (!nameToCheck) errors.push("room name is required");
 
-	// Price
-	if (isNaN(priceToCheck) || priceToCheck <= 0) {
+	// Base Price
+	if (isNaN(basePrice) || basePrice <= 0) {
 		errors.push("room price is required");
-	} else if (priceToCheck < 1000) {
+	} else if (basePrice < 1000) {
 		errors.push("room price must be at least 1,000 VND");
-	} else if (priceToCheck > MAX_PRICE) {
+	} else if (basePrice > MAX_PRICE) {
 		errors.push("room price exceeds 100,000,000 VND");
+	}
+
+	// Floor Price
+	if (!isNaN(floorPrice)) {
+		if (floorPrice < 0) {
+			errors.push("floor price cannot be negative");
+		} else if (floorPrice > basePrice) {
+			errors.push("floor price cannot exceed base price");
+		}
 	}
 
 	// Guest capacity

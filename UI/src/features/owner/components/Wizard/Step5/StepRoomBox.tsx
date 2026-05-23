@@ -71,6 +71,10 @@ function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardF
 		quantity: b.quantity ?? 1,
 	}));
 
+	const base = Number(room.basePrice ?? room.price) || 0;
+	// Use explicit floorPrice if set, otherwise default to basePrice.
+	const floor = Number(room.floorPrice ?? base) || 0;
+
 	return {
 		name: isEntirePlace ? formattedName : room.name,
 		description: room.description || undefined,
@@ -82,9 +86,8 @@ function toRoomDTO(room: RoomForm, amenities: AmenityConfigForm[], form: WizardF
 		bathroomCount: room.bathroomCount || 0,
 		viewType: toEViewType(room.viewType),
 		viewDescription: room.viewDescription || undefined,
-		basePrice: Number(room.price) || 0,
-		// Default floor = base on create; owner will lower it later from Settings notice / Manage page.
-		floorPrice: Number(room.price) || 0,
+		basePrice: base,
+		floorPrice: floor,
 		pricingType: toEPricingType(room.pricingType),
 		isActive: true,
 		beds: mappedBeds,

@@ -1,5 +1,6 @@
 import * as React from "react";
-import { Box, MenuItem, TextField } from "@mui/material";
+import { Box, MenuItem, TextField, Typography, Alert, AlertTitle } from "@mui/material";
+import { InfoOutlined } from "@mui/icons-material";
 import type { RoomForm } from "../../../types/owner.types";
 import { PRICING_TYPES, VIEW_TYPES } from "../../../const/RoomConst";
 import NumberField from "../../../../../components/shared/NumberField";
@@ -17,16 +18,31 @@ export function CommonFields({
 	viewDisabled: boolean;
 	onValidationChange?: (state: { disableSave: boolean; disableNext: boolean }) => void;
 }) {
-	const handlePriceChange = (val: number | null) => {
-		set("price", Math.max(val ?? 0, 0));
+	const handleBasePriceChange = (val: number | null) => {
+		const nextBase = Math.max(val ?? 0, 0);
+		set("basePrice", nextBase);
+		set("price", nextBase); // keep for compatibility
+		
+		// Ensure floor doesn't exceed new base
+		if ((draft.floorPrice ?? 0) > nextBase) {
+			set("floorPrice", nextBase);
+		}
 	};
 
-	const priceValue = draft.price ?? 0;
+	const handleFloorPriceChange = (val: number | null) => {
+		const nextFloor = Math.max(val ?? 0, 0);
+		const base = draft.basePrice ?? draft.price ?? 0;
+		set("floorPrice", Math.min(nextFloor, base));
+	};
 
-	const isPriceOverMax = priceValue > MAX_PRICE;
-	const isPriceUnderMin = priceValue > 0 && priceValue < 1000;
-	const isPriceZeroOrNeg = priceValue < 0;
-	const isInvalid = isPriceOverMax || isPriceUnderMin || isPriceZeroOrNeg;
+	const basePrice = draft.basePrice ?? draft.price ?? 0;
+	const floorPrice = draft.floorPrice ?? basePrice;
+
+	const isPriceOverMax = basePrice > MAX_PRICE;
+	const isPriceUnderMin = basePrice > 0 && basePrice < 1000;
+	const isPriceZeroOrNeg = basePrice < 0;
+	const isFloorInvalid = floorPrice > basePrice;
+	const isInvalid = isPriceOverMax || isPriceUnderMin || isPriceZeroOrNeg || isFloorInvalid;
 
 	const disableSave = isInvalid;
 	const disableNext = isInvalid;
@@ -40,7 +56,7 @@ export function CommonFields({
 
 	return (
 		<Box display="flex" flexDirection="column" gap={4}>
-			{/* Row 1 */}
+			{/* Row 1: View */}
 			<Box display="grid" gridTemplateColumns="1.2fr 1.8fr" gap={3}>
 				<TextField select label="View Type" value={draft.viewType} onChange={(e) => set("viewType", e.target.value)} fullWidth>
 					{VIEW_TYPES.map((t) => (
@@ -61,12 +77,21 @@ export function CommonFields({
 				/>
 			</Box>
 
-			{/* Row 2 */}
-			<Box display="grid" gridTemplateColumns="1fr 1fr" gap={3} alignItems="flex-start">
+			{/* Row 2: Pricing Logic */}
+			<Box display="grid" gridTemplateColumns="1fr 1fr 1fr" gap={3} alignItems="flex-start">
 				<Box>
-					<NumberField label="Price" suffix="VND" value={priceValue} onValueChange={handlePriceChange} max={MAX_PRICE} min={0} />
+					<NumberField label="Base Price" suffix="VND" value={basePrice} onValueChange={handleBasePriceChange} max={MAX_PRICE} min={0} />
 				</Box>
-
+				<Box>
+					<NumberField 
+						label="Floor Price" 
+						suffix="VND" 
+						value={floorPrice} 
+						onValueChange={handleFloorPriceChange} 
+						max={basePrice} 
+						min={0}
+					/>
+				</Box>
 				<TextField
 					select
 					label="Pricing Type"
@@ -87,7 +112,23 @@ export function CommonFields({
 				</TextField>
 			</Box>
 
-			{/* Row 3 */}
+			{/* Floor Price Info Alert */}
+			<Alert 
+				severity="info" 
+				icon={<InfoOutlined fontSize="small" />}
+				sx={{ 
+					bgcolor: "rgba(2, 136, 209, 0.05)", 
+					border: "1px solid rgba(2, 136, 209, 0.2)",
+					"& .MuiAlert-message": { width: "100%" }
+				}}
+			>
+				<AlertTitle sx={{ fontSize: "0.85rem", fontWeight: 700, mb: 0.5 }}>About Floor Price</AlertTitle>
+				<Typography variant="caption" color="text.secondary" sx={{ display: "block", lineHeight: 1.4 }}>
+					The <strong>Floor Price</strong> acts as a safety net. Even if multiple discounts (like Early Bird + Long Stay) or custom multipliers apply, the system will <strong>never</strong> price this room below this amount. This ensures your margins are protected during peak promotion periods.
+				</Typography>
+			</Alert>
+
+			{/* Row 3: Description */}
 			<TextField
 				fullWidth
 				label="Description"
