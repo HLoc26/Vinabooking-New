@@ -8,28 +8,47 @@ type HolidaySeed = {
 	isRecurring: boolean;
 };
 
-// Recurring Gregorian holidays — stored under year 2000, matched by MM-DD.
+// Recurring Gregorian holidays — same date every year.
 const RECURRING: HolidaySeed[] = [
-	{ name: "Tết Dương Lịch", code: "NEW_YEAR", date: "2000-01-01", isRecurring: true },
-	{ name: "Giỗ Tổ Hùng Vương", code: "HUNG_KINGS", date: "2000-04-10", isRecurring: true },
-	{ name: "Ngày Giải Phóng Miền Nam", code: "LIBERATION", date: "2000-04-30", isRecurring: true },
-	{ name: "Quốc Tế Lao Động", code: "LABOR_DAY", date: "2000-05-01", isRecurring: true },
-	{ name: "Quốc Khánh", code: "NATIONAL_DAY", date: "2000-09-02", isRecurring: true },
+	{ name: "New Year's Day", code: "NEW_YEAR", date: "2000-01-01", isRecurring: true },
+	{ name: "Reunification Day", code: "LIBERATION", date: "2000-04-30", isRecurring: true },
+	{ name: "Labor Day", code: "LABOR_DAY", date: "2000-05-01", isRecurring: true },
+	{ name: "National Day", code: "NATIONAL_DAY", date: "2000-09-02", isRecurring: true },
 ];
 
-// Lunar New Year (Tết Âm Lịch) — Seed only the ANCHOR date (Mùng 1).
-// Windows (Pre/Post) are configured by the owner in the UI.
-const LUNAR_NEW_YEAR: HolidaySeed[] = [
-	{ name: "Tết Nguyên Đán 2026", code: "TET", date: "2026-02-17", isRecurring: false },
-	{ name: "Tết Nguyên Đán 2027", code: "TET", date: "2027-02-06", isRecurring: false },
-	{ name: "Tết Nguyên Đán 2028", code: "TET", date: "2028-01-26", isRecurring: false },
-	{ name: "Tết Nguyên Đán 2029", code: "TET", date: "2029-02-13", isRecurring: false },
-	{ name: "Tết Nguyên Đán 2030", code: "TET", date: "2030-02-03", isRecurring: false },
+// Lunar Holidays — Gregorian dates shift annually. 
+// We seed anchors for the next 10 years to ensure "automatic" accuracy.
+const LUNAR_ANCHORS: HolidaySeed[] = [
+	// --- Tết Nguyên Đán (1/1 Lunar) ---
+	{ name: "Lunar New Year 2025", code: "TET", date: "2025-01-29", isRecurring: false },
+	{ name: "Lunar New Year 2026", code: "TET", date: "2026-02-17", isRecurring: false },
+	{ name: "Lunar New Year 2027", code: "TET", date: "2027-02-06", isRecurring: false },
+	{ name: "Lunar New Year 2028", code: "TET", date: "2028-01-26", isRecurring: false },
+	{ name: "Lunar New Year 2029", code: "TET", date: "2029-02-13", isRecurring: false },
+	{ name: "Lunar New Year 2030", code: "TET", date: "2030-02-03", isRecurring: false },
+	{ name: "Lunar New Year 2031", code: "TET", date: "2031-01-23", isRecurring: false },
+	{ name: "Lunar New Year 2032", code: "TET", date: "2032-02-11", isRecurring: false },
+	{ name: "Lunar New Year 2033", code: "TET", date: "2033-01-31", isRecurring: false },
+	{ name: "Lunar New Year 2034", code: "TET", date: "2034-02-19", isRecurring: false },
+	{ name: "Lunar New Year 2035", code: "TET", date: "2035-02-08", isRecurring: false },
+
+	// --- Giỗ Tổ Hùng Vương (10/3 Lunar) ---
+	{ name: "Hung Kings' Festival 2025", code: "HUNG_KINGS", date: "2025-04-07", isRecurring: false },
+	{ name: "Hung Kings' Festival 2026", code: "HUNG_KINGS", date: "2026-04-26", isRecurring: false },
+	{ name: "Hung Kings' Festival 2027", code: "HUNG_KINGS", date: "2027-04-15", isRecurring: false },
+	{ name: "Hung Kings' Festival 2028", code: "HUNG_KINGS", date: "2028-05-04", isRecurring: false },
+	{ name: "Hung Kings' Festival 2029", code: "HUNG_KINGS", date: "2029-04-22", isRecurring: false },
+	{ name: "Hung Kings' Festival 2030", code: "HUNG_KINGS", date: "2030-04-12", isRecurring: false },
+	{ name: "Hung Kings' Festival 2031", code: "HUNG_KINGS", date: "2031-05-01", isRecurring: false },
+	{ name: "Hung Kings' Festival 2032", code: "HUNG_KINGS", date: "2032-04-19", isRecurring: false },
+	{ name: "Hung Kings' Festival 2033", code: "HUNG_KINGS", date: "2033-04-09", isRecurring: false },
+	{ name: "Hung Kings' Festival 2034", code: "HUNG_KINGS", date: "2034-04-27", isRecurring: false },
+	{ name: "Hung Kings' Festival 2035", code: "HUNG_KINGS", date: "2035-04-16", isRecurring: false },
 ];
 
 async function seedHolidays() {
-	const all = [...RECURRING, ...LUNAR_NEW_YEAR];
-	console.log(`Seeding ${all.length} holiday anchors…`);
+	const all = [...RECURRING, ...LUNAR_ANCHORS];
+	console.log(`Seeding ${all.length} holiday anchors (${RECURRING.length} recurring, ${LUNAR_ANCHORS.length} shifting Lunar)…`);
 
 	let inserted = 0;
 	let skipped = 0;
