@@ -68,9 +68,16 @@ function canonicalize(obj: unknown): string {
 	if (obj === null || typeof obj !== "object") {
 		return JSON.stringify(obj);
 	}
+
+	// Handle objects with toJSON method (Date, Prisma.Decimal, etc.)
+	if (typeof (obj as any).toJSON === "function") {
+		return JSON.stringify((obj as any).toJSON());
+	}
+
 	if (Array.isArray(obj)) {
 		return "[" + obj.map((x) => canonicalize(x)).join(",") + "]";
 	}
+
 	const keys = Object.keys(obj as Record<string, unknown>).sort();
 	return (
 		"{" +
