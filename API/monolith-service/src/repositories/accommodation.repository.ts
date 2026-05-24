@@ -230,33 +230,43 @@ class AccommodationRepository {
 		holidays: { holidayCode: string; priceMultiplier: number; preDays: number; postDays: number; enabled: boolean }[]
 	) {
 		const accommodations = await this.findAllByOwnerId(ownerId);
+		const accIds = accommodations.map((a) => a.id);
+
+		if (accIds.length === 0) return { updatedCount: 0 };
+
 		const settingsValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
 			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
 
 		return await this.#prismaClient.$transaction(async (tx) => {
-			for (const acc of accommodations) {
-				// 1. Update JSON settings
-				await tx.accommodation.update({
-					where: { id: acc.id },
-					data: { dynamicPricingSettings: settingsValue },
-				});
+			// 1. Bulk update JSON settings
+			await tx.accommodation.updateMany({
+				where: { id: { in: accIds } },
+				data: { dynamicPricingSettings: settingsValue },
+			});
 
-				// 2. Update Holiday Opt-ins
-				await tx.accommodationHoliday.deleteMany({ where: { accommodationId: acc.id } });
-				if (holidays.length > 0) {
-					await tx.accommodationHoliday.createMany({
-						data: holidays.map((h) => ({
-							accommodationId: acc.id,
-							holidayCode: h.holidayCode,
-							priceMultiplier: new Prisma.Decimal(h.priceMultiplier),
-							preDays: h.preDays,
-							postDays: h.postDays,
-							enabled: h.enabled,
-						})),
-					});
-				}
+			// 2. Bulk remove old holiday opt-ins
+			await tx.accommodationHoliday.deleteMany({
+				where: { accommodationId: { in: accIds } },
+			});
+
+			// 3. Bulk insert new holiday opt-ins for all accommodations
+			if (holidays.length > 0) {
+				const batchData = accIds.flatMap((accId) =>
+					holidays.map((h) => ({
+						accommodationId: accId,
+						holidayCode: h.holidayCode,
+						priceMultiplier: new Prisma.Decimal(h.priceMultiplier),
+						preDays: h.preDays,
+						postDays: h.postDays,
+						enabled: h.enabled,
+					}))
+				);
+				await tx.accommodationHoliday.createMany({
+					data: batchData,
+				});
 			}
-			return { updatedCount: accommodations.length };
+
+			return { updatedCount: accIds.length };
 		});
 	}
 
