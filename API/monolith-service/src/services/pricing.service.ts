@@ -149,21 +149,32 @@ class PricingService {
 				const config = configByCode.get(anchor.code);
 				if (!config) continue;
 
-				let anchorMs: number;
 				if (anchor.isRecurring) {
-					// Map recurring year 2000 anchor to the current night's year.
-					anchorMs = ymdToHcmMidnightUtc(`${nightYear}-${ymdMmDd(toHcmYmd(anchor.date))}`).getTime();
+					// For recurring holidays, check the anchor in the previous, current, and next years
+					// to ensure pre/post windows are correctly captured across year boundaries.
+					const anchorMmDd = ymdMmDd(toHcmYmd(anchor.date));
+					const candidateYears = [nightYear - 1, nightYear, nightYear + 1];
+
+					for (const yr of candidateYears) {
+						const anchorMs = ymdToHcmMidnightUtc(`${yr}-${anchorMmDd}`).getTime();
+						const startRange = anchorMs - config.preDays * DAY_MS;
+						const endRange = anchorMs + config.postDays * DAY_MS;
+
+						if (nightMs >= startRange && nightMs <= endRange) {
+							if (config.priceMultiplier.greaterThan(highestMultiplier)) {
+								highestMultiplier = config.priceMultiplier;
+							}
+						}
+					}
 				} else {
-					anchorMs = anchor.date.getTime();
-				}
+					const anchorMs = anchor.date.getTime();
+					const startRange = anchorMs - config.preDays * DAY_MS;
+					const endRange = anchorMs + config.postDays * DAY_MS;
 
-				const startRange = anchorMs - config.preDays * DAY_MS;
-				const endRange = anchorMs + config.postDays * DAY_MS;
-
-				if (nightMs >= startRange && nightMs <= endRange) {
-					// Night falls in window! If multiple holidays overlap, the highest multiplier wins.
-					if (config.priceMultiplier.greaterThan(highestMultiplier)) {
-						highestMultiplier = config.priceMultiplier;
+					if (nightMs >= startRange && nightMs <= endRange) {
+						if (config.priceMultiplier.greaterThan(highestMultiplier)) {
+							highestMultiplier = config.priceMultiplier;
+						}
 					}
 				}
 			}
