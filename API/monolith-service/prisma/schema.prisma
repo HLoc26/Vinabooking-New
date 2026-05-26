@@ -225,6 +225,8 @@ model Accommodation {
     address   Address? @relation(fields: [addressId], references: [id])
     addressId String?  @unique @db.VarChar(191)
 
+    policy                       AccommodationPolicy?
+
     facilities                   FacilityConfig[]
     rooms                        Room[]
     reviews                      Review[]
@@ -234,6 +236,54 @@ model Accommodation {
     @@index([rentalType])
     @@index([ownerId])
     @@map("accommodations")
+}
+
+// Policy
+
+enum EPrepaymentPolicy {
+    PREPAY_100
+    PREPAY_50
+    PREPAY_NONE
+}
+
+enum ECancellationPolicy {
+    CANCEL_24H
+    CANCEL_48H
+    CANCEL_7D
+    CANCEL_14D
+    CANCEL_NONE
+}
+
+model AccommodationPolicy {
+    id String @id @default(uuid())
+
+    // Relation 1-1 to Accommodation
+    accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+    accommodationId String        @unique @db.VarChar(191)
+
+    // 1. Timing
+    checkInTime  String? @db.VarChar(5)
+    checkOutTime String? @db.VarChar(5)
+
+    // 2. Cancellation & Prepayment Policy
+    prepaymentPolicy        EPrepaymentPolicy   @default(PREPAY_100)
+    cancellationPolicy      ECancellationPolicy @default(CANCEL_24H)
+    cancellationDescription String?             @db.Text
+
+    // 3. House Rules 
+    allowsPets      Boolean @default(false)
+    allowsSmoking   Boolean @default(false)
+    allowsParties   Boolean @default(false)
+    quietHoursStart String? @db.VarChar(5)
+    quietHoursEnd   String? @db.VarChar(5)
+
+    // 4. Custom/Other Rules
+    additionalRules String? @db.Text
+
+    createdAt DateTime @default(now())
+    updatedAt DateTime @updatedAt
+
+    @@map("accommodation_policies")
 }
 
 model Address {
