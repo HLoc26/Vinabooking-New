@@ -1,5 +1,5 @@
 import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO, CreateAccommodationDTO } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO, CreateAccommodationDTO, UpdatePolicyDTO } from "@/types/accommodation.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -13,6 +13,7 @@ class AccommodationRepository {
 			where: { id },
 			include: {
 				address: true,
+				policy: true,
 				facilities: { include: { facility: true } },
 			},
 		});
@@ -21,7 +22,7 @@ class AccommodationRepository {
 	public async findByIdBatch(ids: string[]): Promise<AccommodationWithDetails[]> {
 		const accommodation = await this.#prismaClient.accommodation.findMany({
 			where: { id: { in: ids } },
-			include: { address: true, facilities: { include: { facility: true } } },
+			include: { address: true, policy: true, facilities: { include: { facility: true } } },
 		});
 		return accommodation;
 	}
@@ -234,6 +235,7 @@ class AccommodationRepository {
 			where: { id, ownerId },
 			include: {
 				address: true,
+				policy: true,
 				facilities: {
 					include: { facility: true },
 				},
@@ -318,6 +320,7 @@ class AccommodationRepository {
 			},
 			include: {
 				address: true,
+				policy: true,
 				facilities: {
 					include: { facility: true },
 				},
@@ -331,6 +334,45 @@ class AccommodationRepository {
 						},
 					},
 				},
+			},
+		});
+	}
+
+	public async findPolicyByAccommodationId(accommodationId: string) {
+		return await this.#prismaClient.accommodationPolicy.findUnique({
+			where: { accommodationId },
+		});
+	}
+
+	public async upsertPolicy(accommodationId: string, data: UpdatePolicyDTO) {
+		return await this.#prismaClient.accommodationPolicy.upsert({
+			where: { accommodationId },
+			create: {
+				accommodationId,
+				checkInTime: data.checkInTime,
+				checkOutTime: data.checkOutTime,
+				prepaymentPolicy: data.prepaymentPolicy,
+				cancellationPolicy: data.cancellationPolicy,
+				cancellationDescription: data.cancellationDescription,
+				allowsPets: data.allowsPets ?? false,
+				allowsSmoking: data.allowsSmoking ?? false,
+				allowsParties: data.allowsParties ?? false,
+				quietHoursStart: data.quietHoursStart,
+				quietHoursEnd: data.quietHoursEnd,
+				additionalRules: data.additionalRules,
+			},
+			update: {
+				checkInTime: data.checkInTime,
+				checkOutTime: data.checkOutTime,
+				prepaymentPolicy: data.prepaymentPolicy,
+				cancellationPolicy: data.cancellationPolicy,
+				cancellationDescription: data.cancellationDescription,
+				allowsPets: data.allowsPets,
+				allowsSmoking: data.allowsSmoking,
+				allowsParties: data.allowsParties,
+				quietHoursStart: data.quietHoursStart,
+				quietHoursEnd: data.quietHoursEnd,
+				additionalRules: data.additionalRules,
 			},
 		});
 	}

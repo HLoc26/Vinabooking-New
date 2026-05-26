@@ -14,6 +14,7 @@ import {
 	UpdateAccommodationDTO,
 	UpdateAddressDTO,
 	OwnerAccommodationCard,
+	UpdatePolicyDTO,
 } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
@@ -368,6 +369,10 @@ class AccommodationService {
 			}
 		}
 
+		if (!acc.policy?.checkInTime || !acc.policy?.checkOutTime) {
+			throw new BadRequestError("Cannot publish: Missing operation policies (Check-in/Check-out times).");
+		}
+
 		// ==========================================
 		// PASS VALIDATION
 		// ==========================================
@@ -429,6 +434,23 @@ class AccommodationService {
 
 	public async getCapacityByOwnerId(ownerId: string) {
 		return await this.#accommodationRepository.getRoomsCapacityByOwnerId(ownerId);
+	}
+
+	public async getPolicy(accommodationId: string) {
+		const policy = await this.#accommodationRepository.findPolicyByAccommodationId(accommodationId);
+		if (!policy) throw new NotFoundError("Policy for this accommodation not found");
+		return policy;
+	}
+
+	public async updatePolicy(ownerId: string, id: string, data: UpdatePolicyDTO) {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		const updatedPolicy = await this.#accommodationRepository.upsertPolicy(id, data);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return updatedPolicy;
 	}
 }
 

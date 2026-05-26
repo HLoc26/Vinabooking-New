@@ -1,4 +1,4 @@
-import { Prisma, type EAccommodationType, type ERentalType, type EAccommodationStatus } from "@/generated/client";
+import { Prisma, type EAccommodationType, type ERentalType, type EAccommodationStatus, type EPrepaymentPolicy, type ECancellationPolicy } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
 
@@ -17,6 +17,7 @@ export enum ESortOption {
 export type AccommodationWithDetails = Prisma.AccommodationGetPayload<{
 	include: {
 		address: true;
+		policy: true;
 		facilities: {
 			include: {
 				facility: true;
@@ -131,4 +132,20 @@ export interface UpdateAddressDTO {
 	longitude?: number;
 	fullAddress: string;
 	placeId?: string;
+}
+
+// POLICY DOMAIN DTOs
+
+export interface UpdatePolicyDTO {
+	checkInTime: string;
+	checkOutTime: string;
+	prepaymentPolicy: EPrepaymentPolicy;
+	cancellationPolicy: ECancellationPolicy;
+	cancellationDescription?: string;
+	allowsPets?: boolean;
+	allowsSmoking?: boolean;
+	allowsParties?: boolean;
+	quietHoursStart?: string;
+	quietHoursEnd?: string;
+	additionalRules?: string;
 }
