@@ -155,6 +155,7 @@ class AccommodationRepository {
 			where: { ownerId },
 			include: {
 				address: true,
+				policy: true,
 				_count: { select: { rooms: true, reviews: true } },
 				facilities: { include: { facility: true } },
 			},
@@ -167,6 +168,7 @@ class AccommodationRepository {
 			where: { ownerId, status: "DRAFT" },
 			include: {
 				address: true,
+				policy: true,
 				facilities: { include: { facility: true } },
 				rooms: true,
 			},
@@ -218,6 +220,7 @@ class AccommodationRepository {
 			},
 			include: {
 				address: true,
+				policy: true,
 				facilities: { include: { facility: true } },
 			},
 		});

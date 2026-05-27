@@ -15,6 +15,7 @@ import {
 	CreateRoomRequest,
 	UpdateRoomRequest,
 	DeleteRoomRequest,
+	GetPolicyRequest,
 	UpdatePolicyRequest,
 } from "@/types/requests";
 
@@ -107,7 +108,7 @@ class OwnerRouter {
 		});
 
 		this.router.get("/accommodations/:id/policy", onlyOwnerGuard, (req: Request, res: Response) => {
-			return this.accommodationController.getPolicy(req, res);
+			return this.accommodationController.getPolicy(req as GetPolicyRequest, res);
 		});
 
 		this.router.put("/accommodations/:id/policy", onlyOwnerGuard, (req: Request, res: Response) => {

@@ -58,4 +58,5 @@ export type UpdateStatusRequest = Request<{ id: string }, unknown, UpdateStatusD
 export type UpdateAddressRequest = Request<{ id: string }, unknown, UpdateAddressDTO>;
 
 // Policy
+export type GetPolicyRequest = Request<{ id: string }>;
 export type UpdatePolicyRequest = Request<{ id: string }, unknown, UpdatePolicyDTO>;
