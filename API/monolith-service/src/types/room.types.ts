@@ -1,5 +1,6 @@
 import { Prisma, type EViewType, type EPricingType, type EBedType } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
+import type { QuoteItemPricing } from "./pricing.types";
 
 export interface RoomFilterOptions {
 	minPrice?: number;
@@ -25,6 +26,7 @@ export type AmenityConfigWithDetails = Prisma.AmenityConfigGetPayload<{
 export type RoomFullDetail = RoomWithDetails & {
 	remainingQuantity: number;
 	images: ImageFullInfo[];
+	pricing?: QuoteItemPricing;
 };
 
 export interface CreateBedBatchDTO {
@@ -47,7 +49,8 @@ export interface CreateRoomDTO {
 	bathroomCount?: number;
 	viewType?: EViewType;
 	viewDescription?: string;
-	price?: number;
+	basePrice?: number;
+	floorPrice?: number;
 	pricingType?: EPricingType;
 	isActive?: boolean;
 

@@ -8,7 +8,8 @@
 		"build": "npx tsc",
 		"start": "node -r tsconfig-paths/register dist/src/index.js",
 		"sync:pinecone:review": "ts-node -r tsconfig-paths/register src/scripts/sync-review.ts",
-		"sync:pinecone:accomm": "ts-node -r tsconfig-paths/register src/scripts/sync-accommodation.ts"
+		"sync:pinecone:accomm": "ts-node -r tsconfig-paths/register src/scripts/sync-accommodation.ts",
+		"seed:holidays": "ts-node -r tsconfig-paths/register src/scripts/seed-holidays.ts"
 	},
 	"author": "",
 	"license": "ISC",

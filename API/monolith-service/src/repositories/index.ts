@@ -11,3 +11,4 @@ export { default as OwnerRepository } from "./owner.repository";
 export { default as ImageRepository } from "./image.repository";
 export { default as ReviewSummaryRepository } from "./review-summary.repository";
 export { default as PaymentRepository } from "./payment.repository";
+export { default as HolidayRepository } from "./holiday.repository";

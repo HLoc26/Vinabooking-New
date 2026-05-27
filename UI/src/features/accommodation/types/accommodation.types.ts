@@ -104,6 +104,8 @@ export type FacilityConfig = {
 	description: string;
 };
 
+import type { DynamicPricingSettings, HolidayOptIn } from "../../owner/types/pricing.types";
+
 /**
  * Main Accommodation infor interface
  */
@@ -122,6 +124,8 @@ export interface AccommodationDetail {
 	thumbnail: string; // url
 	avgStar: number;
 	reviewCount: number;
+	dynamicPricingSettings?: DynamicPricingSettings | null;
+	holidayOptIns?: HolidayOptIn[];
 }
 
 export type DraftAccommodation = AccommodationDetail & {

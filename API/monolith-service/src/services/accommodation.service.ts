@@ -1,7 +1,10 @@
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
-import { EEntityType, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
+import HolidayRepository from "@/repositories/holiday.repository";
+import OwnerRepository from "@/repositories/owner.repository";
+import prismaClient from "@/clients/prisma.client";
+import { EEntityType, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
 import {
 	SearchQuery,
 	ESortOption,
@@ -13,10 +16,13 @@ import {
 	UpdateFacilitiesDTO,
 	UpdateAccommodationDTO,
 	UpdateAddressDTO,
+	UpdateAccommodationPricingDTO,
 	OwnerAccommodationCard,
 } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
+import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
+import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
 
 import { publishQueue } from "@/clients/queue.client";
 import { PUBLISH_ACCOMMODATION_JOB, type PublishJobData } from "@/types/queue.types";
@@ -26,13 +32,24 @@ class AccommodationService {
 	readonly #roomService: RoomService;
 	readonly #imageService: ImageService;
 	readonly #s3Service: S3Service;
+	readonly #ownerRepository: OwnerRepository;
+	readonly #holidayRepository: HolidayRepository;
 	readonly CACHE_PREFIX = "acc:detail:";
 
-	constructor(accommodationRepository: AccommodationRepository, roomService: RoomService, imageService: ImageService, s3Service: S3Service) {
+	constructor(
+		accommodationRepository: AccommodationRepository,
+		roomService: RoomService,
+		imageService: ImageService,
+		s3Service: S3Service,
+		ownerRepository: OwnerRepository,
+		holidayRepository: HolidayRepository
+	) {
 		this.#accommodationRepository = accommodationRepository;
 		this.#roomService = roomService;
 		this.#imageService = imageService;
 		this.#s3Service = s3Service;
+		this.#ownerRepository = ownerRepository;
+		this.#holidayRepository = holidayRepository;
 	}
 
 	private async _getBaseAccommodations(ids: string[]): Promise<Map<string, AccommodationWithDetails>> {
@@ -290,10 +307,86 @@ class AccommodationService {
 		});
 	}
 
-	async createAccommodation(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
-		const newAccommodation = await this.#accommodationRepository.create(ownerId, data);
+	async createAccommodation(userId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
+		// Resolve owner profile (needed for dynamic-pricing inheritance).
+		const ownerProfile = await this.#ownerRepository.findProfileByUserId(userId);
+		if (!ownerProfile) throw new BadRequestError("Owner profile not found");
 
-		return await this.getAccommodationById(newAccommodation.id);
+		// Tri-state dynamicPricingSettings:
+		//   undefined → inherit owner defaults
+		//   null      → opt-out (no dynamic pricing)
+		//   object    → validate + use
+		let resolvedSettings: DynamicPricingSettings | null;
+		if (data.dynamicPricingSettings === undefined) {
+			resolvedSettings = (ownerProfile.dynamicPricingSettings as DynamicPricingSettings | null) ?? null;
+		} else if (data.dynamicPricingSettings === null) {
+			resolvedSettings = null;
+		} else {
+			validateDynamicPricingSettings(data.dynamicPricingSettings);
+			resolvedSettings = data.dynamicPricingSettings;
+		}
+
+		// Tri-state holiday opt-ins:
+		//   undefined → snapshot OwnerHoliday rows
+		//   null      → opt-out (no holiday markups)
+		//   array     → validate + use
+		const holidayMode: "inherit" | "none" | "explicit" =
+			data.holidayOptIns === undefined ? "inherit" : data.holidayOptIns === null ? "none" : "explicit";
+		if (holidayMode === "explicit") validateHolidayOptIns(data.holidayOptIns as HolidayOptIn[]);
+
+		const newAccommodationId = await prismaClient.$transaction(async (tx) => {
+			const settingsValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+				resolvedSettings === null ? Prisma.JsonNull : (resolvedSettings as Prisma.InputJsonValue);
+
+			const created = await tx.accommodation.create({
+				data: {
+					name: data.name,
+					description: data.description,
+					type: data.type,
+					rentalType: data.rentalType,
+					status: "DRAFT",
+					dynamicPricingSettings: settingsValue,
+					owner: { connect: { id: userId } },
+				},
+				select: { id: true },
+			});
+
+			if (holidayMode === "inherit") {
+				await this.#holidayRepository.snapshotOwnerToAccommodation(ownerProfile.id, created.id, tx);
+			} else if (holidayMode === "explicit") {
+				await this.#holidayRepository.replaceForAccommodation(created.id, data.holidayOptIns as HolidayOptIn[], tx);
+			}
+
+			return created.id;
+		});
+
+		return await this.getAccommodationById(newAccommodationId);
+	}
+
+	async updatePricingSettings(userId: string, id: string, data: UpdateAccommodationPricingDTO): Promise<AccommodationFullInfo> {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, userId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		if (data.dynamicPricingSettings !== undefined) {
+			validateDynamicPricingSettings(data.dynamicPricingSettings);
+			await this.#accommodationRepository.updatePricingSettings(id, data.dynamicPricingSettings ?? null);
+		}
+
+		if (data.holidayOptIns !== undefined) {
+			if (data.holidayOptIns === null) {
+				await this.#holidayRepository.replaceForAccommodation(id, []);
+			} else {
+				validateHolidayOptIns(data.holidayOptIns);
+				await this.#holidayRepository.replaceForAccommodation(id, data.holidayOptIns);
+			}
+		}
+
+		// Spec §2.4 mentions `room:{id}` cache keys, but no code writes them today.
+		// Bust the accommodation-detail cache only — re-add per-room invalidation
+		// at the same site if/when a room-level cache is introduced.
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		return await this.getAccommodationById(id);
 	}
 
 	async updateFacilities(ownerId: string, id: string, data: UpdateFacilitiesDTO): Promise<AccommodationFullInfo> {
@@ -357,8 +450,11 @@ class AccommodationService {
 
 		// 3. Quét từng phòng để đảm bảo tính toàn vẹn dữ liệu
 		for (const room of acc.rooms) {
-			if (!room.price || Number(room.price) <= 0) {
-				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid price greater than 0.`);
+			if (!room.basePrice || Number(room.basePrice) <= 0) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid base price greater than 0.`);
+			}
+			if (Number(room.floorPrice) > Number(room.basePrice)) {
+				throw new BadRequestError(`Cannot publish: Room '${room.name}' floor price must be ≤ base price.`);
 			}
 			if (!room.quantity || room.quantity <= 0) {
 				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid quantity.`);

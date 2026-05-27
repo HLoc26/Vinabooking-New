@@ -1,5 +1,6 @@
 import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO, CreateAccommodationDTO } from "@/types/accommodation.types";
+import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/types/accommodation.types";
+import type { DynamicPricingSettings } from "@/types/pricing.types";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -127,7 +128,7 @@ class AccommodationRepository {
                 (
                     SELECT MIN(
                         COALESCE(
-                            CAST(NULLIF(r.price, '') AS DECIMAL(10,2)),
+                            CAST(NULLIF(r.base_price, '') AS DECIMAL(10,2)),
                             (SELECT MIN(CAST(b.price AS DECIMAL(10,2))) FROM ${Prisma.raw(bedTable)} b WHERE b.roomId = r.id)
                         )
                     )
@@ -203,22 +204,69 @@ class AccommodationRepository {
 		});
 	}
 
-	public async create(ownerId: string, data: CreateAccommodationDTO): Promise<AccommodationWithDetails> {
-		return await this.#prismaClient.accommodation.create({
-			data: {
-				name: data.name,
-				description: data.description,
-				type: data.type,
-				rentalType: data.rentalType,
-				status: "DRAFT",
-				owner: {
-					connect: { id: ownerId },
-				},
-			},
-			include: {
-				address: true,
-				facilities: { include: { facility: true } },
-			},
+	public async updatePricingSettings(id: string, settings: DynamicPricingSettings | null) {
+		const value: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+		return await this.#prismaClient.accommodation.update({
+			where: { id },
+			data: { dynamicPricingSettings: value },
+			select: { id: true, dynamicPricingSettings: true },
+		});
+	}
+
+	public async findAllByOwnerId(ownerId: string) {
+		return await this.#prismaClient.accommodation.findMany({
+			where: { ownerId },
+			select: { id: true },
+		});
+	}
+
+	/**
+	 * Force-apply global settings to all accommodations owned by a user.
+	 */
+	public async syncAllWithGlobalSettings(
+		ownerId: string,
+		settings: DynamicPricingSettings | null,
+		holidays: { holidayCode: string; priceMultiplier: number; preDays: number; postDays: number; enabled: boolean }[]
+	) {
+		const accommodations = await this.findAllByOwnerId(ownerId);
+		const accIds = accommodations.map((a) => a.id);
+
+		if (accIds.length === 0) return { updatedCount: 0 };
+
+		const settingsValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
+			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+
+		return await this.#prismaClient.$transaction(async (tx) => {
+			// 1. Bulk update JSON settings
+			await tx.accommodation.updateMany({
+				where: { id: { in: accIds } },
+				data: { dynamicPricingSettings: settingsValue },
+			});
+
+			// 2. Bulk remove old holiday opt-ins
+			await tx.accommodationHoliday.deleteMany({
+				where: { accommodationId: { in: accIds } },
+			});
+
+			// 3. Bulk insert new holiday opt-ins for all accommodations
+			if (holidays.length > 0) {
+				const batchData = accIds.flatMap((accId) =>
+					holidays.map((h) => ({
+						accommodationId: accId,
+						holidayCode: h.holidayCode,
+						priceMultiplier: new Prisma.Decimal(h.priceMultiplier),
+						preDays: h.preDays,
+						postDays: h.postDays,
+						enabled: h.enabled,
+					}))
+				);
+				await tx.accommodationHoliday.createMany({
+					data: batchData,
+				});
+			}
+
+			return { updatedCount: accIds.length };
 		});
 	}
 
@@ -331,6 +379,7 @@ class AccommodationRepository {
 						},
 					},
 				},
+				holidayOptIns: true,
 			},
 		});
 	}

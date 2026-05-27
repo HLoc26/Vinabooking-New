@@ -1,5 +1,5 @@
 import { Box, Typography } from "@mui/material";
-import { InfoOutlined, WeekendOutlined, MeetingRoomOutlined, StarBorderOutlined, PhotoLibraryOutlined } from "@mui/icons-material";
+import { InfoOutlined, WeekendOutlined, MeetingRoomOutlined, StarBorderOutlined, PhotoLibraryOutlined, PriceCheckOutlined } from "@mui/icons-material";
 
 type Props = Readonly<{
 	activeTab: string;
@@ -46,13 +46,19 @@ export const AccommodationTreeMenu = ({ activeTab, onTabChange }: Props) => {
 				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "rooms" ? 600 : 500, userSelect: "none", flexGrow: 1 }}>Rooms</Typography>
 			</Box>
 
-			{/* 4. PHOTO GALLERY */}
+			{/* 4. PRICING */}
+			<Box onClick={() => onTabChange("pricing")} sx={getLeafStyle(activeTab === "pricing")}>
+				<PriceCheckOutlined sx={{ fontSize: 16 }} />
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "pricing" ? 600 : 500, userSelect: "none" }}>Pricing</Typography>
+			</Box>
+
+			{/* 5. PHOTO GALLERY */}
 			<Box onClick={() => onTabChange("gallery")} sx={getLeafStyle(activeTab === "gallery")}>
 				<PhotoLibraryOutlined sx={{ fontSize: 16 }} />
 				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "gallery" ? 600 : 500, userSelect: "none" }}>Photo Gallery</Typography>
 			</Box>
 
-			{/* 5. GUEST REVIEWS */}
+			{/* 6. GUEST REVIEWS */}
 			<Box onClick={() => onTabChange("reviews")} sx={getLeafStyle(activeTab === "reviews")}>
 				<StarBorderOutlined sx={{ fontSize: 16 }} />
 				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "reviews" ? 600 : 500, userSelect: "none" }}>Guest Reviews</Typography>

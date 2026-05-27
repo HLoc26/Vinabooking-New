@@ -273,6 +273,9 @@ export type RoomForm = {
 	viewType: string;
 	viewDescription?: string;
 
+	basePrice?: number;
+	floorPrice?: number;
+	/** @deprecated use basePrice */
 	price?: number;
 	pricingType: string;
 
@@ -301,7 +304,8 @@ export interface UpdateRoomDTO {
 	bathroomCount?: number;
 	viewType?: EViewType;
 	viewDescription?: string;
-	price?: number;
+	basePrice?: number;
+	floorPrice?: number;
 	pricingType?: EPricingType;
 	isActive?: boolean;
 
@@ -345,6 +349,9 @@ export interface RoomSummary {
 	viewType: EViewType;
 	viewDescription: string | null;
 	/** Server returns price as a string (decimal column) */
+	basePrice: string | null;
+	floorPrice: string | null;
+	/** @deprecated use basePrice */
 	price: string | null;
 	pricingType: EPricingType;
 	isActive: boolean;

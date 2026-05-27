@@ -1,4 +1,5 @@
-import { PrismaClient, ERole } from "@/generated/client";
+import { PrismaClient, ERole, Prisma } from "@/generated/client";
+import type { DynamicPricingSettings } from "@/types/pricing.types";
 
 class OwnerRepository {
 	readonly #prisma: PrismaClient;
@@ -40,6 +41,23 @@ class OwnerRepository {
 			});
 
 			return { profile, user };
+		});
+	}
+
+	public async getDynamicPricingSettings(ownerProfileId: string) {
+		const row = await this.#prisma.ownerProfile.findUnique({
+			where: { id: ownerProfileId },
+			select: { dynamicPricingSettings: true },
+		});
+		return (row?.dynamicPricingSettings ?? null) as DynamicPricingSettings | null;
+	}
+
+	public async updateDynamicPricingSettings(ownerProfileId: string, settings: DynamicPricingSettings | null) {
+		const value: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue = settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+		return await this.#prisma.ownerProfile.update({
+			where: { id: ownerProfileId },
+			data: { dynamicPricingSettings: value },
+			select: { dynamicPricingSettings: true },
 		});
 	}
 }

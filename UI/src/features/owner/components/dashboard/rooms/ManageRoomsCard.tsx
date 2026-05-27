@@ -40,6 +40,8 @@ const hydrateRoomsToForm = (apiRooms: RoomSummary[]): RoomForm[] => {
 			bathroomCount: r.bathroomCount,
 			viewType: r.viewType,
 			viewDescription: r.viewDescription || "",
+			basePrice: r.basePrice ? Number(r.basePrice) : undefined,
+			floorPrice: r.floorPrice ? Number(r.floorPrice) : undefined,
 			price: r.price ? Number(r.price) : undefined,
 			pricingType: r.pricingType,
 			beds: r.beds.map(

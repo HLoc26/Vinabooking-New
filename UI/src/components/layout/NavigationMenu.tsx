@@ -16,7 +16,17 @@ import { AccommodationTreeMenu } from "../../features/owner/components/dashboard
 
 const navItems = [
 	{ label: "Manage Booking", icon: <BookingIcon fontSize="inherit" />, path: "/owner/manage-booking" },
-	{ label: "Manage Price", icon: <PriceIcon fontSize="inherit" />, path: "/owner/manage-price" },
+	{ label: "Dynamic Pricing", icon: <PriceIcon fontSize="inherit" />, path: "/owner/settings" },
+];
+
+const bookingStatusItems = [
+	{ label: "Incoming", status: "BOOKED" },
+	{ label: "Cancelled", status: "CANCELLED" },
+	{ label: "Completed", status: "COMPLETED" },
+];
+
+const pricingStatusItems = [
+	{ label: "Global Settings", path: "/owner/settings" },
 ];
 
 const getModernNavItemStyle = (isActive: boolean) => ({
@@ -49,6 +59,7 @@ export const NavigationMenu = () => {
 
 	const activeAccMatch = matchPath({ path: "/owner/accommodations/:id" }, location.pathname);
 	const activeAccommodationId = activeAccMatch?.params?.id;
+	const activeBookingStatus = searchParams.get("status") || "BOOKED";
 
 	// Local State
 	const [openAccommodations, setOpenAccommodations] = useState(false);
@@ -150,13 +161,84 @@ export const NavigationMenu = () => {
 				</Box>
 			</Collapse>
 
-			{/* 2. Manage Booking, Manage Price (static) */}
+			{/* 2. Manage Booking, Dynamic Pricing (static) */}
 			{navItems.map(({ label, icon, path }) => {
+				const isBookingItem = path === "/owner/manage-booking";
+				const isPricingItem = path === "/owner/settings";
 				const isActive = location.pathname === path;
+
 				return (
-					<Box key={path} onClick={() => navigate(path)} sx={getModernNavItemStyle(isActive)}>
-						<Box sx={{ display: "flex", alignItems: "center", fontSize: "1.1rem", color: isActive ? "primary.main" : "inherit" }}>{icon}</Box>
-						<Typography sx={{ fontSize: "0.85rem", fontWeight: isActive ? 600 : 500, userSelect: "none" }}>{label}</Typography>
+					<Box key={path}>
+						<Box onClick={() => navigate(isBookingItem ? `${path}?status=BOOKED` : path)} sx={getModernNavItemStyle(isActive)}>
+							<Box sx={{ display: "flex", alignItems: "center", fontSize: "1.1rem", color: isActive ? "primary.main" : "inherit" }}>{icon}</Box>
+							<Typography sx={{ fontSize: "0.85rem", fontWeight: isActive ? 600 : 500, userSelect: "none" }}>{label}</Typography>
+						</Box>
+
+						{isBookingItem && (
+							<Collapse in={isActive} timeout="auto" unmountOnExit>
+								<Box sx={{ ml: 4.5, pl: 1, borderLeft: "1px solid", borderColor: "rgba(255,255,255,0.08)", mt: 0.5, mb: 1 }}>
+									{bookingStatusItems.map((item) => {
+										const isStatusActive = isActive && activeBookingStatus === item.status;
+										return (
+											<Box
+												key={item.status}
+												onClick={() => navigate(`${path}?status=${item.status}`)}
+												sx={{
+													...getModernNavItemStyle(isStatusActive),
+													ml: 0,
+													mr: 1.5,
+													py: 0.6,
+												}}
+											>
+												<Typography
+													sx={{
+														fontSize: "0.8rem",
+														fontWeight: isStatusActive ? 600 : 400,
+														color: isStatusActive ? "text.primary" : "text.secondary",
+														userSelect: "none",
+													}}
+												>
+													{item.label}
+												</Typography>
+											</Box>
+										);
+									})}
+								</Box>
+							</Collapse>
+						)}
+
+						{isPricingItem && (
+							<Collapse in={isActive} timeout="auto" unmountOnExit>
+								<Box sx={{ ml: 4.5, pl: 1, borderLeft: "1px solid", borderColor: "rgba(255,255,255,0.08)", mt: 0.5, mb: 1 }}>
+									{pricingStatusItems.map((item) => {
+										const isStatusActive = isActive && location.pathname === item.path;
+										return (
+											<Box
+												key={item.path}
+												onClick={() => navigate(item.path)}
+												sx={{
+													...getModernNavItemStyle(isStatusActive),
+													ml: 0,
+													mr: 1.5,
+													py: 0.6,
+												}}
+											>
+												<Typography
+													sx={{
+														fontSize: "0.8rem",
+														fontWeight: isStatusActive ? 600 : 400,
+														color: isStatusActive ? "text.primary" : "text.secondary",
+														userSelect: "none",
+													}}
+												>
+													{item.label}
+												</Typography>
+											</Box>
+										);
+									})}
+								</Box>
+							</Collapse>
+						)}
 					</Box>
 				);
 			})}
