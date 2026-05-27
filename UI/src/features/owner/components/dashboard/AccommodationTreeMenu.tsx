@@ -46,16 +46,16 @@ export const AccommodationTreeMenu = ({ activeTab, onTabChange }: Props) => {
 				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "rooms" ? 600 : 500, userSelect: "none", flexGrow: 1 }}>Rooms</Typography>
 			</Box>
 
-			{/* 4. PHOTO GALLERY */}
+			{/* 4. GALLERY */}
 			<Box onClick={() => onTabChange("gallery")} sx={getLeafStyle(activeTab === "gallery")}>
 				<PhotoLibraryOutlined sx={{ fontSize: 16 }} />
-				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "gallery" ? 600 : 500, userSelect: "none" }}>Photo Gallery</Typography>
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "gallery" ? 600 : 500, userSelect: "none" }}>Gallery</Typography>
 			</Box>
 
-			{/* 5. GUEST REVIEWS */}
+			{/* 5. REVIEWS */}
 			<Box onClick={() => onTabChange("reviews")} sx={getLeafStyle(activeTab === "reviews")}>
 				<StarBorderOutlined sx={{ fontSize: 16 }} />
-				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "reviews" ? 600 : 500, userSelect: "none" }}>Guest Reviews</Typography>
+				<Typography sx={{ fontSize: "0.8rem", fontWeight: activeTab === "reviews" ? 600 : 500, userSelect: "none" }}>Reviews</Typography>
 			</Box>
 		</Box>
 	);

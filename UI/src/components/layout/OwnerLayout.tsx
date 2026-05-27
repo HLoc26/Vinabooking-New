@@ -21,12 +21,6 @@ interface OwnerLayoutProps {
 const MIN_DRAWER_WIDTH = 260;
 const MAX_DRAWER_WIDTH = 500;
 
-const bookingStatusItems = [
-	{ label: "Incoming", status: "BOOKED" },
-	{ label: "Cancelled", status: "CANCELLED" },
-	{ label: "Completed", status: "COMPLETED" },
-];
-
 export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 	const navigate = useNavigate();
 	const dispatch = useDispatch();
@@ -120,7 +114,6 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 	};
 
 	const avatarLetter = user?.email?.[0]?.toUpperCase() ?? "O";
-	const activeBookingStatus = new URLSearchParams(location.search).get("status") ?? "BOOKED";
 
 	return (
 		<Box sx={{ display: "flex" }}>
@@ -204,110 +197,7 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 				</Box>
 
 				{/* Navigation */}
-				<Box sx={{ px: 2, pt: 1, pb: 0.5 }}>
-					<Typography variant="overline" color="text.disabled" sx={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 700 }}>
-						Navigation
-					</Typography>
-				</Box>
-				<List sx={{ px: 1.5, pt: 0.5 }}>
-					{navItems.map(({ label, icon, path }) => {
-						const isBookingItem = path === "/owner/manage-booking";
-						const isActive = isBookingItem ? location.pathname === path : location.pathname === path;
-						return (
-							<Box key={path}>
-								<ListItem disablePadding sx={{ mb: 0.5 }}>
-									<ListItemButton
-										onClick={() => navigate(isBookingItem ? `${path}?status=BOOKED` : path)}
-										selected={isActive}
-										sx={{
-											borderRadius: 2,
-											py: 1,
-											"&.Mui-selected": {
-												bgcolor: "primary.main",
-												color: "primary.contrastText",
-												"& .MuiListItemIcon-root": {
-													color: "primary.contrastText",
-												},
-												"&:hover": {
-													bgcolor: "primary.dark",
-												},
-											},
-											"&:hover:not(.Mui-selected)": {
-												bgcolor: "action.hover",
-											},
-										}}
-									>
-										<ListItemIcon
-											sx={{
-												minWidth: 36,
-												color: isActive ? "inherit" : "text.secondary",
-											}}
-										>
-											{icon}
-										</ListItemIcon>
-										<ListItemText
-											primary={label}
-											primaryTypographyProps={{
-												fontSize: 14,
-												fontWeight: isActive ? 600 : 400,
-											}}
-										/>
-										{isActive && (
-											<Box
-												sx={{
-													width: 6,
-													height: 6,
-													borderRadius: "50%",
-													bgcolor: "primary.contrastText",
-													opacity: 0.7,
-													flexShrink: 0,
-												}}
-											/>
-										)}
-									</ListItemButton>
-								</ListItem>
-								{isBookingItem && (
-									<List dense disablePadding sx={{ mb: 0.75, pl: 5 }}>
-										{bookingStatusItems.map((item) => {
-											const isStatusActive = location.pathname === path && activeBookingStatus === item.status;
-											return (
-												<ListItem key={item.status} disablePadding sx={{ mb: 0.25 }}>
-													<ListItemButton
-														onClick={() => navigate(`${path}?status=${item.status}`)}
-														selected={isStatusActive}
-														sx={{
-															borderRadius: 1.5,
-															py: 0.65,
-															px: 1.25,
-															"&.Mui-selected": {
-																bgcolor: "primary.main",
-																color: "primary.contrastText",
-																"&:hover": {
-																	bgcolor: "primary.dark",
-																},
-															},
-															"&:hover:not(.Mui-selected)": {
-																bgcolor: "action.hover",
-															},
-														}}
-													>
-														<ListItemText
-															primary={item.label}
-															primaryTypographyProps={{
-																fontSize: 13,
-																fontWeight: isStatusActive ? 700 : 500,
-															}}
-														/>
-													</ListItemButton>
-												</ListItem>
-											);
-										})}
-									</List>
-								)}
-							</Box>
-						);
-					})}
-				</List>
+				<NavigationMenu />
 
 				<Box sx={{ flexGrow: 1 }} />
 
