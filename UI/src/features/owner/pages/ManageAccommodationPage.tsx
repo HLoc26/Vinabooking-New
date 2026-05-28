@@ -13,6 +13,7 @@ import { ManageFacilitiesCard } from "../components/dashboard/facilities/ManageF
 import { ManageRoomsCard } from "../components/dashboard/rooms/ManageRoomsCard";
 import { ManageGalleryCard } from "../components/dashboard/gallery/ManageGalleryCard";
 import { ManageReviewsCard } from "../components/dashboard/reviews/ManageReviewsCard";
+import { ManagePolicyCard } from "../components/dashboard/policy/ManagePolicyCard";
 
 export default function ManageAccommodationPage() {
 	const { accommodationId } = useParams<{ accommodationId: string }>();
@@ -101,6 +102,7 @@ export default function ManageAccommodationPage() {
 					<Tab label="Rooms" value="rooms" />
 					<Tab label="Photo Gallery" value="gallery" />
 					<Tab label="Guest Reviews" value="reviews" />
+					<Tab label="Policies" value="policies" />
 				</Tabs>
 			</Box>
 
@@ -142,6 +144,12 @@ export default function ManageAccommodationPage() {
 				{currentTab === "reviews" && (
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 						<ManageReviewsCard accommodationId={accommodationId!} />
+					</Box>
+				)}
+
+				{currentTab === "policies" && (
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+						<ManagePolicyCard accommodationData={accommodation} accommodationId={accommodationId!} />
 					</Box>
 				)}
 			</Box>
