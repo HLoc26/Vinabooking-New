@@ -101,8 +101,8 @@ export default function ManageAccommodationPage() {
 					<Tab label="Facilities" value="facilities" />
 					<Tab label="Rooms" value="rooms" />
 					<Tab label="Photo Gallery" value="gallery" />
-					<Tab label="Guest Reviews" value="reviews" />
 					<Tab label="Policies" value="policies" />
+					<Tab label="Guest Reviews" value="reviews" />
 				</Tabs>
 			</Box>
 
@@ -141,15 +141,15 @@ export default function ManageAccommodationPage() {
 					</Box>
 				)}
 
-				{currentTab === "reviews" && (
-					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
-						<ManageReviewsCard accommodationId={accommodationId!} />
-					</Box>
-				)}
-
 				{currentTab === "policies" && (
 					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
 						<ManagePolicyCard accommodationData={accommodation} accommodationId={accommodationId!} />
+					</Box>
+				)}
+
+				{currentTab === "reviews" && (
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 3 }}>
+						<ManageReviewsCard accommodationId={accommodationId!} />
 					</Box>
 				)}
 			</Box>
