@@ -92,26 +92,30 @@ const StepPolicyBox = ({ form, setForm, triggerSubmit, resetTrigger, onSuccess }
 	});
 
 	const watchedValues = watch();
+	const watchedString = JSON.stringify(watchedValues);
 
 	// Sync to parent
 	useEffect(() => {
+		const safePolicyData = JSON.parse(watchedString);
 		setForm((prev) => ({
 			...prev,
-			policy: watchedValues,
+			policy: safePolicyData,
 		}));
-	}, [watchedValues, setForm]);
+	}, [watchedString, setForm]);
 
 	useEffect(() => {
 		if (!triggerSubmit) return;
 
-		handleSubmit((data) => {
+		const handleInternalSubmit = handleSubmit((data) => {
 			mutate(data, {
 				onSuccess: () => {
 					onSuccess();
 				},
 				onSettled: resetTrigger,
 			});
-		})();
+		});
+
+		handleInternalSubmit();
 	}, [triggerSubmit, handleSubmit, mutate, onSuccess, resetTrigger]);
 
 	return (
