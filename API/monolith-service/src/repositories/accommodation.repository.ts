@@ -94,6 +94,47 @@ class AccommodationRepository {
 			}));
 		}
 
+		// 5. Policy Filters
+		const policyWhere: Prisma.AccommodationPolicyWhereInput = {};
+		let hasPolicyFilter = false;
+
+		if (filters.allowsPets !== undefined && filters.allowsPets !== "undefined") {
+			policyWhere.allowsPets = filters.allowsPets === 'true';
+			hasPolicyFilter = true;
+		}
+		if (filters.allowsSmoking !== undefined && filters.allowsSmoking !== "undefined") {
+			policyWhere.allowsSmoking = filters.allowsSmoking === 'true';
+			hasPolicyFilter = true;
+		}
+		if (filters.allowsParties !== undefined && filters.allowsParties !== "undefined") {
+			policyWhere.allowsParties = filters.allowsParties === 'true';
+			hasPolicyFilter = true;
+		}
+		if (filters.checkInTime && filters.checkInTime !== "ANY" && filters.checkInTime !== "undefined") {
+			policyWhere.checkInTime = { lte: filters.checkInTime };
+			hasPolicyFilter = true;
+		}
+		if (filters.checkOutTime && filters.checkOutTime !== "ANY" && filters.checkOutTime !== "undefined") {
+			policyWhere.checkOutTime = { gte: filters.checkOutTime };
+			hasPolicyFilter = true;
+		}
+		if (filters.quietHoursStart && filters.quietHoursStart !== "ANY" && filters.quietHoursStart !== "undefined") {
+			policyWhere.quietHoursStart = { gte: filters.quietHoursStart };
+			hasPolicyFilter = true;
+		}
+		if (filters.cancellationPolicy && filters.cancellationPolicy !== "ANY" && filters.cancellationPolicy !== "undefined") {
+			policyWhere.cancellationPolicy = filters.cancellationPolicy as any;
+			hasPolicyFilter = true;
+		}
+		if (filters.prepaymentPolicy && filters.prepaymentPolicy !== "ANY" && filters.prepaymentPolicy !== "undefined") {
+			policyWhere.prepaymentPolicy = filters.prepaymentPolicy as any;
+			hasPolicyFilter = true;
+		}
+
+		if (hasPolicyFilter) {
+			where.policy = policyWhere;
+		}
+
 		// Get all IDs that matches
 		const matchingRecords = await this.#prismaClient.accommodation.findMany({
 			where,

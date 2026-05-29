@@ -51,6 +51,14 @@ export interface SearchFilters {
 	type?: EAccommodationType;
 	ids?: string[];
 	facilities?: string[];
+	allowsPets?: string;
+	allowsSmoking?: string;
+	allowsParties?: string;
+	checkInTime?: string;
+	checkOutTime?: string;
+	cancellationPolicy?: string;
+	prepaymentPolicy?: string;
+	quietHoursStart?: string;
 }
 
 // --- Search related types ---
@@ -74,6 +82,14 @@ export interface SearchQuery {
 	page?: string;
 	limit?: string;
 	sortBy?: ESortOption;
+	allowsPets?: string;
+	allowsSmoking?: string;
+	allowsParties?: string;
+	checkInTime?: string;
+	checkOutTime?: string;
+	cancellationPolicy?: string;
+	prepaymentPolicy?: string;
+	quietHoursStart?: string;
 }
 
 export interface AccommodationStats {
