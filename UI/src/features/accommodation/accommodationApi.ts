@@ -42,6 +42,16 @@ export const search = async (query: Partial<Query>): Promise<ApiResponse<Accommo
 
 		// Facilities
 		facilities: query.facilities,
+
+		// Policy Filters
+		allowsPets: query.allowsPets ? "true" : undefined,
+		allowsSmoking: query.allowsSmoking ? "true" : undefined,
+		allowsParties: query.allowsParties ? "true" : undefined,
+		checkInTime: query.checkInTime || undefined,
+		checkOutTime: query.checkOutTime || undefined,
+		cancellationPolicy: query.cancellationPolicy || undefined,
+		prepaymentPolicy: query.prepaymentPolicy || undefined,
+		quietHoursStart: query.quietHoursStart || undefined,
 	};
 
 	// eslint-disable-next-line @typescript-eslint/no-unused-vars
