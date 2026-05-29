@@ -1,18 +1,19 @@
 import React, { useEffect, useState } from "react";
 import { useNavigate, useSearchParams } from "react-router-dom";
 import { useSelector } from "react-redux";
-import { Box, Paper, Typography, Divider, TextField, MenuItem, Slider, FormGroup, FormControlLabel, Checkbox, InputAdornment } from "@mui/material";
-import { FilterList } from "@mui/icons-material";
+import { Box, Paper, Typography, Divider, TextField, MenuItem, Slider, FormGroup, FormControlLabel, Checkbox, InputAdornment, Chip } from "@mui/material";
+import { FilterList, Pets, SmokingRooms, MusicNote } from "@mui/icons-material";
 
 // Types & Utils
 import type { RootState } from "../../../../app/store";
-import { ACCOMMODATION_TYPE_OPTIONS, PRICE_FILTER_CONFIG } from "../../constants/searchFilters";
+import { ACCOMMODATION_TYPE_OPTIONS, PRICE_FILTER_CONFIG, CANCELLATION_EN_LABELS, PREPAYMENT_EN_LABELS } from "../../constants/searchFilters";
 import { EAccommodationType, type FacilityConfig } from "../../types/accommodation.types";
 
 type SearchFiltersSidebarProps = {
 	facilityList: FacilityConfig[];
 	loading?: boolean;
 };
+
 export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ facilityList, loading = false }) => {
 	const navigate = useNavigate();
 	const [searchParams] = useSearchParams();
@@ -35,7 +36,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 		newParams.set("page", "1");
 
 		Object.entries(updates).forEach(([key, value]) => {
-			if (value === null || value === "") {
+			if (value === null || value === "" || value === "ANY") {
 				newParams.delete(key);
 			} else {
 				newParams.set(key, value);
@@ -99,6 +100,18 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 		});
 	};
 
+	const togglePolicyBoolean = (policyKey: "allowsPets" | "allowsSmoking" | "allowsParties") => {
+		updateFilter({
+			[policyKey]: criteria[policyKey] ? null : "true",
+		});
+	};
+
+	const handleSelectChange = (key: string, value: string) => {
+		updateFilter({
+			[key]: value === "ANY" ? null : value,
+		});
+	};
+
 	const clearAllFilters = () => {
 		const newParams = new URLSearchParams();
 		// Giữ lại keyword, date, guest
@@ -110,8 +123,12 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 		navigate(`/search?${newParams.toString()}`);
 	};
 
+	const checkInOptions = ["ANY", "12:00", "13:00", "14:00", "15:00", "16:00", "17:00", "18:00", "19:00", "20:00", "21:00", "22:00"];
+	const checkOutOptions = ["ANY", "08:00", "09:00", "10:00", "11:00", "12:00", "13:00", "14:00", "15:00", "16:00"];
+	const quietHoursOptions = ["ANY", "20:00", "21:00", "22:00", "23:00", "00:00"];
+
 	return (
-		<Box sx={{ height: "100%", position: "relative" }}>
+		<Box sx={{ position: "relative" }}>
 			<Paper
 				elevation={0}
 				variant="outlined"
@@ -123,15 +140,20 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 					pointerEvents: loading ? "none" : "auto",
 					transition: "opacity 0.2s",
 					position: "sticky",
-					top: 160,
+					top: 110,
 					zIndex: 10,
+					maxHeight: "calc(100vh - 140px)",
+					overflowY: "auto",
+					"&::-webkit-scrollbar": { width: "5px" },
+					"&::-webkit-scrollbar-track": { bgcolor: "transparent" },
+					"&::-webkit-scrollbar-thumb": { bgcolor: "grey.300", borderRadius: "10px" },
 				}}
 			>
 				{/* HEADER */}
 				<Box sx={{ display: "flex", alignItems: "center", mb: 2 }}>
 					<FilterList sx={{ mr: 1 }} fontSize="small" />
 					<Typography variant="h6" fontWeight="bold">
-						Bộ lọc
+						Filters
 					</Typography>
 				</Box>
 				<Divider sx={{ mb: 3 }} />
@@ -139,7 +161,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 				{/* TYPE */}
 				<Box sx={{ mb: 4 }}>
 					<Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-						Loại chỗ ở
+						Accommodation Type
 					</Typography>
 					<TextField select fullWidth value={criteria.type || EAccommodationType.ALL} onChange={handleTypeChange} size="small" disabled={loading}>
 						{ACCOMMODATION_TYPE_OPTIONS.map((type) => (
@@ -153,7 +175,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 				{/* PRICE */}
 				<Box sx={{ mb: 4 }}>
 					<Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-						Khoảng giá
+						Price Range
 					</Typography>
 					<Slider
 						value={localPrice}
@@ -198,11 +220,11 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 				</Box>
 
 				{/* FACILITIES */}
-				<Box sx={{ mb: 3 }}>
+				<Box sx={{ mb: 4 }}>
 					<Typography variant="subtitle2" fontWeight="bold" sx={{ mb: 1.5 }}>
-						Tiện ích
+						Facilities
 					</Typography>
-					<Box sx={{ maxHeight: 150, overflowY: "auto" }}>
+					<Box sx={{ maxHeight: 150, overflowY: "auto", pr: 1, "&::-webkit-scrollbar": { width: "4px" }, "&::-webkit-scrollbar-thumb": { bgcolor: "grey.200", borderRadius: "10px" } }}>
 						<FormGroup>
 							{facilityList.map((facility) => (
 								<FormControlLabel
@@ -214,6 +236,108 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 						</FormGroup>
 					</Box>
 				</Box>
+
+				<Divider sx={{ mb: 4 }} />
+
+				{/* ACCOMMODATION POLICIES */}
+				<Box sx={{ mb: 4 }}>
+					<Typography variant="h6" fontWeight="bold" sx={{ mb: 3 }}>
+						Policies & House Rules
+					</Typography>
+
+					{/* House Rules Chips */}
+					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 1.5, mb: 4 }}>
+						<Chip
+							icon={<Pets sx={{ fontSize: "16px !important" }} />}
+							label="Pets"
+							onClick={() => togglePolicyBoolean("allowsPets")}
+							color={criteria.allowsPets ? "primary" : "default"}
+							variant={criteria.allowsPets ? "filled" : "outlined"}
+							sx={{ fontWeight: 600 }}
+						/>
+						<Chip
+							icon={<SmokingRooms sx={{ fontSize: "16px !important" }} />}
+							label="Smoking"
+							onClick={() => togglePolicyBoolean("allowsSmoking")}
+							color={criteria.allowsSmoking ? "primary" : "default"}
+							variant={criteria.allowsSmoking ? "filled" : "outlined"}
+							sx={{ fontWeight: 600 }}
+						/>
+						<Chip
+							icon={<MusicNote sx={{ fontSize: "16px !important" }} />}
+							label="Parties"
+							onClick={() => togglePolicyBoolean("allowsParties")}
+							color={criteria.allowsParties ? "primary" : "default"}
+							variant={criteria.allowsParties ? "filled" : "outlined"}
+							sx={{ fontWeight: 600 }}
+						/>
+					</Box>
+
+					{/* Booking Conditions */}
+					<Typography variant="subtitle2" fontWeight="bold" color="text.secondary" sx={{ mb: 1.5, textTransform: "uppercase", fontSize: "0.75rem" }}>
+						Booking Conditions
+					</Typography>
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 2, mb: 4 }}>
+						<TextField
+							select
+							fullWidth
+							label="Cancellation Policy"
+							value={criteria.cancellationPolicy || "ANY"}
+							onChange={(e) => handleSelectChange("cancellationPolicy", e.target.value)}
+							size="small"
+						>
+							{Object.entries(CANCELLATION_EN_LABELS).map(([key, label]) => (
+								<MenuItem key={key} value={key}>
+									{label}
+								</MenuItem>
+							))}
+						</TextField>
+						<TextField
+							select
+							fullWidth
+							label="Prepayment Policy"
+							value={criteria.prepaymentPolicy || "ANY"}
+							onChange={(e) => handleSelectChange("prepaymentPolicy", e.target.value)}
+							size="small"
+						>
+							{Object.entries(PREPAYMENT_EN_LABELS).map(([key, label]) => (
+								<MenuItem key={key} value={key}>
+									{label}
+								</MenuItem>
+							))}
+						</TextField>
+					</Box>
+
+					{/* Timings */}
+					<Typography variant="subtitle2" fontWeight="bold" color="text.secondary" sx={{ mb: 1.5, textTransform: "uppercase", fontSize: "0.75rem" }}>
+						Timing
+					</Typography>
+					<Box sx={{ display: "flex", flexDirection: "column", gap: 2 }}>
+						<TextField select fullWidth label="Desired Check-in" value={criteria.checkInTime || "ANY"} onChange={(e) => handleSelectChange("checkInTime", e.target.value)} size="small">
+							{checkInOptions.map((time) => (
+								<MenuItem key={time} value={time}>
+									{time === "ANY" ? "Any time" : time}
+								</MenuItem>
+							))}
+						</TextField>
+						<TextField select fullWidth label="Desired Check-out" value={criteria.checkOutTime || "ANY"} onChange={(e) => handleSelectChange("checkOutTime", e.target.value)} size="small">
+							{checkOutOptions.map((time) => (
+								<MenuItem key={time} value={time}>
+									{time === "ANY" ? "Any time" : time}
+								</MenuItem>
+							))}
+						</TextField>
+						<TextField select fullWidth label="Quiet Hours" value={criteria.quietHoursStart || "ANY"} onChange={(e) => handleSelectChange("quietHoursStart", e.target.value)} size="small">
+							{quietHoursOptions.map((time) => (
+								<MenuItem key={time} value={time}>
+									{time === "ANY" ? "No preference" : time}
+								</MenuItem>
+							))}
+						</TextField>
+					</Box>
+				</Box>
+
+				<Divider sx={{ mb: 3 }} />
 
 				{/* CLEAR BUTTON */}
 				<Box
@@ -227,7 +351,7 @@ export const SearchFiltersSidebar: React.FC<SearchFiltersSidebarProps> = ({ faci
 					}}
 				>
 					<Typography variant="body2" fontWeight="600" sx={{ textDecoration: "underline" }}>
-						Xóa bộ lọc
+						Clear all
 					</Typography>
 				</Box>
 			</Paper>
