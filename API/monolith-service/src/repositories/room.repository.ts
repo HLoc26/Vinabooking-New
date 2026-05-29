@@ -117,11 +117,11 @@ class RoomRepository {
 			isActive: true,
 		};
 
-		// 1. Lọc theo Giá
+		// 1. Lọc theo Giá (so với basePrice — fast path, không cần ngày check-in)
 		if (filters.minPrice !== undefined || filters.maxPrice !== undefined) {
-			where.price = {};
-			if (filters.minPrice !== undefined) where.price.gte = filters.minPrice;
-			if (filters.maxPrice !== undefined) where.price.lte = filters.maxPrice;
+			where.basePrice = {};
+			if (filters.minPrice !== undefined) where.basePrice.gte = filters.minPrice;
+			if (filters.maxPrice !== undefined) where.basePrice.lte = filters.maxPrice;
 		}
 
 		// 2. Lọc theo Sức chứa
@@ -136,7 +136,7 @@ class RoomRepository {
 			where,
 			select: {
 				accommodationId: true,
-				price: true,
+				basePrice: true,
 			},
 		});
 
@@ -146,7 +146,7 @@ class RoomRepository {
 		rooms.forEach((room) => {
 			const currentMin = accMap.get(room.accommodationId) || Infinity;
 			// Ép kiểu Number vì Prisma Decimal trả về object hoặc string tùy config
-			const roomPrice = Number(room.price);
+			const roomPrice = Number(room.basePrice);
 
 			if (roomPrice < currentMin) {
 				accMap.set(room.accommodationId, roomPrice);
@@ -186,7 +186,8 @@ class RoomRepository {
 				bathroomCount: data.bathroomCount,
 				viewType: data.viewType,
 				viewDescription: data.viewDescription,
-				price: data.price,
+				basePrice: data.basePrice ?? 0,
+				floorPrice: data.floorPrice ?? data.basePrice ?? 0,
 				pricingType: data.pricingType,
 				isActive: data.isActive ?? true,
 				beds: {
@@ -267,7 +268,8 @@ class RoomRepository {
 					bathroomCount: data.bathroomCount ?? undefined,
 					viewType: data.viewType ?? undefined,
 					viewDescription: data.viewDescription ?? undefined,
-					price: data.price !== undefined ? String(data.price) : undefined, // Nếu DB dùng kiểu String/Decimal
+					basePrice: data.basePrice !== undefined ? String(data.basePrice) : undefined,
+					floorPrice: data.floorPrice !== undefined ? String(data.floorPrice) : undefined,
 					pricingType: data.pricingType ?? undefined,
 					isActive: data.isActive ?? undefined,
 
@@ -308,6 +310,30 @@ class RoomRepository {
 			});
 
 			return result as RoomWithDetails;
+		});
+	}
+
+	/**
+	 * Bulk update floor prices for all rooms in an accommodation.
+	 */
+	public async bulkUpdateFloorPrices(accommodationId: string, rule: { percent: number; minAmount: number }) {
+		const rooms = await this.#prismaClient.room.findMany({
+			where: { accommodationId },
+			select: { id: true, basePrice: true },
+		});
+
+		return await this.#prismaClient.$transaction(async (tx) => {
+			for (const room of rooms) {
+				const base = Number(room.basePrice);
+				const calculated = Math.max(base * (rule.percent / 100), rule.minAmount);
+				const finalFloor = Math.min(calculated, base);
+
+				await tx.room.update({
+					where: { id: room.id },
+					data: { floorPrice: new Prisma.Decimal(finalFloor) },
+				});
+			}
+			return { updatedCount: rooms.length };
 		});
 	}
 

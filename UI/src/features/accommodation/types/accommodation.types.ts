@@ -133,6 +133,7 @@ export interface AccommodationPolicy {
 	quietHoursEnd?: string;
 	additionalRules?: string;
 }
+import type { DynamicPricingSettings, HolidayOptIn } from "../../owner/types/pricing.types";
 
 /**
  * Main Accommodation infor interface
@@ -153,6 +154,8 @@ export interface AccommodationDetail {
 	avgStar: number;
 	reviewCount: number;
 	policy?: AccommodationPolicy;
+	dynamicPricingSettings?: DynamicPricingSettings | null;
+	holidayOptIns?: HolidayOptIn[];
 }
 
 export type DraftAccommodation = AccommodationDetail & {

@@ -1,6 +1,7 @@
 import { Prisma, type EAccommodationType, type ERentalType, type EAccommodationStatus, type EPrepaymentPolicy, type ECancellationPolicy } from "@/generated/client";
 import { ImageFullInfo } from "./image.types";
 import { RoomWithDetails } from "./room.types";
+import type { DynamicPricingSettings, HolidayOptIn } from "./pricing.types";
 
 export { EAccommodationStatus } from "@/generated/client";
 
@@ -117,6 +118,18 @@ export interface CreateAccommodationDTO {
 	description?: string;
 	type: EAccommodationType;
 	rentalType: ERentalType;
+	// Tri-state per dynamic-pricing spec §1.1:
+	//   undefined → inherit from OwnerProfile defaults
+	//   null      → opt out, accommodation has no dynamic pricing
+	//   object    → use directly
+	dynamicPricingSettings?: DynamicPricingSettings | null;
+	// Same tri-state for holiday opt-ins (snapshot of OwnerHoliday rows on inherit).
+	holidayOptIns?: HolidayOptIn[] | null;
+}
+
+export interface UpdateAccommodationPricingDTO {
+	dynamicPricingSettings?: DynamicPricingSettings | null;
+	holidayOptIns?: HolidayOptIn[] | null;
 }
 
 export interface UpdateFacilitiesDTO {

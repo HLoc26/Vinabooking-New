@@ -3,6 +3,7 @@ import Cookies from "js-cookie";
 import type { BookingContextInfo } from "../types/BookingContextInfo";
 import type { Booking } from "../types/Booking";
 import type { ApiResponse } from "../../../types/Response";
+import type { QuoteRequestInput, QuoteResponse } from "../types/pricing.types";
 
 const ACCESS_TOKEN_KEY = import.meta.env.VITE_ACCESS_TOKEN_KEY;
 const BOOKING_ENDPOINT = "/bookings";
@@ -12,6 +13,14 @@ const ACCOM_ENDPOINT = "/accommodations";
 const PAYMENT_ENDPOINT = "/payments";
 
 export const bookingApi = {
+	async getQuote(input: QuoteRequestInput): Promise<QuoteResponse> {
+		const res = await axioInstance.post<ApiResponse<QuoteResponse>>("/pricing/quote", input);
+		if (!res.data.success || !res.data.data) {
+			throw new Error(res.data.error || "Failed to fetch price quote");
+		}
+		return res.data.data;
+	},
+
 	async getByUserId(userId: string) {
 		return axioInstance.get<ApiResponse<Booking[]>>("/bookings", { params: { entity: "user", id: userId } }).then((r) => r.data);
 	},
@@ -27,6 +36,7 @@ export const bookingApi = {
 	async createBooking(booking: BookingContextInfo) {
 		const token = Cookies.get(ACCESS_TOKEN_KEY);
 
+		// Resolve item types from room records (some are ROOM, some BED).
 		const rooms = await Promise.all(
 			booking.items.map(async (item) => {
 				const res = await axioInstance.get(`${ROOM_ENDPOINT}/${item.id}`);
@@ -34,22 +44,34 @@ export const bookingApi = {
 			})
 		);
 
-		const startDate = new Date(booking.startDate);
-		const endDate = new Date(booking.endDate);
-		const nights = Math.max(1, Math.ceil((endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24)));
+		const items = rooms.map((room) => ({
+			itemId: room.id,
+			itemType: (room.type ?? "ROOM") as "ROOM" | "BED",
+			count: booking.items.find((i) => i.id === room.id)?.count ?? 1,
+		}));
 
-		let totalPrice = 0;
-		rooms.forEach((room, index) => {
-			const item = booking.items[index];
-			const price = parseFloat(room.price) || 0;
-			totalPrice += price * item.count * nights;
+		// Quote-then-book: BE re-computes pricing and verifies the hash matches.
+		// Capture bookedAt once and reuse for the quote AND the booking payload so
+		// BE re-quote uses the same lead-day basis (avoids hash drift around HCM
+		// midnight).
+		const bookedAt = new Date().toISOString();
+		const quoteRes = await axioInstance.post(`/pricing/quote`, {
+			checkIn: booking.startDate,
+			checkOut: booking.endDate,
+			bookedAt,
+			items,
 		});
+		const quote = quoteRes.data?.data;
+		if (!quote?.quoteHash) {
+			throw new Error("Failed to fetch price quote");
+		}
 
 		const payload = {
 			startDate: booking.startDate,
 			endDate: booking.endDate,
 			guestCount: booking.guestCount,
-			totalPrice: totalPrice,
+			quoteHash: quote.quoteHash,
+			bookedAt,
 			details: {
 				create: rooms.map((room) => ({
 					itemId: room.id,

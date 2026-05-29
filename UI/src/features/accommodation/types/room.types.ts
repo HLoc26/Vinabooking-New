@@ -20,11 +20,34 @@ export interface Amenity {
 	type: string;
 	description: string | null;
 }
+export interface NightBreakdownEntry {
+	date: string;
+	list: number;
+	pay: number;
+	holidayMultiplier: number;
+	discountRate: number;
+	flooredTo: number | null;
+}
+
+export interface RoomPricing {
+	listPrice: number;
+	payablePrice: number;
+	averagePricePerNight: number;
+	averageListPricePerNight: number;
+	discountApplied: boolean;
+	holidayApplied: boolean;
+	nightBreakdown: NightBreakdownEntry[];
+}
+
 export type Room = {
 	id: string;
 	name: string;
 	description: string;
-	price: string;
+	basePrice: string;
+	floorPrice?: string;
+	/** @deprecated use basePrice; kept temporarily for components mid-migration. */
+	price?: string;
+	pricing?: RoomPricing;
 	maxAdults: number;
 	maxChildren: number;
 	size: string;

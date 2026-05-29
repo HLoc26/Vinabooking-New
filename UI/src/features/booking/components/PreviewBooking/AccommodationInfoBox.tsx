@@ -1,21 +1,17 @@
 import React, { type Dispatch, type SetStateAction } from "react";
-import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel } from "@mui/material";
-import { Apartment, CalendarToday, LocationOn, People } from "@mui/icons-material";
+import { Box, Typography, Checkbox, Divider, CardContent, Card, Button, FormControlLabel, Chip } from "@mui/material";
+import { Apartment, CalendarToday, LocalFireDepartment, LocalOffer, LocationOn, People } from "@mui/icons-material";
 import { formatDate } from "../../../../utils/dateFormatter";
 import type { AccommodationDetail } from "../../../accommodation/types/accommodation.types";
-import type { RoomFullDetail } from "../../../accommodation/types/room.types";
+import type { QuoteResponse } from "../../types/pricing.types";
 import useAccommodation from "../../../accommodation/hooks/useAccommodation";
 import type { RootState } from "../../../../app/store";
 import { useSelector } from "react-redux";
 import { useCurrency } from "../../../../hooks/useCurrency";
 
-type BookingRoom = RoomFullDetail & {
-	count: number;
-};
-
 interface Props {
 	accommInfo: AccommodationDetail;
-	rooms: BookingRoom[];
+	quote?: QuoteResponse;
 	agreed: boolean;
 	setAgreed: Dispatch<SetStateAction<boolean>>;
 	// FIX: Changed from Image[] to string[] to match parent state
@@ -24,7 +20,7 @@ interface Props {
 	handleProceed: () => void;
 }
 
-const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
+const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, quote, agreed, setAgreed, setGalleryImages, openImageGallery, handleProceed }) => {
 	const bookingContext = useSelector((state: RootState) => state.booking);
 	const { data: accomImages, isLoading: accomImagesLoading } = useAccommodation(accommInfo?.id ?? "");
 	const { format } = useCurrency();
@@ -33,13 +29,13 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 		return <Typography>Accommodation not found</Typography>;
 	}
 
-	// Calculate number of nights
-	const checkInDate = new Date(bookingContext.startDate);
-	const checkOutDate = new Date(bookingContext.endDate);
-	const nights = Math.max(1, Math.ceil((checkOutDate.getTime() - checkInDate.getTime()) / (1000 * 60 * 60 * 24)));
-
-	// Calculate total price
-	const totalPrice = rooms.reduce((sum, room) => sum + (Number.parseFloat(room.price) * (room.count || 0) * nights || 0), 0);
+	// BE owns all pricing math (dynamic-pricing.md §4). Render the totals the
+	// /pricing/quote endpoint returned; suppress price block until it arrives.
+	const totals = quote?.totals;
+	const payablePrice = totals?.payablePrice;
+	const listPrice = totals?.listPrice;
+	const discountApplied = !!totals?.discountApplied && payablePrice !== undefined && listPrice !== undefined && payablePrice < listPrice;
+	const holidayApplied = !!totals?.holidayApplied;
 
 	// FIX: Extract WEBP URLs properly
 	const webpUrls: string[] = (accomImages?.images || []).map((img) => {
@@ -175,9 +171,26 @@ const AccommodationInfoBox: React.FC<Props> = ({ accommInfo, rooms, agreed, setA
 					<Typography variant="subtitle2" color="text.secondary">
 						Total Price
 					</Typography>
-					<Typography variant="h4" fontWeight="bold" color="primary">
-						{format(totalPrice)}
-					</Typography>
+					{payablePrice === undefined ? (
+						<Typography variant="body2" color="text.secondary">
+							Calculating…
+						</Typography>
+					) : (
+						<>
+							{discountApplied && listPrice !== undefined && (
+								<Typography variant="body2" color="text.secondary" sx={{ textDecoration: "line-through", lineHeight: 1.2 }}>
+									{format(listPrice)}
+								</Typography>
+							)}
+							<Typography variant="h4" fontWeight="bold" sx={{ color: discountApplied ? "#e53e3e" : "primary.main" }}>
+								{format(payablePrice)}
+							</Typography>
+							<Box display="flex" gap={0.5} mt={0.5} flexWrap="wrap">
+								{holidayApplied && <Chip icon={<LocalFireDepartment fontSize="small" />} label="Holiday rate" size="small" color="warning" />}
+								{discountApplied && <Chip icon={<LocalOffer fontSize="small" />} label="Promotion applied" size="small" color="success" />}
+							</Box>
+						</>
+					)}
 				</Box>
 
 				<FormControlLabel

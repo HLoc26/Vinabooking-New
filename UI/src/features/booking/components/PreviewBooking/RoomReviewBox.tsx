@@ -8,12 +8,13 @@ type BookingRoom = RoomFullDetail & {
 };
 type RoomReviewBoxProps = {
 	roomsInfo: BookingRoom[];
+	nights?: number;
 	// FIX: Standardized to string array setter
 	setGalleryImages: Dispatch<SetStateAction<string[]>>;
 	openImageGallery: (index: number) => void;
 };
 
-const RoomReviewBox: React.FC<RoomReviewBoxProps> = ({ roomsInfo, setGalleryImages, openImageGallery }) => {
+const RoomReviewBox: React.FC<RoomReviewBoxProps> = ({ roomsInfo, nights, setGalleryImages, openImageGallery }) => {
 	return (
 		<Card sx={{ borderRadius: 2 }}>
 			<CardContent>
@@ -32,7 +33,7 @@ const RoomReviewBox: React.FC<RoomReviewBoxProps> = ({ roomsInfo, setGalleryImag
 
 					return (
 						<Box key={room.id} mb={idx < roomsInfo.length - 1 ? 3 : 0}>
-							<RoomReviewCard room={room} thumbnail={thumbnail} images={roomImages} setGalleryImages={setGalleryImages} openImageGallery={openImageGallery} amenities={room.amenities} />
+							<RoomReviewCard room={room} thumbnail={thumbnail} images={roomImages} nights={nights} setGalleryImages={setGalleryImages} openImageGallery={openImageGallery} amenities={room.amenities} />
 						</Box>
 					);
 				})}

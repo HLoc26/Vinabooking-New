@@ -1,8 +1,9 @@
 import { BookingRepository, RoomRepository } from "@/repositories";
-import { NotFoundError, BadRequestError } from "@/errors";
+import { NotFoundError, ConflictError, BadRequestError } from "@/errors";
 import UserService from "./user.service";
 import EmailService from "./email.service";
 import AccommodationService from "./accommodation.service";
+import PricingService from "./pricing.service";
 import { BookingPayload } from "@/types/requests";
 import { ECancellationSource, Prisma } from "@/generated/client";
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
@@ -23,6 +24,7 @@ const cancellationSourceMap: Record<CancelBookingActor, ECancellationSource> = {
 	traveller: "TRAVELLER",
 	system: "SYSTEM",
 };
+import type { QuoteRequest, QuoteResponse } from "@/types/pricing.types";
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
@@ -30,6 +32,7 @@ export default class BookingService {
 	readonly #userService: UserService;
 	readonly #emailService: EmailService;
 	#accommodationService?: AccommodationService;
+	#pricingService?: PricingService;
 
 	constructor(bookingRepository: BookingRepository, roomRepository: RoomRepository, userService: UserService, emailService: EmailService) {
 		this.#bookingRepository = bookingRepository;
@@ -40,6 +43,25 @@ export default class BookingService {
 
 	public setAccommodationService(accommodationService: AccommodationService) {
 		this.#accommodationService = accommodationService;
+	}
+
+	public setPricingService(pricingService: PricingService) {
+		this.#pricingService = pricingService;
+	}
+
+	private async _quoteForBooking(data: BookingPayload): Promise<QuoteResponse> {
+		if (!this.#pricingService) throw new Error("PricingService not wired in BookingService");
+		const req: QuoteRequest = {
+			checkIn: new Date(data.startDate),
+			checkOut: new Date(data.endDate),
+			bookedAt: data.bookedAt ? new Date(data.bookedAt) : undefined,
+			items: data.details.create.map((d) => ({
+				itemType: d.itemType,
+				itemId: d.itemId,
+				count: d.count,
+			})),
+		};
+		return await this.#pricingService.quote(req);
 	}
 
 	public async getBookingById(id: string) {
@@ -142,58 +164,22 @@ export default class BookingService {
 		}));
 	}
 
-	private async _calculateTotalPrice(data: BookingPayload): Promise<Prisma.Decimal> {
-		const { startDate, endDate, details } = data;
-		const start = new Date(startDate);
-		const end = new Date(endDate);
-		const nights = Math.ceil((end.getTime() - start.getTime()) / (1000 * 60 * 60 * 24));
-
-		if (nights <= 0) {
-			throw new BadRequestError("End date must be after start date");
-		}
-
-		let total = new Prisma.Decimal(0);
-
-		const roomIds = details.create.filter((d) => d.itemType === "ROOM").map((d) => d.itemId);
-		const bedIds = details.create.filter((d) => d.itemType === "BED").map((d) => d.itemId);
-
-		const [rooms, beds] = await Promise.all([this.#roomRepository.findManyByIds(roomIds), this.#roomRepository.findBedsByIds(bedIds)]);
-
-		for (const detail of details.create) {
-			if (detail.itemType === "ROOM") {
-				const room = rooms.find((r) => r.id === detail.itemId);
-				if (!room || !room.price) {
-					throw new NotFoundError(`Room with id ${detail.itemId} not found or has no price`);
-				}
-				total = total.add(new Prisma.Decimal(room.price).mul(detail.count).mul(nights));
-			} else if (detail.itemType === "BED") {
-				const bed = beds.find((b) => b.id === detail.itemId);
-				if (!bed || !bed.price) {
-					throw new NotFoundError(`Bed with id ${detail.itemId} not found or has no price`);
-				}
-				total = total.add(new Prisma.Decimal(bed.price).mul(detail.count).mul(nights));
-			}
-		}
-
-		return total;
-	}
-
 	public async createBooking(userId: string, data: BookingPayload) {
-		const requestedItems = data.details.create.map((d) => ({
-			itemId: d.itemId,
-			itemType: d.itemType,
-			count: d.count,
-		}));
-		const isAvailable = await this.#bookingRepository.checkAvailability(requestedItems, new Date(data.startDate), new Date(data.endDate));
-		if (!isAvailable) {
-			throw new BadRequestError("One or more selected rooms are no longer available for these dates.");
+		const quote = await this._quoteForBooking(data);
+		if (data.quoteHash !== quote.quoteHash) {
+			throw new ConflictError("Price changed since the quote — please re-quote and try again", "PRICE_CHANGED");
 		}
-
-		const totalPrice = await this._calculateTotalPrice(data);
-		const { totalPrice: _, ...rest } = data;
+		const { quoteHash: _, bookedAt: __, ...rest } = data;
+		const snapshot = {
+			...quote,
+			checkIn: new Date(data.startDate).toISOString(),
+			checkOut: new Date(data.endDate).toISOString(),
+			bookedAt: data.bookedAt,
+		};
 		const bookingData: Prisma.BookingCreateInput = {
 			...rest,
-			totalPrice: totalPrice,
+			totalPrice: new Prisma.Decimal(quote.totals.payablePrice),
+			pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
 			user: { connect: { id: userId } },
 			status: "PENDING",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
@@ -205,11 +191,19 @@ export default class BookingService {
 	}
 
 	public async createDraftBooking(userId: string, data: BookingPayload) {
-		const totalPrice = await this._calculateTotalPrice(data);
-		const { totalPrice: _, ...rest } = data;
+		// Draft booking: compute snapshot but skip the hash check (FE may not have it yet).
+		const quote = await this._quoteForBooking(data);
+		const { quoteHash: _, bookedAt: __, ...rest } = data;
+		const snapshot = {
+			...quote,
+			checkIn: new Date(data.startDate).toISOString(),
+			checkOut: new Date(data.endDate).toISOString(),
+			bookedAt: data.bookedAt,
+		};
 		const bookingData: Prisma.BookingCreateInput = {
 			...rest,
-			totalPrice: totalPrice,
+			totalPrice: new Prisma.Decimal(quote.totals.payablePrice),
+			pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
 			user: { connect: { id: userId } },
 			status: "DRAFT",
 			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),

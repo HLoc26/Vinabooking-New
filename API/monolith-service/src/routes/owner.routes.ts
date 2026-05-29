@@ -85,6 +85,10 @@ class OwnerRouter {
 			return this.accommodationController.updateAddress(req as UpdateAddressRequest, res);
 		});
 
+		this.router.patch("/accommodations/:id/pricing-settings", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.accommodationController.updatePricingSettings(req as Request<{ id: string }>, res);
+		});
+
 		// Dashboard Stats
 		this.router.get("/dashboard/stats", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.ownerController.getDashboardStats(req, res);

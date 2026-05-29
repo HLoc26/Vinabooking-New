@@ -22,8 +22,11 @@ export class RoomController {
 
 	async getRoomById(req: GetRoomByIdRequest, res: Response) {
 		const { id } = req.params;
+		const { checkIn, checkOut } = req.query as { checkIn?: string; checkOut?: string };
 		try {
-			const room = await this.#roomService.getRoomById(id);
+			const start = checkIn ? new Date(checkIn) : undefined;
+			const end = checkOut ? new Date(checkOut) : undefined;
+			const room = await this.#roomService.getRoomById(id, start, end);
 			ResponseHelper.success(res, room);
 		} catch (error) {
 			if (error instanceof Error) ResponseHelper.error(res, error.message, 404);
@@ -78,8 +81,11 @@ export class RoomController {
 			return ResponseHelper.error(res, "Unauthorized", 401);
 		}
 
-		if (!body.name || !body.price || body.quantity === undefined) {
-			return ResponseHelper.error(res, "Missing required fields (name, price, quantity)", 400);
+		if (!body.name || !body.basePrice || body.quantity === undefined) {
+			return ResponseHelper.error(res, "Missing required fields (name, basePrice, quantity)", 400);
+		}
+		if (body.floorPrice !== undefined && Number(body.floorPrice) > Number(body.basePrice)) {
+			return ResponseHelper.error(res, "floorPrice must be ≤ basePrice", 400);
 		}
 
 		if (!body.beds || body.beds.length === 0) {

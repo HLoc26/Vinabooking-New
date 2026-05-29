@@ -16,8 +16,18 @@ import { useOwnerAccommodations } from "../../features/owner/hooks/useOwnerAccom
 import { AccommodationTreeMenu } from "../../features/owner/components/dashboard/AccommodationTreeMenu";
 
 const navItems = [
-	{ label: "Manage Booking", icon: <BookingIcon fontSize="inherit" />, path: "/owner/manage-booking", hasSubItems: true },
-	{ label: "Manage Price", icon: <PriceIcon fontSize="inherit" />, path: "/owner/manage-price" },
+	{ label: "Manage Booking", icon: <BookingIcon fontSize="inherit" />, path: "/owner/manage-booking" },
+	{ label: "Dynamic Pricing", icon: <PriceIcon fontSize="inherit" />, path: "/owner/settings" },
+];
+
+const bookingStatusItems = [
+	{ label: "Incoming", status: "BOOKED" },
+	{ label: "Cancelled", status: "CANCELLED" },
+	{ label: "Completed", status: "COMPLETED" },
+];
+
+const pricingStatusItems = [
+	{ label: "Global Settings", path: "/owner/settings" },
 ];
 
 const bookingStatusItems = [
@@ -68,6 +78,7 @@ export const NavigationMenu = () => {
 
 	const activeAccMatch = matchPath({ path: "/owner/accommodations/:accommodationId" }, location.pathname);
 	const activeAccommodationId = activeAccMatch?.params?.accommodationId;
+	const activeBookingStatus = searchParams.get("status") || "BOOKED";
 
 	// Local State
 	const [openAccommodations, setOpenAccommodations] = useState(true);
@@ -197,52 +208,83 @@ export const NavigationMenu = () => {
 				</Box>
 			</Collapse>
 
-			{/* 2. Manage Booking, Manage Price */}
-			{navItems.map(({ label, icon, path, hasSubItems }) => {
+			{/* 2. Manage Booking, Dynamic Pricing (static) */}
+			{navItems.map(({ label, icon, path }) => {
+				const isBookingItem = path === "/owner/manage-booking";
+				const isPricingItem = path === "/owner/settings";
 				const isActive = location.pathname === path;
-				const isBookingItem = label === "Manage Booking";
 
 				return (
 					<Box key={path}>
 						<Box onClick={() => navigate(isBookingItem ? `${path}?status=BOOKED` : path)} sx={getModernNavItemStyle(isActive)}>
-							<Box sx={{ display: "flex", alignItems: "center", fontSize: "1.2rem" }}>{icon}</Box>
-							<Typography sx={{ fontSize: "0.875rem", fontWeight: isActive ? 600 : 500, userSelect: "none" }}>{label}</Typography>
+							<Box sx={{ display: "flex", alignItems: "center", fontSize: "1.1rem", color: isActive ? "primary.main" : "inherit" }}>{icon}</Box>
+							<Typography sx={{ fontSize: "0.85rem", fontWeight: isActive ? 600 : 500, userSelect: "none" }}>{label}</Typography>
 						</Box>
 
-						{hasSubItems && isBookingItem && isActive && (
-							<List dense disablePadding sx={{ mb: 1, ml: 4.5, pl: 1, borderLeft: "1px solid", borderColor: "rgba(255,255,255,0.08)" }}>
-								{bookingStatusItems.map((item) => {
-									const isStatusActive = activeBookingStatus === item.status;
-									return (
-										<ListItemButton
-											key={item.status}
-											onClick={() => navigate(`${path}?status=${item.status}`)}
-											sx={{
-												py: 0.5,
-												px: 1.5,
-												borderRadius: "6px",
-												mb: 0.25,
-												color: isStatusActive ? "primary.main" : "text.secondary",
-												bgcolor: isStatusActive ? "rgba(var(--mui-palette-primary-mainChannel) / 0.08)" : "transparent",
-												"&:hover": {
-													bgcolor: isStatusActive ? "rgba(var(--mui-palette-primary-mainChannel) / 0.12)" : "rgba(255,255,255,0.03)",
-													color: isStatusActive ? "primary.main" : "text.primary",
-												},
-											}}
-										>
-											<ListItemText
-												primary={item.label}
-												slotProps={{
-													primary: {
-														fontSize: "0.8rem",
-														fontWeight: isStatusActive ? 600 : 500,
-													},
+						{isBookingItem && (
+							<Collapse in={isActive} timeout="auto" unmountOnExit>
+								<Box sx={{ ml: 4.5, pl: 1, borderLeft: "1px solid", borderColor: "rgba(255,255,255,0.08)", mt: 0.5, mb: 1 }}>
+									{bookingStatusItems.map((item) => {
+										const isStatusActive = isActive && activeBookingStatus === item.status;
+										return (
+											<Box
+												key={item.status}
+												onClick={() => navigate(`${path}?status=${item.status}`)}
+												sx={{
+													...getModernNavItemStyle(isStatusActive),
+													ml: 0,
+													mr: 1.5,
+													py: 0.6,
 												}}
-											/>
-										</ListItemButton>
-									);
-								})}
-							</List>
+											>
+												<Typography
+													sx={{
+														fontSize: "0.8rem",
+														fontWeight: isStatusActive ? 600 : 400,
+														color: isStatusActive ? "text.primary" : "text.secondary",
+														userSelect: "none",
+													}}
+												>
+													{item.label}
+												</Typography>
+											</Box>
+										);
+									})}
+								</Box>
+							</Collapse>
+						)}
+
+						{isPricingItem && (
+							<Collapse in={isActive} timeout="auto" unmountOnExit>
+								<Box sx={{ ml: 4.5, pl: 1, borderLeft: "1px solid", borderColor: "rgba(255,255,255,0.08)", mt: 0.5, mb: 1 }}>
+									{pricingStatusItems.map((item) => {
+										const isStatusActive = isActive && location.pathname === item.path;
+										return (
+											<Box
+												key={item.path}
+												onClick={() => navigate(item.path)}
+												sx={{
+													...getModernNavItemStyle(isStatusActive),
+													ml: 0,
+													mr: 1.5,
+													py: 0.6,
+												}}
+											>
+												<Typography
+													sx={{
+														fontSize: "0.8rem",
+														fontWeight: isStatusActive ? 600 : 400,
+														color: isStatusActive ? "text.primary" : "text.secondary",
+														userSelect: "none",
+													}}
+												>
+													{item.label}
+												</Typography>
+											</Box>
+										);
+									})}
+								</Box>
+							</Collapse>
 						)}
 					</Box>
 				);

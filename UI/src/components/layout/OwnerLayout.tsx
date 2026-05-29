@@ -197,9 +197,12 @@ export const OwnerLayout: React.FC<OwnerLayoutProps> = ({ children }) => {
 				</Box>
 
 				{/* Navigation */}
+				<Box sx={{ px: 2, pt: 1, pb: 0.5 }}>
+					<Typography variant="overline" color="text.disabled" sx={{ fontSize: 10, letterSpacing: 1.2, fontWeight: 700 }}>
+						Navigation
+					</Typography>
+				</Box>
 				<NavigationMenu />
-
-				<Box sx={{ flexGrow: 1 }} />
 
 				{/* Logout */}
 				<Box sx={{ p: 2, mt: "auto" }}>

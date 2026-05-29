@@ -73,8 +73,12 @@ model OwnerProfile {
 
     isVerified Boolean @default(false)
 
+    dynamicPricingSettings Json? @map("dynamic_pricing_settings")
+
     createdAt DateTime @default(now())
     updatedAt DateTime @updatedAt
+
+    ownerHolidays OwnerHoliday[]
 }
 
 // Auth
@@ -101,7 +105,11 @@ model Booking {
     guestCount  Int            @default(1)
     leaderName  String?
     leaderEmail String?
+    // Denormalized mirror of pricingSnapshot.totals.payablePrice — kept for
+    // dashboard/email queries that don't want to deserialize the JSON snapshot.
+    // pricingSnapshot is the authoritative record of the transaction (§1.4).
     totalPrice  Decimal?       @db.Decimal(10, 2)
+    pricingSnapshot Json?      @map("pricing_snapshot")
     phone       String?
     referenceNo Int            @unique
     status      EBookingStatus @default(BOOKED)
@@ -226,11 +234,13 @@ model Accommodation {
     addressId String?  @unique @db.VarChar(191)
 
     policy                       AccommodationPolicy?
+    dynamicPricingSettings Json? @map("dynamic_pricing_settings")
 
     facilities                   FacilityConfig[]
     rooms                        Room[]
     reviews                      Review[]
     accommodationReviewSummaries AccommodationReviewSummary?
+    holidayOptIns                AccommodationHoliday[]
 
     @@index([type])
     @@index([rentalType])
@@ -424,7 +434,8 @@ model Room {
     viewType        EViewType @default(NONE)
     viewDescription String?   @db.VarChar(191)
 
-    price       Decimal?     @db.Decimal(10, 2)
+    basePrice   Decimal      @default(0) @map("base_price") @db.Decimal(10, 2)
+    floorPrice  Decimal      @default(0) @map("floor_price") @db.Decimal(10, 2)
     pricingType EPricingType @default(PER_NIGHT)
 
     isActive Boolean @default(true)
@@ -437,7 +448,7 @@ model Room {
 
     @@index([accommodationId, isActive])
     @@index([maxAdults, maxChildren])
-    @@index([price])
+    @@index([basePrice])
     @@index([viewType])
     @@index([bathroomCount])
     @@index([bedroomCount])
@@ -626,4 +637,53 @@ model AccommodationReviewSummary {
     updatedAt       DateTime      @updatedAt
     accommodationId String        @unique
     accommodation   Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+}
+
+// Dynamic Pricing — Holidays
+
+model Holiday {
+    id          Int      @id @default(autoincrement())
+    name        String   @db.VarChar(100)
+    code        String   @db.VarChar(50)
+    date        DateTime @db.Date
+    isRecurring Boolean  @default(false) @map("is_recurring")
+
+    // Compound key lets a year-2000 recurring row coexist with an explicit
+    // 2000-MM-DD non-recurring row.
+    @@unique([date, isRecurring])
+    @@index([date])
+    @@index([code])
+    @@map("holidays")
+}
+
+model OwnerHoliday {
+    id              String  @id @default(uuid())
+    ownerProfileId  String  @map("owner_profile_id")
+    holidayCode     String  @map("holiday_code") @db.VarChar(50)
+    priceMultiplier Decimal @map("price_multiplier") @db.Decimal(4, 2)
+    preDays         Int     @default(0) @map("pre_days") @db.UnsignedInt
+    postDays        Int     @default(0) @map("post_days") @db.UnsignedInt
+    enabled         Boolean @default(true)
+
+    ownerProfile OwnerProfile @relation(fields: [ownerProfileId], references: [id], onDelete: Cascade)
+
+    @@unique([ownerProfileId, holidayCode])
+    @@index([ownerProfileId])
+    @@map("owner_holidays")
+}
+
+model AccommodationHoliday {
+    id              String  @id @default(uuid())
+    accommodationId String  @map("accommodation_id") @db.VarChar(191)
+    holidayCode     String  @map("holiday_code") @db.VarChar(50)
+    priceMultiplier Decimal @map("price_multiplier") @db.Decimal(4, 2)
+    preDays         Int     @default(0) @map("pre_days") @db.UnsignedInt
+    postDays        Int     @default(0) @map("post_days") @db.UnsignedInt
+    enabled         Boolean @default(true)
+
+    accommodation Accommodation @relation(fields: [accommodationId], references: [id], onDelete: Cascade)
+
+    @@unique([accommodationId, holidayCode])
+    @@index([accommodationId])
+    @@map("accommodation_holidays")
 }

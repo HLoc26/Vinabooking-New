@@ -70,10 +70,15 @@ export default function RoomEditModal({ room, open, onClose, onSave, draftAmenit
 			const isEntirePlace = rentalType === "ENTIRE_PLACE";
 			const nameToCheck = (isEntirePlace ? accommodationType : draft.name)?.trim();
 
+			const base = Number(draft.basePrice ?? draft.price) || 0;
+			const floor = Number(draft.floorPrice ?? base) || 0;
+
 			onSave({
 				...draft,
 				name: nameToCheck || "Room",
-				price: Number(draft.price) || 0,
+				basePrice: base,
+				floorPrice: floor,
+				price: base, // keep for compatibility
 			});
 		} catch (error) {
 			console.error("[RoomEditModal] onSave execution error:", error);

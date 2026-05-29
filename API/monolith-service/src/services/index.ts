@@ -15,3 +15,5 @@ export { default as ReviewSummaryService } from "./review-summary.service";
 export { default as SearchService } from "./search.service";
 export { default as PaymentService } from "./payment.service";
 export { default as PayosService } from "./payos.service";
+export { default as PricingService } from "./pricing.service";
+export { default as OwnerPricingService } from "./owner-pricing.service";

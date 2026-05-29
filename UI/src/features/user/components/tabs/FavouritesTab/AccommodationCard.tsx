@@ -21,7 +21,7 @@ const AccommodationCard: React.FC<AccommodationCardProps> = ({ accommodation, on
 	const displayUrl = getThumbnailUrl(images);
 
 	const rooms = accommodation?.rooms || [];
-	const minPrice = rooms.length > 0 ? Math.min(...rooms.map((r) => Number(r.price))) : 0;
+	const minPrice = rooms.length > 0 ? Math.min(...rooms.map((r) => Number(r.basePrice ?? r.price ?? 0))) : 0;
 
 	const handleRemoveClick = (e: React.MouseEvent) => {
 		e.stopPropagation(); // tránh click lan ra card

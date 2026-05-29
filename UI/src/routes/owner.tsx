@@ -7,7 +7,7 @@ import { OwnerLayout } from "../components/layout/OwnerLayout";
 import OwnerOnboardPage from "../features/owner/pages/OwnerOnboardPage";
 import DashboardPage from "../features/owner/pages/DashboardPage";
 import ManageBookingPage from "../features/owner/pages/ManageBookingPage";
-import ManagePricePage from "../features/owner/pages/ManagePricePage";
+import SettingsPage from "../features/owner/pages/SettingsPage";
 import DraftsPage from "../features/owner/pages/DraftsPage";
 import OwnerCreateAccomPage from "../features/owner/pages/OwnerCreateAccomPage";
 import ManageAccommodationPage from "../features/owner/pages/ManageAccommodationPage";
@@ -37,10 +37,10 @@ export const OwnerRouter = () => (
 			}
 		/>
 		<Route
-			path="/manage-price"
+			path="/settings"
 			element={
 				<OwnerLayout>
-					<ManagePricePage />
+					<SettingsPage />
 				</OwnerLayout>
 			}
 		/>

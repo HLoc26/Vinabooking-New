@@ -41,7 +41,9 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 					bathroomCount: room.bathroomCount,
 					viewType: room.viewType,
 					viewDescription: room.viewDescription || "",
-					price: room.price ? Number(room.price) : undefined,
+					price: (room as { basePrice?: string | number | null }).basePrice
+						? Number((room as { basePrice?: string | number | null }).basePrice)
+						: undefined,
 					pricingType: room.pricingType,
 					beds: room.beds.map((bed) => ({
 						id: bed.id,

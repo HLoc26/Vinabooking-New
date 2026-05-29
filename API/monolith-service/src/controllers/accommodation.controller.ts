@@ -214,6 +214,28 @@ class AccommodationController {
 		}
 	}
 
+	public async updatePricingSettings(req: Request<{ id: string }>, res: Response) {
+		const ownerId = req.userId;
+		const { id } = req.params;
+		const body = req.body as import("@/types/accommodation.types").UpdateAccommodationPricingDTO;
+
+		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
+		if (body.dynamicPricingSettings === undefined && body.holidayOptIns === undefined) {
+			return ResponseHelper.error(res, "At least one of dynamicPricingSettings or holidayOptIns must be provided", 400);
+		}
+
+		try {
+			const data = await this.#accommodationService.updatePricingSettings(ownerId, id, body);
+			ResponseHelper.success(res, data);
+		} catch (error) {
+			if (error instanceof Error) {
+				ResponseHelper.error(res, error.message, 400);
+			} else {
+				ResponseHelper.error(res, "An unknown error occurred", 500);
+			}
+		}
+	}
+
 	public async updateAddress(req: UpdateAddressRequest, res: Response) {
 		const ownerId = req.userId;
 		const { id } = req.params;

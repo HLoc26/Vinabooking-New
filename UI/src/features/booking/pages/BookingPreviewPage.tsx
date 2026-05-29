@@ -9,6 +9,8 @@ import AccommodationInfoBox from "../components/PreviewBooking/AccommodationInfo
 import type { UserInfo } from "../types/UserInfo";
 import useRooms from "../../accommodation/hooks/useRooms";
 import useAccommodation from "../../accommodation/hooks/useAccommodation";
+import usePreviewQuote from "../hooks/usePreviewQuote";
+import type { QuoteItemPricing } from "../types/pricing.types";
 
 import { useSelector, useDispatch } from "react-redux";
 import type { RootState, AppDispatch } from "../../../app/store";
@@ -24,6 +26,14 @@ export default function BookingPreviewPage() {
 	const roomIds = bookingInfo.items.map((i) => i.id);
 	const { data: selectedRooms = [], isLoading: roomInfoLoading } = useRooms(roomIds);
 	const { data: accommInfo } = useAccommodation(bookingInfo.accommodationId);
+	const { data: quote } = usePreviewQuote({
+		startDate: bookingInfo.startDate,
+		endDate: bookingInfo.endDate,
+		items: bookingInfo.items,
+	});
+
+	const pricingByItemId = new Map<string, QuoteItemPricing>();
+	quote?.items.forEach((it) => pricingByItemId.set(it.itemId, it.pricing));
 
 	const enrichedRooms = selectedRooms.map((room) => {
 		const bookingItem = bookingInfo.items.find((i) => i.id === room.id);
@@ -31,6 +41,7 @@ export default function BookingPreviewPage() {
 		return {
 			...room,
 			count: bookingItem?.count ?? 0,
+			pricing: pricingByItemId.get(room.id) ?? room.pricing,
 		};
 	});
 
@@ -134,14 +145,14 @@ export default function BookingPreviewPage() {
 
 					{/* MIDDLE */}
 					<Grid size={{ xs: 12, md: 5 }}>
-						{roomInfoLoading ? <Typography>Loading...</Typography> : <RoomReviewBox roomsInfo={enrichedRooms} setGalleryImages={setGalleryImages} openImageGallery={openImageGallery} />}
+						{roomInfoLoading ? <Typography>Loading...</Typography> : <RoomReviewBox roomsInfo={enrichedRooms} nights={quote?.nights} setGalleryImages={setGalleryImages} openImageGallery={openImageGallery} />}
 					</Grid>
 
 					{/* RIGHT */}
 					<Grid size={{ xs: 12, md: 4 }}>
 						<AccommodationInfoBox
 							accommInfo={accommInfo!}
-							rooms={enrichedRooms}
+							quote={quote}
 							agreed={agreed}
 							setAgreed={setAgreed}
 							setGalleryImages={setGalleryImages}
