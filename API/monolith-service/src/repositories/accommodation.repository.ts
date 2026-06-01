@@ -100,15 +100,15 @@ class AccommodationRepository {
 		let hasPolicyFilter = false;
 
 		if (filters.allowsPets !== undefined && filters.allowsPets !== "undefined") {
-			policyWhere.allowsPets = filters.allowsPets === 'true';
+			policyWhere.allowsPets = filters.allowsPets === "true";
 			hasPolicyFilter = true;
 		}
 		if (filters.allowsSmoking !== undefined && filters.allowsSmoking !== "undefined") {
-			policyWhere.allowsSmoking = filters.allowsSmoking === 'true';
+			policyWhere.allowsSmoking = filters.allowsSmoking === "true";
 			hasPolicyFilter = true;
 		}
 		if (filters.allowsParties !== undefined && filters.allowsParties !== "undefined") {
-			policyWhere.allowsParties = filters.allowsParties === 'true';
+			policyWhere.allowsParties = filters.allowsParties === "true";
 			hasPolicyFilter = true;
 		}
 		if (filters.checkInTime && filters.checkInTime !== "ANY" && filters.checkInTime !== "undefined") {
@@ -142,13 +142,12 @@ class AccommodationRepository {
 			select: { id: true },
 		});
 		const matchedIds = matchingRecords.map((r) => r.id);
-		const totalMatches = matchedIds.length; // <-- Đếm tổng số lượng record thỏa mãn
+		const totalMatches = matchedIds.length;
 
 		if (totalMatches === 0) {
 			return { paginatedIds: [], statsRows: [], total: 0 };
 		}
-		// TODO: Add minPrice, avgStar, and reviewCount column for faster query
-		// Use raw SQL
+
 		let orderClause = Prisma.sql`ORDER BY a.createdAt DESC`;
 		if (sortBy === ESortOption.RECOMMENDED) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, avgStar IS NULL, minPrice ASC, avgStar DESC`;
 		if (sortBy === ESortOption.PRICE_ASC) orderClause = Prisma.sql`ORDER BY minPrice IS NULL, minPrice ASC`;
@@ -157,37 +156,36 @@ class AccommodationRepository {
 		if (sortBy === ESortOption.NAME_DESC) orderClause = Prisma.sql`ORDER BY a.name DESC`;
 		if (sortBy === ESortOption.RATING) orderClause = Prisma.sql`ORDER BY avgStar IS NULL, avgStar DESC`;
 
-		// TODO: unify table names in prisma.schema
 		const roomTable = "rooms";
 		const accommodationTable = "accommodations";
 		const reviewTable = "Review";
 		const bedTable = "beds";
 		const statsRows = await this.#prismaClient.$queryRaw<{ id: string; minPrice: number | null; avgStar: number | null; reviewCount: number }[]>`
-            SELECT 
-                a.id,
-                a.name,
-                a.createdAt,
-                (
-                    SELECT MIN(
-                        COALESCE(
-                            CAST(NULLIF(r.base_price, '') AS DECIMAL(10,2)),
-                            (SELECT MIN(CAST(b.price AS DECIMAL(10,2))) FROM ${Prisma.raw(bedTable)} b WHERE b.roomId = r.id)
-                        )
-                    )
+			SELECT 
+				a.id,
+				a.name,
+				a.createdAt,
+				(
+					SELECT MIN(
+						COALESCE(
+							CAST(NULLIF(r.base_price, '') AS DECIMAL(10,2)),
+							(SELECT MIN(CAST(b.price AS DECIMAL(10,2))) FROM ${Prisma.raw(bedTable)} b WHERE b.roomId = r.id)
+						)
+					)
 					FROM ${Prisma.raw(roomTable)} r
-                    WHERE r.accommodationId = a.id
-                ) AS minPrice,
-                (
-                    SELECT AVG(rev.star) FROM ${Prisma.raw(reviewTable)} rev WHERE rev.accommodationId = a.id
-                ) AS avgStar,
-                (
-                    SELECT COUNT(rev.id) FROM ${Prisma.raw(reviewTable)} rev WHERE rev.accommodationId = a.id
-                ) AS reviewCount
+					WHERE r.accommodationId = a.id
+				) AS minPrice,
+				(
+					SELECT AVG(rev.star) FROM ${Prisma.raw(reviewTable)} rev WHERE rev.accommodationId = a.id
+				) AS avgStar,
+				(
+					SELECT COUNT(rev.id) FROM ${Prisma.raw(reviewTable)} rev WHERE rev.accommodationId = a.id
+				) AS reviewCount
 			FROM ${Prisma.raw(accommodationTable)} a
-            WHERE a.id IN (${Prisma.join(matchedIds)})
-            ${orderClause}
-            LIMIT ${limit} OFFSET ${offset}
-        `;
+			WHERE a.id IN (${Prisma.join(matchedIds)})
+			${orderClause}
+			LIMIT ${limit} OFFSET ${offset}
+		`;
 
 		return { statsRows, total: totalMatches };
 	}
@@ -240,7 +238,7 @@ class AccommodationRepository {
 				},
 				reviews: {
 					select: {
-						star: true, // Cái này tự tính trung bình in-memory
+						star: true,
 					},
 				},
 			},
@@ -265,9 +263,11 @@ class AccommodationRepository {
 				policy: true,
 				facilities: { include: { facility: true } },
 			},
+		});
+	}
+
 	public async updatePricingSettings(id: string, settings: DynamicPricingSettings | null) {
-		const value: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
-			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+		const value = settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
 		return await this.#prismaClient.accommodation.update({
 			where: { id },
 			data: { dynamicPricingSettings: value },
@@ -282,9 +282,6 @@ class AccommodationRepository {
 		});
 	}
 
-	/**
-	 * Force-apply global settings to all accommodations owned by a user.
-	 */
 	public async syncAllWithGlobalSettings(
 		ownerId: string,
 		settings: DynamicPricingSettings | null,
@@ -295,22 +292,18 @@ class AccommodationRepository {
 
 		if (accIds.length === 0) return { updatedCount: 0 };
 
-		const settingsValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
-			settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
+		const settingsValue = settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
 
 		return await this.#prismaClient.$transaction(async (tx) => {
-			// 1. Bulk update JSON settings
 			await tx.accommodation.updateMany({
 				where: { id: { in: accIds } },
 				data: { dynamicPricingSettings: settingsValue },
 			});
 
-			// 2. Bulk remove old holiday opt-ins
 			await tx.accommodationHoliday.deleteMany({
 				where: { accommodationId: { in: accIds } },
 			});
 
-			// 3. Bulk insert new holiday opt-ins for all accommodations
 			if (holidays.length > 0) {
 				const batchData = accIds.flatMap((accId) =>
 					holidays.map((h) => ({
@@ -355,7 +348,6 @@ class AccommodationRepository {
 	}
 
 	public async syncFacilities(accommodationId: string, facilities: { facilityId: string; fee?: number; note?: string; isAvailable?: boolean }[]) {
-		// Dùng Transaction để xóa cũ, thêm mới an toàn
 		return await this.#prismaClient.$transaction(async (tx) => {
 			await tx.facilityConfig.deleteMany({ where: { accommodationId } });
 
