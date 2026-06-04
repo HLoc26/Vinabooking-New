@@ -11,3 +11,8 @@ export interface ReviewResponse {
 	children: ReviewResponse[];
 	commentDate: Date;
 }
+
+export interface AccommodationReviewsResponse {
+	reviews: ReviewResponse[];
+	summary: string | null;
+}

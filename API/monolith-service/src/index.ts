@@ -104,14 +104,15 @@ const bookingService = new BookingService(bookingRepository, roomRepository, use
 const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
 const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service, ownerRepository, holidayRepository);
+const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
 	bookingService: bookingService,
 	imageService: imageService,
 	accommodationService: accommodationService,
+	reviewSummaryService: reviewSummaryService,
 });
-const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 bookingService.setAccommodationService(accommodationService);
 
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);

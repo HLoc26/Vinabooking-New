@@ -1,13 +1,13 @@
 import { useState, useMemo, lazy, Suspense, useCallback } from "react";
-import { Box, Paper, Typography, Rating, Stack, CircularProgress, LinearProgress, Pagination } from "@mui/material";
-import { StarBorderOutlined } from "@mui/icons-material";
+import { Box, Paper, Typography, Rating, Stack, CircularProgress, LinearProgress, Pagination, alpha } from "@mui/material";
+import { StarBorderOutlined, AutoAwesome } from "@mui/icons-material";
 import { useQueryClient, useMutation } from "@tanstack/react-query";
 
 import { usePushNotificationContext } from "../../../../../context/PushNotification/hook";
 import { getCardSx, getHeaderSx } from "../shared/CardSharedUI";
 
 import reviewApi from "../../../../review/services/reviewApi";
-import { useReviews } from "../../../../accommodation/hooks/useReviews";
+import { useReviews, type AccommodationReviewsWithImagesResponse } from "../../../../accommodation/hooks/useReviews";
 import type { ReviewDto, ReviewWithImages } from "../../../../review/types/review.types";
 import { ReviewItem } from "./ReviewItem";
 
@@ -29,43 +29,48 @@ export const ManageReviewsCard = ({ accommodationId }: Props) => {
 	const { pushNotification } = usePushNotificationContext();
 	const queryClient = useQueryClient();
 
-	const { data: reviews = [], isLoading, isError } = useReviews(accommodationId);
+	const { data, isLoading, isError } = useReviews(accommodationId);
+	const reviews = data?.reviews ?? [];
+	const summary = data?.summary;
 
 	const { mutateAsync: submitReply } = useMutation({
 		mutationFn: async (payload: ReviewDto) => reviewApi.create(payload),
 		onMutate: async (newReply) => {
 			await queryClient.cancelQueries({ queryKey: ["accommodation", accommodationId, "reviews"] });
-			const previousReviews = queryClient.getQueryData<ReviewWithImages[]>(["accommodation", accommodationId, "reviews"]);
+			const previousData = queryClient.getQueryData<AccommodationReviewsWithImagesResponse>(["accommodation", accommodationId, "reviews"]);
 
-			queryClient.setQueryData<ReviewWithImages[]>(["accommodation", accommodationId, "reviews"], (old) => {
-				if (!old) return [];
-				return old.map((r) => {
-					if (r.id === newReply.parentId) {
-						return {
-							...r,
-							children: [
-								...(r.children || []),
-								{
-									id: `temp-${Date.now()}`,
-									star: 0,
-									comment: newReply.comment,
-									bookingId: "",
-									user: { id: "owner", name: "You (Owner Response)", avatar: "" },
-									children: [],
-									commentDate: new Date(),
-									images: [],
-								},
-							],
-						};
-					}
-					return r;
-				});
+			queryClient.setQueryData<AccommodationReviewsWithImagesResponse>(["accommodation", accommodationId, "reviews"], (old) => {
+				if (!old) return { reviews: [], summary: null };
+				return {
+					...old,
+					reviews: old.reviews.map((r) => {
+						if (r.id === newReply.parentId) {
+							return {
+								...r,
+								children: [
+									...(r.children || []),
+									{
+										id: `temp-${Date.now()}`,
+										star: 0,
+										comment: newReply.comment,
+										bookingId: "",
+										user: { id: "owner", name: "You (Owner Response)", avatar: "" },
+										children: [],
+										commentDate: new Date(),
+										images: [],
+									},
+								],
+							};
+						}
+						return r;
+					}),
+				};
 			});
 
-			return { previousReviews };
+			return { previousData };
 		},
 		onError: (_err, _newReply, context) => {
-			queryClient.setQueryData(["accommodation", accommodationId, "reviews"], context?.previousReviews);
+			queryClient.setQueryData(["accommodation", accommodationId, "reviews"], context?.previousData);
 			pushNotification("Failed to post reply. Please try again.", "error");
 		},
 		onSuccess: () => pushNotification("Reply posted successfully!", "success"),
@@ -134,6 +139,31 @@ export const ManageReviewsCard = ({ accommodationId }: Props) => {
 			</Box>
 
 			<Box sx={{ px: 3.5, py: 3 }}>
+				{summary && (
+					<Box
+						sx={{
+							mb: 4,
+							p: 2.5,
+							bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+							borderRadius: 3,
+							border: "1px solid",
+							borderColor: (theme) => alpha(theme.palette.primary.main, 0.2),
+							position: "relative",
+							overflow: "hidden",
+						}}
+					>
+						<Box sx={{ display: "flex", alignItems: "center", gap: 1.5, mb: 1.5 }}>
+							<AutoAwesome sx={{ color: "primary.main", fontSize: "1.2rem" }} />
+							<Typography variant="subtitle2" fontWeight={700} color="primary.dark">
+								AI Review Summary
+							</Typography>
+						</Box>
+						<Typography variant="body2" sx={{ fontStyle: "italic", color: "text.primary", lineHeight: 1.6 }}>
+							"{summary}"
+						</Typography>
+					</Box>
+				)}
+
 				{stats.total > 0 && (
 					<Box sx={{ display: "flex", flexWrap: "wrap", gap: 4, mb: 4, p: 3, bgcolor: "rgba(255,255,255,0.02)", borderRadius: 3, border: "1px solid rgba(255,255,255,0.05)" }}>
 						<Box sx={{ display: "flex", flexDirection: "column", alignItems: "center", justifyContent: "center", minWidth: 150 }}>
