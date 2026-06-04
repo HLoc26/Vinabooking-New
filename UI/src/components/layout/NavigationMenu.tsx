@@ -30,12 +30,6 @@ const pricingStatusItems = [
 	{ label: "Global Settings", path: "/owner/settings" },
 ];
 
-const bookingStatusItems = [
-	{ label: "Incoming", status: "BOOKED" },
-	{ label: "Cancelled", status: "CANCELLED" },
-	{ label: "Completed", status: "COMPLETED" },
-];
-
 const getModernNavItemStyle = (isActive: boolean) => ({
 	display: "flex",
 	alignItems: "center",
@@ -95,7 +89,6 @@ export const NavigationMenu = () => {
 	}, [location.pathname, activeAccommodationId]);
 
 	const currentTab = searchParams.get("tab") || "overview";
-	const activeBookingStatus = searchParams.get("status") || "BOOKED";
 
 	const handleTreeTabChange = (newTab: string) => {
 		if (!activeAccommodationId) return;
