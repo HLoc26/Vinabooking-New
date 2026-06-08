@@ -5,7 +5,7 @@
 	"main": "index.js",
 	"scripts": {
 		"dev": "npx nodemon --legacy-watch --exec \"npx ts-node -r tsconfig-paths/register ./src/index.ts\"",
-		"build": "npx prisma generate && npx tsc && npx tsc-alias",
+		"build": "yarn install --production=false && npx prisma generate && npx tsc && npx tsc-alias",
 		"start": "node dist/src/index.js",
 		"sync:pinecone:review": "ts-node -r tsconfig-paths/register src/scripts/sync-review.ts",
 		"sync:pinecone:accomm": "ts-node -r tsconfig-paths/register src/scripts/sync-accommodation.ts",
