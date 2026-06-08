@@ -6,7 +6,7 @@ const redisConnection = new Redis(process.env["REDIS_ENDPOINT"]!, {
 });
 
 export const reviewQueue = new Queue("review-task", {
-	connection: redisConnection,
+	connection: redisConnection as any,
 	defaultJobOptions: {
 		attempts: 3,
 		backoff: { type: "exponential", delay: 5000 },
@@ -16,7 +16,7 @@ export const reviewQueue = new Queue("review-task", {
 });
 
 export const publishQueue = new Queue("publish-task", {
-	connection: redisConnection,
+	connection: redisConnection as any,
 	defaultJobOptions: {
 		attempts: 3,
 		backoff: { type: "exponential", delay: 5000 },
@@ -26,7 +26,7 @@ export const publishQueue = new Queue("publish-task", {
 });
 
 export const bookingTimeoutQueue = new Queue("booking-timeout-task", {
-	connection: redisConnection,
+	connection: redisConnection as any,
 	defaultJobOptions: {
 		attempts: 3,
 		backoff: { type: "exponential", delay: 5000 },

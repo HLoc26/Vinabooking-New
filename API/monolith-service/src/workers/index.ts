@@ -16,7 +16,7 @@ export class WorkerManager {
 					await workerDef.process(job);
 				},
 				{
-					connection: getRedisConnection(),
+					connection: getRedisConnection() as any,
 					concurrency: workerDef.concurrency || 1,
 					lockDuration: 60000, // 60 secs
 				}
