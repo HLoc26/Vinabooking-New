@@ -1,10 +1,12 @@
+import { EntityType } from "@/models/image";
+import { ImageDto } from "@/dto/response/image.dto";
 import { RoomRepository } from "@/repositories";
 import { NotFoundError, BadRequestError } from "@/errors";
 import { EEntityType } from "@/generated/client";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
 import PricingService from "./pricing.service";
-import { ImageFullInfo } from "@/types/image.types";
+
 import { RoomFullDetail, CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
 import type { QuoteItemPricing } from "@/types/pricing.types";
 import redisClient from "@/clients/redis.client";
@@ -92,7 +94,7 @@ export class RoomService {
 		const imagesTask = Promise.all(
 			rooms.map(async (room) => {
 				try {
-					const images = await this.#imageService.getImage(EEntityType.ROOM, room.id);
+					const images = await this.#imageService.getImage(EntityType.ROOM, room.id);
 					return { roomId: room.id, images };
 				} catch {
 					return { roomId: room.id, images: [] };
@@ -103,7 +105,7 @@ export class RoomService {
 		const [bookedCounts, imagesMapList] = await Promise.all([bookingTask, imagesTask]);
 		const bookedMap = new Map<string, number>();
 		bookedCounts.forEach((item) => bookedMap.set(item.roomId, item.bookedCount));
-		const imagesMap = new Map<string, ImageFullInfo[]>();
+		const imagesMap = new Map<string, ImageDto[]>();
 		imagesMapList.forEach((item) => imagesMap.set(item.roomId, item.images));
 
 		const pricingMap = new Map<string, QuoteItemPricing>();
@@ -189,7 +191,7 @@ export class RoomService {
 		const deletedRoom = await this.#roomRepository.delete(roomId);
 
 		// 3. Delete Images
-		await this.#imageService.deleteImagesByEntity(EEntityType.ROOM, roomId);
+		await this.#imageService.deleteImagesByEntity(EntityType.ROOM, roomId);
 
 		// 4. Clear Cache
 		await redisClient.del(`${this.CACHE_PREFIX}${room.accommodationId}`);

@@ -1,5 +1,6 @@
+import { ImageDto } from "@/dto/response/image.dto";
 import { Prisma, type EAccommodationType, type ERentalType, type EAccommodationStatus } from "@/generated/client";
-import { ImageFullInfo } from "./image.types";
+
 import { RoomWithDetails } from "./room.types";
 import type { DynamicPricingSettings, HolidayOptIn } from "./pricing.types";
 
@@ -32,7 +33,7 @@ export type DraftAccommodation = AccommodationWithDetails & {
 
 export type AccommodationFullInfo = AccommodationWithDetails & {
 	rooms?: RoomWithDetails[];
-	images?: ImageFullInfo[];
+	images?: ImageDto[];
 
 	// Calculated fields
 	thumbnail?: string | null;

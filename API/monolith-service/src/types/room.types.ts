@@ -1,5 +1,6 @@
+import { ImageDto } from "@/dto/response/image.dto";
 import { Prisma, type EViewType, type EPricingType, type EBedType } from "@/generated/client";
-import { ImageFullInfo } from "./image.types";
+
 import type { QuoteItemPricing } from "./pricing.types";
 
 export interface RoomFilterOptions {
@@ -25,7 +26,7 @@ export type AmenityConfigWithDetails = Prisma.AmenityConfigGetPayload<{
 
 export type RoomFullDetail = RoomWithDetails & {
 	remainingQuantity: number;
-	images: ImageFullInfo[];
+	images: ImageDto[];
 	pricing?: QuoteItemPricing;
 };
 

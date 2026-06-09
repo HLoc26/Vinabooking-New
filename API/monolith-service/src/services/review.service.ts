@@ -1,3 +1,4 @@
+import { EntityType } from "@/models/image";
 import ReviewRepository from "@/repositories/review.repository";
 import UserService from "./user.service";
 import { AccommodationService, BookingService, ImageService } from "@/services";
@@ -182,7 +183,7 @@ class ReviewService {
 			userIds.map(async (id) => {
 				const user = await this.#userService.getUserById(id);
 				if (!user) return null;
-				const images = await this.#imageService.getImage(EEntityType.USER_PROFILE, id);
+				const images = await this.#imageService.getImage(EntityType.USER_PROFILE, id);
 				const avatar = images.find((i) => i.references.some((r) => r.isPrimary))?.url || ""; // Lấy URL string
 				return { id: user.id, name: user.name, avatar };
 			})

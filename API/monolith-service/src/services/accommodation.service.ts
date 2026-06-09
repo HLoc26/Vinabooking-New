@@ -1,3 +1,5 @@
+import { EntityType } from "@/models/image";
+import { ImageDto } from "@/dto/response/image.dto";
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
@@ -19,7 +21,7 @@ import {
 	UpdateAccommodationPricingDTO,
 	OwnerAccommodationCard,
 } from "@/types/accommodation.types";
-import { ImageFullInfo } from "@/types/image.types";
+
 import redisClient from "@/clients/redis.client";
 import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
 import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
@@ -89,8 +91,8 @@ class AccommodationService {
 		}
 
 		// 3. Lấy toàn bộ hình ảnh
-		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
-		const imageMap: Record<string, ImageFullInfo[]> = {};
+		const imagesBatch = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, ids);
+		const imageMap: Record<string, ImageDto[]> = {};
 		imagesBatch.forEach((img) => {
 			const entityId = img.references[0].entityId;
 			if (!imageMap[entityId]) imageMap[entityId] = [];
@@ -274,7 +276,7 @@ class AccommodationService {
 		const ids = rawAccommodations.map((acc) => acc.id);
 
 		// Get thubnail
-		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
+		const imagesBatch = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, ids);
 		const imageMap: Record<string, string> = {};
 
 		ids.forEach((id) => {

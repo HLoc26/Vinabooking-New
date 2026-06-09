@@ -1,6 +1,6 @@
-import { UploadedImage } from "@/types/image.types";
+import { ImageDto as Image } from "@/dto/response/image.dto";
 
 export interface UploadResponse {
 	success: boolean;
-	images: UploadedImage[];
+	images: Image[];
 }

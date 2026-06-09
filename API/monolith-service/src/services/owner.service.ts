@@ -1,3 +1,4 @@
+import { EntityType } from "@/models/image";
 import BadRequestError from "@/errors/BadRequestError";
 import { NotFoundError } from "@/errors";
 import { OwnerRepository } from "@/repositories";
@@ -36,7 +37,7 @@ class OwnerService {
 		if (accommodations.length === 0) return [];
 
 		const accIds = accommodations.map((acc) => acc.id);
-		const allImages = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, accIds);
+		const allImages = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, accIds);
 
 		const imageCountMap = new Map<string, number>();
 		allImages.forEach((img) => {
@@ -80,9 +81,9 @@ class OwnerService {
 			throw new NotFoundError("Draft accommodation not found or unauthorized access.");
 		}
 
-		const accommImages = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, [accommodationId]);
+		const accommImages = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, [accommodationId]);
 		const roomIds = accDetails.rooms.map((r) => r.id);
-		const roomImages = roomIds.length > 0 ? await this.#imageService.getImagesBatch(EEntityType.ROOM, roomIds) : [];
+		const roomImages = roomIds.length > 0 ? await this.#imageService.getImagesBatch(EntityType.ROOM, roomIds) : [];
 		const formattedImages = [
 			...accommImages.map((img) => ({ ...img, target: "accommodation" })),
 			...roomImages.map((img) => {
