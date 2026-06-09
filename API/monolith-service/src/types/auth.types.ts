@@ -5,8 +5,3 @@ export interface AuthTokens {
 	expiresIn: number;
 	tokenType: string;
 }
-
-export enum ETokenType {
-	ACCESS = "access",
-	ID = "id",
-}
