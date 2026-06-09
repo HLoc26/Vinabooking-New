@@ -2,9 +2,9 @@ import { Response } from "express";
 import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
 import BadRequestError from "@/errors/BadRequestError";
-import { CreateReviewRequest, GetAccommodationReviewsRequest, GetUserByBookingRequest } from "@/types/requests";
+import { CreateReviewRequest, GetAccommodationReviewsRequest, GetUserByBookingRequest } from "@/dto/request/review.dto";
 import { ApiResponse } from "@/types/responses";
-import { ReviewResponse } from "@/types/responses/review.response";
+import { ReviewResponse } from "@/dto/response/review.dto";
 
 class ReviewController {
 	readonly #reviewService: ReviewService;

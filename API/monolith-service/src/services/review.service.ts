@@ -3,15 +3,14 @@ import ReviewRepository from "@/repositories/review.repository";
 import UserService from "./user.service";
 import { AccommodationService, BookingService, ImageService } from "@/services";
 import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
-import { EEntityType, Prisma, Review } from "@/generated/client";
+import { EEntityType } from "@/generated/client";
+import { Review, ReviewBuilder } from "@/models/review";
 import { BookingStatus } from "@/models/booking";
-import { CreateReviewPayload } from "@/types/requests";
-import { ReviewResponse } from "@/types/responses/review.response";
+import { CreateReviewPayload } from "@/dto/request/review.dto";
+import { ReviewResponse } from "@/dto/response/review.dto";
 import { reviewQueue } from "@/clients/queue.client";
 import { EReviewJobName } from "@/types/queue.types";
 import redisClient from "@/clients/redis.client";
-
-type ReviewWithReplies = Review & { replies?: Review[] };
 
 // Định nghĩa Config Interface cho Dependency Injection
 export interface ReviewServiceConfig {
@@ -63,15 +62,15 @@ class ReviewService {
 			throw new BadRequestError("Accommodation ID is required.");
 		}
 
-		const data: Prisma.ReviewUncheckedCreateInput = {
-			userId,
-			accommodationId: dto.accommodationId,
-			bookingId: dto.bookingId,
-			comment: dto.comment,
-			star: dto.star,
-		};
+		const reviewDomain = new ReviewBuilder()
+			.setUserId(userId)
+			.setAccommodationId(dto.accommodationId)
+			.setBookingId(dto.bookingId)
+			.setComment(dto.comment)
+			.setStar(dto.star ?? null)
+			.build();
 
-		const created = await this.#reviewRepository.create(data);
+		const created = await this.#reviewRepository.create(reviewDomain);
 
 		const { lat, lon } = await this.#getAccommodationCoords(dto.accommodationId);
 
@@ -113,10 +112,10 @@ class ReviewService {
 		await reviewQueue.add(
 			EReviewJobName.SUMMARIZE_REVIEWS,
 			{
-				accommodationId: created.accommodationId,
+				accommodationId: created.getAccommodationId(),
 			},
 			{
-				jobId: `summary-${created.accommodationId}-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
+				jobId: `summary-${created.getAccommodationId()}-${Math.floor(Date.now() / (60 * 60 * 1000))}`,
 			}
 		);
 	}
@@ -125,16 +124,16 @@ class ReviewService {
 		await reviewQueue.add(
 			EReviewJobName.PROCESS_TO_VECTORS,
 			{
-				reviewId: created.id,
-				accommodationId: created.accommodationId,
-				text: created.comment,
-				rating: created.star!,
+				reviewId: created.getId(),
+				accommodationId: created.getAccommodationId(),
+				text: created.getComment(),
+				rating: created.getStar() ?? 0,
 				lat,
 				lon,
-				createdAt: created.createdAt.getTime(),
+				createdAt: created.getCreatedAt().getTime(),
 			},
 			{
-				jobId: `review-${created.id}`,
+				jobId: `review-${created.getId()}`,
 			}
 		);
 	}
@@ -154,20 +153,19 @@ class ReviewService {
 		}
 
 		// 2. Create Reply
-		const accommodation = await this.#accommodationService.getAccommodationById(parent.accommodationId);
+		const accommodation = await this.#accommodationService.getAccommodationById(parent.getAccommodationId());
 		if (accommodation.ownerId !== userId) {
 			throw new ForbiddenError("You can only reply to reviews for your own accommodations.");
 		}
 
-		const data: Prisma.ReviewUncheckedCreateInput = {
-			userId,
-			accommodationId: parent.accommodationId,
-			parentId: dto.parentId,
-			comment: dto.comment,
-			// Reply không có star và bookingId
-		};
+		const replyDomain = new ReviewBuilder()
+			.setUserId(userId)
+			.setAccommodationId(parent.getAccommodationId())
+			.setParentId(dto.parentId)
+			.setComment(dto.comment)
+			.build();
 
-		return this.#reviewRepository.create(data);
+		return this.#reviewRepository.create(replyDomain);
 	}
 
 	/**
@@ -177,8 +175,8 @@ class ReviewService {
 		const rawReviews = await this.#reviewRepository.findByAccommodationId(accommodationId);
 		if (!rawReviews.length) return [];
 
-		const reviews = rawReviews.flatMap((r: ReviewWithReplies) => [r, ...(r.replies || [])]);
-		const userIds = [...new Set(reviews.map((r) => r.userId))];
+		const reviews = rawReviews.flatMap((r: Review) => [r, ...r.getReplies()]);
+		const userIds = [...new Set(reviews.map((r) => r.getUserId()))];
 
 		const usersData = await Promise.all(
 			userIds.map(async (id) => {
@@ -195,23 +193,23 @@ class ReviewService {
 			if (u) userMap.set(u.id, u);
 		});
 		const formatReview = (review: Review): ReviewResponse => {
-			const userData = userMap.get(review.userId);
+			const userData = userMap.get(review.getUserId());
 			return {
-				id: review.id,
-				star: review.star ?? 0,
-				comment: review.comment,
-				bookingId: review.bookingId,
-				commentDate: review.createdAt,
-				user: userData || { id: review.userId, name: "Unknown", avatar: "" },
+				id: review.getId(),
+				star: review.getStar() ?? 0,
+				comment: review.getComment(),
+				bookingId: review.getBookingId(),
+				commentDate: review.getCreatedAt(),
+				user: userData || { id: review.getUserId(), name: "Unknown", avatar: "" },
 				children: [], // Sẽ fill sau
 			};
 		};
-		const parentReviews: ReviewResponse[] = reviews.filter((r) => !r.parentId).map(formatReview);
+		const parentReviews: ReviewResponse[] = reviews.filter((r) => !r.getParentId()).map(formatReview);
 
-		const childReviews = reviews.filter((r) => r.parentId).map(formatReview);
+		const childReviews = reviews.filter((r) => r.getParentId()).map(formatReview);
 
 		return parentReviews.map((parent) => {
-			parent.children = childReviews.filter((child) => reviews.find((r) => r.id === child.id)?.parentId === parent.id);
+			parent.children = childReviews.filter((child) => reviews.find((r) => r.getId() === child.id)?.getParentId() === parent.id);
 			return parent;
 		});
 	}

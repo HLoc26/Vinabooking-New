@@ -2,7 +2,7 @@ export interface ReviewResponse {
 	id: string;
 	star: number;
 	comment: string;
-	bookingId: string | null; // replies does not have booking id
+	bookingId: string | null;
 	user: {
 		id: string;
 		name: string;
