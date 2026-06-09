@@ -2,7 +2,7 @@ import { EntityType } from "@/models/image";
 import BadRequestError from "@/errors/BadRequestError";
 import { NotFoundError } from "@/errors";
 import { OwnerRepository } from "@/repositories";
-import { AccommodationService, BookingService, ImageService } from "@/services";
+import { AccommodationService, BookingService, ImageService, UserService } from "@/services";
 import { DraftAccommodation } from "@/types/accommodation.types";
 import { EEntityType } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
@@ -19,12 +19,14 @@ class OwnerService {
 	readonly #imageService: ImageService;
 	readonly #accommodationService: AccommodationService;
 	readonly #bookingService: BookingService;
+	readonly #userService: UserService;
 
-	constructor(ownerRepo: OwnerRepository, imageService: ImageService, accommodationService: AccommodationService, bookingService: BookingService) {
+	constructor(ownerRepo: OwnerRepository, imageService: ImageService, accommodationService: AccommodationService, bookingService: BookingService, userService: UserService) {
 		this.#ownerRepo = ownerRepo;
 		this.#imageService = imageService;
 		this.#accommodationService = accommodationService;
 		this.#bookingService = bookingService;
+		this.#userService = userService;
 	}
 
 	public async getOwnerProfile(userId: string) {
@@ -120,17 +122,23 @@ class OwnerService {
 	}
 
 	public async upgradeToOwner(userId: string, data: { businessName: string; contactPhone: string; taxId?: string }) {
-		const user = await this.#ownerRepo.findUserWithProfile(userId);
+		let user;
+		try {
+			user = await this.#userService.getUser({ id: userId });
+		} catch {
+			user = null;
+		}
 
 		if (!user) {
 			throw new BadRequestError("User not found");
 		}
 
-		if (user.ownerProfile) {
+		const profile = await this.#ownerRepo.findProfileByUserId(userId);
+		if (profile) {
 			throw new BadRequestError("Owner profile already exists for this user");
 		}
 
-		const result = await this.#ownerRepo.upgradeRoleAndCreateProfile(userId, data);
+		const newProfile = await this.#ownerRepo.upgradeRoleAndCreateProfile(userId, data);
 
 		// --- CACHE INVALIDATION ---
 		try {
@@ -140,7 +148,7 @@ class OwnerService {
 			console.error(`[Redis] Failed to delete role cache for user ${userId} after upgrade:`, redisErr);
 		}
 
-		return result;
+		return { profile: newProfile, user: { ...user, role: "ACCOMMODATION_OWNER" } };
 	}
 
 	public async getDashboardStats(ownerId: string) {

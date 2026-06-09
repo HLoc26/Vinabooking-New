@@ -320,7 +320,7 @@ class AccommodationService {
 		//   object    → validate + use
 		let resolvedSettings: DynamicPricingSettings | null;
 		if (data.dynamicPricingSettings === undefined) {
-			resolvedSettings = (ownerProfile.dynamicPricingSettings as DynamicPricingSettings | null) ?? null;
+			resolvedSettings = (ownerProfile.getDynamicPricingSettings() as DynamicPricingSettings | null) ?? null;
 		} else if (data.dynamicPricingSettings === null) {
 			resolvedSettings = null;
 		} else {
@@ -354,7 +354,7 @@ class AccommodationService {
 			});
 
 			if (holidayMode === "inherit") {
-				await this.#holidayRepository.snapshotOwnerToAccommodation(ownerProfile.id, created.id, tx);
+				await this.#holidayRepository.snapshotOwnerToAccommodation(ownerProfile.getId(), created.id, tx);
 			} else if (holidayMode === "explicit") {
 				await this.#holidayRepository.replaceForAccommodation(created.id, data.holidayOptIns as HolidayOptIn[], tx);
 			}

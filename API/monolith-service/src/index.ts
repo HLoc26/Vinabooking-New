@@ -115,14 +115,14 @@ const facilityService = new FacilityService(facilityRepository);
 const amenityService = new AmenityService(amenityRepository);
 bookingService.setAccommodationService(accommodationService);
 
-const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
+const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService, userService);
 
 const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
 const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
 const pricingService = new PricingService(prismaClient, holidayRepository);
-const ownerPricingService = new OwnerPricingService(ownerRepository, holidayRepository, accommodationRepository, roomRepository);
 const holidayService = new HolidayService(holidayRepository);
+const ownerPricingService = new OwnerPricingService(ownerRepository, holidayService, accommodationRepository, roomRepository);
 roomService.setPricingService(pricingService);
 bookingService.setPricingService(pricingService);
 

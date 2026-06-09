@@ -1,6 +1,6 @@
 import { NotFoundError } from "@/errors";
 import AccommodationRepository from "@/repositories/accommodation.repository";
-import HolidayRepository from "@/repositories/holiday.repository";
+import HolidayService from "./holiday.service";
 import OwnerRepository from "@/repositories/owner.repository";
 import RoomRepository from "@/repositories/room.repository";
 import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
@@ -8,69 +8,94 @@ import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/p
 
 class OwnerPricingService {
 	readonly #ownerRepository: OwnerRepository;
-	readonly #holidayRepository: HolidayRepository;
+	readonly #holidayService: HolidayService;
 	readonly #accommodationRepository: AccommodationRepository;
 	readonly #roomRepository: RoomRepository;
 
 	constructor(
 		ownerRepository: OwnerRepository,
-		holidayRepository: HolidayRepository,
+		holidayService: HolidayService,
 		accommodationRepository: AccommodationRepository,
 		roomRepository: RoomRepository
 	) {
 		this.#ownerRepository = ownerRepository;
-		this.#holidayRepository = holidayRepository;
+		this.#holidayService = holidayService;
 		this.#accommodationRepository = accommodationRepository;
 		this.#roomRepository = roomRepository;
 	}
 
-	private async resolveOwnerProfileId(userId: string): Promise<string> {
+	private async resolveOwnerProfile(userId: string) {
 		const profile = await this.#ownerRepository.findProfileByUserId(userId);
 		if (!profile) throw new NotFoundError("Owner profile not found for user");
-		return profile.id;
+		return profile;
 	}
 
 	// ----- Owner-wide settings -----
 
 	public async getSettingsByUser(userId: string) {
-		const ownerProfileId = await this.resolveOwnerProfileId(userId);
-		const settings = await this.#ownerRepository.getDynamicPricingSettings(ownerProfileId);
-		return { ownerProfileId, dynamicPricingSettings: settings };
+		const profile = await this.resolveOwnerProfile(userId);
+		const settings = profile.getDynamicPricingSettings();
+		return { ownerProfileId: profile.getId(), dynamicPricingSettings: settings };
 	}
 
 	public async updateSettingsByUser(userId: string, dto: DynamicPricingSettings | null) {
 		validateDynamicPricingSettings(dto);
-		const ownerProfileId = await this.resolveOwnerProfileId(userId);
-		const updated = await this.#ownerRepository.updateDynamicPricingSettings(ownerProfileId, dto);
-		return { ownerProfileId, dynamicPricingSettings: updated.dynamicPricingSettings };
+		const profile = await this.resolveOwnerProfile(userId);
+		profile.updateDynamicPricingSettings(dto);
+		await this.#ownerRepository.saveProfile(profile);
+		return { ownerProfileId: profile.getId(), dynamicPricingSettings: profile.getDynamicPricingSettings() };
 	}
 
 	// ----- Owner-wide holiday opt-ins -----
 
 	public async getHolidayOptInsByUser(userId: string) {
-		const ownerProfileId = await this.resolveOwnerProfileId(userId);
-		const rows = await this.#holidayRepository.findByOwner(ownerProfileId);
-		return rows.map((r) => ({
-			id: r.id,
-			holidayCode: r.holidayCode,
-			priceMultiplier: Number(r.priceMultiplier),
-			preDays: r.preDays,
-			postDays: r.postDays,
-			enabled: r.enabled,
+		const profile = await this.resolveOwnerProfile(userId);
+		const holidays = profile.getOwnerHolidays();
+		return holidays.map((h) => ({
+			id: h.getId(),
+			holidayCode: h.getHolidayCode(),
+			priceMultiplier: h.getPriceMultiplier(),
+			preDays: h.getPreDays(),
+			postDays: h.getPostDays(),
+			enabled: h.getEnabled(),
 		}));
 	}
 
 	public async replaceHolidayOptInsByUser(userId: string, items: HolidayOptIn[]) {
 		validateHolidayOptIns(items);
-		const ownerProfileId = await this.resolveOwnerProfileId(userId);
-		const rows = await this.#holidayRepository.replaceForOwner(ownerProfileId, items);
-		return rows.map((r) => ({
-			id: r.id,
-			holidayCode: r.holidayCode,
-			priceMultiplier: Number(r.priceMultiplier),
-			preDays: r.preDays,
-			postDays: r.postDays,
-			enabled: r.enabled,
+
+		const availableHolidays = await this.#holidayService.getHolidayCatalog();
+		const validCodes = new Set(availableHolidays.map(h => h.code));
+		for (const item of items) {
+			if (!validCodes.has(item.holidayCode)) {
+				throw new Error(`Invalid holiday code: ${item.holidayCode}`);
+			}
+		}
+
+		const profile = await this.resolveOwnerProfile(userId);
+		
+		const { OwnerHoliday } = await import("@/models/owner");
+		
+		const newHolidays = items.map(item => OwnerHoliday.builder()
+			.setOwnerProfileId(profile.getId())
+			.setHolidayCode(item.holidayCode)
+			.setPriceMultiplier(item.priceMultiplier)
+			.setPreDays(item.preDays)
+			.setPostDays(item.postDays)
+			.setEnabled(item.enabled ?? true)
+			.build()
+		);
+
+		profile.setOwnerHolidays(newHolidays);
+		await this.#ownerRepository.saveOwnerHolidays(profile.getId(), profile.getOwnerHolidays());
+		
+		return profile.getOwnerHolidays().map((h) => ({
+			id: h.getId(),
+			holidayCode: h.getHolidayCode(),
+			priceMultiplier: h.getPriceMultiplier(),
+			preDays: h.getPreDays(),
+			postDays: h.getPostDays(),
+			enabled: h.getEnabled(),
 		}));
 	}
 
@@ -79,16 +104,16 @@ class OwnerPricingService {
 	 * IRREVERSIBLE ACTION.
 	 */
 	public async forceApplyGlobalSettingsToAll(userId: string) {
-		const ownerProfileId = await this.resolveOwnerProfileId(userId);
-		const globalSettings = await this.#ownerRepository.getDynamicPricingSettings(ownerProfileId);
-		const globalHolidays = await this.#holidayRepository.findByOwner(ownerProfileId);
+		const profile = await this.resolveOwnerProfile(userId);
+		const globalSettings = profile.getDynamicPricingSettings();
+		const globalHolidays = profile.getOwnerHolidays();
 
 		const mappedHolidays = globalHolidays.map((h) => ({
-			holidayCode: h.holidayCode,
-			priceMultiplier: Number(h.priceMultiplier),
-			preDays: h.preDays,
-			postDays: h.postDays,
-			enabled: h.enabled,
+			holidayCode: h.getHolidayCode(),
+			priceMultiplier: h.getPriceMultiplier(),
+			preDays: h.getPreDays(),
+			postDays: h.getPostDays(),
+			enabled: h.getEnabled(),
 		}));
 
 		return await this.#accommodationRepository.syncAllWithGlobalSettings(userId, globalSettings, mappedHolidays);

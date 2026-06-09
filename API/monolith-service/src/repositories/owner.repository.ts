@@ -1,5 +1,7 @@
 import { PrismaClient, ERole, Prisma } from "@/generated/client";
 import type { DynamicPricingSettings } from "@/types/pricing.types";
+import { OwnerProfile, OwnerHoliday } from "@/models/owner";
+import { OwnerMapper } from "@/mappers/owner.mapper";
 
 class OwnerRepository {
 	readonly #prisma: PrismaClient;
@@ -8,21 +10,24 @@ class OwnerRepository {
 		this.#prisma = prisma;
 	}
 
-	public async findProfileByUserId(userId: string) {
-		return await this.#prisma.ownerProfile.findUnique({
+	public async findProfileByUserId(userId: string): Promise<OwnerProfile | null> {
+		const profile = await this.#prisma.ownerProfile.findUnique({
 			where: { userId },
+			include: { ownerHolidays: true },
 		});
+		return profile ? OwnerMapper.toDomainProfile(profile) : null;
 	}
 
-	public async findUserWithProfile(userId: string) {
-		return await this.#prisma.user.findUnique({
-			where: { id: userId },
-			include: { ownerProfile: true },
+	public async findProfileById(profileId: string): Promise<OwnerProfile | null> {
+		const profile = await this.#prisma.ownerProfile.findUnique({
+			where: { id: profileId },
+			include: { ownerHolidays: true },
 		});
+		return profile ? OwnerMapper.toDomainProfile(profile) : null;
 	}
 
-	public async upgradeRoleAndCreateProfile(userId: string, data: { businessName: string; contactPhone: string; taxId?: string }) {
-		return await this.#prisma.$transaction(async (tx) => {
+	public async upgradeRoleAndCreateProfile(userId: string, data: { businessName: string; contactPhone: string; taxId?: string }): Promise<OwnerProfile> {
+		const result = await this.#prisma.$transaction(async (tx) => {
 			// 1. Tạo Profile
 			const profile = await tx.ownerProfile.create({
 				data: {
@@ -32,34 +37,53 @@ class OwnerRepository {
 					taxId: data.taxId,
 					isVerified: false,
 				},
+				include: { ownerHolidays: true },
 			});
 
 			// 2. Đổi Role
-			const user = await tx.user.update({
+			await tx.user.update({
 				where: { id: userId },
 				data: { role: ERole.ACCOMMODATION_OWNER },
 			});
 
-			return { profile, user };
+			return profile;
 		});
+		return OwnerMapper.toDomainProfile(result);
 	}
 
-	public async getDynamicPricingSettings(ownerProfileId: string) {
-		const row = await this.#prisma.ownerProfile.findUnique({
-			where: { id: ownerProfileId },
-			select: { dynamicPricingSettings: true },
+	public async saveProfile(profile: OwnerProfile): Promise<OwnerProfile> {
+		const data = OwnerMapper.toPersistenceProfile(profile);
+		
+		const updated = await this.#prisma.ownerProfile.update({
+			where: { id: profile.getId() },
+			data: {
+				businessName: data.businessName,
+				taxId: data.taxId,
+				contactPhone: data.contactPhone,
+				isVerified: data.isVerified,
+				dynamicPricingSettings: data.dynamicPricingSettings as any
+			},
+			include: { ownerHolidays: true },
 		});
-		return (row?.dynamicPricingSettings ?? null) as DynamicPricingSettings | null;
+		return OwnerMapper.toDomainProfile(updated);
 	}
 
-	public async updateDynamicPricingSettings(ownerProfileId: string, settings: DynamicPricingSettings | null) {
-		const value: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue = settings === null ? Prisma.JsonNull : (settings as Prisma.InputJsonValue);
-		return await this.#prisma.ownerProfile.update({
-			where: { id: ownerProfileId },
-			data: { dynamicPricingSettings: value },
-			select: { dynamicPricingSettings: true },
+	public async saveOwnerHolidays(profileId: string, holidays: OwnerHoliday[]): Promise<void> {
+		await this.#prisma.$transaction(async (tx) => {
+			// Xóa các holidays cũ
+			await tx.ownerHoliday.deleteMany({
+				where: { ownerProfileId: profileId }
+			});
+
+			if (holidays.length > 0) {
+				const data = holidays.map(h => OwnerMapper.toPersistenceHoliday(h));
+				await tx.ownerHoliday.createMany({
+					data: data
+				});
+			}
 		});
 	}
 }
 
 export default OwnerRepository;
+
