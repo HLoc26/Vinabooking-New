@@ -102,7 +102,8 @@ const imageService = new ImageService(imageRepository, s3Service);
 const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService);
 const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
-const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service, ownerRepository, holidayRepository);
+const holidayService = new HolidayService(holidayRepository);
+const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service, holidayService);
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
@@ -113,15 +114,13 @@ const reviewService = new ReviewService({
 const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 const facilityService = new FacilityService(facilityRepository);
 const amenityService = new AmenityService(amenityRepository);
-bookingService.setAccommodationService(accommodationService);
-
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService, userService);
+accommodationService.setOwnerService(ownerService);
 
 const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
 const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
 const pricingService = new PricingService(prismaClient, holidayRepository);
-const holidayService = new HolidayService(holidayRepository);
 const ownerPricingService = new OwnerPricingService(ownerRepository, holidayService, accommodationRepository, roomRepository);
 roomService.setPricingService(pricingService);
 bookingService.setPricingService(pricingService);

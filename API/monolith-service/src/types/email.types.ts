@@ -1,5 +1,5 @@
 import { Accommodation, EItemType } from "@/generated/client";
-import { AccommodationFullInfo } from "./accommodation.types";
+import { AccommodationFullInfo } from "@/dto/response/accommodation.dto";
 
 export interface ConfirmationEmailData {
 	to: string;

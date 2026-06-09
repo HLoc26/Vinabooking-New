@@ -1,6 +1,10 @@
 import { PrismaClient, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
-import { SearchFilters, AccommodationWithDetails, ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/types/accommodation.types";
+import { SearchFilters } from "@/dto/request/accommodation.dto";
+import { AccommodationWithDetails } from "@/dto/response/accommodation.dto";
+import { ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/dto/request/accommodation.dto";
 import type { DynamicPricingSettings } from "@/types/pricing.types";
+import { Accommodation } from "@/models/accommodation/accommodation.model";
+import { AccommodationMapper } from "@/mappers/accommodation.mapper";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -9,22 +13,34 @@ class AccommodationRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	public async findById(id: string): Promise<AccommodationWithDetails | null> {
-		return await this.#prismaClient.accommodation.findUnique({
+	public async findById(id: string): Promise<Accommodation | null> {
+		const entity = await this.#prismaClient.accommodation.findUnique({
 			where: { id },
 			include: {
 				address: true,
 				facilities: { include: { facility: true } },
+				holidayOptIns: true,
+				rooms: {
+					select: { id: true, basePrice: true, floorPrice: true, quantity: true, beds: { select: { id: true } } }
+				}
 			},
 		});
+		return entity ? AccommodationMapper.toDomain(entity as any) : null;
 	}
 
-	public async findByIdBatch(ids: string[]): Promise<AccommodationWithDetails[]> {
-		const accommodation = await this.#prismaClient.accommodation.findMany({
+	public async findByIdBatch(ids: string[]): Promise<Accommodation[]> {
+		const entities = await this.#prismaClient.accommodation.findMany({
 			where: { id: { in: ids } },
-			include: { address: true, facilities: { include: { facility: true } } },
+			include: { 
+				address: true, 
+				facilities: { include: { facility: true } },
+				holidayOptIns: true,
+				rooms: {
+					select: { id: true, basePrice: true, floorPrice: true, quantity: true, beds: { select: { id: true } } }
+				}
+			},
 		});
-		return accommodation;
+		return entities.map(e => AccommodationMapper.toDomain(e as any));
 	}
 
 	public async countByType(): Promise<{ type: EAccommodationType; _count: { id: number } }[]> {
@@ -83,7 +99,7 @@ class AccommodationRepository {
 
 		// 4. Facilities
 		if (filters.facilities && filters.facilities.length > 0) {
-			where.AND = filters.facilities.map((facilityName) => ({
+			where.AND = filters.facilities.map((facilityName: string) => ({
 				facilities: {
 					some: {
 						facility: {
@@ -277,18 +293,96 @@ class AccommodationRepository {
 		return count > 0;
 	}
 
-	public async getForPublishValidation(id: string, ownerId: string) {
-		return await this.#prismaClient.accommodation.findFirst({
+	public async getForPublishValidation(id: string, ownerId: string): Promise<Accommodation | null> {
+		const entity = await this.#prismaClient.accommodation.findFirst({
 			where: { id, ownerId },
 			include: {
 				address: true,
 				facilities: {
 					include: { facility: true },
 				},
+				holidayOptIns: true,
 				rooms: {
 					include: { beds: true },
 				},
 			},
+		});
+		return entity ? AccommodationMapper.toDomain(entity as any) : null;
+	}
+
+	public async save(accommodation: Accommodation): Promise<void> {
+		const data = AccommodationMapper.toPersistence(accommodation);
+		const addressData = accommodation.getAddress() ? AccommodationMapper.toAddressPersistence(accommodation.getAddress()!) : null;
+		const facilitiesData = accommodation.getFacilities().map(f => ({
+			facilityId: f.getFacility().getId(),
+			fee: f.getFee(),
+			note: f.getNote(),
+			isAvailable: f.getIsAvailable()
+		}));
+		const holidayData = accommodation.getHolidayOptIns().map(h => ({
+			holidayCode: h.getHolidayCode(),
+			priceMultiplier: new Prisma.Decimal(h.getPriceMultiplier()),
+			preDays: h.getPreDays(),
+			postDays: h.getPostDays(),
+			enabled: h.getEnabled()
+		}));
+
+		await this.#prismaClient.$transaction(async (tx) => {
+			const existing = await tx.accommodation.findUnique({ where: { id: accommodation.getId() } });
+
+			if (!existing) {
+				await tx.accommodation.create({
+					data: {
+						id: accommodation.getId(),
+						name: data.name,
+						description: data.description,
+						type: data.type,
+						rentalType: data.rentalType,
+						status: data.status,
+						ownerId: data.ownerId,
+						dynamicPricingSettings: data.dynamicPricingSettings,
+						...(addressData && {
+							address: { create: addressData }
+						})
+					}
+				});
+			} else {
+				await tx.accommodation.update({
+					where: { id: accommodation.getId() },
+					data: {
+						name: data.name,
+						description: data.description,
+						type: data.type,
+						rentalType: data.rentalType,
+						status: data.status,
+						dynamicPricingSettings: data.dynamicPricingSettings,
+						...(addressData && {
+							address: {
+								upsert: {
+									create: addressData,
+									update: addressData,
+								},
+							},
+						}),
+					},
+				});
+			}
+
+			// Update Facilities
+			await tx.facilityConfig.deleteMany({ where: { accommodationId: accommodation.getId() } });
+			if (facilitiesData.length > 0) {
+				await tx.facilityConfig.createMany({
+					data: facilitiesData.map(f => ({ ...f, accommodationId: accommodation.getId() }))
+				});
+			}
+
+			// Update Holidays
+			await tx.accommodationHoliday.deleteMany({ where: { accommodationId: accommodation.getId() } });
+			if (holidayData.length > 0) {
+				await tx.accommodationHoliday.createMany({
+					data: holidayData.map(h => ({ ...h, accommodationId: accommodation.getId() }))
+				});
+			}
 		});
 	}
 

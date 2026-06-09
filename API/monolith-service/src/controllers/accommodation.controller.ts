@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import AccommodationService from "../services/accommodation.service";
 import ResponseHelper from "../utils/response";
 
-import { EAccommodationStatus } from "@/types/accommodation.types";
+import { EAccommodationStatus } from "@/generated/client";
 import {
 	GetAccommodationByIdRequest,
 	GetAccommodationByEntityRequest,
@@ -216,7 +216,7 @@ class AccommodationController {
 	public async updatePricingSettings(req: Request<{ id: string }>, res: Response) {
 		const ownerId = req.userId;
 		const { id } = req.params;
-		const body = req.body as import("@/types/accommodation.types").UpdateAccommodationPricingDTO;
+		const body = req.body as import("@/dto/request/accommodation.dto").UpdateAccommodationPricingDTO;
 
 		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
 		if (body.dynamicPricingSettings === undefined && body.holidayOptIns === undefined) {

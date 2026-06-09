@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { type EAccommodationType } from "@/generated/client";
-import { SearchQuery, CreateAccommodationDTO, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateStatusDTO, UpdateAddressDTO } from "@/types/accommodation.types";
+import { SearchQuery, CreateAccommodationDTO, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateStatusDTO, UpdateAddressDTO } from "@/dto/request/accommodation.dto";
 
 /**
  * GET /accommodations/:id?checkIn=...&checkOut=...
