@@ -59,7 +59,19 @@ class UserService {
 			
 			const withFavsDto: UserWithFavouritesDto = {
 				...baseDto,
-				favourites: lists,
+				favourites: lists.map(list => ({
+					id: list.getId(),
+					name: list.getName(),
+					ownerId: list.getOwnerId(),
+					createdAt: list.getCreatedAt(),
+					updatedAt: list.getUpdatedAt(),
+					items: list.getItems().map(i => ({
+						id: i.getId(),
+						listId: i.getListId(),
+						accommodationId: i.getAccommodationId(),
+						createdAt: new Date(), // FavouriteItem in schema lacks createdAt, mock for DTO compliance if needed
+					}))
+				})),
 			};
 			return withFavsDto as (T extends true ? UserWithFavouritesDto : UserDto);
 		}

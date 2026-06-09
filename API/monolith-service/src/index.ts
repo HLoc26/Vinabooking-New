@@ -88,7 +88,14 @@ const authService = new AuthService({
 	emailService: emailService,
 	authRepository: authRepository,
 });
-const favouriteService = new FavouriteService(favouriteRepository);
+// We need accommodationServiceProxy for FavouriteService, let's declare it first
+// Pre-declare accommodationService and roomService for circular dependencies
+let accommodationService: AccommodationService;
+let roomService: RoomService;
+const accommodationServiceProxy = createLazyProxy<AccommodationService>(() => accommodationService);
+const roomServiceProxy = createLazyProxy<RoomService>(() => roomService);
+
+const favouriteService = new FavouriteService(favouriteRepository, accommodationServiceProxy);
 const userService = new UserService(userRepository, favouriteService);
 const oauthService = new OAuthService(
 	{
@@ -103,11 +110,7 @@ const imageService = new ImageService(imageRepository, s3Service);
 const uploadService = new UploadService(s3Service, imageRepository);
 const holidayService = new HolidayService(holidayRepository);
 
-// Pre-declare accommodationService and roomService for circular dependencies
-let accommodationService: AccommodationService;
-let roomService: RoomService;
-const accommodationServiceProxy = createLazyProxy<AccommodationService>(() => accommodationService);
-const roomServiceProxy = createLazyProxy<RoomService>(() => roomService);
+
 
 const pricingService = new PricingService(holidayService, roomServiceProxy);
 const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService, accommodationServiceProxy, pricingService);
