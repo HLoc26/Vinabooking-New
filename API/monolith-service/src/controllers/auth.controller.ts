@@ -23,6 +23,7 @@ import IdentityProviderError from "@/errors/IdentityProviderError";
 import BadRequestError from "@/errors/BadRequestError";
 import DatabaseError from "@/errors/DatabaseError";
 import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
+import { UserRole } from "@/models/user";
 
 class AuthController {
 	readonly #authService: AuthService;
@@ -64,7 +65,7 @@ class AuthController {
 					email,
 					name,
 					phone,
-					role: userType,
+					role: userType as UserRole,
 				},
 			});
 		} catch (error) {

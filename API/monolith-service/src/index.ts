@@ -86,8 +86,8 @@ const authService = new AuthService({
 	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 	emailService: emailService,
 });
-const userService = new UserService(userRepository);
 const favouriteService = new FavouriteService(favouriteRepository);
+const userService = new UserService(userRepository, favouriteService);
 const oauthService = new OAuthService(
 	{
 		googleClientId: process.env["GOOGLE_CLIENT_ID"]!,

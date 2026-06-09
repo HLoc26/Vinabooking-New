@@ -1,0 +1,4 @@
+export enum UserRole {
+    TRAVELLER = "TRAVELLER",
+    ACCOMMODATION_OWNER = "ACCOMMODATION_OWNER"
+}

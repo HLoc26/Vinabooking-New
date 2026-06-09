@@ -91,12 +91,11 @@ class OAuthService {
 			}
 
 			// Tạo user mới
-			await this.#userRepository.createUser({
+			await this.#userService.createUser({
 				id: userId,
 				email,
 				name,
 				phone: "",
-				role: "TRAVELLER",
 			});
 		}
 

@@ -9,6 +9,13 @@ class FavouriteRepository {
 		this.#prismaClient = prismaClient;
 	}
 
+	public async getListsByOwnerId(ownerId: string): Promise<FavouriteList[]> {
+		return await this.#prismaClient.favouriteList.findMany({
+			where: { ownerId },
+			include: { items: true },
+		});
+	}
+
 	public async isOwner(listId: string, ownerId: string): Promise<boolean> {
 		const count = await this.#prismaClient.favouriteList.count({
 			where: {

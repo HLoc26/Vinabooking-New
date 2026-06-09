@@ -6,8 +6,8 @@ import type { SaveUserRequest, UpdateUserRequest } from "../types/requests";
 import type { ApiResponse } from "../types/responses";
 import ResponseHelper from "../utils/response";
 import { User, FavouriteList, FavouriteItem } from "@/generated/client";
+import { UserDto, UserWithFavouritesDto } from "@/dto/response/user.dto";
 import DatabaseError from "@/errors/DatabaseError";
-import { UserWithFavourites } from "@/types/dtos/get-user.dto";
 
 class UserController {
 	readonly #userService: UserService;
@@ -19,16 +19,16 @@ class UserController {
 	}
 
 	// --- USER PROFILE ---
-	public async getMe(req: Request, res: Response<ApiResponse<User>>) {
+	public async getMe(req: Request, res: Response<ApiResponse<UserDto>>) {
 		const userId = req.userId;
 
 		// TODO: call image service to get user avatar
 		const user = await this.#userService.getUser({ id: userId });
 
-		return ResponseHelper.success(res, user as User);
+		return ResponseHelper.success(res, user as UserDto);
 	}
 
-	public async getUser(req: Request, res: Response<ApiResponse<User | UserWithFavourites>>) {
+	public async getUser(req: Request, res: Response<ApiResponse<UserDto | UserWithFavouritesDto>>) {
 		try {
 			const { id, withFavourites } = req.query;
 			if (!id) return ResponseHelper.error(res, "Missing user ID parameter");
@@ -55,15 +55,15 @@ class UserController {
 		return ResponseHelper.success<{ success: boolean }>(res, { success: true });
 	}
 
-	public async updateUser(req: UpdateUserRequest, res: Response<ApiResponse<User>>) {
+	public async updateUser(req: UpdateUserRequest, res: Response<ApiResponse<UserDto>>) {
 		const userId = req.userId;
 
 		if (!userId) {
 			return ResponseHelper.error(res, "Unauthorized", 401);
 		}
 
-		const updatedUser = await this.#userService.updateUser(userId, req.body);
-		return ResponseHelper.success<User>(res, updatedUser);
+		const updatedUser = await this.#userService.updateUser(userId, req.body as any);
+		return ResponseHelper.success<UserDto>(res, updatedUser);
 	}
 
 	// --- FAVOURITES ---

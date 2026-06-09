@@ -1,9 +1,9 @@
-import { User } from "@/generated/client";
 import UserRepository from "@/repositories/user.repository";
-import { UserWithFavourites } from "@/types/dtos/get-user.dto";
-import { UserCacheInfo } from "@/types/dtos/cache-user-info.dto";
+import FavouriteService from "./favourite.service";
 import redisClient from "../clients/redis.client";
-import { UserCreateWithoutFavouritesInput, UserUpdateInput } from "@/generated/models";
+import { UserCreateDto, UserUpdateDto, UserCacheInfo } from "@/dto/request/user.dto";
+import { UserDto, UserWithFavouritesDto } from "@/dto/response/user.dto";
+import { User } from "@/models/user";
 import BadRequestError from "@/errors/BadRequestError";
 import NotFoundError from "@/errors/NotFoundError";
 import DatabaseError from "@/errors/DatabaseError";
@@ -11,48 +11,63 @@ import RedisClientError from "@/errors/RedisClientError";
 
 class UserService {
 	readonly #userRepository: UserRepository;
+	readonly #favouriteService: FavouriteService;
 
-	constructor(userRepository: UserRepository) {
+	constructor(userRepository: UserRepository, favouriteService: FavouriteService) {
 		this.#userRepository = userRepository;
+		this.#favouriteService = favouriteService;
 	}
 
 	public async getUser<T extends boolean = false>(
 		field: { id?: string; email?: string },
-		withFavourites: T = false as T // generic
-	): Promise<(T extends true ? UserWithFavourites : User) | null> {
+		withFavourites: T = false as T
+	): Promise<(T extends true ? UserWithFavouritesDto : UserDto) | null> {
 		if (!field.id && !field.email) {
 			return null;
 		}
-		let userRaw;
+		let userDomain: User | null = null;
 
 		if (field.id) {
-			userRaw = await this.#userRepository.getUserById(field.id, withFavourites);
+			userDomain = await this.#userRepository.getUserById(field.id);
 
 			// Found User, but Email input != Email in DB -> Mismatch
-			if (userRaw && field.email && userRaw.email !== field.email) {
+			if (userDomain && field.email && userDomain.getEmail() !== field.email) {
 				throw new BadRequestError("Mismatch info: ID and Email do not match");
 			}
 		} else if (field.email) {
-			userRaw = await this.#userRepository.getByEmail(field.email, withFavourites);
+			userDomain = await this.#userRepository.getByEmail(field.email);
 		}
-		if (!userRaw) {
+
+		if (!userDomain) {
 			const criteria = field.id ? `ID ${field.id}` : `email ${field.email}`;
 			throw new NotFoundError(`User with ${criteria} not found`);
 		}
-		if (withFavourites) {
-			const safeUser = userRaw as Record<string, unknown>;
-			const mappedFavourites = safeUser.favouriteLists || safeUser.favouriteList || safeUser.favourites || [];
 
-			return {
-				...userRaw,
-				favourites: mappedFavourites,
-			} as unknown as T extends true ? UserWithFavourites : User;
+		const baseDto: UserDto = {
+			id: userDomain.getId(),
+			email: userDomain.getEmail(),
+			name: userDomain.getName(),
+			phone: userDomain.getPhone(),
+			role: userDomain.getRole(),
+			createdAt: userDomain.getCreatedAt(),
+			updatedAt: userDomain.getUpdatedAt()
+		};
+
+		if (withFavourites) {
+			// Orchestrate: Fetch favourites from the foreign domain service
+			const lists = await this.#favouriteService.getListsByOwnerId(userDomain.getId());
+			
+			const withFavsDto: UserWithFavouritesDto = {
+				...baseDto,
+				favourites: lists,
+			};
+			return withFavsDto as (T extends true ? UserWithFavouritesDto : UserDto);
 		}
 
-		return userRaw as T extends true ? UserWithFavourites : User;
+		return baseDto as (T extends true ? UserWithFavouritesDto : UserDto);
 	}
 
-	public async getUserById(id: string, withFavourites: boolean = false): Promise<User | UserWithFavourites | null> {
+	public async getUserById(id: string, withFavourites: boolean = false): Promise<UserDto | UserWithFavouritesDto | null> {
 		return this.getUser({ id }, withFavourites);
 	}
 
@@ -76,25 +91,42 @@ class UserService {
 		}
 	}
 
-	public async saveUserFromCache(email: string): Promise<UserWithFavourites> {
+	public async saveUserFromCache(email: string): Promise<UserWithFavouritesDto> {
 		const infoString: string | null = await redisClient.get(email);
 
 		if (!infoString) {
 			throw new NotFoundError("User not found in cache");
 		}
 
-		const info: UserCreateWithoutFavouritesInput = JSON.parse(infoString);
+		const info: UserCreateDto = JSON.parse(infoString);
 		info.email = email;
 
-		return await this.#userRepository.createUser(info);
+		return await this.createUser(info);
 	}
 
-	public async createUser(input: UserCreateWithoutFavouritesInput) {
-		return await this.#userRepository.createUser(input);
+	public async createUser(input: UserCreateDto): Promise<UserWithFavouritesDto> {
+		// 1. Core Entity Creation
+		const userDomain = await this.#userRepository.createUser(input);
+
+		// 2. Cross-Domain Orchestration: Create default favourite list
+		await this.#favouriteService.createList("My Favourite List", userDomain.getId());
+
+		// 3. Re-fetch via orchestration to get full DTO
+		const fullUser = await this.getUserById(userDomain.getId(), true);
+		return fullUser as UserWithFavouritesDto;
 	}
 
-	public async updateUser(id: string, data: UserUpdateInput) {
-		return await this.#userRepository.updateUser(id, data);
+	public async updateUser(id: string, data: UserUpdateDto): Promise<UserDto> {
+		const userDomain = await this.#userRepository.updateUser(id, data);
+		return {
+			id: userDomain.getId(),
+			email: userDomain.getEmail(),
+			name: userDomain.getName(),
+			phone: userDomain.getPhone(),
+			role: userDomain.getRole(),
+			createdAt: userDomain.getCreatedAt(),
+			updatedAt: userDomain.getUpdatedAt()
+		};
 	}
 }
 

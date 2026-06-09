@@ -7,6 +7,10 @@ class FavouriteService {
 		this.#favouriteRepository = favouriteRepository;
 	}
 
+	public async getListsByOwnerId(ownerId: string) {
+		return await this.#favouriteRepository.getListsByOwnerId(ownerId);
+	}
+
 	public async createList(name: string, ownerId: string) {
 		return await this.#favouriteRepository.createList(name, ownerId);
 	}
