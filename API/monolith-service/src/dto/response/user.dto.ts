@@ -1,5 +1,5 @@
 import { UserRole } from "@/models/user";
-import { FavouriteListDto } from "./favourite.dto";
+import { FavouriteListDto } from "@/dto/response/favourite.dto";
 
 export interface UserDto {
     id: string;
