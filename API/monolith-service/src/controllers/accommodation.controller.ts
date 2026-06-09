@@ -2,7 +2,7 @@ import { Request, Response } from "express";
 import AccommodationService from "../services/accommodation.service";
 import ResponseHelper from "../utils/response";
 
-import { EAccommodationStatus } from "@/generated/client";
+import { AccommodationStatus } from "@/models/accommodation/accommodation.enums";
 import {
 	GetAccommodationByIdRequest,
 	GetAccommodationByEntityRequest,
@@ -179,7 +179,7 @@ class AccommodationController {
 		const { status } = req.body;
 
 		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
-		if (!status || !Object.values(EAccommodationStatus).includes(status)) {
+		if (!status || !Object.values(AccommodationStatus).includes(status)) {
 			return ResponseHelper.error(res, "Invalid status value", 400);
 		}
 

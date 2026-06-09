@@ -1,19 +1,15 @@
-import { EntityType } from "@/models/image";
 import { ImageDto } from "@/dto/response/image.dto";
-import { RoomRepository } from "@/repositories";
-import { NotFoundError, BadRequestError } from "@/errors";
-import { EEntityType } from "@/generated/client";
+import { BadRequestError, NotFoundError } from "@/errors";
+import { EntityType } from "@/models/image";
+import { AccommodationRepository, RoomRepository } from "@/repositories";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
 import PricingService from "./pricing.service";
-import AccommodationRepository from "@/repositories/accommodation.repository";
 
-import { RoomFullDetail, CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
-import type { QuoteItemPricing, PricableItem, DynamicPricingSettings } from "@/types/pricing.types";
 import redisClient from "@/clients/redis.client";
-import { Room } from "@/models/room/room.model";
-import { Bed } from "@/models/room/bed.model";
-import { AmenityConfig } from "@/models/room/amenity-config.model";
+import { AmenityConfig, Bed, Room } from "@/models/room";
+import type { DynamicPricingSettings, PricableItem, QuoteItemPricing } from "@/types/pricing.types";
+import { CreateRoomDTO, RoomFullDetail, UpdateRoomDTO } from "@/types/room.types";
 import { v4 as uuidv4 } from "uuid";
 
 export class RoomService {
@@ -25,8 +21,8 @@ export class RoomService {
 	readonly CACHE_PREFIX = "acc:detail:";
 
 	constructor(
-		roomRepository: RoomRepository, 
-		bookingService: BookingService, 
+		roomRepository: RoomRepository,
+		bookingService: BookingService,
 		imageService: ImageService,
 		pricingService: PricingService,
 		accommodationRepository: AccommodationRepository
@@ -137,8 +133,8 @@ export class RoomService {
 		if (!room) {
 			throw new NotFoundError(`Room with ID ${roomId} not found`);
 		}
-		
-		let result: any = {
+
+		const result: any = {
 			id: room.getId(),
 			accommodationId: room.getAccommodationId(),
 			name: room.getName(),
@@ -195,7 +191,7 @@ export class RoomService {
 		if (!rooms || rooms.length === 0) {
 			throw new NotFoundError("No rooms found...");
 		}
-		
+
 		// Map back to expected structure for external calls if necessary
 		return rooms.map(room => ({
 			id: room.getId(),
@@ -216,9 +212,9 @@ export class RoomService {
 	async getRoomsByAccommodationId(accommodationId: string, startDate?: Date, endDate?: Date): Promise<RoomFullDetail[]> {
 		const rooms = await this.#roomRepository.findAllByAccommodationId(accommodationId);
 		if (rooms.length === 0) return [];
-		
+
 		const roomIds = rooms.map((r) => r.getId());
-		
+
 		// Task 1: Lấy thông tin Booking (nếu có ngày)
 		const bookingTask = (async () => {
 			if (startDate && endDate) {
@@ -231,7 +227,7 @@ export class RoomService {
 			}
 			return [];
 		})();
-		
+
 		// Task 2: Lấy hình ảnh cho từng phòng
 		const imagesTask = Promise.all(
 			rooms.map(async (room) => {
@@ -247,7 +243,7 @@ export class RoomService {
 		const [bookedCounts, imagesMapList] = await Promise.all([bookingTask, imagesTask]);
 		const bookedMap = new Map<string, number>();
 		bookedCounts.forEach((item) => bookedMap.set(item.roomId, item.bookedCount));
-		
+
 		const imagesMap = new Map<string, ImageDto[]>();
 		imagesMapList.forEach((item) => imagesMap.set(item.roomId, item.images));
 
@@ -270,7 +266,7 @@ export class RoomService {
 			const bookedCount = bookedMap.get(room.getId()) || 0;
 			const remainingQuantity = startDate && endDate ? Math.max(0, totalQuantity - bookedCount) : totalQuantity;
 			const images = imagesMap.get(room.getId()) || [];
-			
+
 			return {
 				id: room.getId(),
 				accommodationId: room.getAccommodationId(),
@@ -321,7 +317,7 @@ export class RoomService {
 		const roomId = uuidv4();
 
 		// 2. Build Beds (Encapsulating rules in Builder/Model)
-		const beds = (data.beds || []).map(b => 
+		const beds = (data.beds || []).map(b =>
 			Bed.builder()
 				.setId(uuidv4())
 				.setRoomId(roomId)
@@ -404,12 +400,12 @@ export class RoomService {
 			const existingBeds = room.getBeds();
 			const existingBedIds = existingBeds.map(b => b.getId());
 			const incomingBeds = data.beds;
-			
+
 			const bedsToKeepAndUpdate = incomingBeds.filter(b => b.id && existingBedIds.includes(b.id));
 			const bedsToCreate = incomingBeds.filter(b => !b.id);
-			
+
 			const finalBeds: Bed[] = [];
-			
+
 			// Update existing beds
 			for (const bedData of bedsToKeepAndUpdate) {
 				const existing = existingBeds.find(b => b.getId() === bedData.id)!;
@@ -423,7 +419,7 @@ export class RoomService {
 				});
 				finalBeds.push(existing);
 			}
-			
+
 			// Create new beds
 			for (const newBed of bedsToCreate) {
 				const bed = Bed.builder()
@@ -438,7 +434,7 @@ export class RoomService {
 					.build();
 				finalBeds.push(bed);
 			}
-			
+
 			room.setBeds(finalBeds);
 		}
 
@@ -447,7 +443,7 @@ export class RoomService {
 			const finalAmenities = data.amenityIds.map(id => {
 				const existing = room.getAmenities().find(a => a.getAmenityId() === id);
 				if (existing) return existing;
-				
+
 				return AmenityConfig.builder()
 					.setId(uuidv4())
 					.setRoomId(room.getId())

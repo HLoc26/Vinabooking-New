@@ -5,7 +5,6 @@ import type { SaveUserRequest, UpdateUserRequest } from "../types/requests";
 
 import type { ApiResponse } from "../types/responses";
 import ResponseHelper from "../utils/response";
-import { User, FavouriteList, FavouriteItem } from "@/generated/client";
 import { UserDto, UserWithFavouritesDto } from "@/dto/response/user.dto";
 import DatabaseError from "@/errors/DatabaseError";
 

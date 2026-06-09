@@ -1,8 +1,8 @@
-import NotFoundError from "@/errors/NotFoundError";
+import { NotFoundError } from "@/errors";
+import { FavouriteItem, FavouriteList } from "@/models/favourite";
 import { FavouriteRepository } from "@/repositories";
-import AccommodationService from "./accommodation.service";
-import { FavouriteList, FavouriteItem } from "@/models/favourite";
 import { v4 as uuidv4 } from "uuid";
+import AccommodationService from "./accommodation.service";
 
 // Note: we can use FavouriteList.builder() instead of importing the builders directly if we want
 
@@ -39,7 +39,7 @@ class FavouriteService {
 		if (!list || !list.isOwner(userId)) {
 			throw new NotFoundError("List not found or permission denied");
 		}
-		
+
 		await this.#favouriteRepository.deleteFavouriteList(listId);
 		return list;
 	}
@@ -77,7 +77,7 @@ class FavouriteService {
 
 		// Persist the new item
 		await this.#favouriteRepository.addAccommodationToFavourite(newItem);
-		
+
 		// Update the list timestamp if necessary
 		await this.#favouriteRepository.save(list);
 

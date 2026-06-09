@@ -1,6 +1,6 @@
-import HolidayRepository from "@/repositories/holiday.repository";
-import { Holiday } from "@/models/holiday";
 import { HolidayDto } from "@/dto/response/holiday.dto";
+import { Holiday } from "@/models/holiday";
+import { HolidayRepository } from "@/repositories";
 
 class HolidayService {
     readonly #holidayRepository: HolidayRepository;

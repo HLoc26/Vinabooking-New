@@ -1,7 +1,7 @@
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
-import SmtpClient from "../clients/smtp.client";
-import { SentMessageInfo } from "nodemailer/lib/smtp-transport";
 import ImageUtils from "@/utils/image";
+import { SentMessageInfo } from "nodemailer/lib/smtp-transport";
+import SmtpClient from "../clients/smtp.client";
 import S3Service from "./s3.service";
 
 export class EmailService {
@@ -78,7 +78,7 @@ export class EmailService {
 
 		// build gallery HTML (skip primary if same as gallery first)
 
-		/* eslint-disable indent, max-len */
+		 
 		const html = `
       <!DOCTYPE html>
       <html lang="en">
@@ -183,7 +183,7 @@ export class EmailService {
       </html>
     `;
 
-		/* eslint-enable indent, max-len */
+		 
 		await this.smtpClient.send(to, subject, message, html);
 	}
 
@@ -196,7 +196,7 @@ export class EmailService {
 		const safeCancellationReason = cancellationReason ? this.escapeHtml(cancellationReason) : "";
 		const message = `Your booking at ${accomData?.name || "the property"} has been cancelled.${reasonText}`;
 
-		/* eslint-disable max-len, indent */
+		 
 		const html = `
 	<!DOCTYPE html>
 	<html lang="en">
@@ -261,7 +261,7 @@ export class EmailService {
 	</body>
 	</html>
 	`;
-		/* eslint-enable max-len, indent */
+		 
 
 		await this.smtpClient.send(to, subject, message, html);
 	}

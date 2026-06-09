@@ -1,8 +1,8 @@
-import { EAmenityType } from "@/generated/client";
+import { AmenityType } from "../amenity/amenity.enums";
 
 export class AmenityConfig {
     readonly #amenityDescription: string | null | undefined;
-    readonly #amenityType: EAmenityType | undefined;
+    readonly #amenityType: AmenityType | undefined;
     readonly #amenityName: string | undefined;
     #updatedAt: Date;
     readonly #createdAt: Date;
@@ -20,7 +20,7 @@ export class AmenityConfig {
 		updatedAt: Date,
 		// Populated fields from Amenity entity
 		amenityName?: string,
-		amenityType?: EAmenityType,
+		amenityType?: AmenityType,
 		amenityDescription?: string | null
 	) {
         this.#id = id;
@@ -40,7 +40,7 @@ export class AmenityConfig {
 	public getCreatedAt(): Date { return this.#createdAt; }
 	public getUpdatedAt(): Date { return this.#updatedAt; }
 	public getAmenityName(): string | undefined { return this.#amenityName; }
-	public getAmenityType(): EAmenityType | undefined { return this.#amenityType; }
+	public getAmenityType(): AmenityType | undefined { return this.#amenityType; }
 	public getAmenityDescription(): string | null | undefined { return this.#amenityDescription; }
 
 	public updateNote(note: string | null): void {
@@ -61,7 +61,7 @@ export class AmenityConfigBuilder {
 	#createdAt?: Date;
 	#updatedAt?: Date;
 	#amenityName?: string;
-	#amenityType?: EAmenityType;
+	#amenityType?: AmenityType;
 	#amenityDescription?: string | null;
 
 	public setId(id: string): this {
@@ -90,7 +90,7 @@ export class AmenityConfigBuilder {
 		return this;
 	}
 
-	public setAmenityDetails(name: string, type: EAmenityType, description: string | null): this {
+	public setAmenityDetails(name: string, type: AmenityType, description: string | null): this {
 		this.#amenityName = name;
 		this.#amenityType = type;
 		this.#amenityDescription = description;

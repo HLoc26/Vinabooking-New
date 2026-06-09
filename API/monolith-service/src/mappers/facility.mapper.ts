@@ -1,5 +1,5 @@
 import { Facility as PrismaFacility, EFacilityType } from "@/generated/client";
-import { Facility, FacilityType } from "../models/facility";
+import { Facility, FacilityType } from "@/models/facility";
 
 export class FacilityMapper {
     public static toDomain(prismaFacility: PrismaFacility): Facility {

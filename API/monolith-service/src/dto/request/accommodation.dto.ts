@@ -1,4 +1,4 @@
-import { EAccommodationType, ERentalType, EAccommodationStatus } from "@/generated/client";
+import { AccommodationType, RentalType, AccommodationStatus } from "@/models/accommodation/accommodation.enums";
 import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
 
 export enum ESortOption {
@@ -13,7 +13,7 @@ export enum ESortOption {
 
 export interface SearchQuery {
     keyword?: string;
-    type?: EAccommodationType;
+    type?: AccommodationType;
     checkIn?: string;
     checkOut?: string;
     adults?: string;
@@ -30,8 +30,8 @@ export interface SearchQuery {
 export interface CreateAccommodationDTO {
     name: string;
     description?: string;
-    type: EAccommodationType;
-    rentalType: ERentalType;
+    type: AccommodationType;
+    rentalType: RentalType;
     dynamicPricingSettings?: DynamicPricingSettings | null;
     holidayOptIns?: HolidayOptIn[] | null;
 }
@@ -53,11 +53,11 @@ export interface UpdateFacilitiesDTO {
 export interface UpdateAccommodationDTO {
     name?: string;
     description?: string;
-    type?: EAccommodationType;
+    type?: AccommodationType;
 }
 
 export interface UpdateStatusDTO {
-    status: EAccommodationStatus;
+    status: AccommodationStatus;
 }
 
 export interface UpdateAddressDTO {
@@ -74,7 +74,7 @@ export interface UpdateAddressDTO {
 
 export interface SearchFilters {
     keyword?: string;
-    type?: EAccommodationType;
+    type?: AccommodationType;
     ids?: string[];
     facilities?: string[];
 }

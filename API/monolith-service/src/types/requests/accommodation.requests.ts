@@ -1,5 +1,5 @@
 import { Request } from "express";
-import { type EAccommodationType } from "@/generated/client";
+import { AccommodationType } from "@/models/accommodation/accommodation.enums";
 import { SearchQuery, CreateAccommodationDTO, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateStatusDTO, UpdateAddressDTO } from "@/dto/request/accommodation.dto";
 
 /**
@@ -41,7 +41,7 @@ export type PostAccommodationIdsRequest = Request<object, PostAccommodationIdsBo
  */
 export interface GetAccommodationCountQuery {
 	city?: string;
-	type?: EAccommodationType;
+	type?: AccommodationType;
 }
 
 export type GetAccommodationCountRequest = Request<object, object, object, GetAccommodationCountQuery>;

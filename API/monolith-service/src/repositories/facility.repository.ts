@@ -1,6 +1,6 @@
 import { PrismaClient } from "@/generated/client";
-import { Facility } from "../models/facility";
-import { FacilityMapper } from "../mappers/facility.mapper";
+import { Facility } from "@/models/facility";
+import { FacilityMapper } from "@/mappers/facility.mapper";
 
 class FacilityRepository {
 	readonly #prismaClient: PrismaClient;
@@ -22,7 +22,7 @@ class FacilityRepository {
 
 	public async save(facility: Facility): Promise<void> {
 		const persistenceModel = FacilityMapper.toPersistence(facility);
-		
+
 		await this.#prismaClient.facility.upsert({
 			where: { id: persistenceModel.id },
 			create: persistenceModel,

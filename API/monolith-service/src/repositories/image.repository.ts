@@ -1,6 +1,6 @@
 import { PrismaClient } from "@/generated/client";
-import { Image, EntityType } from "../models/image";
-import { ImageMapper } from "../mappers/image.mapper";
+import { Image, EntityType } from "@/models/image";
+import { ImageMapper } from "@/mappers/image.mapper";
 
 export default class ImageRepository {
 	readonly #prisma: PrismaClient;
@@ -17,7 +17,7 @@ export default class ImageRepository {
 		const imageExists = await this.#prisma.image.findUnique({ where: { id: persistenceImage.id } });
 
 		if (imageExists) {
-            // Wait, we need to handle updates if necessary, but images are typically immutable and just deleted/created.
+			// Wait, we need to handle updates if necessary, but images are typically immutable and just deleted/created.
 			// Let's implement full update if needed.
 			await this.#prisma.$transaction([
 				this.#prisma.imageVariant.deleteMany({ where: { imageId: persistenceImage.id } }),

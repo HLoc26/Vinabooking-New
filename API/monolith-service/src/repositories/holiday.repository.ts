@@ -1,7 +1,7 @@
 import { PrismaClient, Prisma } from "@/generated/client";
 import type { HolidayOptIn } from "@/types/pricing.types";
-import { Holiday } from "../models/holiday";
-import { HolidayMapper } from "../mappers/holiday.mapper";
+import { Holiday } from "@/models/holiday";
+import { HolidayMapper } from "@/mappers/holiday.mapper";
 
 class HolidayRepository {
 	readonly #prismaClient: PrismaClient;
@@ -18,7 +18,7 @@ class HolidayRepository {
 		const holidays = await this.#prismaClient.holiday.findMany({
 			orderBy: [{ date: "asc" }],
 		});
-		
+
 		const uniqueCodes = new Set<string>();
 		const uniqueHolidays = holidays.filter(h => {
 			if (uniqueCodes.has(h.code)) return false;

@@ -1,8 +1,5 @@
-import { Prisma, EAccommodationType, ERentalType, EAccommodationStatus } from "@/generated/client";
-import { Accommodation } from "@/models/accommodation/accommodation.model";
-import { Address } from "@/models/accommodation/address.model";
-import { FacilityConfig } from "@/models/accommodation/facility-config.model";
-import { AccommodationHoliday } from "@/models/accommodation/accommodation-holiday.model";
+import { Prisma } from "@/generated/client";
+import { Accommodation, Address, FacilityConfig, AccommodationHoliday, AccommodationType, RentalType, AccommodationStatus } from "@/models/accommodation";
 import { Facility } from "@/models/facility";
 import { DynamicPricingSettings } from "@/types/pricing.types";
 
@@ -66,7 +63,7 @@ export class AccommodationMapper {
                 .build();
         });
 
-        const holidays = (entity.holidayOptIns || []).map(h => 
+        const holidays = (entity.holidayOptIns || []).map(h =>
             AccommodationHoliday.builder()
                 .setId(h.id)
                 .setAccommodationId(h.accommodationId)
@@ -80,7 +77,7 @@ export class AccommodationMapper {
 
         let roomCount = 0;
         let allRoomsValid = false;
-        
+
         if (entity.rooms) {
             roomCount = entity.rooms.length;
             allRoomsValid = entity.rooms.every(room => {
@@ -99,9 +96,9 @@ export class AccommodationMapper {
             .setId(entity.id)
             .setName(entity.name)
             .setDescription(entity.description)
-            .setType(entity.type)
-            .setRentalType(entity.rentalType)
-            .setStatus(entity.status)
+            .setType(entity.type as unknown as AccommodationType)
+            .setRentalType(entity.rentalType as unknown as RentalType | null)
+            .setStatus(entity.status as unknown as AccommodationStatus)
             .setOwnerId(entity.ownerId)
             .setDynamicPricingSettings(entity.dynamicPricingSettings as DynamicPricingSettings | null)
             .setCreatedAt(entity.createdAt)

@@ -1,11 +1,10 @@
-import { GoogleOAuthResponse } from "@/types/responses";
-import JwtService from "@/utils/jwt";
-import UserService from "./user.service";
-import AuthService from "./auth.service";
+import { EnvironmentNotSetError, IdentityProviderError } from "@/errors";
 import { AuthProvider } from "@/models/auth";
 import { AuthTokens } from "@/types/auth/auth-token";
-import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
-import IdentityProviderError from "@/errors/IdentityProviderError";
+import { GoogleOAuthResponse } from "@/types/responses";
+import JwtService from "@/utils/jwt";
+import AuthService from "./auth.service";
+import UserService from "./user.service";
 
 export interface OAuthConfig {
 	googleClientId: string;
@@ -97,7 +96,7 @@ class OAuthService {
 		// 5. Liên kết provider (Nếu chưa có)
 		const userProviders = await this.#authService.getUserProviders(email);
 		if (!userProviders) {
-			await this.#authService.createUserProvider(email, userId, AuthProvider.GOOGLE); 
+			await this.#authService.createUserProvider(email, userId, AuthProvider.GOOGLE);
 		}
 		let hasGoogle = false;
 		let hasCredentials = false;

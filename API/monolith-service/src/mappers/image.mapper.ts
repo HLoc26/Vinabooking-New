@@ -1,11 +1,11 @@
-import { 
-    Image as PrismaImage, 
-    ImageVariant as PrismaImageVariant, 
+import {
+    Image as PrismaImage,
+    ImageVariant as PrismaImageVariant,
     ImageReference as PrismaImageReference,
     EEntityType as PrismaEEntityType,
     EVariantType as PrismaEVariantType
 } from "@/generated/client";
-import { Image, ImageBuilder, ImageVariant, ImageReference, EntityType, VariantType } from "../models/image";
+import { Image, ImageVariant, ImageReference, EntityType, VariantType } from "@/models/image";
 
 type FullPrismaImage = PrismaImage & {
     variants?: PrismaImageVariant[];
@@ -23,7 +23,7 @@ export class ImageMapper {
             .setCreatedAt(prismaImage.createdAt);
 
         if (prismaImage.variants) {
-            const variants = prismaImage.variants.map(v => 
+            const variants = prismaImage.variants.map(v =>
                 ImageVariant.builder()
                     .setId(v.id)
                     .setImageId(v.imageId)
@@ -35,7 +35,7 @@ export class ImageMapper {
         }
 
         if (prismaImage.references) {
-            const references = prismaImage.references.map(r => 
+            const references = prismaImage.references.map(r =>
                 ImageReference.builder()
                     .setId(r.id)
                     .setImageId(r.imageId)

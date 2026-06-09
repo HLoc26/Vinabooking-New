@@ -1,4 +1,4 @@
-import { EViewType, EPricingType } from "@/generated/client";
+import { ViewType, PricingType } from "./room.enums";
 import { Bed } from "./bed.model";
 import { AmenityConfig } from "./amenity-config.model";
 
@@ -8,11 +8,11 @@ export class Room {
     #updatedAt: Date;
     readonly #createdAt: Date;
     #isActive: boolean;
-    #pricingType: EPricingType;
+    #pricingType: PricingType;
     #floorPrice: number;
     #basePrice: number;
     #viewDescription: string | null;
-    #viewType: EViewType;
+    #viewType: ViewType;
     #bathroomCount: number;
     #bedroomCount: number;
     #size: number | null;
@@ -35,11 +35,11 @@ export class Room {
 		size: number | null, // Prisma Decimal -> number
 		bedroomCount: number,
 		bathroomCount: number,
-		viewType: EViewType,
+		viewType: ViewType,
 		viewDescription: string | null,
 		basePrice: number,
 		floorPrice: number,
-		pricingType: EPricingType,
+		pricingType: PricingType,
 		isActive: boolean,
 		createdAt: Date,
 		updatedAt: Date,
@@ -79,11 +79,11 @@ export class Room {
 	public getSize(): number | null { return this.#size; }
 	public getBedroomCount(): number { return this.#bedroomCount; }
 	public getBathroomCount(): number { return this.#bathroomCount; }
-	public getViewType(): EViewType { return this.#viewType; }
+	public getViewType(): ViewType { return this.#viewType; }
 	public getViewDescription(): string | null { return this.#viewDescription; }
 	public getBasePrice(): number { return this.#basePrice; }
 	public getFloorPrice(): number { return this.#floorPrice; }
-	public getPricingType(): EPricingType { return this.#pricingType; }
+	public getPricingType(): PricingType { return this.#pricingType; }
 	public getIsActive(): boolean { return this.#isActive; }
 	public getCreatedAt(): Date { return this.#createdAt; }
 	public getUpdatedAt(): Date { return this.#updatedAt; }
@@ -101,11 +101,11 @@ export class Room {
 		size?: number | null;
 		bedroomCount?: number;
 		bathroomCount?: number;
-		viewType?: EViewType;
+		viewType?: ViewType;
 		viewDescription?: string | null;
 		basePrice?: number;
 		floorPrice?: number;
-		pricingType?: EPricingType;
+		pricingType?: PricingType;
 		isActive?: boolean;
 	}): void {
 		if (params.name !== undefined) this.#name = params.name;
@@ -173,11 +173,11 @@ export class RoomBuilder {
 	#size: number | null = null;
 	#bedroomCount: number = 1;
 	#bathroomCount: number = 1;
-	#viewType?: EViewType;
+	#viewType?: ViewType;
 	#viewDescription: string | null = null;
 	#basePrice: number = 0;
 	#floorPrice: number = 0;
-	#pricingType?: EPricingType;
+	#pricingType?: PricingType;
 	#isActive: boolean = true;
 	#createdAt?: Date;
 	#updatedAt?: Date;
@@ -222,13 +222,13 @@ export class RoomBuilder {
 		return this;
 	}
 
-	public setView(viewType: EViewType | undefined, viewDescription: string | null | undefined): this {
+	public setView(viewType: ViewType | undefined, viewDescription: string | null | undefined): this {
 		if (viewType !== undefined) this.#viewType = viewType;
 		this.#viewDescription = viewDescription ?? null;
 		return this;
 	}
 
-	public setPricing(basePrice: number | undefined, floorPrice: number | undefined, pricingType: EPricingType | undefined): this {
+	public setPricing(basePrice: number | undefined, floorPrice: number | undefined, pricingType: PricingType | undefined): this {
 		this.#basePrice = basePrice ?? 0;
 		const rawFloorPrice = floorPrice ?? this.#basePrice;
 		this.#floorPrice = Math.min(rawFloorPrice, this.#basePrice);

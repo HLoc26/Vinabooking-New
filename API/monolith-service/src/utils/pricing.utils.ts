@@ -1,5 +1,5 @@
 import crypto from "crypto";
-import { Prisma } from "@/generated/client";
+import { Decimal } from "@/types/decimal";
 import { BadRequestError } from "@/errors";
 import { QuoteResponse } from "@/types/pricing.types";
 
@@ -49,8 +49,11 @@ export function ymdMmDd(ymd: string): string {
 	return ymd.slice(5); // MM-DD
 }
 
-export function canonicalNumber(value: Prisma.Decimal | number | string): string {
-	return new Prisma.Decimal(value).toFixed(2);
+/**
+ * @deprecated
+ */
+export function canonicalNumber(value: Decimal | number | string): string {
+	return new Decimal(value).toFixed(2);
 }
 
 export function canonicalize(obj: unknown): string {

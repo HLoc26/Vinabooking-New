@@ -1,14 +1,14 @@
-import ImageRepository from "@/repositories/image.repository";
-import { FileType, UploadResult } from "../types/image.types";
+import { EntityType, Image, VariantType } from "@/models/image";
+import { ImageRepository } from "@/repositories";
 import { CreateOptimized, CreateThumbnail, CreateWEBP, ImageProcessingPipeline } from "@/utils/image-processor";
+import { FileType, UploadResult } from "../types/image.types";
 import S3Service from "./s3.service";
-import { EntityType, Image, ImageReference, ImageVariant, VariantType } from "../models/image";
 
 class UploadService {
 	constructor(
 		private readonly s3Service: S3Service,
 		private readonly imageRepository: ImageRepository
-	) {}
+	) { }
 
 	private async processAndUpload(
 		entityId: string,
@@ -22,7 +22,7 @@ class UploadService {
 
 		// The legacy uploadFn seems to expect the keys to be EVariantType, which are identical to VariantType.
 		const uploadResult = await uploadFn(entityId, processed as any, original.mimetype);
-		
+
 		// Build Domain Model
 		const s3Key = uploadResult.get(VariantType.ORIGINAL)?.get("s3Key");
 		if (!s3Key) throw new Error("Missing original image s3Key");

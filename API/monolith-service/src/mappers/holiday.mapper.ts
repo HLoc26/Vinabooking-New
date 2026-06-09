@@ -1,5 +1,5 @@
 import { Holiday as PrismaHoliday } from "@/generated/client";
-import { Holiday } from "../models/holiday";
+import { Holiday } from "@/models/holiday";
 
 export class HolidayMapper {
     public static toDomain(prismaHoliday: PrismaHoliday): Holiday {

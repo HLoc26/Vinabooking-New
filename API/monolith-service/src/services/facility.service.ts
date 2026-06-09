@@ -1,6 +1,6 @@
-import FacilityRepository from "@/repositories/facility.repository";
-import { Facility } from "@/models/facility";
 import { FacilityDto } from "@/dto/response/facility.dto";
+import { Facility } from "@/models/facility";
+import { FacilityRepository } from "@/repositories";
 
 class FacilityService {
     readonly #facilityRepository: FacilityRepository;

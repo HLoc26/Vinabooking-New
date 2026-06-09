@@ -1,4 +1,4 @@
-import { EBedType } from "@/generated/client";
+import { BedType } from "./room.enums";
 
 export class Bed {
     #updatedAt: Date;
@@ -7,7 +7,7 @@ export class Bed {
     #price: number | null;
     #quantity: number;
     #size: string | null;
-    #bedType: EBedType;
+    #bedType: BedType;
     #description: string | null;
     #name: string;
     readonly #roomId: string;
@@ -18,7 +18,7 @@ export class Bed {
 		roomId: string,
 		name: string,
 		description: string | null,
-		bedType: EBedType,
+		bedType: BedType,
 		size: string | null,
 		quantity: number,
 		price: number | null,
@@ -43,7 +43,7 @@ export class Bed {
 	public getRoomId(): string { return this.#roomId; }
 	public getName(): string { return this.#name; }
 	public getDescription(): string | null { return this.#description; }
-	public getBedType(): EBedType { return this.#bedType; }
+	public getBedType(): BedType { return this.#bedType; }
 	public getSize(): string | null { return this.#size; }
 	public getQuantity(): number { return this.#quantity; }
 	public getPrice(): number | null { return this.#price; }
@@ -55,7 +55,7 @@ export class Bed {
 	public updateDetails(params: {
 		name?: string;
 		description?: string | null;
-		bedType?: EBedType;
+		bedType?: BedType;
 		size?: string | null;
 		quantity?: number;
 		price?: number | null;
@@ -72,11 +72,11 @@ export class Bed {
 			const typeToSet = params.bedType ?? this.#bedType;
 			const baseQuantity = params.quantity ?? this.#quantity;
 			
-			// Normalize bunk bed type to EBedType.BUNK_BED if string passed
+			// Normalize bunk bed type to BedType.BUNK_BED if string passed
 			const rawType = String(typeToSet).toUpperCase();
 			const isBunk = rawType.includes("BUNK");
 			
-			this.#bedType = isBunk ? EBedType.BUNK_BED : typeToSet;
+			this.#bedType = isBunk ? BedType.BUNK_BED : typeToSet;
 			this.#quantity = isBunk ? baseQuantity * 2 : baseQuantity;
 		}
 
@@ -93,7 +93,7 @@ export class BedBuilder {
 	#roomId?: string;
 	#name?: string;
 	#description: string | null = null;
-	#bedType?: EBedType;
+	#bedType?: BedType;
 	#size: string | null = null;
 	#baseQuantity: number = 1;
 	#price: number | null = 0;
@@ -121,10 +121,10 @@ export class BedBuilder {
 		return this;
 	}
 
-	public setBedType(bedType: EBedType | string): this {
+	public setBedType(bedType: BedType | string): this {
 		const rawType = String(bedType).toUpperCase();
 		const isBunk = rawType.includes("BUNK");
-		this.#bedType = isBunk ? EBedType.BUNK_BED : (bedType as EBedType);
+		this.#bedType = isBunk ? BedType.BUNK_BED : (bedType as BedType);
 		return this;
 	}
 
@@ -177,7 +177,7 @@ export class BedBuilder {
 	
 	public setCalculatedQuantity(baseQuantity: number | undefined): this {
 		const qty = baseQuantity ?? 1;
-		this.#baseQuantity = this.#bedType === EBedType.BUNK_BED ? qty * 2 : qty;
+		this.#baseQuantity = this.#bedType === BedType.BUNK_BED ? qty * 2 : qty;
 		return this;
 	}
 

@@ -1,22 +1,18 @@
-import { EntityType } from "@/models/image";
-import { ImageDto } from "@/dto/response/image.dto";
-import AccommodationRepository from "@/repositories/accommodation.repository";
-import { NotFoundError, BadRequestError } from "../errors";
-import { RoomService, ImageService, S3Service, OwnerService, HolidayService } from "@/services";
-import { EEntityType, Prisma, EAccommodationType, EAccommodationStatus, ERentalType } from "@/generated/client";
-import { SearchQuery, ESortOption, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateAddressDTO, UpdateAccommodationPricingDTO, CreateAccommodationDTO } from "@/dto/request/accommodation.dto";
-import { AccommodationFullInfo, AccommodationStats, OwnerAccommodationCard } from "@/dto/response/accommodation.dto";
-import redisClient from "@/clients/redis.client";
-import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
-import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
 import { publishQueue } from "@/clients/queue.client";
-import { PUBLISH_ACCOMMODATION_JOB, type PublishJobData } from "@/types/queue.types";
+import redisClient from "@/clients/redis.client";
+import { CreateAccommodationDTO, ESortOption, SearchQuery, UpdateAccommodationDTO, UpdateAccommodationPricingDTO, UpdateAddressDTO, UpdateFacilitiesDTO } from "@/dto/request/accommodation.dto";
+import { AccommodationFullInfo, AccommodationStats, OwnerAccommodationCard } from "@/dto/response/accommodation.dto";
+import { ImageDto } from "@/dto/response/image.dto";
+import { BadRequestError, NotFoundError } from "@/errors";
 import { AccommodationMapper } from "@/mappers/accommodation.mapper";
-import { Accommodation } from "@/models/accommodation/accommodation.model";
-import { AccommodationHoliday } from "@/models/accommodation/accommodation-holiday.model";
-import { FacilityConfig } from "@/models/accommodation/facility-config.model";
+import { Accommodation, AccommodationHoliday, AccommodationStatus, AccommodationType, Address, FacilityConfig } from "@/models/accommodation";
 import { Facility } from "@/models/facility";
-import { Address } from "@/models/accommodation/address.model";
+import { EntityType } from "@/models/image";
+import { AccommodationRepository } from "@/repositories";
+import { ImageService, OwnerService, RoomService, S3Service } from "@/services";
+import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
+import { PUBLISH_ACCOMMODATION_JOB, type PublishJobData } from "@/types/queue.types";
+import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
@@ -170,7 +166,7 @@ class AccommodationService {
 	}
 
 	async getCount(city?: string, type?: string) {
-		const count = await this.#accommodationRepository.count({ city, type: type as EAccommodationType });
+		const count = await this.#accommodationRepository.count({ city, type: type as AccommodationType });
 		return { city: city || null, type: type || null, count };
 	}
 
@@ -290,7 +286,7 @@ class AccommodationService {
 			.setDescription(data.description || null)
 			.setType(data.type)
 			.setRentalType(data.rentalType)
-			.setStatus(EAccommodationStatus.DRAFT)
+			.setStatus(AccommodationStatus.DRAFT)
 			.setOwnerId(userId)
 			.setDynamicPricingSettings(resolvedSettings)
 			.setHolidayOptIns(holidays)
@@ -392,7 +388,7 @@ class AccommodationService {
 		return await this.getAccommodationById(id);
 	}
 
-	async updateStatus(ownerId: string, id: string, status: EAccommodationStatus): Promise<AccommodationFullInfo> {
+	async updateStatus(ownerId: string, id: string, status: AccommodationStatus): Promise<AccommodationFullInfo> {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 

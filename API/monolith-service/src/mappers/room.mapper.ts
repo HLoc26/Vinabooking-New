@@ -1,7 +1,6 @@
 import { Room as PrismaRoom, Bed as PrismaBed, AmenityConfig as PrismaAmenityConfig, Amenity as PrismaAmenity, Prisma } from "@/generated/client";
-import { Room } from "@/models/room/room.model";
-import { Bed } from "@/models/room/bed.model";
-import { AmenityConfig } from "@/models/room/amenity-config.model";
+import { Room, Bed, AmenityConfig, ViewType, PricingType, BedType } from "@/models/room";
+import { AmenityType } from "@/models/amenity";
 
 type PrismaRoomWithDetails = PrismaRoom & {
 	beds: PrismaBed[];
@@ -21,8 +20,8 @@ export class RoomMapper {
 			.setQuantity(prismaRoom.quantity)
 			.setCapacity(prismaRoom.maxAdults, prismaRoom.maxChildren)
 			.setDimensions(prismaRoom.size ? Number(prismaRoom.size) : null, prismaRoom.bedroomCount, prismaRoom.bathroomCount)
-			.setView(prismaRoom.viewType, prismaRoom.viewDescription)
-			.setPricing(Number(prismaRoom.basePrice), Number(prismaRoom.floorPrice), prismaRoom.pricingType)
+			.setView(prismaRoom.viewType as unknown as ViewType, prismaRoom.viewDescription)
+			.setPricing(Number(prismaRoom.basePrice), Number(prismaRoom.floorPrice), prismaRoom.pricingType as unknown as PricingType)
 			.setIsActive(prismaRoom.isActive)
 			.setTimestamps(prismaRoom.createdAt, prismaRoom.updatedAt)
 			.setBeds(beds)
@@ -36,7 +35,7 @@ export class RoomMapper {
 			.setRoomId(prismaBed.roomId)
 			.setName(prismaBed.name)
 			.setDescription(prismaBed.description)
-			.setBedType(prismaBed.bedType)
+			.setBedType(prismaBed.bedType as unknown as BedType)
 			.setSize(prismaBed.size)
 			.setPersistedQuantity(prismaBed.quantity)
 			.setPrice(prismaBed.price ? Number(prismaBed.price) : null)
@@ -56,7 +55,7 @@ export class RoomMapper {
 		if (prismaAmenityConfig.amenity) {
 			builder.setAmenityDetails(
 				prismaAmenityConfig.amenity.name,
-				prismaAmenityConfig.amenity.type,
+				prismaAmenityConfig.amenity.type as unknown as AmenityType,
 				prismaAmenityConfig.amenity.description
 			);
 		}

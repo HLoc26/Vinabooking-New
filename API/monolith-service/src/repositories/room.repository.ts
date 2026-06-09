@@ -1,5 +1,5 @@
-import { PrismaClient, Prisma, Room as PrismaRoom } from "@/generated/client";
-import type { RoomFilterOptions, RoomWithDetails, CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
+import { PrismaClient, Prisma } from "@/generated/client";
+import type { RoomFilterOptions } from "@/types/room.types";
 import { Room } from "@/models/room/room.model";
 import { RoomMapper } from "@/mappers/room.mapper";
 

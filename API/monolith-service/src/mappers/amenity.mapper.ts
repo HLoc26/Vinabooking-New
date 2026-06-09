@@ -1,5 +1,5 @@
 import { Amenity as PrismaAmenity, EAmenityType } from "@/generated/client";
-import { Amenity, AmenityType } from "../models/amenity";
+import { Amenity, AmenityType } from "@/models/amenity";
 
 export class AmenityMapper {
     public static toDomain(prismaAmenity: PrismaAmenity): Amenity {

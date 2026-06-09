@@ -1,7 +1,7 @@
-import ImageRepository from "@/repositories/image.repository";
-import S3Service from "./s3.service";
-import { EntityType, Image } from "../models/image";
+import { EntityType, Image } from "@/models/image";
+import { ImageRepository } from "@/repositories";
 import { ImageDto } from "../dto/response/image.dto";
+import S3Service from "./s3.service";
 
 class ImageService {
 	readonly #imageRepository: ImageRepository;
@@ -32,7 +32,7 @@ class ImageService {
 		if (!image) return;
 
 		await this.#imageRepository.deleteById(id);
-		
+
 		const keys = [image.getS3Key(), ...image.getVariants().map(v => v.getS3Key())];
 		await this.#s3Service.deleteFiles(keys);
 	}

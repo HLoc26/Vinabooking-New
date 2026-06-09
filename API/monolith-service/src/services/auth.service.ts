@@ -1,26 +1,26 @@
-import {
-	AdminDeleteUserCommand,
-	CognitoIdentityProviderClient,
-	ConfirmSignUpCommand,
-	SignUpCommand,
-	AdminInitiateAuthCommand,
-	ResendConfirmationCodeCommand,
-	GlobalSignOutCommand,
-	AdminCreateUserCommand,
-	AdminSetUserPasswordCommand,
-	AdminGetUserCommand,
-	UserNotFoundException,
-	ForgotPasswordCommand,
-	ConfirmForgotPasswordCommand,
-	AuthenticationResultType,
-	AdminRespondToAuthChallengeCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import CognitoClient from "@/clients/cognito.client";
-import { AuthTokens } from "@/types/auth/auth-token";
-import IdentityProviderError from "@/errors/IdentityProviderError";
-import EmailService from "./email.service";
+import { IdentityProviderError } from "@/errors";
+import { AuthProvider, UserAuthProvider } from "@/models/auth";
 import { AuthRepository } from "@/repositories";
-import { UserAuthProvider, AuthProvider } from "@/models/auth";
+import { AuthTokens } from "@/types/auth/auth-token";
+import {
+	AdminCreateUserCommand,
+	AdminDeleteUserCommand,
+	AdminGetUserCommand,
+	AdminInitiateAuthCommand,
+	AdminRespondToAuthChallengeCommand,
+	AdminSetUserPasswordCommand,
+	AuthenticationResultType,
+	CognitoIdentityProviderClient,
+	ConfirmForgotPasswordCommand,
+	ConfirmSignUpCommand,
+	ForgotPasswordCommand,
+	GlobalSignOutCommand,
+	ResendConfirmationCodeCommand,
+	SignUpCommand,
+	UserNotFoundException,
+} from "@aws-sdk/client-cognito-identity-provider";
+import EmailService from "./email.service";
 
 export interface AuthServiceConfig {
 	cognitoClient: CognitoIdentityProviderClient;

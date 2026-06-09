@@ -1,4 +1,4 @@
-import { FavouriteItem, FavouriteItemBuilder, FavouriteList, FavouriteListBuilder } from "@/models/favourite";
+import { FavouriteItem, FavouriteList } from "@/models/favourite";
 import { FavouriteItem as PrismaFavouriteItem, FavouriteList as PrismaFavouriteList } from "@/generated/client";
 
 type PrismaFavouriteListWithItems = PrismaFavouriteList & { items?: PrismaFavouriteItem[] };

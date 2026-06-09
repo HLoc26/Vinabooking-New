@@ -1,5 +1,5 @@
 import { ImageDto } from "@/dto/response/image.dto";
-import { Prisma, type EViewType, type EPricingType, type EBedType } from "@/generated/client";
+import { ViewType, PricingType, BedType } from "@/models/room/room.enums";
 
 import type { QuoteItemPricing } from "./pricing.types";
 
@@ -11,18 +11,38 @@ export interface RoomFilterOptions {
 	sortBy?: string;
 }
 
-export type RoomWithDetails = Prisma.RoomGetPayload<{
-	include: {
-		beds: true;
-		amenities: {
-			include: { amenity: true };
-		};
-	};
-}>;
+export interface RoomWithDetails {
+	id: string;
+	accommodationId: string;
+	name: string;
+	description: string | null;
+	quantity: number;
+	maxAdults: number;
+	maxChildren: number;
+	size: number | null;
+	bedroomCount: number;
+	bathroomCount: number;
+	viewType: ViewType;
+	viewDescription: string | null;
+	basePrice: any;
+	floorPrice: any;
+	pricingType: PricingType;
+	isActive: boolean;
+	createdAt: Date;
+	updatedAt: Date;
+	beds: any[];
+	amenities: any[];
+}
 
-export type AmenityConfigWithDetails = Prisma.AmenityConfigGetPayload<{
-	include: { amenity: true };
-}>;
+export interface AmenityConfigWithDetails {
+	id: string;
+	roomId: string;
+	amenityId: string;
+	note: string | null;
+	createdAt: Date;
+	updatedAt: Date;
+	amenity: any;
+}
 
 export type RoomFullDetail = RoomWithDetails & {
 	remainingQuantity: number;
@@ -33,7 +53,7 @@ export type RoomFullDetail = RoomWithDetails & {
 export interface CreateBedBatchDTO {
 	name: string;
 	description?: string;
-	bedType: EBedType;
+	bedType: BedType;
 	quantity?: number;
 	size?: string;
 	price?: number;
@@ -48,11 +68,11 @@ export interface CreateRoomDTO {
 	size?: number;
 	bedroomCount?: number;
 	bathroomCount?: number;
-	viewType?: EViewType;
+	viewType?: ViewType;
 	viewDescription?: string;
 	basePrice?: number;
 	floorPrice?: number;
-	pricingType?: EPricingType;
+	pricingType?: PricingType;
 	isActive?: boolean;
 
 	beds: CreateBedBatchDTO[];
@@ -60,7 +80,7 @@ export interface CreateRoomDTO {
 }
 
 export type UpdateBedDTO = Partial<CreateBedBatchDTO> & {
-	id?: string; // id có thể có (update) hoặc không (create)
+	id?: string;
 };
 export type UpdateRoomDTO = Partial<Omit<CreateRoomDTO, "beds">> & {
 	beds?: UpdateBedDTO[];

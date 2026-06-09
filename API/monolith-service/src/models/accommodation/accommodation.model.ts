@@ -1,4 +1,4 @@
-import { EAccommodationType, ERentalType, EAccommodationStatus } from "@/generated/client";
+import { AccommodationType, RentalType, AccommodationStatus } from "./accommodation.enums";
 import { Address } from "./address.model";
 import { FacilityConfig } from "./facility-config.model";
 import { AccommodationHoliday } from "./accommodation-holiday.model";
@@ -14,9 +14,9 @@ export class Accommodation {
     readonly #createdAt: Date;
     #dynamicPricingSettings: DynamicPricingSettings | null;
     readonly #ownerId: string;
-    #status: EAccommodationStatus;
-    #rentalType: ERentalType | null;
-    #type: EAccommodationType;
+    #status: AccommodationStatus;
+    #rentalType: RentalType | null;
+    #type: AccommodationType;
     #description: string | null;
     #name: string;
     readonly #id: string;
@@ -25,9 +25,9 @@ export class Accommodation {
         id: string,
         name: string,
         description: string | null,
-        type: EAccommodationType,
-        rentalType: ERentalType | null,
-        status: EAccommodationStatus,
+        type: AccommodationType,
+        rentalType: RentalType | null,
+        status: AccommodationStatus,
         ownerId: string,
         dynamicPricingSettings: DynamicPricingSettings | null,
         createdAt: Date,
@@ -60,9 +60,9 @@ export class Accommodation {
     public getId(): string { return this.#id; }
     public getName(): string { return this.#name; }
     public getDescription(): string | null { return this.#description; }
-    public getType(): EAccommodationType { return this.#type; }
-    public getRentalType(): ERentalType | null { return this.#rentalType; }
-    public getStatus(): EAccommodationStatus { return this.#status; }
+    public getType(): AccommodationType { return this.#type; }
+    public getRentalType(): RentalType | null { return this.#rentalType; }
+    public getStatus(): AccommodationStatus { return this.#status; }
     public getOwnerId(): string { return this.#ownerId; }
     public getDynamicPricingSettings(): DynamicPricingSettings | null { return this.#dynamicPricingSettings; }
     public getCreatedAt(): Date { return this.#createdAt; }
@@ -75,7 +75,7 @@ export class Accommodation {
     public setFacilities(facilities: FacilityConfig[]): void { this.#facilities = facilities; }
     public setHolidayOptIns(holidays: AccommodationHoliday[]): void { this.#holidayOptIns = holidays; }
     
-    public updateBasicInfo(name: string, description: string | null, type: EAccommodationType): void {
+    public updateBasicInfo(name: string, description: string | null, type: AccommodationType): void {
         this.validateName(name);
         this.#name = name;
         this.#description = description;
@@ -86,12 +86,12 @@ export class Accommodation {
         this.#dynamicPricingSettings = settings;
     }
 
-    public changeStatus(status: EAccommodationStatus): void {
+    public changeStatus(status: AccommodationStatus): void {
         this.#status = status;
     }
 
     public publish(roomCount: number, allRoomsValid: boolean): void {
-        if (this.#status === EAccommodationStatus.PUBLISHED) {
+        if (this.#status === AccommodationStatus.PUBLISHED) {
             throw new Error("This accommodation is already published");
         }
         if (!this.#address) {
@@ -104,7 +104,7 @@ export class Accommodation {
             throw new Error("Cannot publish: One or more rooms have invalid pricing or capacity.");
         }
 
-        this.#status = EAccommodationStatus.PUBLISHED;
+        this.#status = AccommodationStatus.PUBLISHED;
     }
 
     private validateName(name: string): void {
@@ -122,9 +122,9 @@ export class AccommodationBuilder {
     #id?: string;
     #name?: string;
     #description: string | null = null;
-    #type?: EAccommodationType;
-    #rentalType: ERentalType | null = null;
-    #status: EAccommodationStatus = EAccommodationStatus.DRAFT;
+    #type?: AccommodationType;
+    #rentalType: RentalType | null = null;
+    #status: AccommodationStatus = AccommodationStatus.DRAFT;
     #ownerId?: string;
     #dynamicPricingSettings: DynamicPricingSettings | null = null;
     #createdAt?: Date;
@@ -138,9 +138,9 @@ export class AccommodationBuilder {
     public setId(id: string): this { this.#id = id; return this; }
     public setName(name: string): this { this.#name = name; return this; }
     public setDescription(description: string | null): this { this.#description = description; return this; }
-    public setType(type: EAccommodationType): this { this.#type = type; return this; }
-    public setRentalType(rentalType: ERentalType | null): this { this.#rentalType = rentalType; return this; }
-    public setStatus(status: EAccommodationStatus): this { this.#status = status; return this; }
+    public setType(type: AccommodationType): this { this.#type = type; return this; }
+    public setRentalType(rentalType: RentalType | null): this { this.#rentalType = rentalType; return this; }
+    public setStatus(status: AccommodationStatus): this { this.#status = status; return this; }
     public setOwnerId(ownerId: string): this { this.#ownerId = ownerId; return this; }
     public setDynamicPricingSettings(settings: DynamicPricingSettings | null): this { this.#dynamicPricingSettings = settings; return this; }
     public setCreatedAt(createdAt: Date): this { this.#createdAt = createdAt; return this; }

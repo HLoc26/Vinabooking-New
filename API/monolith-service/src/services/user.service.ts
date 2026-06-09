@@ -1,13 +1,10 @@
-import UserRepository from "@/repositories/user.repository";
-import FavouriteService from "./favourite.service";
-import redisClient from "../clients/redis.client";
-import { UserCreateDto, UserUpdateDto, UserCacheInfo } from "@/dto/request/user.dto";
+import { UserCacheInfo, UserCreateDto, UserUpdateDto } from "@/dto/request/user.dto";
 import { UserDto, UserWithFavouritesDto } from "@/dto/response/user.dto";
+import { BadRequestError, DatabaseError, NotFoundError, RedisClientError } from "@/errors";
 import { User } from "@/models/user";
-import BadRequestError from "@/errors/BadRequestError";
-import NotFoundError from "@/errors/NotFoundError";
-import DatabaseError from "@/errors/DatabaseError";
-import RedisClientError from "@/errors/RedisClientError";
+import { UserRepository } from "@/repositories";
+import redisClient from "../clients/redis.client";
+import FavouriteService from "./favourite.service";
 
 class UserService {
 	readonly #userRepository: UserRepository;
@@ -56,7 +53,7 @@ class UserService {
 		if (withFavourites) {
 			// Orchestrate: Fetch favourites from the foreign domain service
 			const lists = await this.#favouriteService.getListsByOwnerId(userDomain.getId());
-			
+
 			const withFavsDto: UserWithFavouritesDto = {
 				...baseDto,
 				favourites: lists.map(list => ({

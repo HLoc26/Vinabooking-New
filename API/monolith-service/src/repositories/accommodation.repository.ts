@@ -176,7 +176,7 @@ class AccommodationRepository {
 				facilities: { include: { facility: true } },
 			},
 			orderBy: { createdAt: Prisma.SortOrder.desc },
-		});
+		}) as unknown as AccommodationWithDetails[];
 	}
 
 	public async findDraftByOwnerId(ownerId: string): Promise<AccommodationWithDetails[]> {
@@ -188,7 +188,7 @@ class AccommodationRepository {
 				rooms: true,
 			},
 			orderBy: { createdAt: Prisma.SortOrder.desc },
-		});
+		}) as unknown as AccommodationWithDetails[];
 	}
 
 	public async getDashboardCardsByOwnerId(ownerId: string) {

@@ -1,6 +1,6 @@
-import AmenityRepository from "@/repositories/amenity.repository";
-import { Amenity, AmenityType } from "@/models/amenity";
 import { AmenityDto } from "@/dto/response/amenity.dto";
+import { Amenity, AmenityType } from "@/models/amenity";
+import { AmenityRepository } from "@/repositories";
 
 class AmenityService {
     readonly #amenityRepository: AmenityRepository;
@@ -19,7 +19,7 @@ class AmenityService {
         if (!amenity) return null;
         return this.mapToDto([amenity])[0];
     }
-    
+
     public async getAmenitiesByType(type: AmenityType): Promise<AmenityDto[]> {
         const amenities = await this.#amenityRepository.findByType(type);
         return this.mapToDto(amenities);

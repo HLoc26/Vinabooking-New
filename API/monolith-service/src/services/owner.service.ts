@@ -1,12 +1,9 @@
-import { EntityType } from "@/models/image";
-import BadRequestError from "@/errors/BadRequestError";
-import { NotFoundError } from "@/errors";
-import { OwnerRepository } from "@/repositories";
-import { AccommodationService, BookingService, ImageService, UserService } from "@/services";
-import { DraftAccommodation } from "@/dto/response/accommodation.dto";
-import { EEntityType } from "@/generated/client";
 import redisClient from "@/clients/redis.client";
-import type { OwnerBookingFilters } from "@/repositories/booking.repository";
+import { DraftAccommodation } from "@/dto/response/accommodation.dto";
+import { BadRequestError, NotFoundError } from "@/errors";
+import { EntityType } from "@/models/image";
+import { OwnerBookingFilters, OwnerRepository } from "@/repositories";
+import { AccommodationService, BookingService, ImageService, UserService } from "@/services";
 
 interface IWizardStepData {
 	address: unknown;
