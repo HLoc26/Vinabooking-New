@@ -5,6 +5,7 @@ import { ESortOption, UpdateAccommodationDTO, UpdateAddressDTO } from "@/dto/req
 import type { DynamicPricingSettings } from "@/types/pricing.types";
 import { Accommodation } from "@/models/accommodation/accommodation.model";
 import { AccommodationMapper } from "@/mappers/accommodation.mapper";
+import redisClient from "@/clients/redis.client";
 
 class AccommodationRepository {
 	readonly #prismaClient: PrismaClient;
@@ -191,7 +192,15 @@ class AccommodationRepository {
 	}
 
 	public async getDashboardCardsByOwnerId(ownerId: string) {
-		return await this.#prismaClient.accommodation.findMany({
+		const cacheKey = `owner:dashboard:${ownerId}`;
+		try {
+			const cached = await redisClient.get(cacheKey);
+			if (cached) return JSON.parse(cached);
+		} catch (err) {
+			console.error(`Failed to parse cached dashboard for owner ${ownerId}`, err);
+		}
+
+		const data = await this.#prismaClient.accommodation.findMany({
 			where: { ownerId },
 			select: {
 				id: true,
@@ -218,6 +227,14 @@ class AccommodationRepository {
 			},
 			orderBy: { updatedAt: Prisma.SortOrder.desc },
 		});
+
+		try {
+			await redisClient.set(cacheKey, JSON.stringify(data), { EX: 600 }); // 10 mins
+		} catch (err) {
+			console.error(`Failed to cache dashboard for owner ${ownerId}`, err);
+		}
+
+		return data;
 	}
 
 	public async updatePricingSettings(id: string, settings: DynamicPricingSettings | null) {

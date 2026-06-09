@@ -11,87 +11,18 @@ import {
 	QuoteRequest,
 	QuoteResponse,
 } from "@/types/pricing.types";
+import redisClient from "@/clients/redis.client";
 
-const HCM_TZ = "Asia/Ho_Chi_Minh";
-const DAY_MS = 24 * 60 * 60 * 1000;
-const ZERO = new Prisma.Decimal(0);
-const ONE = new Prisma.Decimal(1);
-const MAX_DISCOUNT_RATE = new Prisma.Decimal("0.5");
-
-function toHcmYmd(d: Date): string {
-	// en-CA locale formats as YYYY-MM-DD
-	const fmt = new Intl.DateTimeFormat("en-CA", {
-		timeZone: HCM_TZ,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-	});
-	return fmt.format(d);
-}
-
-function ymdToHcmMidnightUtc(ymd: string): Date {
-	// HCM is UTC+7 (no DST). Midnight in HCM = 17:00 UTC the previous day.
-	const [y, m, d] = ymd.split("-").map((n) => parseInt(n, 10));
-	return new Date(Date.UTC(y, m - 1, d, -7, 0, 0));
-}
-
-function diffDaysHcm(later: Date, earlier: Date): number {
-	const a = ymdToHcmMidnightUtc(toHcmYmd(later));
-	const b = ymdToHcmMidnightUtc(toHcmYmd(earlier));
-	return Math.floor((a.getTime() - b.getTime()) / DAY_MS);
-}
-
-function enumerateNights(checkIn: Date, checkOut: Date): string[] {
-	const startYmd = toHcmYmd(checkIn);
-	const endYmd = toHcmYmd(checkOut);
-	if (startYmd >= endYmd) {
-		throw new BadRequestError("checkOut must be after checkIn (HCM tz)");
-	}
-	const nights: string[] = [];
-	let cursor = ymdToHcmMidnightUtc(startYmd);
-	const end = ymdToHcmMidnightUtc(endYmd);
-	while (cursor.getTime() < end.getTime()) {
-		nights.push(toHcmYmd(cursor));
-		cursor = new Date(cursor.getTime() + DAY_MS);
-	}
-	return nights;
-}
-
-function ymdMmDd(ymd: string): string {
-	return ymd.slice(5); // MM-DD
-}
-
-function canonicalNumber(value: Prisma.Decimal | number | string): string {
-	return new Prisma.Decimal(value).toFixed(2);
-}
-
-function canonicalize(obj: unknown): string {
-	if (obj === null || typeof obj !== "object") {
-		return JSON.stringify(obj);
-	}
-
-	// Handle objects with toJSON method (Date, Prisma.Decimal, etc.)
-	if (typeof (obj as any).toJSON === "function") {
-		return JSON.stringify((obj as any).toJSON());
-	}
-
-	if (Array.isArray(obj)) {
-		return "[" + obj.map((x) => canonicalize(x)).join(",") + "]";
-	}
-
-	const keys = Object.keys(obj as Record<string, unknown>).sort();
-	return (
-		"{" +
-		keys
-			.map((k) => JSON.stringify(k) + ":" + canonicalize((obj as Record<string, unknown>)[k]))
-			.join(",") +
-		"}"
-	);
-}
-
-export function hashQuote(payload: Omit<QuoteResponse, "quoteHash">): string {
-	return crypto.createHash("sha256").update(canonicalize(payload)).digest("hex");
-}
+import {
+	DAY_MS,
+	toHcmYmd,
+	ymdToHcmMidnightUtc,
+	diffDaysHcm,
+	enumerateNights,
+	ymdMmDd,
+	canonicalNumber,
+	hashQuote,
+} from "@/utils/pricing.utils";
 
 type HolidayOptInRow = {
 	holidayCode: string;
@@ -100,6 +31,10 @@ type HolidayOptInRow = {
 	postDays: number;
 	enabled: boolean;
 };
+
+const ZERO = new Prisma.Decimal(0);
+const ONE = new Prisma.Decimal(1);
+const MAX_DISCOUNT_RATE = new Prisma.Decimal("0.5");
 
 class PricingService {
 	readonly #prismaClient: PrismaClient;
@@ -121,18 +56,37 @@ class PricingService {
 		const map = new Map<string, Prisma.Decimal>();
 		if (nightYmds.length === 0) return map;
 
+		const cacheKeys = nightYmds.map((ymd) => `holiday_map:${accommodationId}:${ymd}`);
+		const cachedVals = await redisClient.mGet(cacheKeys);
+		const missingYmds: string[] = [];
+
+		cachedVals.forEach((val, i) => {
+			if (val) {
+				if (val !== "1") map.set(nightYmds[i], new Prisma.Decimal(val));
+			} else {
+				missingYmds.push(nightYmds[i]);
+			}
+		});
+
+		if (missingYmds.length === 0) return map;
+
 		// 1. Fetch owner/accommodation opt-ins.
 		const optIns = (await this.#holidayRepository.findByAccommodation(accommodationId)) as HolidayOptInRow[];
 		const enabledConfigs = optIns.filter((o) => o.enabled);
-		if (enabledConfigs.length === 0) return map;
+		
+		// If no opt-ins, set all missing to 1 and return
+		if (enabledConfigs.length === 0) {
+			const multi = redisClient.multi();
+			missingYmds.forEach(ymd => multi.set(`holiday_map:${accommodationId}:${ymd}`, "1", { EX: 86400 }));
+			await multi.exec();
+			return map;
+		}
 
 		const configByCode = new Map(enabledConfigs.map((c) => [c.holidayCode, c]));
 
-		// 2. Fetch all holiday anchors that could potentially cover our stay.
-		// We need to fetch anchors even slightly outside the range because pre/post windows
-		// might pull them into the stay. Let's fetch anchors within [min - 31, max + 31] for safety.
-		const startMs = ymdToHcmMidnightUtc(nightYmds[0]).getTime();
-		const endMs = ymdToHcmMidnightUtc(nightYmds[nightYmds.length - 1]).getTime();
+		// 2. Fetch all holiday anchors that could potentially cover our missing stay.
+		const startMs = ymdToHcmMidnightUtc(missingYmds[0]).getTime();
+		const endMs = ymdToHcmMidnightUtc(missingYmds[missingYmds.length - 1]).getTime();
 		const pad = 31 * DAY_MS;
 
 		const prismaAnchors = await this.#prismaClient.holiday.findMany({
@@ -146,9 +100,10 @@ class PricingService {
 		});
 
 		const anchors = prismaAnchors.map(a => HolidayMapper.toDomain(a));
+		const multi = redisClient.multi();
 
-		// 3. For each night, check if it falls within ANY expanded holiday window.
-		for (const nightYmd of nightYmds) {
+		// 3. For each missing night, check if it falls within ANY expanded holiday window.
+		for (const nightYmd of missingYmds) {
 			const nightMs = ymdToHcmMidnightUtc(nightYmd).getTime();
 			const nightMmDd = ymdMmDd(nightYmd);
 			const nightYear = parseInt(nightYmd.split("-")[0], 10);
@@ -169,7 +124,11 @@ class PricingService {
 			if (highestMultiplier.greaterThan(ONE)) {
 				map.set(nightYmd, highestMultiplier);
 			}
+			
+			multi.set(`holiday_map:${accommodationId}:${nightYmd}`, highestMultiplier.toString(), { EX: 86400 });
 		}
+		
+		await multi.exec();
 
 		return map;
 	}
@@ -406,4 +365,3 @@ class PricingService {
 }
 
 export default PricingService;
-export { canonicalize };

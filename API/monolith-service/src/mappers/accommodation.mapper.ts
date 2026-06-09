@@ -144,4 +144,132 @@ export class AccommodationMapper {
             updatedAt: domain.getUpdatedAt()
         };
     }
+
+    public static toJson(domain: Accommodation): string {
+        const payload = {
+            id: domain.getId(),
+            name: domain.getName(),
+            description: domain.getDescription(),
+            type: domain.getType(),
+            rentalType: domain.getRentalType(),
+            status: domain.getStatus(),
+            ownerId: domain.getOwnerId(),
+            dynamicPricingSettings: domain.getDynamicPricingSettings(),
+            createdAt: domain.getCreatedAt().toISOString(),
+            updatedAt: domain.getUpdatedAt().toISOString(),
+            address: domain.getAddress() ? {
+                id: domain.getAddress()!.getId(),
+                street: domain.getAddress()!.getStreet(),
+                city: domain.getAddress()!.getCity(),
+                country: domain.getAddress()!.getCountry(),
+                countryCode: domain.getAddress()!.getCountryCode(),
+                postalCode: domain.getAddress()!.getPostalCode(),
+                latitude: domain.getAddress()!.getLatitude(),
+                longitude: domain.getAddress()!.getLongitude(),
+                fullAddress: domain.getAddress()!.getFullAddress(),
+                placeId: domain.getAddress()!.getPlaceId(),
+                createdAt: domain.getAddress()!.getCreatedAt().toISOString(),
+                updatedAt: domain.getAddress()!.getUpdatedAt().toISOString()
+            } : null,
+            facilities: domain.getFacilities().map(f => ({
+                id: f.getId(),
+                fee: f.getFee(),
+                note: f.getNote(),
+                isAvailable: f.getIsAvailable(),
+                createdAt: f.getCreatedAt().toISOString(),
+                updatedAt: f.getUpdatedAt().toISOString(),
+                facility: {
+                    id: f.getFacility().getId(),
+                    name: f.getFacility().getName(),
+                    type: f.getFacility().getType(),
+                    description: f.getFacility().getDescription(),
+                    createdAt: f.getFacility().getCreatedAt().toISOString(),
+                    updatedAt: f.getFacility().getUpdatedAt().toISOString()
+                }
+            })),
+            holidayOptIns: domain.getHolidayOptIns().map(h => ({
+                id: h.getId(),
+                accommodationId: h.getAccommodationId(),
+                holidayCode: h.getHolidayCode(),
+                priceMultiplier: h.getPriceMultiplier(),
+                preDays: h.getPreDays(),
+                postDays: h.getPostDays(),
+                enabled: h.getEnabled()
+            })),
+            roomCount: (domain as any).roomCount || 0,
+            allRoomsValid: (domain as any).allRoomsValid || false
+        };
+        return JSON.stringify(payload);
+    }
+
+    public static fromJson(jsonStr: string): Accommodation {
+        const parsed = JSON.parse(jsonStr);
+
+        let address: Address | null = null;
+        if (parsed.address) {
+            address = Address.builder()
+                .setId(parsed.address.id)
+                .setStreet(parsed.address.street)
+                .setCity(parsed.address.city)
+                .setCountry(parsed.address.country)
+                .setCountryCode(parsed.address.countryCode)
+                .setPostalCode(parsed.address.postalCode)
+                .setLatitude(parsed.address.latitude)
+                .setLongitude(parsed.address.longitude)
+                .setFullAddress(parsed.address.fullAddress)
+                .setPlaceId(parsed.address.placeId)
+                .setCreatedAt(new Date(parsed.address.createdAt))
+                .setUpdatedAt(new Date(parsed.address.updatedAt))
+                .build();
+        }
+
+        const facilities = (parsed.facilities || []).map((fc: any) => {
+            const facilityDomain = new Facility(
+                fc.facility.id,
+                fc.facility.name,
+                fc.facility.type as any,
+                fc.facility.description,
+                new Date(fc.facility.createdAt),
+                new Date(fc.facility.updatedAt)
+            );
+            return FacilityConfig.builder()
+                .setId(fc.id)
+                .setFee(fc.fee)
+                .setNote(fc.note)
+                .setIsAvailable(fc.isAvailable)
+                .setCreatedAt(new Date(fc.createdAt))
+                .setUpdatedAt(new Date(fc.updatedAt))
+                .setFacility(facilityDomain)
+                .build();
+        });
+
+        const holidays = (parsed.holidayOptIns || []).map((h: any) => {
+            return AccommodationHoliday.builder()
+                .setId(h.id)
+                .setAccommodationId(h.accommodationId)
+                .setHolidayCode(h.holidayCode)
+                .setPriceMultiplier(h.priceMultiplier)
+                .setPreDays(h.preDays)
+                .setPostDays(h.postDays)
+                .setEnabled(h.enabled)
+                .build();
+        });
+
+        return Accommodation.builder()
+            .setId(parsed.id)
+            .setName(parsed.name)
+            .setDescription(parsed.description)
+            .setType(parsed.type)
+            .setRentalType(parsed.rentalType)
+            .setStatus(parsed.status)
+            .setOwnerId(parsed.ownerId)
+            .setDynamicPricingSettings(parsed.dynamicPricingSettings)
+            .setCreatedAt(new Date(parsed.createdAt))
+            .setUpdatedAt(new Date(parsed.updatedAt))
+            .setAddress(address)
+            .setFacilities(facilities)
+            .setHolidayOptIns(holidays)
+            .setRoomValidationInfo(parsed.roomCount, parsed.allRoomsValid)
+            .build();
+    }
 }

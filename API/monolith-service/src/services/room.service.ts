@@ -157,6 +157,7 @@ export class RoomService {
 
 		// 3. Clear Cache
 		await redisClient.del(`${this.CACHE_PREFIX}${accommodationId}`);
+		await redisClient.del(`owner:dashboard:${ownerId}`);
 
 		return newRoom;
 	}
@@ -195,6 +196,7 @@ export class RoomService {
 
 		// 4. Clear Cache
 		await redisClient.del(`${this.CACHE_PREFIX}${room.accommodationId}`);
+		await redisClient.del(`owner:dashboard:${ownerId}`);
 
 		return deletedRoom;
 	}

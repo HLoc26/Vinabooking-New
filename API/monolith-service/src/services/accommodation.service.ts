@@ -49,10 +49,37 @@ class AccommodationService {
 		const allAccommodationsData = new Map<string, Accommodation>();
 		if (ids.length === 0) return allAccommodationsData;
 
-		// Skip caching for Domain Models temporarily as we'd need a robust serializer/deserializer
-		// Or we can just fetch from DB for now to ensure correctness of Domain Models
-		const dbData = await this.#accommodationRepository.findByIdBatch(ids);
-		dbData.forEach((acc) => allAccommodationsData.set(acc.getId(), acc));
+		// 1. Fetch from Redis
+		const keys = ids.map((id) => `${this.CACHE_PREFIX}${id}`);
+		const cachedValues = await redisClient.mGet(keys);
+		const missingIds: string[] = [];
+
+		cachedValues.forEach((val, index) => {
+			if (val) {
+				try {
+					const domainModel = AccommodationMapper.fromJson(val);
+					allAccommodationsData.set(ids[index], domainModel);
+				} catch (err) {
+					console.error(`Failed to parse cached accommodation ${ids[index]}`, err);
+					missingIds.push(ids[index]);
+				}
+			} else {
+				missingIds.push(ids[index]);
+			}
+		});
+
+		// 2. Fetch missing from DB
+		if (missingIds.length > 0) {
+			const dbData = await this.#accommodationRepository.findByIdBatch(missingIds);
+			
+			// 3. Save to Redis and Map
+			const multi = redisClient.multi();
+			dbData.forEach((acc) => {
+				allAccommodationsData.set(acc.getId(), acc);
+				multi.set(`${this.CACHE_PREFIX}${acc.getId()}`, AccommodationMapper.toJson(acc), { EX: 86400 }); // 24h
+			});
+			await multi.exec();
+		}
 
 		return allAccommodationsData;
 	}
@@ -184,11 +211,11 @@ class AccommodationService {
 		const rawAccommodations = await this.#accommodationRepository.getDashboardCardsByOwnerId(ownerId);
 		if (!rawAccommodations || rawAccommodations.length === 0) return [];
 
-		const ids = rawAccommodations.map((acc) => acc.id);
+		const ids = rawAccommodations.map((acc: any) => acc.id);
 		const imagesBatch = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, ids);
 		const imageMap: Record<string, string> = {};
 
-		ids.forEach((id) => {
+		ids.forEach((id: string) => {
 			const accImages = imagesBatch.filter((img) => img.references.some((ref) => ref.entityId === id));
 			if (accImages.length > 0) {
 				const bestImage = accImages.find((img) => img.references.some((ref) => ref.entityId === id && ref.isPrimary)) ?? accImages[0];
@@ -197,9 +224,9 @@ class AccommodationService {
 			}
 		});
 
-		return rawAccommodations.map((acc) => {
-			const validStars = acc.reviews.filter((r) => r.star !== null).map((r) => r.star as number);
-			const avgStar = validStars.length > 0 ? Number((validStars.reduce((a, b) => a + b, 0) / validStars.length).toFixed(1)) : null;
+		return rawAccommodations.map((acc: any) => {
+			const validStars = acc.reviews.filter((r: any) => r.star !== null).map((r: any) => r.star as number);
+			const avgStar = validStars.length > 0 ? Number((validStars.reduce((a: number, b: number) => a + b, 0) / validStars.length).toFixed(1)) : null;
 
 			return {
 				id: acc.id,
@@ -275,6 +302,7 @@ class AccommodationService {
 			.build();
 
 		await this.#accommodationRepository.save(acc);
+		await redisClient.del(`owner:dashboard:${userId}`);
 
 		return await this.getAccommodationById(acc.getId());
 	}
@@ -313,6 +341,16 @@ class AccommodationService {
 
 		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+		
+		// Flush holiday maps
+		try {
+			const keys = await redisClient.keys(`holiday_map:${id}:*`);
+			if (keys.length > 0) {
+				await redisClient.del(keys);
+			}
+		} catch (err) {
+			console.error(`Failed to flush holiday_map for ${id}`, err);
+		}
 
 		return await this.getAccommodationById(id);
 	}
