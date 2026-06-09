@@ -15,9 +15,8 @@ import type {
 } from "@/types/responses";
 
 import { OAuthService, AuthService, UserService } from "@/services";
-import { EProvider } from "@/generated/client";
 import JwtService from "@/utils/jwt";
-import { AuthRepository } from "@/repositories";
+import { AuthProvider } from "@/models/auth";
 import { ETokenType } from "@/types/auth/auth-token";
 import IdentityProviderError from "@/errors/IdentityProviderError";
 import BadRequestError from "@/errors/BadRequestError";
@@ -29,13 +28,11 @@ class AuthController {
 	readonly #authService: AuthService;
 	readonly #userService: UserService;
 	readonly #oauthService: OAuthService;
-	readonly #authRepository: AuthRepository;
 	readonly #frontendUrl: string;
-	constructor(authService: AuthService, userService: UserService, oauthService: OAuthService, authRepository: AuthRepository) {
+	constructor(authService: AuthService, userService: UserService, oauthService: OAuthService) {
 		this.#authService = authService;
 		this.#userService = userService;
 		this.#oauthService = oauthService;
-		this.#authRepository = authRepository;
 
 		let clientUrl = process.env["CLIENT_URL"];
 		if (!clientUrl) {
@@ -90,7 +87,7 @@ class AuthController {
 		if (!savedUser) throw new DatabaseError("Failed to save user to DB");
 
 		// Step 3: Create Provider Record
-		await this.#authRepository.createUserProvider(id, email, EProvider.Credentials);
+		await this.#authService.createUserProvider(email, id, AuthProvider.CREDENTIALS);
 
 		return ResponseHelper.success<ConfirmUserResponse>(res, { success: true });
 	}
@@ -99,8 +96,8 @@ class AuthController {
 		const { email, password } = req.body;
 
 		// Check Provider (Logic check provider nên đẩy xuống Service nếu có thể)
-		const userProviders = await this.#authRepository.getUserProviders(email);
-		if (userProviders?.map((p) => p.provider).includes(EProvider.Google)) {
+		const userProviders = await this.#authService.getUserProviders(email);
+		if (userProviders?.map((p) => p.getProvider()).includes(AuthProvider.GOOGLE)) {
 			throw new BadRequestError("Please login with Google");
 		}
 

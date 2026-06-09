@@ -85,6 +85,7 @@ const authService = new AuthService({
 	cognitoClient: cognitoClient,
 	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 	emailService: emailService,
+	authRepository: authRepository,
 });
 const favouriteService = new FavouriteService(favouriteRepository);
 const userService = new UserService(userRepository, favouriteService);
@@ -95,9 +96,7 @@ const oauthService = new OAuthService(
 		redirectUri: process.env["GOOGLE_REDIRECT_URI"]!,
 	},
 	userService,
-	authService,
-	authRepository,
-	userRepository
+	authService
 );
 const imageService = new ImageService(imageRepository, s3Service);
 const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService);
@@ -135,7 +134,7 @@ const workerManager = new WorkerManager([reviewWorkerInstance, publishWorkerInst
 workerManager.start();
 
 // Controllers
-const authController = new AuthController(authService, userService, oauthService, authRepository);
+const authController = new AuthController(authService, userService, oauthService);
 const userController = new UserController(userService, favouriteService);
 const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, imageService);

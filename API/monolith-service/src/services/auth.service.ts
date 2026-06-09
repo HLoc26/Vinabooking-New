@@ -19,17 +19,21 @@ import CognitoClient from "@/clients/cognito.client";
 import { AuthTokens } from "@/types/auth/auth-token";
 import IdentityProviderError from "@/errors/IdentityProviderError";
 import EmailService from "./email.service";
+import { AuthRepository } from "@/repositories";
+import { UserAuthProvider, AuthProvider } from "@/models/auth";
 
 export interface AuthServiceConfig {
 	cognitoClient: CognitoIdentityProviderClient;
 	googleClientSecret: string;
 	emailService: EmailService;
+	authRepository: AuthRepository;
 }
 
 class AuthService {
 	private readonly cognitoClient: CognitoIdentityProviderClient;
 	private readonly googleClientSecret: string;
 	private readonly emailService: EmailService;
+	private readonly authRepository: AuthRepository;
 
 	private readonly backendAuthSecret = process.env["BACKEND_SECRET_KEY"]!;
 
@@ -37,6 +41,7 @@ class AuthService {
 		this.cognitoClient = config.cognitoClient;
 		this.googleClientSecret = config.googleClientSecret;
 		this.emailService = config.emailService;
+		this.authRepository = config.authRepository;
 	}
 
 	public async signUp(email: string, password: string) {
@@ -137,6 +142,20 @@ class AuthService {
 
 	public async signOut(accessToken: string) {
 		return await this.cognitoClient.send(new GlobalSignOutCommand({ AccessToken: accessToken }));
+	}
+
+	// --- DOMAIN METHODS ---
+	public async createUserProvider(email: string, userId: string, provider: AuthProvider) {
+		const domainModel = UserAuthProvider.builder()
+			.setEmail(email)
+			.setUserId(userId)
+			.setProvider(provider)
+			.build();
+		return await this.authRepository.saveUserProvider(domainModel);
+	}
+
+	public async getUserProviders(email: string): Promise<UserAuthProvider[]> {
+		return await this.authRepository.getUserProviders(email);
 	}
 
 	// --- PASSWORD RESET ---
