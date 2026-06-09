@@ -6,10 +6,10 @@ import { EEntityType } from "@/generated/client";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
 import PricingService from "./pricing.service";
-import type AccommodationService from "./accommodation.service"; // type import to avoid circular dependencies
+import AccommodationRepository from "@/repositories/accommodation.repository";
 
 import { RoomFullDetail, CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
-import type { QuoteItemPricing } from "@/types/pricing.types";
+import type { QuoteItemPricing, PricableItem, DynamicPricingSettings } from "@/types/pricing.types";
 import redisClient from "@/clients/redis.client";
 import { Room } from "@/models/room/room.model";
 import { Bed } from "@/models/room/bed.model";
@@ -20,34 +20,103 @@ export class RoomService {
 	readonly #roomRepository: RoomRepository;
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
-	#pricingService?: PricingService;
-	#accommodationService?: AccommodationService;
+	readonly #pricingService: PricingService;
+	readonly #accommodationRepository: AccommodationRepository;
 	readonly CACHE_PREFIX = "acc:detail:";
 
-	constructor(roomRepository: RoomRepository, bookingService: BookingService, imageService: ImageService) {
+	constructor(
+		roomRepository: RoomRepository, 
+		bookingService: BookingService, 
+		imageService: ImageService,
+		pricingService: PricingService,
+		accommodationRepository: AccommodationRepository
+	) {
 		this.#roomRepository = roomRepository;
 		this.#bookingService = bookingService;
 		this.#imageService = imageService;
-	}
-
-	public setPricingService(pricingService: PricingService) {
 		this.#pricingService = pricingService;
-	}
-
-	public setAccommodationService(accommodationService: AccommodationService) {
-		this.#accommodationService = accommodationService;
+		this.#accommodationRepository = accommodationRepository;
 	}
 
 	// --- Helpers ---
 
 	private async _checkAccommodationOwnership(accommodationId: string, ownerId: string): Promise<void> {
-		if (!this.#accommodationService) {
-			throw new Error("AccommodationService not set in RoomService");
-		}
-		const acc = await this.#accommodationService.getAccommodationById(accommodationId);
-		if (acc.ownerId !== ownerId) {
+		const isOwner = await this.#accommodationRepository.checkOwnership(accommodationId, ownerId);
+		if (!isOwner) {
 			throw new BadRequestError("Accommodation not found or unauthorized");
 		}
+	}
+
+	private async _getAccommodationPricingSettings(accommodationIds: string[]): Promise<Map<string, DynamicPricingSettings | null>> {
+		const map = new Map<string, DynamicPricingSettings | null>();
+		const uniqueIds = [...new Set(accommodationIds)];
+		await Promise.all(
+			uniqueIds.map(async (accId) => {
+				const acc = await this.#accommodationRepository.findById(accId);
+				map.set(accId, acc?.getDynamicPricingSettings() ?? null);
+			})
+		);
+		return map;
+	}
+
+	/**
+	 * Returns PricableItem data for rooms, used by PricingService.
+	 * Includes accommodation dynamicPricingSettings for each room.
+	 */
+	public async getPricableRoomData(roomIds: string[]): Promise<Map<string, PricableItem>> {
+		const rooms = await this.#roomRepository.findManyByIds(roomIds);
+		const accIds = rooms.map(r => r.getAccommodationId());
+		const settingsMap = await this._getAccommodationPricingSettings(accIds);
+
+		const result = new Map<string, PricableItem>();
+		for (const room of rooms) {
+			result.set(room.getId(), {
+				basePrice: room.getBasePrice(),
+				floorPrice: room.getFloorPrice(),
+				name: room.getName(),
+				accommodationId: room.getAccommodationId(),
+				dynamicPricingSettings: settingsMap.get(room.getAccommodationId()) ?? null,
+				pricingTypePerNight: room.getPricingType() === "PER_NIGHT",
+			});
+		}
+		return result;
+	}
+
+	/**
+	 * Returns PricableItem data for beds, used by PricingService.
+	 * Includes parent room's pricingType and accommodation pricing settings.
+	 */
+	public async getPricableBedData(bedIds: string[]): Promise<Map<string, PricableItem>> {
+		const result = new Map<string, PricableItem>();
+		if (bedIds.length === 0) return result;
+
+		// Use the repository to find beds and their rooms
+		const beds = await this.#roomRepository.findBedsByIds(bedIds);
+		if (beds.length === 0) return result;
+
+		// Get unique room IDs from beds
+		const roomIds = [...new Set(beds.map(b => b.roomId))];
+		const rooms = await this.#roomRepository.findManyByIds(roomIds);
+		const roomMap = new Map(rooms.map(r => [r.getId(), r]));
+
+		// Get accommodation settings
+		const accIds = rooms.map(r => r.getAccommodationId());
+		const settingsMap = await this._getAccommodationPricingSettings(accIds);
+
+		for (const bed of beds) {
+			const room = roomMap.get(bed.roomId);
+			if (!room || !bed.price) continue;
+
+			result.set(bed.id, {
+				basePrice: Number(bed.price),
+				floorPrice: null,
+				name: bed.name,
+				accommodationId: room.getAccommodationId(),
+				dynamicPricingSettings: settingsMap.get(room.getAccommodationId()) ?? null,
+				pricingTypePerNight: room.getPricingType() === "PER_NIGHT",
+			});
+		}
+		return result;
 	}
 
 	private async _invalidateAccommodationCacheByRoomId(roomId: string) {

@@ -31,26 +31,26 @@ export default class BookingService {
 	readonly #roomRepository: RoomRepository;
 	readonly #userService: UserService;
 	readonly #emailService: EmailService;
-	#accommodationService?: AccommodationService;
-	#pricingService?: PricingService;
+	readonly #accommodationService: AccommodationService;
+	readonly #pricingService: PricingService;
 
-	constructor(bookingRepository: BookingRepository, roomRepository: RoomRepository, userService: UserService, emailService: EmailService) {
+	constructor(
+		bookingRepository: BookingRepository, 
+		roomRepository: RoomRepository, 
+		userService: UserService, 
+		emailService: EmailService,
+		accommodationService: AccommodationService,
+		pricingService: PricingService
+	) {
 		this.#bookingRepository = bookingRepository;
 		this.#roomRepository = roomRepository;
 		this.#userService = userService;
 		this.#emailService = emailService;
-	}
-
-	public setAccommodationService(accommodationService: AccommodationService) {
 		this.#accommodationService = accommodationService;
-	}
-
-	public setPricingService(pricingService: PricingService) {
 		this.#pricingService = pricingService;
 	}
 
 	private async _quoteForBooking(data: BookingPayload): Promise<QuoteResponse> {
-		if (!this.#pricingService) throw new Error("PricingService not wired in BookingService");
 		const req: QuoteRequest = {
 			checkIn: new Date(data.startDate),
 			checkOut: new Date(data.endDate),
@@ -212,7 +212,6 @@ export default class BookingService {
 	}
 
 	public async confirmBooking(id: string) {
-		if (!this.#accommodationService) throw new Error("AccommodationService not initialized in BookingService");
 
 		// Remove timeout job from queue if it exists
 		await bookingTimeoutQueue.remove(id);
@@ -294,7 +293,6 @@ export default class BookingService {
 	}
 
 	public async cancelBooking(id: string, options: CancelBookingOptions = {}) {
-		if (!this.#accommodationService) throw new Error("AccommodationService not initialized in BookingService");
 
 		const existingBooking = await this.getBookingById(id);
 		if (options.requestedByUserId && existingBooking.userId !== options.requestedByUserId) {

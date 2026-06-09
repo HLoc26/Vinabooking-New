@@ -29,6 +29,26 @@ class HolidayRepository {
 		return uniqueHolidays.map(h => HolidayMapper.toDomain(h));
 	}
 
+	/**
+	 * Find holiday anchors by codes within a padded date range.
+	 * Used by PricingService to build holiday multiplier maps.
+	 */
+	public async findAnchorsByCodes(codes: string[], startDate: Date, endDate: Date): Promise<Holiday[]> {
+		if (codes.length === 0) return [];
+
+		const prismaAnchors = await this.#prismaClient.holiday.findMany({
+			where: {
+				OR: [
+					{ isRecurring: false, date: { gte: startDate, lte: endDate } },
+					{ isRecurring: true }, // recurring (year 2000) we always fetch and match by MM-DD
+				],
+				code: { in: codes },
+			},
+		});
+
+		return prismaAnchors.map(a => HolidayMapper.toDomain(a));
+	}
+
 	// ----- Owner opt-ins -----
 
 	public async findByOwner(ownerProfileId: string) {

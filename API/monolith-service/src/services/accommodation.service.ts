@@ -2,7 +2,7 @@ import { EntityType } from "@/models/image";
 import { ImageDto } from "@/dto/response/image.dto";
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError, BadRequestError } from "../errors";
-import { RoomService, ImageService, S3Service, OwnerService, HolidayService } from "@/services"; 
+import { RoomService, ImageService, S3Service, OwnerService, HolidayService } from "@/services";
 import { EEntityType, Prisma, EAccommodationType, EAccommodationStatus, ERentalType } from "@/generated/client";
 import { SearchQuery, ESortOption, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateAddressDTO, UpdateAccommodationPricingDTO, CreateAccommodationDTO } from "@/dto/request/accommodation.dto";
 import { AccommodationFullInfo, AccommodationStats, OwnerAccommodationCard } from "@/dto/response/accommodation.dto";
@@ -20,29 +20,24 @@ import { Address } from "@/models/accommodation/address.model";
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
-	readonly #roomService: RoomService;
 	readonly #imageService: ImageService;
 	readonly #s3Service: S3Service;
-	#ownerService?: OwnerService;
-	readonly #holidayService: HolidayService;
+	readonly #ownerService: OwnerService;
+	readonly #roomService: RoomService;
 	readonly CACHE_PREFIX = "acc:detail:";
 
 	constructor(
 		accommodationRepository: AccommodationRepository,
-		roomService: RoomService,
 		imageService: ImageService,
 		s3Service: S3Service,
-		holidayService: HolidayService
+		ownerService: OwnerService,
+		roomService: RoomService,
 	) {
 		this.#accommodationRepository = accommodationRepository;
-		this.#roomService = roomService;
 		this.#imageService = imageService;
 		this.#s3Service = s3Service;
-		this.#holidayService = holidayService;
-	}
-
-	public setOwnerService(ownerService: OwnerService) {
 		this.#ownerService = ownerService;
+		this.#roomService = roomService;
 	}
 
 	private async _getBaseAccommodations(ids: string[]): Promise<Map<string, Accommodation>> {
@@ -71,7 +66,7 @@ class AccommodationService {
 		// 2. Fetch missing from DB
 		if (missingIds.length > 0) {
 			const dbData = await this.#accommodationRepository.findByIdBatch(missingIds);
-			
+
 			// 3. Save to Redis and Map
 			const multi = redisClient.multi();
 			dbData.forEach((acc) => {
@@ -106,7 +101,7 @@ class AccommodationService {
 		const finalData = ids.map((id) => {
 			const acc = baseDataMap.get(id);
 			if (!acc) return null;
-			
+
 			const stats = statsRows!.find((s: AccommodationStats) => s.id === id);
 			const accImages = imageMap[id] || [];
 			const thumbnail = accImages.length > 0 ? this.#s3Service.getS3Url(accImages[0].s3Key) : null;
@@ -261,33 +256,33 @@ class AccommodationService {
 		if (holidayMode === "explicit") validateHolidayOptIns(data.holidayOptIns as HolidayOptIn[]);
 
 		const id = require('crypto').randomUUID();
-        
-        let holidays: AccommodationHoliday[] = [];
-        if (holidayMode === "inherit") {
-            holidays = ownerProfile.getOwnerHolidays().map(h => 
-                AccommodationHoliday.builder()
-                    .setId(require('crypto').randomUUID())
-                    .setAccommodationId(id)
-                    .setHolidayCode(h.getHolidayCode())
-                    .setPriceMultiplier(h.getPriceMultiplier())
-                    .setPreDays(h.getPreDays())
-                    .setPostDays(h.getPostDays())
-                    .setEnabled(h.getEnabled())
-                    .build()
-            );
-        } else if (holidayMode === "explicit" && data.holidayOptIns) {
-            holidays = data.holidayOptIns.map(h => 
-                AccommodationHoliday.builder()
-                    .setId(require('crypto').randomUUID())
-                    .setAccommodationId(id)
-                    .setHolidayCode(h.holidayCode)
-                    .setPriceMultiplier(h.priceMultiplier)
-                    .setPreDays(h.preDays || 0)
-                    .setPostDays(h.postDays || 0)
-                    .setEnabled(h.enabled !== false)
-                    .build()
-            );
-        }
+
+		let holidays: AccommodationHoliday[] = [];
+		if (holidayMode === "inherit") {
+			holidays = ownerProfile.getOwnerHolidays().map(h =>
+				AccommodationHoliday.builder()
+					.setId(require('crypto').randomUUID())
+					.setAccommodationId(id)
+					.setHolidayCode(h.getHolidayCode())
+					.setPriceMultiplier(h.getPriceMultiplier())
+					.setPreDays(h.getPreDays())
+					.setPostDays(h.getPostDays())
+					.setEnabled(h.getEnabled())
+					.build()
+			);
+		} else if (holidayMode === "explicit" && data.holidayOptIns) {
+			holidays = data.holidayOptIns.map(h =>
+				AccommodationHoliday.builder()
+					.setId(require('crypto').randomUUID())
+					.setAccommodationId(id)
+					.setHolidayCode(h.holidayCode)
+					.setPriceMultiplier(h.priceMultiplier)
+					.setPreDays(h.preDays || 0)
+					.setPostDays(h.postDays || 0)
+					.setEnabled(h.enabled !== false)
+					.build()
+			);
+		}
 
 		const acc = Accommodation.builder()
 			.setId(id)
@@ -298,7 +293,7 @@ class AccommodationService {
 			.setStatus(EAccommodationStatus.DRAFT)
 			.setOwnerId(userId)
 			.setDynamicPricingSettings(resolvedSettings)
-            .setHolidayOptIns(holidays)
+			.setHolidayOptIns(holidays)
 			.build();
 
 		await this.#accommodationRepository.save(acc);
@@ -324,24 +319,24 @@ class AccommodationService {
 				acc.setHolidayOptIns([]);
 			} else {
 				validateHolidayOptIns(data.holidayOptIns);
-                const holidays = data.holidayOptIns.map(h => 
-                    AccommodationHoliday.builder()
-                        .setId(require('crypto').randomUUID())
-                        .setAccommodationId(id)
-                        .setHolidayCode(h.holidayCode)
-                        .setPriceMultiplier(h.priceMultiplier)
-                        .setPreDays(h.preDays || 0)
-                        .setPostDays(h.postDays || 0)
-                        .setEnabled(h.enabled !== false)
-                        .build()
-                );
+				const holidays = data.holidayOptIns.map(h =>
+					AccommodationHoliday.builder()
+						.setId(require('crypto').randomUUID())
+						.setAccommodationId(id)
+						.setHolidayCode(h.holidayCode)
+						.setPriceMultiplier(h.priceMultiplier)
+						.setPreDays(h.preDays || 0)
+						.setPostDays(h.postDays || 0)
+						.setEnabled(h.enabled !== false)
+						.build()
+				);
 				acc.setHolidayOptIns(holidays);
 			}
 		}
 
 		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
-		
+
 		// Flush holiday maps
 		try {
 			const keys = await redisClient.keys(`holiday_map:${id}:*`);
@@ -362,20 +357,20 @@ class AccommodationService {
 		const acc = await this.#accommodationRepository.findById(id);
 		if (!acc) throw new NotFoundError("Accommodation not found");
 
-        // Assuming Facility models can just be created with random placeholders or we need to query them.
-        // For now, we will create dummy Facility domain models because the repo just extracts IDs.
-        const facilities = data.facilities.map(f => {
-            const mockFacility = new Facility(f.facilityId, "", null as any, null, new Date(), new Date());
-            return FacilityConfig.builder()
-                .setId(require('crypto').randomUUID())
-                .setFee(f.fee || 0)
-                .setNote(f.note || null)
-                .setIsAvailable(f.isAvailable !== false)
-                .setFacility(mockFacility)
-                .build();
-        });
+		// Assuming Facility models can just be created with random placeholders or we need to query them.
+		// For now, we will create dummy Facility domain models because the repo just extracts IDs.
+		const facilities = data.facilities.map(f => {
+			const mockFacility = new Facility(f.facilityId, "", null as any, null, new Date(), new Date());
+			return FacilityConfig.builder()
+				.setId(require('crypto').randomUUID())
+				.setFee(f.fee || 0)
+				.setNote(f.note || null)
+				.setIsAvailable(f.isAvailable !== false)
+				.setFacility(mockFacility)
+				.build();
+		});
 
-        acc.setFacilities(facilities);
+		acc.setFacilities(facilities);
 		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
@@ -390,8 +385,8 @@ class AccommodationService {
 		if (!acc) throw new NotFoundError("Accommodation not found");
 
 		acc.updateBasicInfo(data.name || acc.getName(), data.description || acc.getDescription(), data.type || acc.getType());
-		
-        await this.#accommodationRepository.save(acc);
+
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
 		return await this.getAccommodationById(id);
@@ -418,14 +413,14 @@ class AccommodationService {
 			throw new NotFoundError("Accommodation not found or unauthorized");
 		}
 
-        // Domain Model encapsulates validation
-        // _count info and room validity was injected by Repository via Mapper
-        // The domain method will throw errors if constraints are not met.
-        // We injected roomCount and allRoomsValid into the builder inside Mapper.
-        const roomCount = (acc as any).roomCount;
-        const allRoomsValid = (acc as any).allRoomsValid;
-		
-        acc.publish(roomCount, allRoomsValid);
+		// Domain Model encapsulates validation
+		// _count info and room validity was injected by Repository via Mapper
+		// The domain method will throw errors if constraints are not met.
+		// We injected roomCount and allRoomsValid into the builder inside Mapper.
+		const roomCount = (acc as any).roomCount;
+		const allRoomsValid = (acc as any).allRoomsValid;
+
+		acc.publish(roomCount, allRoomsValid);
 
 		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
@@ -450,20 +445,20 @@ class AccommodationService {
 		const acc = await this.#accommodationRepository.findById(id);
 		if (!acc) throw new NotFoundError("Accommodation not found");
 
-        const addr = Address.builder()
-            .setId(acc.getAddress()?.getId() || require('crypto').randomUUID())
-            .setStreet(addressData.street)
-            .setCity(addressData.city)
-            .setCountry(addressData.country)
-            .setCountryCode(addressData.countryCode)
-            .setPostalCode(addressData.postalCode || null)
-            .setLatitude(addressData.latitude || null)
-            .setLongitude(addressData.longitude || null)
-            .setFullAddress(addressData.fullAddress)
-            .setPlaceId(addressData.placeId || null)
-            .build();
+		const addr = Address.builder()
+			.setId(acc.getAddress()?.getId() || require('crypto').randomUUID())
+			.setStreet(addressData.street)
+			.setCity(addressData.city)
+			.setCountry(addressData.country)
+			.setCountryCode(addressData.countryCode)
+			.setPostalCode(addressData.postalCode || null)
+			.setLatitude(addressData.latitude || null)
+			.setLongitude(addressData.longitude || null)
+			.setFullAddress(addressData.fullAddress)
+			.setPlaceId(addressData.placeId || null)
+			.build();
 
-        acc.setAddress(addr);
+		acc.setAddress(addr);
 		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 

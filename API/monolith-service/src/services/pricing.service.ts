@@ -1,11 +1,11 @@
-import crypto from "crypto";
-import { Prisma, PrismaClient } from "@/generated/client";
+import { Prisma } from "@/generated/client";
 import { BadRequestError, NotFoundError } from "@/errors";
-import HolidayRepository from "@/repositories/holiday.repository";
-import { HolidayMapper } from "@/mappers/holiday.mapper";
+import HolidayService from "./holiday.service";
+import type RoomService from "./room.service";
 import {
 	DynamicPricingSettings,
 	NightBreakdownEntry,
+	PricableItem,
 	QuoteItemOutput,
 	QuoteItemPricing,
 	QuoteRequest,
@@ -37,12 +37,12 @@ const ONE = new Prisma.Decimal(1);
 const MAX_DISCOUNT_RATE = new Prisma.Decimal("0.5");
 
 class PricingService {
-	readonly #prismaClient: PrismaClient;
-	readonly #holidayRepository: HolidayRepository;
+	readonly #holidayService: HolidayService;
+	readonly #roomService: RoomService;
 
-	constructor(prismaClient: PrismaClient, holidayRepository: HolidayRepository) {
-		this.#prismaClient = prismaClient;
-		this.#holidayRepository = holidayRepository;
+	constructor(holidayService: HolidayService, roomService: RoomService) {
+		this.#holidayService = holidayService;
+		this.#roomService = roomService;
 	}
 
 	/**
@@ -70,8 +70,8 @@ class PricingService {
 
 		if (missingYmds.length === 0) return map;
 
-		// 1. Fetch owner/accommodation opt-ins.
-		const optIns = (await this.#holidayRepository.findByAccommodation(accommodationId)) as HolidayOptInRow[];
+		// 1. Fetch owner/accommodation opt-ins via HolidayService.
+		const optIns = (await this.#holidayService.getAccommodationHolidayOptIns(accommodationId)) as HolidayOptInRow[];
 		const enabledConfigs = optIns.filter((o) => o.enabled);
 		
 		// If no opt-ins, set all missing to 1 and return
@@ -84,22 +84,17 @@ class PricingService {
 
 		const configByCode = new Map(enabledConfigs.map((c) => [c.holidayCode, c]));
 
-		// 2. Fetch all holiday anchors that could potentially cover our missing stay.
+		// 2. Fetch all holiday anchors via HolidayService.
 		const startMs = ymdToHcmMidnightUtc(missingYmds[0]).getTime();
 		const endMs = ymdToHcmMidnightUtc(missingYmds[missingYmds.length - 1]).getTime();
 		const pad = 31 * DAY_MS;
 
-		const prismaAnchors = await this.#prismaClient.holiday.findMany({
-			where: {
-				OR: [
-					{ isRecurring: false, date: { gte: new Date(startMs - pad), lte: new Date(endMs + pad) } },
-					{ isRecurring: true }, // recurring (year 2000) we always fetch and match by MM-DD
-				],
-				code: { in: Array.from(configByCode.keys()) },
-			},
-		});
+		const anchors = await this.#holidayService.findHolidayAnchorsByCodes(
+			Array.from(configByCode.keys()),
+			new Date(startMs - pad),
+			new Date(endMs + pad)
+		);
 
-		const anchors = prismaAnchors.map(a => HolidayMapper.toDomain(a));
 		const multi = redisClient.multi();
 
 		// 3. For each missing night, check if it falls within ANY expanded holiday window.
@@ -133,7 +128,7 @@ class PricingService {
 		return map;
 	}
 
-	private resolveSettings(raw: Prisma.JsonValue | null | undefined): DynamicPricingSettings {
+	private resolveSettings(raw: DynamicPricingSettings | null | undefined): DynamicPricingSettings {
 		if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
 		return raw as DynamicPricingSettings;
 	}
@@ -155,6 +150,7 @@ class PricingService {
 	}
 
 	public async quote(req: QuoteRequest): Promise<QuoteResponse> {
+		if (!this.#roomService) throw new Error("RoomService not wired in PricingService");
 		if (!req.items || req.items.length === 0) {
 			throw new BadRequestError("quote.items must not be empty");
 		}
@@ -175,30 +171,22 @@ class PricingService {
 
 		const leadDays = Math.max(0, diffDaysHcm(checkIn, bookedAt));
 
-		// Bulk-load rooms and beds for the items.
+		// Bulk-load pricing data via RoomService.
 		const roomItems = req.items.filter((i) => i.itemType === "ROOM");
 		const bedItems = req.items.filter((i) => i.itemType === "BED");
 
-		const rooms = roomItems.length
-			? await this.#prismaClient.room.findMany({
-					where: { id: { in: roomItems.map((i) => i.itemId) } },
-					include: { accommodation: true },
-				})
-			: [];
-		const beds = bedItems.length
-			? await this.#prismaClient.bed.findMany({
-					where: { id: { in: bedItems.map((i) => i.itemId) } },
-					include: { room: { include: { accommodation: true } } },
-				})
-			: [];
+		const roomMap = roomItems.length
+			? await this.#roomService.getPricableRoomData(roomItems.map((i) => i.itemId))
+			: new Map<string, PricableItem>();
 
-		const roomMap = new Map(rooms.map((r) => [r.id, r]));
-		const bedMap = new Map(beds.map((b) => [b.id, b]));
+		const bedMap = bedItems.length
+			? await this.#roomService.getPricableBedData(bedItems.map((i) => i.itemId))
+			: new Map<string, PricableItem>();
 
 		// Collect distinct accommodations involved and prefetch their holiday-multiplier maps.
 		const accIds = new Set<string>();
-		for (const r of rooms) accIds.add(r.accommodationId);
-		for (const b of beds) accIds.add(b.room.accommodationId);
+		for (const [, item] of roomMap) accIds.add(item.accommodationId);
+		for (const [, item] of bedMap) accIds.add(item.accommodationId);
 
 		const holidayMapByAcc = new Map<string, Map<string, Prisma.Decimal>>();
 		await Promise.all(
@@ -215,31 +203,22 @@ class PricingService {
 		let anyHoliday = false;
 
 		for (const item of req.items) {
-			let basePrice: Prisma.Decimal;
-			let floorPrice: Prisma.Decimal | null;
-			let name: string;
-			let accommodation: { id: string; dynamicPricingSettings: Prisma.JsonValue | null };
-			let pricingTypePerNight = true;
+			let pricableItem: PricableItem | undefined;
 
 			if (item.itemType === "ROOM") {
-				const room = roomMap.get(item.itemId);
-				if (!room) throw new NotFoundError(`Room ${item.itemId} not found`);
-				basePrice = new Prisma.Decimal(room.basePrice);
-				floorPrice = new Prisma.Decimal(room.floorPrice);
-				name = room.name;
-				accommodation = room.accommodation;
-				pricingTypePerNight = room.pricingType === "PER_NIGHT";
+				pricableItem = roomMap.get(item.itemId);
+				if (!pricableItem) throw new NotFoundError(`Room ${item.itemId} not found`);
 			} else {
-				const bed = bedMap.get(item.itemId);
-				if (!bed || !bed.price) throw new NotFoundError(`Bed ${item.itemId} not found or has no price`);
-				basePrice = new Prisma.Decimal(bed.price);
-				floorPrice = null;
-				name = bed.name;
-				accommodation = bed.room.accommodation;
-				pricingTypePerNight = bed.room.pricingType === "PER_NIGHT";
+				pricableItem = bedMap.get(item.itemId);
+				if (!pricableItem) throw new NotFoundError(`Bed ${item.itemId} not found or has no price`);
 			}
 
-			const settings = this.resolveSettings(accommodation.dynamicPricingSettings);
+			const basePrice = new Prisma.Decimal(pricableItem.basePrice);
+			const floorPrice = pricableItem.floorPrice !== null ? new Prisma.Decimal(pricableItem.floorPrice) : null;
+			const name = pricableItem.name;
+			const pricingTypePerNight = pricableItem.pricingTypePerNight;
+
+			const settings = this.resolveSettings(pricableItem.dynamicPricingSettings);
 			const longStay = settings.longStayConfig;
 			const earlyBird = settings.earlyBirdConfig;
 
@@ -260,7 +239,7 @@ class PricingService {
 			if (baseDiscount.greaterThan(MAX_DISCOUNT_RATE)) baseDiscount = MAX_DISCOUNT_RATE;
 
 			const holidayMap = pricingTypePerNight
-				? holidayMapByAcc.get(accommodation.id) ?? new Map<string, Prisma.Decimal>()
+				? holidayMapByAcc.get(pricableItem.accommodationId) ?? new Map<string, Prisma.Decimal>()
 				: new Map<string, Prisma.Decimal>();
 
 			// Non PER_NIGHT items fall back to static math (spec §1.2).

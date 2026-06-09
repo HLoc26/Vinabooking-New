@@ -10,6 +10,7 @@ import { AuthService, OAuthService, UserService, EmailService, BookingService, I
 import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository, HolidayRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
+import { createLazyProxy } from "./utils/di.utils";
 
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -99,31 +100,43 @@ const oauthService = new OAuthService(
 	authService
 );
 const imageService = new ImageService(imageRepository, s3Service);
-const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService);
-const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
 const holidayService = new HolidayService(holidayRepository);
-const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service, holidayService);
+
+// Pre-declare accommodationService and roomService for circular dependencies
+let accommodationService: AccommodationService;
+let roomService: RoomService;
+const accommodationServiceProxy = createLazyProxy<AccommodationService>(() => accommodationService);
+const roomServiceProxy = createLazyProxy<RoomService>(() => roomService);
+
+const pricingService = new PricingService(holidayService, roomServiceProxy);
+const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService, accommodationServiceProxy, pricingService);
+roomService = new RoomService(roomRepository, bookingService, imageService, pricingService, accommodationRepository);
+
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
 	bookingService: bookingService,
 	imageService: imageService,
-	accommodationService: accommodationService,
+	accommodationService: accommodationServiceProxy,
 });
 const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 const facilityService = new FacilityService(facilityRepository);
 const amenityService = new AmenityService(amenityRepository);
-const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService, userService);
-accommodationService.setOwnerService(ownerService);
+const ownerService = new OwnerService(ownerRepository, imageService, accommodationServiceProxy, bookingService, userService);
+
+accommodationService = new AccommodationService(
+	accommodationRepository, 
+	imageService, 
+	s3Service, 
+	ownerService, 
+	roomService
+);
 
 const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
 const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
-const pricingService = new PricingService(prismaClient, holidayRepository);
 const ownerPricingService = new OwnerPricingService(ownerRepository, holidayService, accommodationRepository, roomRepository);
-roomService.setPricingService(pricingService);
-bookingService.setPricingService(pricingService);
 
 // Workers
 const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
