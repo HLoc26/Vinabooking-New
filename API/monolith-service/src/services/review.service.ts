@@ -4,6 +4,7 @@ import UserService from "./user.service";
 import { AccommodationService, BookingService, ImageService } from "@/services";
 import { NotFoundError, ForbiddenError, BadRequestError } from "@/errors";
 import { EEntityType, Prisma, Review } from "@/generated/client";
+import { BookingStatus } from "@/models/booking";
 import { CreateReviewPayload } from "@/types/requests";
 import { ReviewResponse } from "@/types/responses/review.response";
 import { reviewQueue } from "@/clients/queue.client";
@@ -48,12 +49,12 @@ class ReviewService {
 		const booking = await this.#bookingService.getBookingById(dto.bookingId);
 
 		// 2. Validate chủ sở hữu booking
-		if (booking.userId !== userId) {
+		if (booking.getUserId() !== userId) {
 			throw new ForbiddenError("You can only review your own bookings.");
 		}
 
 		// 3. Validate trạng thái (Chỉ cho review khi đã hoàn thành)
-		if (booking.status !== "COMPLETED") {
+		if (booking.getStatus() !== BookingStatus.COMPLETED) {
 			throw new ForbiddenError("You can only review after the booking is completed.");
 		}
 

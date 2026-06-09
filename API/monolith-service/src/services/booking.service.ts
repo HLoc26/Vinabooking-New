@@ -4,12 +4,14 @@ import UserService from "./user.service";
 import EmailService from "./email.service";
 import AccommodationService from "./accommodation.service";
 import PricingService from "./pricing.service";
-import { BookingPayload } from "@/types/requests";
-import { ECancellationSource, Prisma } from "@/generated/client";
+import { BookingPayload } from "@/dto/request/booking.dto";
 import { CancellationEmailData, ConfirmationEmailData } from "@/types/email.types";
 import { bookingTimeoutQueue } from "@/clients/queue.client";
 import { BOOKING_TIMEOUT_MS } from "@/constants/booking";
+import { v4 as uuidv4 } from "uuid";
+import { Booking, BookingDetail, BookingStatus, CancellationSource, BookingItemType, PricingSnapshot } from "@/models/booking";
 import type { OwnerBookingFilters } from "@/repositories/booking.repository";
+import type { QuoteRequest, QuoteResponse } from "@/types/pricing.types";
 
 type CancelBookingActor = "owner" | "traveller" | "system";
 
@@ -19,12 +21,11 @@ type CancelBookingOptions = {
 	requestedByUserId?: string;
 };
 
-const cancellationSourceMap: Record<CancelBookingActor, ECancellationSource> = {
-	owner: "OWNER",
-	traveller: "TRAVELLER",
-	system: "SYSTEM",
+const cancellationSourceMap: Record<CancelBookingActor, CancellationSource> = {
+	owner: CancellationSource.OWNER,
+	traveller: CancellationSource.TRAVELLER,
+	system: CancellationSource.SYSTEM,
 };
-import type { QuoteRequest, QuoteResponse } from "@/types/pricing.types";
 
 export default class BookingService {
 	readonly #bookingRepository: BookingRepository;
@@ -65,7 +66,7 @@ export default class BookingService {
 	}
 
 	public async getBookingById(id: string) {
-		const booking = await this.#bookingRepository.findById(id, true);
+		const booking = await this.#bookingRepository.findById(id);
 		if (!booking) throw new NotFoundError(`Booking with id ${id} not found`);
 		return booking;
 	}
@@ -77,8 +78,7 @@ export default class BookingService {
 	}
 
 	public async getBookingsByUserId(userId: string) {
-		const bookings = await this.#bookingRepository.findByUserId(userId, true);
-		//if (!bookings || bookings.length === 0) throw new NotFoundError(`No bookings found for user ${userId}`);
+		const bookings = await this.#bookingRepository.findByUserId(userId);
 		return bookings || [];
 	}
 
@@ -91,43 +91,44 @@ export default class BookingService {
 	public async getOwnerBookings(ownerId: string, filters: OwnerBookingFilters) {
 		const { bookings, itemMap } = await this.#bookingRepository.findOwnerBookings(ownerId, filters);
 
-		return bookings.map((booking) => {
-			const nights = Math.max(1, Math.ceil((booking.endDate.getTime() - booking.startDate.getTime()) / (1000 * 60 * 60 * 24)));
-			const items = booking.details.map((detail) => {
-				const meta = itemMap[detail.itemId];
+		return bookings.map(({ booking, user, paymentTransfers }) => {
+			const nights = Math.max(1, Math.ceil((booking.getEndDate().getTime() - booking.getStartDate().getTime()) / (1000 * 60 * 60 * 24)));
+			const details = booking.getDetails();
+			const items = details.map((detail) => {
+				const meta = itemMap[detail.getItemId()];
 				return {
-					id: detail.itemId,
-					type: detail.itemType,
-					name: meta?.name ?? detail.itemType,
-					count: detail.count,
-					note: detail.note,
+					id: detail.getItemId(),
+					type: detail.getItemType(),
+					name: meta?.name ?? detail.getItemType(),
+					count: detail.getCount(),
+					note: detail.getNote(),
 				};
 			});
-			const firstMeta = booking.details.map((detail) => itemMap[detail.itemId]).find(Boolean);
-			const latestPayment = booking.paymentTransfers[0] ?? null;
+			const firstMeta = details.map((detail) => itemMap[detail.getItemId()]).find(Boolean);
+			const latestPayment = paymentTransfers[0] ?? null;
 
 			return {
-				id: booking.id,
-				referenceNo: booking.referenceNo,
-				status: booking.status,
-				startDate: booking.startDate,
-				endDate: booking.endDate,
-				guestCount: booking.guestCount,
+				id: booking.getId(),
+				referenceNo: booking.getReferenceNo(),
+				status: booking.getStatus(),
+				startDate: booking.getStartDate(),
+				endDate: booking.getEndDate(),
+				guestCount: booking.getGuestCount(),
 				nights,
-				totalPrice: booking.totalPrice?.toString() ?? null,
-				phone: booking.phone,
-				leaderName: booking.leaderName,
-				leaderEmail: booking.leaderEmail,
-				note: booking.note,
-				noteBy: booking.noteBy,
-				createdAt: booking.createdAt,
-				updatedAt: booking.updatedAt,
+				totalPrice: booking.getTotalPrice()?.toString() ?? null,
+				phone: booking.getPhone(),
+				leaderName: booking.getLeaderName(),
+				leaderEmail: booking.getLeaderEmail(),
+				note: booking.getNote(),
+				noteBy: booking.getNoteBy(),
+				createdAt: booking.getCreatedAt(),
+				updatedAt: booking.getUpdatedAt(),
 				paymentStatus: latestPayment?.status ?? null,
 				guest: {
-					id: booking.user.id,
-					name: booking.user.name,
-					email: booking.user.email,
-					phone: booking.user.phone,
+					id: user.id,
+					name: user.name,
+					email: user.email,
+					phone: user.phone,
 				},
 				accommodation: firstMeta
 					? {
@@ -143,7 +144,7 @@ export default class BookingService {
 	public async revokeOwnerBooking(ownerId: string, bookingId: string, note?: string) {
 		const booking = await this.getBookingById(bookingId);
 
-		if (booking.status !== "PENDING" && booking.status !== "BOOKED") {
+		if (booking.getStatus() !== BookingStatus.PENDING && booking.getStatus() !== BookingStatus.BOOKED) {
 			throw new BadRequestError("Only pending or booked bookings can be revoked");
 		}
 
@@ -169,183 +170,210 @@ export default class BookingService {
 		if (data.quoteHash !== quote.quoteHash) {
 			throw new ConflictError("Price changed since the quote — please re-quote and try again", "PRICE_CHANGED");
 		}
-		const { quoteHash: _, bookedAt: __, ...rest } = data;
-		const snapshot = {
+
+		const snapshot: PricingSnapshot = {
 			...quote,
 			checkIn: new Date(data.startDate).toISOString(),
 			checkOut: new Date(data.endDate).toISOString(),
 			bookedAt: data.bookedAt,
 		};
-		const bookingData: Prisma.BookingCreateInput = {
-			...rest,
-			totalPrice: new Prisma.Decimal(quote.totals.payablePrice),
-			pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
-			user: { connect: { id: userId } },
-			status: "PENDING",
-			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
-		};
 
-		const newBooking = await this.#bookingRepository.create(bookingData);
-		await bookingTimeoutQueue.add("timeout", { bookingId: newBooking.id }, { delay: BOOKING_TIMEOUT_MS, jobId: newBooking.id });
+		const bookingId = uuidv4();
+
+		const domainDetails = data.details.create.map(d => 
+			BookingDetail.builder()
+				.setId(uuidv4())
+				.setCount(d.count)
+				.setNote(d.note || null)
+				.setBookingId(bookingId)
+				.setItemId(d.itemId)
+				.setItemType(d.itemType as unknown as BookingItemType)
+				.build()
+		);
+
+		const domainBooking = Booking.builder()
+			.setId(bookingId)
+			.setDates(new Date(data.startDate), new Date(data.endDate))
+			.setGuestCount(data.guestCount)
+			.setContactInfo(data.leaderName || null, data.leaderEmail || null, data.phone || null)
+			.setPricing(quote.totals.payablePrice, snapshot)
+			.setReferenceNo(Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)))
+			.setStatus(BookingStatus.PENDING)
+			.setUserId(userId)
+			.setDetails(domainDetails)
+			.build();
+
+		const newBooking = await this.#bookingRepository.create(domainBooking);
+		await bookingTimeoutQueue.add("timeout", { bookingId: newBooking.getId() }, { delay: BOOKING_TIMEOUT_MS, jobId: newBooking.getId() });
 		return newBooking;
 	}
 
 	public async createDraftBooking(userId: string, data: BookingPayload) {
-		// Draft booking: compute snapshot but skip the hash check (FE may not have it yet).
 		const quote = await this._quoteForBooking(data);
-		const { quoteHash: _, bookedAt: __, ...rest } = data;
-		const snapshot = {
+		const snapshot: PricingSnapshot = {
 			...quote,
 			checkIn: new Date(data.startDate).toISOString(),
 			checkOut: new Date(data.endDate).toISOString(),
 			bookedAt: data.bookedAt,
 		};
-		const bookingData: Prisma.BookingCreateInput = {
-			...rest,
-			totalPrice: new Prisma.Decimal(quote.totals.payablePrice),
-			pricingSnapshot: snapshot as unknown as Prisma.InputJsonValue,
-			user: { connect: { id: userId } },
-			status: "DRAFT",
-			referenceNo: Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)),
-		};
-		return await this.#bookingRepository.create(bookingData);
+
+		const bookingId = uuidv4();
+
+		const domainDetails = data.details.create.map(d => 
+			BookingDetail.builder()
+				.setId(uuidv4())
+				.setCount(d.count)
+				.setNote(d.note || null)
+				.setBookingId(bookingId)
+				.setItemId(d.itemId)
+				.setItemType(d.itemType as unknown as BookingItemType)
+				.build()
+		);
+
+		const domainBooking = Booking.builder()
+			.setId(bookingId)
+			.setDates(new Date(data.startDate), new Date(data.endDate))
+			.setGuestCount(data.guestCount)
+			.setContactInfo(data.leaderName || null, data.leaderEmail || null, data.phone || null)
+			.setPricing(quote.totals.payablePrice, snapshot)
+			.setReferenceNo(Number((Date.now() % 1e7) * 100 + Math.floor(Math.random() * 100)))
+			.setStatus(BookingStatus.DRAFT)
+			.setUserId(userId)
+			.setDetails(domainDetails)
+			.build();
+
+		return await this.#bookingRepository.create(domainBooking);
 	}
 
 	public async confirmBooking(id: string) {
-
-		// Remove timeout job from queue if it exists
 		await bookingTimeoutQueue.remove(id);
 
-		// 1. Confirm booking
-		const booking = await this.#bookingRepository.confirm(id);
-		console.log(`[BookingService] Booking confirmed: ${JSON.stringify(booking)}`);
+		const booking = await this.#bookingRepository.findById(id);
 		if (!booking) throw new NotFoundError("Booking not found");
 
-		// Ensure the necessary fields for email are present on the booking object
-		if (!booking.leaderEmail || !booking.leaderName) {
+		// Encapsulated state transition
+		if (booking.getStatus() === BookingStatus.DRAFT) {
+			booking.markAsPending();
+		}
+		booking.markAsBooked(booking.getPricingSnapshot()!, booking.getTotalPrice()!);
+
+		const updatedBooking = await this.#bookingRepository.update(booking);
+		console.log(`[BookingService] Booking confirmed: ${updatedBooking.getId()}`);
+
+		const leaderEmail = updatedBooking.getLeaderEmail();
+		const leaderName = updatedBooking.getLeaderName();
+		if (!leaderEmail || !leaderName) {
 			throw new Error("Booking object is missing leaderEmail or leaderName required for confirmation email.");
 		}
 
-		const firstDetail = booking.details[0];
-
-		// Get accommodation
-		const accommodation = await this.#accommodationService.getAccommodationByRoomId(firstDetail.itemId);
-
-		// Get user using booking.leaderEmail and booking.leaderName
-		const user = await this.#userService.getUserById(booking.userId);
+		const firstDetail = updatedBooking.getDetails()[0];
+		const accommodation = await this.#accommodationService.getAccommodationByRoomId(firstDetail.getItemId());
+		const user = await this.#userService.getUserById(updatedBooking.getUserId());
 
 		if (!user) {
-			throw new NotFoundError(`User with id ${booking.userId} not found`);
+			throw new NotFoundError(`User with id ${updatedBooking.getUserId()} not found`);
 		}
 
-		// Build check-in / check-out display format
-		const checkIn = booking.startDate.toLocaleDateString("en-US", {
-			weekday: "long",
-			year: "numeric",
-			month: "long",
-			day: "numeric",
+		const checkIn = updatedBooking.getStartDate().toLocaleDateString("en-US", {
+			weekday: "long", year: "numeric", month: "long", day: "numeric",
 		});
 
-		const checkOut = booking.endDate.toLocaleDateString("en-US", {
-			weekday: "long",
-			year: "numeric",
-			month: "long",
-			day: "numeric",
+		const checkOut = updatedBooking.getEndDate().toLocaleDateString("en-US", {
+			weekday: "long", year: "numeric", month: "long", day: "numeric",
 		});
-		const totalChargeDisplay = booking.totalPrice ? booking.totalPrice.toString() : undefined;
+		
+		const totalChargeDisplay = updatedBooking.getTotalPrice() ? updatedBooking.getTotalPrice()!.toString() : undefined;
 
-		// 5. Prepare email payload
 		const userEmailData: ConfirmationEmailData = {
 			to: user.email,
 			accommodation,
 			checkIn,
 			checkOut,
 			guestName: user.name,
-			referenceNo: booking.referenceNo,
-			roomType: firstDetail.itemType,
-			guestCount: booking.guestCount,
-			nights: firstDetail.count,
-			specialRequest: firstDetail.note || undefined,
+			referenceNo: updatedBooking.getReferenceNo(),
+			roomType: firstDetail.getItemType(),
+			guestCount: updatedBooking.getGuestCount(),
+			nights: firstDetail.getCount(),
+			specialRequest: firstDetail.getNote() || undefined,
 			totalCharge: totalChargeDisplay,
 		};
 
 		const leaderEmailData: ConfirmationEmailData = {
-			to: booking.leaderEmail,
+			to: leaderEmail,
 			accommodation,
 			checkIn,
 			checkOut,
-			guestName: booking.leaderName,
-			referenceNo: booking.referenceNo,
-			roomType: firstDetail.itemType,
-			guestCount: booking.guestCount,
-			nights: firstDetail.count,
-			specialRequest: firstDetail.note || undefined,
+			guestName: leaderName,
+			referenceNo: updatedBooking.getReferenceNo(),
+			roomType: firstDetail.getItemType(),
+			guestCount: updatedBooking.getGuestCount(),
+			nights: firstDetail.getCount(),
+			specialRequest: firstDetail.getNote() || undefined,
 			totalCharge: totalChargeDisplay,
 		};
 
-		// 6. Send email
 		await this.#emailService.sendConfirmationEmail(userEmailData);
-		if (user.email !== booking.leaderEmail) {
+		if (user.email !== leaderEmail) {
 			await this.#emailService.sendConfirmationEmail(leaderEmailData);
 		}
 
-		return booking;
+		return updatedBooking;
 	}
 
 	public async cancelBooking(id: string, options: CancelBookingOptions = {}) {
+		const booking = await this.#bookingRepository.findById(id);
+		if (!booking) throw new NotFoundError("Booking not found");
 
-		const existingBooking = await this.getBookingById(id);
-		if (options.requestedByUserId && existingBooking.userId !== options.requestedByUserId) {
+		if (options.requestedByUserId && booking.getUserId() !== options.requestedByUserId) {
 			throw new BadRequestError("Booking does not belong to this traveller");
 		}
 
 		const cancellationNote = options.note?.trim() || undefined;
-		const booking = await this.#bookingRepository.cancel(id, cancellationNote, options.cancelledBy ? cancellationSourceMap[options.cancelledBy] : undefined);
-		if (!booking) throw new NotFoundError("Booking not found");
+		const cancellationSource = options.cancelledBy ? cancellationSourceMap[options.cancelledBy] : CancellationSource.SYSTEM;
+		
+		// Encapsulated state transition
+		booking.cancel(cancellationSource, cancellationNote);
 
-		// Ensure the necessary fields for email are present on the booking object
-		if (!booking.leaderEmail || !booking.leaderName) {
+		const updatedBooking = await this.#bookingRepository.cancelWithTransaction(booking);
+
+		const leaderEmail = updatedBooking.getLeaderEmail();
+		const leaderName = updatedBooking.getLeaderName();
+		if (!leaderEmail || !leaderName) {
 			throw new Error("Booking object is missing leaderEmail or leaderName required for cancellation email.");
 		}
 
-		const firstDetail = booking.details[0];
-
-		// Get accommodation
-		const accommodation = await this.#accommodationService.getAccommodationByRoomId(firstDetail.itemId);
-
-		// Get user using booking.leaderEmail and booking.leaderName
-		const user = await this.#userService.getUserById(booking.userId);
+		const firstDetail = updatedBooking.getDetails()[0];
+		const accommodation = await this.#accommodationService.getAccommodationByRoomId(firstDetail.getItemId());
+		const user = await this.#userService.getUserById(updatedBooking.getUserId());
 
 		if (!user) {
-			throw new NotFoundError(`User with id ${booking.userId} not found`);
+			throw new NotFoundError(`User with id ${updatedBooking.getUserId()} not found`);
 		}
 
-		// 4. Prepare email payload
 		const userEmailData: CancellationEmailData = {
 			to: user.email,
 			accommodation,
 			guestName: user.name,
-			referenceNo: booking.referenceNo,
-			roomType: firstDetail.itemType,
-			nights: firstDetail.count,
+			referenceNo: updatedBooking.getReferenceNo(),
+			roomType: firstDetail.getItemType(),
+			nights: firstDetail.getCount(),
 			cancellationReason: cancellationNote,
 			cancelledBy: options.cancelledBy === "owner" ? "the host" : options.cancelledBy === "traveller" ? "the traveller" : undefined,
 		};
 
 		const leaderEmailData: CancellationEmailData = {
-			to: booking.leaderEmail,
+			to: leaderEmail,
 			accommodation,
-			guestName: booking.leaderName,
-			referenceNo: booking.referenceNo,
-			roomType: firstDetail.itemType,
-			nights: firstDetail.count,
+			guestName: leaderName,
+			referenceNo: updatedBooking.getReferenceNo(),
+			roomType: firstDetail.getItemType(),
+			nights: firstDetail.getCount(),
 			cancellationReason: cancellationNote,
 			cancelledBy: options.cancelledBy === "owner" ? "the host" : options.cancelledBy === "traveller" ? "the traveller" : undefined,
 		};
 
-		// 5. Send email
 		await this.#emailService.sendCancellationEmail(userEmailData);
-		if (user.email !== booking.leaderEmail) {
+		if (user.email !== leaderEmail) {
 			await this.#emailService.sendCancellationEmail(leaderEmailData);
 		}
 
@@ -360,17 +388,16 @@ export default class BookingService {
 		let nightsSold = 0;
 
 		bookings.forEach((b) => {
-			if (b.status === "PENDING") {
+			if (b.getStatus() === BookingStatus.PENDING) {
 				pendingBookings++;
-			} else if (b.status === "BOOKED" || b.status === "COMPLETED") {
-				revenue += Number(b.totalPrice || 0);
+			} else if (b.getStatus() === BookingStatus.BOOKED || b.getStatus() === BookingStatus.COMPLETED) {
+				revenue += Number(b.getTotalPrice() || 0);
 
-				const nights = Math.max(1, Math.ceil((b.endDate.getTime() - b.startDate.getTime()) / (1000 * 60 * 60 * 24)));
+				const nights = Math.max(1, Math.ceil((b.getEndDate().getTime() - b.getStartDate().getTime()) / (1000 * 60 * 60 * 24)));
 
-				// Số đêm bán được = Số đêm * Số lượng phòng
-				b.details.forEach((d) => {
-					if (d.itemType === "ROOM" && roomIds.includes(d.itemId)) {
-						nightsSold += nights * d.count;
+				b.getDetails().forEach((d) => {
+					if (d.getItemType() === BookingItemType.ROOM && roomIds.includes(d.getItemId())) {
+						nightsSold += nights * d.getCount();
 					}
 				});
 			}

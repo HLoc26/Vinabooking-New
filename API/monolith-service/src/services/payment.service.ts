@@ -4,6 +4,7 @@ import { Prisma } from "@/generated/client";
 import { PayosWebhookData } from "@/types/requests/payment.requests";
 import PayosService from "./payos.service";
 import BookingService from "./booking.service";
+import { BookingStatus } from "@/models/booking";
 
 export default class PaymentService {
 	readonly #paymentRepository: PaymentRepository;
@@ -29,20 +30,20 @@ export default class PaymentService {
 			throw new NotFoundError(`Booking with ID ${bookingId} not found`);
 		}
 
-		if (booking.status === "BOOKED" || booking.status === "COMPLETED") {
+		if (booking.getStatus() === BookingStatus.BOOKED || booking.getStatus() === BookingStatus.COMPLETED) {
 			throw new BadRequestError("Booking is already paid");
 		}
 
 		// 2. Logic: Prepare PayOS-specific data
 		const attemptSuffix = Math.floor(1000 + Math.random() * 9000);
-		const orderCode = Number(`${booking.referenceNo}${attemptSuffix}`);
-		const amount = Math.round(Number(booking.totalPrice));
+		const orderCode = Number(`${booking.getReferenceNo()}${attemptSuffix}`);
+		const amount = Math.round(Number(booking.getTotalPrice()));
 
 		if (isNaN(amount) || amount <= 0) {
-			throw new BadRequestError(`Invalid booking amount: ${booking.totalPrice}`);
+			throw new BadRequestError(`Invalid booking amount: ${booking.getTotalPrice()}`);
 		}
 
-		const description = `BK${booking.referenceNo}`.slice(0, 25);
+		const description = `BK${booking.getReferenceNo()}`.slice(0, 25);
 
 		// 3. Orchestration: Call External Provider
 		const paymentLinkRes = await this.#payosService.createPaymentLink({
@@ -69,17 +70,17 @@ export default class PaymentService {
 			throw new NotFoundError(`Booking with reference ${referenceNo} not found`);
 		}
 
-		if (booking.status === "BOOKED" || booking.status === "COMPLETED") {
-			return { bookingId: booking.id, status: "ALREADY_PAID" };
+		if (booking.getStatus() === BookingStatus.BOOKED || booking.getStatus() === BookingStatus.COMPLETED) {
+			return { bookingId: booking.getId(), status: "ALREADY_PAID" };
 		}
 
 		try {
 			// Fix: We can't search PayOS by referenceNo directly anymore since we mutated the orderCode.
 			// Retrieve the specific PayOS link ID from our database instead.
-			const latestPayment = await this.#paymentRepository.findLatestByBookingId(booking.id);
+			const latestPayment = await this.#paymentRepository.findLatestByBookingId(booking.getId());
 
 			if (!latestPayment || !latestPayment.paymentLinkId) {
-				return { bookingId: booking.id, status: "NOT_FOUND" };
+				return { bookingId: booking.getId(), status: "NOT_FOUND" };
 			}
 
 			const paymentInfo = await this.#payosService.getPaymentLinkInformation(latestPayment.paymentLinkId);
@@ -99,15 +100,15 @@ export default class PaymentService {
 							currency: (paymentInfo as any).currency || "VND",
 							paymentLinkId: (paymentInfo as any).id,
 						} as unknown as PayosWebhookData,
-						booking.id
+						booking.getId()
 					);
 				}
 			}
 
-			return { bookingId: booking.id, status: paymentInfo.status };
+			return { bookingId: booking.getId(), status: paymentInfo.status };
 		} catch (error) {
 			console.error("Verify Payment Error:", error);
-			return { bookingId: booking.id, status: "NOT_FOUND" };
+			return { bookingId: booking.getId(), status: "NOT_FOUND" };
 		}
 	}
 
@@ -125,8 +126,8 @@ export default class PaymentService {
 		const booking = await this.#bookingRepository.findByReferenceNo(originalRefNo);
 		if (!booking) throw new Error(`Booking not found for referenceNo: ${originalRefNo}`);
 
-		if (booking.status === "BOOKED" || booking.status === "COMPLETED") {
-			console.log(`[PaymentService] Booking ${booking.id} already confirmed, skipping.`);
+		if (booking.getStatus() === BookingStatus.BOOKED || booking.getStatus() === BookingStatus.COMPLETED) {
+			console.log(`[PaymentService] Booking ${booking.getId()} already confirmed, skipping.`);
 			return { success: true };
 		}
 

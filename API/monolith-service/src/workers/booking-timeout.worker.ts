@@ -1,6 +1,7 @@
 import { Job } from "bullmq";
 import { IBaseWorker } from "./types";
 import { BookingRepository } from "@/repositories";
+import { BookingStatus, CancellationSource } from "@/models/booking";
 
 export class BookingTimeoutWorker implements IBaseWorker {
 	public readonly queueName = "booking-timeout-task";
@@ -21,12 +22,13 @@ export class BookingTimeoutWorker implements IBaseWorker {
 			return;
 		}
 
-		if (booking.status === "PENDING") {
+		if (booking.getStatus() === BookingStatus.PENDING) {
 			console.log(`[BookingTimeoutWorker] Booking ${bookingId} is still PENDING. Cancelling...`);
-			await this.#bookingRepository.cancelWithTransaction(bookingId);
+			booking.cancel(CancellationSource.SYSTEM, "Booking timeout");
+			await this.#bookingRepository.cancelWithTransaction(booking);
 			console.log(`[BookingTimeoutWorker] Booking ${bookingId} and associated payments failed.`);
 		} else {
-			console.log(`[BookingTimeoutWorker] Booking ${bookingId} status is ${booking.status}. No timeout needed.`);
+			console.log(`[BookingTimeoutWorker] Booking ${bookingId} status is ${booking.getStatus()}. No timeout needed.`);
 		}
 	}
 }
