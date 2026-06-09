@@ -30,12 +30,6 @@ class OwnerPricingService {
 		return profile.id;
 	}
 
-	// ----- Catalog -----
-
-	public async getHolidayCatalog() {
-		return await this.#holidayRepository.findAll();
-	}
-
 	// ----- Owner-wide settings -----
 
 	public async getSettingsByUser(userId: string) {

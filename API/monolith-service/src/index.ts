@@ -6,7 +6,7 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService, FacilityService, AmenityService } from "@/services";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService, FacilityService, AmenityService, HolidayService } from "@/services";
 import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository, HolidayRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
@@ -123,6 +123,7 @@ const paymentService = new PaymentService(paymentRepository, bookingRepository, 
 const searchService = new SearchService();
 const pricingService = new PricingService(prismaClient, holidayRepository);
 const ownerPricingService = new OwnerPricingService(ownerRepository, holidayRepository, accommodationRepository, roomRepository);
+const holidayService = new HolidayService(holidayRepository);
 roomService.setPricingService(pricingService);
 bookingService.setPricingService(pricingService);
 
@@ -146,7 +147,7 @@ const ownerController = new OwnerController(ownerService);
 const amenityController = new AmenityController(amenityService);
 const paymentController = new PaymentController(paymentService);
 const searchController = new SearchController(searchService, accommodationService);
-const pricingController = new PricingController(pricingService, ownerPricingService);
+const pricingController = new PricingController(pricingService, ownerPricingService, holidayService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);

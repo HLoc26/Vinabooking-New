@@ -1,5 +1,7 @@
 import { PrismaClient, Prisma } from "@/generated/client";
 import type { HolidayOptIn } from "@/types/pricing.types";
+import { Holiday } from "../models/holiday";
+import { HolidayMapper } from "../mappers/holiday.mapper";
 
 class HolidayRepository {
 	readonly #prismaClient: PrismaClient;
@@ -10,7 +12,7 @@ class HolidayRepository {
 
 	// ----- Catalog (read-only, seeded) -----
 
-	public async findAll() {
+	public async findAll(): Promise<Holiday[]> {
 		// Return distinct codes for the catalog, picking the first name and date found
 		// for each code. The UI only needs one row per logical holiday.
 		const holidays = await this.#prismaClient.holiday.findMany({
@@ -18,11 +20,13 @@ class HolidayRepository {
 		});
 		
 		const uniqueCodes = new Set<string>();
-		return holidays.filter(h => {
+		const uniqueHolidays = holidays.filter(h => {
 			if (uniqueCodes.has(h.code)) return false;
 			uniqueCodes.add(h.code);
 			return true;
 		});
+
+		return uniqueHolidays.map(h => HolidayMapper.toDomain(h));
 	}
 
 	// ----- Owner opt-ins -----
