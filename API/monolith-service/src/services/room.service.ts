@@ -1,10 +1,11 @@
 import { ImageDto } from "@/dto/response/image.dto";
 import { BadRequestError, NotFoundError } from "@/errors";
 import { EntityType } from "@/models/image";
-import { AccommodationRepository, RoomRepository } from "@/repositories";
+import { RoomRepository } from "@/repositories";
 import BookingService from "./booking.service";
 import ImageService from "./image.service";
 import PricingService from "./pricing.service";
+import AccommodationService from "./accommodation.service";
 
 import redisClient from "@/clients/redis.client";
 import { AmenityConfig, Bed, Room } from "@/models/room";
@@ -17,7 +18,7 @@ export class RoomService {
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
 	readonly #pricingService: PricingService;
-	readonly #accommodationRepository: AccommodationRepository;
+	readonly #accommodationService: AccommodationService;
 	readonly CACHE_PREFIX = "acc:detail:";
 
 	constructor(
@@ -25,20 +26,24 @@ export class RoomService {
 		bookingService: BookingService,
 		imageService: ImageService,
 		pricingService: PricingService,
-		accommodationRepository: AccommodationRepository
+		accommodationService: AccommodationService
 	) {
 		this.#roomRepository = roomRepository;
 		this.#bookingService = bookingService;
 		this.#imageService = imageService;
 		this.#pricingService = pricingService;
-		this.#accommodationRepository = accommodationRepository;
+		this.#accommodationService = accommodationService;
 	}
 
 	// --- Helpers ---
 
 	private async _checkAccommodationOwnership(accommodationId: string, ownerId: string): Promise<void> {
-		const isOwner = await this.#accommodationRepository.checkOwnership(accommodationId, ownerId);
-		if (!isOwner) {
+		try {
+			const acc = await this.#accommodationService.getAccommodationDomainModel(accommodationId);
+			if (!acc.isOwner(ownerId)) {
+				throw new BadRequestError("Accommodation not found or unauthorized");
+			}
+		} catch (error) {
 			throw new BadRequestError("Accommodation not found or unauthorized");
 		}
 	}
@@ -48,8 +53,12 @@ export class RoomService {
 		const uniqueIds = [...new Set(accommodationIds)];
 		await Promise.all(
 			uniqueIds.map(async (accId) => {
-				const acc = await this.#accommodationRepository.findById(accId);
-				map.set(accId, acc?.getDynamicPricingSettings() ?? null);
+				try {
+					const acc = await this.#accommodationService.getAccommodationDomainModel(accId);
+					map.set(accId, acc.getDynamicPricingSettings());
+				} catch {
+					map.set(accId, null);
+				}
 			})
 		);
 		return map;
@@ -123,6 +132,14 @@ export class RoomService {
 	}
 
 	// --- Quản lý Rooms ---
+
+	async getRoomDomainModel(roomId: string): Promise<Room> {
+		const room = await this.#roomRepository.findById(roomId);
+		if (!room) {
+			throw new NotFoundError(`Room with ID ${roomId} not found`);
+		}
+		return room;
+	}
 
 	/**
 	 * (R) Lấy thông tin chi tiết một phòng (gồm beds, amenities)

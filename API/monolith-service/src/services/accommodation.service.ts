@@ -152,8 +152,15 @@ class AccommodationService {
 		return results[0];
 	}
 
+	async getAccommodationDomainModel(id: string): Promise<Accommodation> {
+		const baseDataMap = await this._getBaseAccommodations([id]);
+		const acc = baseDataMap.get(id);
+		if (!acc) throw new NotFoundError(`Accommodation with ID ${id} not found`);
+		return acc;
+	}
+
 	async getAccommodationByRoomId(roomId: string): Promise<AccommodationFullInfo> {
-		const accommodationId = (await this.#roomService.getRoomById(roomId)).accommodationId;
+		const accommodationId = (await this.#roomService.getRoomDomainModel(roomId)).getAccommodationId();
 		return this.getAccommodationById(accommodationId);
 	}
 

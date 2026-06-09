@@ -114,7 +114,7 @@ const holidayService = new HolidayService(holidayRepository);
 
 const pricingService = new PricingService(holidayService, roomServiceProxy);
 const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService, accommodationServiceProxy, pricingService);
-roomService = new RoomService(roomRepository, bookingService, imageService, pricingService, accommodationRepository);
+roomService = new RoomService(roomRepository, bookingService, imageService, pricingService, accommodationServiceProxy);
 
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,

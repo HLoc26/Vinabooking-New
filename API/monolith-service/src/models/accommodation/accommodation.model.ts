@@ -5,21 +5,21 @@ import { AccommodationHoliday } from "./accommodation-holiday.model";
 import { DynamicPricingSettings } from "@/types/pricing.types";
 
 export class Accommodation {
-    #allRoomsValid: boolean;
-    #roomCount: number;
-    #holidayOptIns: AccommodationHoliday[];
-    #facilities: FacilityConfig[];
-    #address: Address | null;
-    readonly #updatedAt: Date;
-    readonly #createdAt: Date;
-    #dynamicPricingSettings: DynamicPricingSettings | null;
-    readonly #ownerId: string;
-    #status: AccommodationStatus;
-    #rentalType: RentalType | null;
-    #type: AccommodationType;
-    #description: string | null;
-    #name: string;
     readonly #id: string;
+    #name: string;
+    #description: string | null;
+    #type: AccommodationType;
+    #rentalType: RentalType | null;
+    #status: AccommodationStatus;
+    readonly #ownerId: string;
+    #dynamicPricingSettings: DynamicPricingSettings | null;
+    readonly #createdAt: Date;
+    readonly #updatedAt: Date;
+    #address: Address | null;
+    #facilities: FacilityConfig[];
+    #holidayOptIns: AccommodationHoliday[];
+    #roomCount: number;
+    #allRoomsValid: boolean;
 
     public constructor(
         id: string,
@@ -64,6 +64,7 @@ export class Accommodation {
     public getRentalType(): RentalType | null { return this.#rentalType; }
     public getStatus(): AccommodationStatus { return this.#status; }
     public getOwnerId(): string { return this.#ownerId; }
+    public isOwner(userId: string): boolean { return this.#ownerId === userId; }
     public getDynamicPricingSettings(): DynamicPricingSettings | null { return this.#dynamicPricingSettings; }
     public getCreatedAt(): Date { return this.#createdAt; }
     public getUpdatedAt(): Date { return this.#updatedAt; }
@@ -74,7 +75,7 @@ export class Accommodation {
     public setAddress(address: Address | null): void { this.#address = address; }
     public setFacilities(facilities: FacilityConfig[]): void { this.#facilities = facilities; }
     public setHolidayOptIns(holidays: AccommodationHoliday[]): void { this.#holidayOptIns = holidays; }
-    
+
     public updateBasicInfo(name: string, description: string | null, type: AccommodationType): void {
         this.validateName(name);
         this.#name = name;
