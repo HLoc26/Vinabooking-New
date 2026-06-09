@@ -4,32 +4,49 @@ import { ImageReference } from "./image-reference.model";
 import { ImageVariant } from "./image-variant.model";
 
 export class Image {
-    public constructor(
-        private readonly id: string,
-        private readonly s3Key: string,
-        private readonly filename: string,
-        private readonly contentType: string,
-        private readonly size: bigint,
-        private readonly createdAt: Date,
-        private variants: ImageVariant[],
-        private references: ImageReference[]
-    ) {}
+    #references: ImageReference[];
+    #variants: ImageVariant[];
+    readonly #createdAt: Date;
+    readonly #size: bigint;
+    readonly #contentType: string;
+    readonly #filename: string;
+    readonly #s3Key: string;
+    readonly #id: string;
 
-    public getId(): string { return this.id; }
-    public getS3Key(): string { return this.s3Key; }
-    public getFilename(): string { return this.filename; }
-    public getContentType(): string { return this.contentType; }
-    public getSize(): bigint { return this.size; }
-    public getCreatedAt(): Date { return this.createdAt; }
-    public getVariants(): ImageVariant[] { return [...this.variants]; }
-    public getReferences(): ImageReference[] { return [...this.references]; }
+    public constructor(
+        id: string,
+        s3Key: string,
+        filename: string,
+        contentType: string,
+        size: bigint,
+        createdAt: Date,
+        variants: ImageVariant[],
+        references: ImageReference[]
+    ) {
+        this.#id = id;
+        this.#s3Key = s3Key;
+        this.#filename = filename;
+        this.#contentType = contentType;
+        this.#size = size;
+        this.#createdAt = createdAt;
+        this.#variants = variants;
+        this.#references = references;}
+
+    public getId(): string { return this.#id; }
+    public getS3Key(): string { return this.#s3Key; }
+    public getFilename(): string { return this.#filename; }
+    public getContentType(): string { return this.#contentType; }
+    public getSize(): bigint { return this.#size; }
+    public getCreatedAt(): Date { return this.#createdAt; }
+    public getVariants(): ImageVariant[] { return [...this.#variants]; }
+    public getReferences(): ImageReference[] { return [...this.#references]; }
 
     public addVariant(variant: ImageVariant): void {
-        this.variants.push(variant);
+        this.#variants.push(variant);
     }
 
     public addReference(reference: ImageReference): void {
-        this.references.push(reference);
+        this.#references.push(reference);
     }
 
     /**
@@ -40,22 +57,22 @@ export class Image {
         for (const variant of Object.values(VariantType)) {
             if (variant === VariantType.ORIGINAL) {
                 const v = ImageVariant.builder()
-                    .setImageId(this.id)
-                    .setS3Key(this.s3Key)
+                    .setImageId(this.#id)
+                    .setS3Key(this.#s3Key)
                     .setVariant(variant)
                     .build();
-                this.variants.push(v);
+                this.#variants.push(v);
                 continue;
             }
 
             const data = uploadResult.get(variant);
             if (data) {
                 const v = ImageVariant.builder()
-                    .setImageId(this.id)
+                    .setImageId(this.#id)
                     .setS3Key(data.get("s3Key")!)
                     .setVariant(variant)
                     .build();
-                this.variants.push(v);
+                this.#variants.push(v);
             }
         }
     }
@@ -68,45 +85,45 @@ export class Image {
         const isPrimary = (entityType === EntityType.USER_PROFILE);
         
         const reference = ImageReference.builder()
-            .setImageId(this.id)
+            .setImageId(this.#id)
             .setEntityType(entityType)
             .setEntityId(entityId)
             .setIsPrimary(isPrimary)
             .build();
             
-        this.references.push(reference);
+        this.#references.push(reference);
     }
 
     public static builder() { return new ImageBuilder(); }
 }
 
 export class ImageBuilder {
-    private id?: string;
-    private s3Key?: string;
-    private filename?: string;
-    private contentType?: string;
-    private size?: bigint;
-    private createdAt?: Date;
-    private variants: ImageVariant[] = [];
-    private references: ImageReference[] = [];
+    #id?: string;
+    #s3Key?: string;
+    #filename?: string;
+    #contentType?: string;
+    #size?: bigint;
+    #createdAt?: Date;
+    #variants: ImageVariant[] = [];
+    #references: ImageReference[] = [];
 
-    public setId(id: string): this { this.id = id; return this; }
-    public setS3Key(s3Key: string): this { this.s3Key = s3Key; return this; }
-    public setFilename(filename: string): this { this.filename = filename; return this; }
-    public setContentType(contentType: string): this { this.contentType = contentType; return this; }
-    public setSize(size: bigint): this { this.size = size; return this; }
-    public setCreatedAt(createdAt: Date): this { this.createdAt = createdAt; return this; }
-    public setVariants(variants: ImageVariant[]): this { this.variants = variants; return this; }
-    public setReferences(references: ImageReference[]): this { this.references = references; return this; }
+    public setId(id: string): this { this.#id = id; return this; }
+    public setS3Key(s3Key: string): this { this.#s3Key = s3Key; return this; }
+    public setFilename(filename: string): this { this.#filename = filename; return this; }
+    public setContentType(contentType: string): this { this.#contentType = contentType; return this; }
+    public setSize(size: bigint): this { this.#size = size; return this; }
+    public setCreatedAt(createdAt: Date): this { this.#createdAt = createdAt; return this; }
+    public setVariants(variants: ImageVariant[]): this { this.#variants = variants; return this; }
+    public setReferences(references: ImageReference[]): this { this.#references = references; return this; }
 
     public build(): Image {
-        if (!this.s3Key || !this.filename || !this.contentType || this.size === undefined) {
+        if (!this.#s3Key || !this.#filename || !this.#contentType || this.#size === undefined) {
             throw new Error("Missing required fields in ImageBuilder");
         }
         
-        const id = this.id || randomUUID();
-        const createdAt = this.createdAt || new Date();
+        const id = this.#id || randomUUID();
+        const createdAt = this.#createdAt || new Date();
 
-        return new Image(id, this.s3Key, this.filename, this.contentType, this.size, createdAt, this.variants, this.references);
+        return new Image(id, this.#s3Key, this.#filename, this.#contentType, this.#size, createdAt, this.#variants, this.#references);
     }
 }
