@@ -18,3 +18,4 @@ export { default as PayosService } from "./payos.service";
 export { default as PricingService } from "./pricing.service";
 export { default as OwnerPricingService } from "./owner-pricing.service";
 export { default as FacilityService } from "./facility.service";
+export { default as AmenityService } from "./amenity.service";
