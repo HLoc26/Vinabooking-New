@@ -1,4 +1,5 @@
 import { randomUUID } from "crypto";
+import { EntityType, VariantType } from "./index";
 import { ImageReference } from "./image-reference.model";
 import { ImageVariant } from "./image-variant.model";
 
@@ -28,6 +29,51 @@ export class Image {
     }
 
     public addReference(reference: ImageReference): void {
+        this.references.push(reference);
+    }
+
+    /**
+     * Domain Logic: An image is responsible for parsing its own upload results 
+     * and generating its required variants.
+     */
+    public generateVariantsFromUpload(uploadResult: Map<VariantType, any>): void {
+        for (const variant of Object.values(VariantType)) {
+            if (variant === VariantType.ORIGINAL) {
+                const v = ImageVariant.builder()
+                    .setImageId(this.id)
+                    .setS3Key(this.s3Key)
+                    .setVariant(variant)
+                    .build();
+                this.variants.push(v);
+                continue;
+            }
+
+            const data = uploadResult.get(variant);
+            if (data) {
+                const v = ImageVariant.builder()
+                    .setImageId(this.id)
+                    .setS3Key(data.get("s3Key")!)
+                    .setVariant(variant)
+                    .build();
+                this.variants.push(v);
+            }
+        }
+    }
+
+    /**
+     * Domain Logic: Enforces reference invariants.
+     */
+    public attachToEntity(entityType: EntityType, entityId: string): void {
+        // Enforce the rule: User profiles automatically get primary images
+        const isPrimary = (entityType === EntityType.USER_PROFILE);
+        
+        const reference = ImageReference.builder()
+            .setImageId(this.id)
+            .setEntityType(entityType)
+            .setEntityId(entityId)
+            .setIsPrimary(isPrimary)
+            .build();
+            
         this.references.push(reference);
     }
 

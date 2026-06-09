@@ -35,41 +35,14 @@ class UploadService {
 			.build();
 
 		// Add Variants
-		for (const variant of Object.values(VariantType)) {
-			if (variant === VariantType.ORIGINAL) {
-				const v = ImageVariant.builder()
-					.setImageId(image.getId())
-					.setS3Key(s3Key)
-					.setVariant(variant)
-					.build();
-				image.addVariant(v);
-				continue;
-			}
-
-			const data = uploadResult.get(variant);
-			if (data) {
-				const v = ImageVariant.builder()
-					.setImageId(image.getId())
-					.setS3Key(data.get("s3Key")!)
-					.setVariant(variant)
-					.build();
-				image.addVariant(v);
-			}
-		}
+		image.generateVariantsFromUpload(uploadResult as any);
 
 		// Handle References
 		if (entityType === EntityType.USER_PROFILE) {
 			await this.imageRepository.clearPrimaryReference(entityType, entityId);
 		}
 
-		const reference = ImageReference.builder()
-			.setImageId(image.getId())
-			.setEntityType(entityType)
-			.setEntityId(entityId)
-			.setIsPrimary(entityType === EntityType.USER_PROFILE)
-			.build();
-			
-		image.addReference(reference);
+		image.attachToEntity(entityType, entityId);
 
 		// Persist the pure domain model
 		await this.imageRepository.save(image);
