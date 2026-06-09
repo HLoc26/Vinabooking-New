@@ -43,7 +43,7 @@ class BookingRepository {
 	public async findById(id: string): Promise<Booking | null> {
 		const prismaBooking = await this.#prismaClient.booking.findUnique({
 			where: { id },
-			include: { details: true },
+			include: { details: true, paymentTransfers: true },
 		});
 		return prismaBooking ? BookingMapper.toDomain(prismaBooking) : null;
 	}
@@ -51,7 +51,7 @@ class BookingRepository {
 	public async findByUserId(userId: string): Promise<Booking[]> {
 		const bookings = await this.#prismaClient.booking.findMany({
 			where: { userId },
-			include: { details: true },
+			include: { details: true, paymentTransfers: true },
 		});
 		return bookings.map((b) => BookingMapper.toDomain(b));
 	}
@@ -220,10 +220,12 @@ class BookingRepository {
 		const persistenceData = BookingMapper.toPersistence(domainBooking);
 		const persistenceDetails = domainBooking.getDetails().map(BookingMapper.toPersistenceDetail);
 
+		const { paymentTransfers, details, ...safeData } = persistenceData;
+
 		const created = await this.#prismaClient.booking.create({
 			data: {
-				...persistenceData,
-				pricingSnapshot: persistenceData.pricingSnapshot as Prisma.InputJsonValue,
+				...safeData,
+				pricingSnapshot: safeData.pricingSnapshot as Prisma.InputJsonValue,
 				details: {
 					create: persistenceDetails.map(d => ({
 						id: d.id,

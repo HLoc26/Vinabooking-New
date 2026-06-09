@@ -20,6 +20,10 @@ export default class PaymentService {
 		this.#bookingService = bookingService;
 	}
 
+	public async getTransfersByBookingId(bookingId: string) {
+		return await this.#paymentRepository.findAllByBookingId(bookingId);
+	}
+
 	public async createPaymentLink(bookingId: string, returnUrl: string, cancelUrl: string) {
 		// 1. Logic: Cleanup old attempts via Repo
 		const latest = await this.#paymentRepository.findLatestByBookingId(bookingId);

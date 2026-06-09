@@ -1,14 +1,18 @@
 import type { Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
 import type { ApiResponse } from "@/types/responses";
-import { BookingService } from "@/services";
+import { BookingService, PaymentService } from "@/services";
 import { BookingPayload, BookingRequest, ConfirmRequest } from "@/dto/request/booking.dto";
 import { Booking } from "@/generated/client";
 import BookingMapper from "@/mappers/booking.mapper";
+import { PaymentMapper } from "@/mappers/payment.mapper";
 import { Booking as DomainBooking } from "@/models/booking";
 
 export default class BookingController {
-	constructor(private readonly bookingService: BookingService) {}
+	constructor(
+		private readonly bookingService: BookingService,
+		private readonly paymentService: PaymentService
+	) {}
 
 	public async getBookings(req: Request, res: Response<ApiResponse<Booking | Booking[]>>) {
 		const { entity, id } = req.query;
@@ -38,11 +42,20 @@ export default class BookingController {
 					return ResponseHelper.error(res, `Invalid entity type: ${entity}`);
 			}
 			
-			const bookings = Array.isArray(domainBookings) 
-				? domainBookings.map(b => BookingMapper.toPersistence(b)) 
-				: BookingMapper.toPersistence(domainBookings);
-
-			return ResponseHelper.success<Booking | Booking[]>(res, bookings);
+			if (Array.isArray(domainBookings)) {
+				const bookings = await Promise.all(domainBookings.map(async b => {
+					const dto = BookingMapper.toPersistence(b);
+					const transfers = await this.paymentService.getTransfersByBookingId(b.getId());
+					dto.paymentTransfers = transfers.map(t => PaymentMapper.toPersistence(t));
+					return dto;
+				}));
+				return ResponseHelper.success<Booking | Booking[]>(res, bookings as unknown as Booking[]);
+			} else {
+				const dto = BookingMapper.toPersistence(domainBookings);
+				const transfers = await this.paymentService.getTransfersByBookingId(domainBookings.getId());
+				dto.paymentTransfers = transfers.map(t => PaymentMapper.toPersistence(t));
+				return ResponseHelper.success<Booking | Booking[]>(res, dto as unknown as Booking);
+			}
 		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);

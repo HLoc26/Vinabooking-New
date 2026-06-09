@@ -1,7 +1,7 @@
 import { Booking as PrismaBooking, BookingDetail as PrismaBookingDetail, Prisma, EBookingStatus as PrismaBookingStatus, ECancellationSource as PrismaCancellationSource, EItemType as PrismaItemType } from "@/generated/client";
 import { Booking, BookingDetail, BookingStatus, CancellationSource, BookingItemType, PricingSnapshot } from "@/models/booking";
 
-type PrismaBookingWithDetails = PrismaBooking & { details?: PrismaBookingDetail[] };
+type PrismaBookingWithDetails = PrismaBooking & { details?: PrismaBookingDetail[], paymentTransfers?: any[] };
 
 class BookingMapper {
 	public static toDomain(prismaBooking: PrismaBookingWithDetails): Booking {
@@ -51,7 +51,7 @@ class BookingMapper {
 			.build();
 	}
 
-	public static toPersistence(domainBooking: Booking): PrismaBooking {
+	public static toPersistence(domainBooking: Booking): PrismaBookingWithDetails {
 		return {
 			id: domainBooking.getId(),
 			startDate: domainBooking.getStartDate(),
@@ -69,6 +69,7 @@ class BookingMapper {
 			userId: domainBooking.getUserId(),
 			createdAt: domainBooking.getCreatedAt(),
 			updatedAt: domainBooking.getUpdatedAt(),
+			details: domainBooking.getDetails()?.map(d => this.toPersistenceDetail(d)) || [],
 		};
 	}
 

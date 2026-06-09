@@ -50,6 +50,14 @@ class PaymentRepository {
 		});
 		return result ? PaymentMapper.toDomain(result) : null;
 	}
+
+	public async findAllByBookingId(bookingId: string): Promise<PaymentTransfer[]> {
+		const results = await this.#prismaClient.paymentTransfer.findMany({
+			where: { bookingId },
+			orderBy: { createdAt: "desc" },
+		});
+		return results.map((result) => PaymentMapper.toDomain(result));
+	}
 }
 
 export default PaymentRepository;
