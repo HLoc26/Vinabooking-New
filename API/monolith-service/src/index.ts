@@ -6,7 +6,7 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService } from "@/services";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService, FacilityService } from "@/services";
 import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository, HolidayRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
@@ -112,6 +112,7 @@ const reviewService = new ReviewService({
 	accommodationService: accommodationService,
 });
 const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
+const facilityService = new FacilityService(facilityRepository);
 bookingService.setAccommodationService(accommodationService);
 
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
@@ -139,7 +140,7 @@ const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
 const bookingController = new BookingController(bookingService);
 const reviewController = new ReviewController(reviewService);
-const facilityController = new FacilityController(facilityRepository);
+const facilityController = new FacilityController(facilityService);
 const ownerController = new OwnerController(ownerService);
 const amenityController = new AmenityController(amenityRepository);
 const paymentController = new PaymentController(paymentService);
