@@ -1,3 +1,5 @@
+
+
 export interface ImageVariantDto {
     id: string;
     imageId: string;
@@ -25,4 +27,9 @@ export interface ImageDto {
     url: string;
     variants: ImageVariantDto[];
     references: ImageReferenceDto[];
+}
+
+export interface UploadResponse {
+	success: boolean;
+	images: ImageDto[];
 }

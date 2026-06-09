@@ -1,5 +1,51 @@
+import { ViewType, PricingType, BedType } from "@/models/room/room.enums";
+
 import { Request } from "express";
-import { CreateRoomDTO, UpdateRoomDTO } from "@/types/room.types";
+
+export interface RoomFilterOptions {
+	minPrice?: number;
+	maxPrice?: number;
+	adults?: number;
+	children?: number;
+	sortBy?: string;
+}
+
+export interface CreateBedBatchDTO {
+	name: string;
+	description?: string;
+	bedType: BedType;
+	quantity?: number;
+	size?: string;
+	price?: number;
+}
+
+export interface CreateRoomDTO {
+	name: string;
+	description?: string;
+	quantity?: number;
+	maxAdults?: number;
+	maxChildren?: number;
+	size?: number;
+	bedroomCount?: number;
+	bathroomCount?: number;
+	viewType?: ViewType;
+	viewDescription?: string;
+	basePrice?: number;
+	floorPrice?: number;
+	pricingType?: PricingType;
+	isActive?: boolean;
+
+	beds: CreateBedBatchDTO[];
+	amenityIds: string[];
+}
+
+export type UpdateBedDTO = Partial<CreateBedBatchDTO> & {
+	id?: string;
+};
+
+export type UpdateRoomDTO = Partial<Omit<CreateRoomDTO, "beds">> & {
+	beds?: UpdateBedDTO[];
+};
 
 /* ------------------------------------------------------------------ */
 /* Room                                                               */

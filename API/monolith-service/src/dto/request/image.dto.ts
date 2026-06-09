@@ -1,6 +1,7 @@
 import { type Request } from "express";
 import { EEntityType } from "@/generated/enums";
 
+
 export type ImageEntityType = "profile" | "accommodation" | "room" | "review";
 
 export const ImageUploadMapper: Record<ImageEntityType, EEntityType> = {

@@ -1,5 +1,6 @@
 import { Request } from "express";
 
+
 export interface UpgradeOwnerRequest extends Request {
 	userId: string;
 	body: {

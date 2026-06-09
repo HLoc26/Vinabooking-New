@@ -1,5 +1,6 @@
 import { Request } from "express";
 
+
 export interface SemanticSearchQuery {
 	q: string;
 	minLat: string;

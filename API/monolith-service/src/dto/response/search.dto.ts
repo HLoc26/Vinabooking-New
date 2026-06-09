@@ -1,5 +1,6 @@
 import { AccommodationFullInfo } from "@/dto/response/accommodation.dto";
-import { MatchReasonType } from "../search.types";
+import { MatchReasonType } from "../../types/search.types";
+
 
 export interface SemanticSearchResponse {
 	accommodation: AccommodationFullInfo;

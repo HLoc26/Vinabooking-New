@@ -3,8 +3,8 @@ import ResponseHelper from "@/utils/response";
 import BadRequestError from "@/errors/BadRequestError";
 import { OwnerService } from "@/services";
 import { OwnerMapper } from "@/mappers/owner.mapper";
-import { UpgradeOwnerRequest } from "@/types/requests";
-import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/types/responses";
+import { UpgradeOwnerRequest } from "@/dto/request";
+import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/dto/response";
 import { DraftAccommodation } from "@/dto/response/accommodation.dto";
 import type { OwnerBookingFilters, OwnerBookingSort, OwnerBookingStatus } from "@/repositories/booking.repository";
 

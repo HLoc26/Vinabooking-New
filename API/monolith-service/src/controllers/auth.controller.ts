@@ -1,5 +1,5 @@
 import { type Response, type Request } from "express";
-import { LogInRequest, SignUpRequest, ConfirmUserRequest, ConfirmForgotPasswordRequest, ForgotPasswordRequest, GetOTPRequest, VerifyRequest, GoogleCallbackRequest } from "@/types/requests";
+import { LogInRequest, SignUpRequest, ConfirmUserRequest, ConfirmForgotPasswordRequest, ForgotPasswordRequest, GetOTPRequest, VerifyRequest, GoogleCallbackRequest } from "@/dto/request";
 import ResponseHelper from "@/utils/response";
 import type {
 	ApiResponse,
@@ -12,12 +12,11 @@ import type {
 	SignOutResponse,
 	SignUpResponse,
 	VerifyResponse,
-} from "@/types/responses";
+} from "@/dto/response";
 
 import { OAuthService, AuthService, UserService } from "@/services";
 import JwtService from "@/utils/jwt";
-import { AuthProvider } from "@/models/auth";
-import { ETokenType } from "@/types/auth/auth-token";
+import { AuthProvider, ETokenType } from "@/models/auth";
 import IdentityProviderError from "@/errors/IdentityProviderError";
 import BadRequestError from "@/errors/BadRequestError";
 import DatabaseError from "@/errors/DatabaseError";

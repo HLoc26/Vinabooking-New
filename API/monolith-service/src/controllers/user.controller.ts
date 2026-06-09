@@ -1,9 +1,9 @@
 import { Request, type Response } from "express";
 import UserService from "../services/user.service";
 import FavouriteService from "../services/favourite.service";
-import type { SaveUserRequest, UpdateUserRequest } from "../types/requests";
+import type { SaveUserRequest, UpdateUserRequest } from "../dto/request";
 
-import type { ApiResponse } from "../types/responses";
+import type { ApiResponse } from "../dto/response";
 import ResponseHelper from "../utils/response";
 import { UserDto, UserWithFavouritesDto } from "@/dto/response/user.dto";
 import DatabaseError from "@/errors/DatabaseError";

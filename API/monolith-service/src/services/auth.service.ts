@@ -2,7 +2,7 @@ import CognitoClient from "@/clients/cognito.client";
 import { IdentityProviderError } from "@/errors";
 import { AuthProvider, UserAuthProvider } from "@/models/auth";
 import { AuthRepository } from "@/repositories";
-import { AuthTokens } from "@/types/auth/auth-token";
+import { AuthTokens } from "@/types/auth.types";
 import {
 	AdminCreateUserCommand,
 	AdminDeleteUserCommand,

@@ -14,8 +14,8 @@ import {
 	UpdateAccommodationRequest,
 	UpdateStatusRequest,
 	UpdateAddressRequest,
-} from "@/types/requests";
-import type { ApiResponse, AccommodationCardResponse } from "@/types/responses";
+} from "@/dto/request";
+import type { ApiResponse, AccommodationCardResponse } from "@/dto/response";
 
 class AccommodationController {
 	readonly #accommodationService: AccommodationService;

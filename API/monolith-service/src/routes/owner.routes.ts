@@ -15,7 +15,7 @@ import {
 	CreateRoomRequest,
 	UpdateRoomRequest,
 	DeleteRoomRequest,
-} from "@/types/requests";
+} from "@/dto/request";
 
 class OwnerRouter {
 	constructor(

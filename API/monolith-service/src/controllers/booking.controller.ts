@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
-import type { ApiResponse } from "@/types/responses";
+import type { ApiResponse } from "@/dto/response";
 import { BookingService, PaymentService } from "@/services";
 import { BookingPayload, BookingRequest, ConfirmRequest } from "@/dto/request/booking.dto";
 import { BookingDto, toBookingDto } from "@/dto/response/booking.dto";

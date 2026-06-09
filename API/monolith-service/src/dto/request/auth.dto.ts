@@ -1,6 +1,7 @@
 import { Request } from "express";
-import { ETokenType } from "../auth/auth-token";
 import { ERole } from "@/generated/enums";
+import { ETokenType } from "@/models/auth";
+
 
 export interface ConfirmForgotPasswordBody {
 	email: string;

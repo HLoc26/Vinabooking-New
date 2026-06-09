@@ -2,7 +2,7 @@ import { BadRequestError, NotFoundError } from "@/errors";
 import { BookingStatus } from "@/models/booking";
 import { PaymentTransferBuilder, PaymentTransferStatus } from "@/models/payment";
 import { BookingRepository, PaymentRepository } from "@/repositories";
-import { PayosWebhookData } from "@/types/requests/payment.requests";
+import { PayosWebhookData } from "@/dto/request/payment.dto";
 import { randomUUID } from "crypto";
 import BookingService from "./booking.service";
 import PayosService from "./payos.service";

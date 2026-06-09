@@ -1,6 +1,9 @@
 import { ImageDto } from "@/dto/response/image.dto";
-import { RoomWithDetails } from "@/types/room.types";
+import { RoomWithDetails } from "@/dto/response/room.dto";
 import { AccommodationType, RentalType, AccommodationStatus } from "@/models/accommodation/accommodation.enums";
+import { EAccommodationType, EAccommodationStatus } from "@/generated/client";
+
+
 export interface FacilityDto {
     id: string;
     name: string;
@@ -91,4 +94,17 @@ export interface OwnerAccommodationCard {
     reviewCount: number;
     avgStar: number | null;
     updatedAt: Date;
+}
+
+export interface AccommodationCardResponse {
+	id: string;
+	name: string;
+	type: EAccommodationType;
+	status: EAccommodationStatus;
+	thumbnail: string | null;
+	address: string | null;
+	roomCount: number;
+	reviewCount: number;
+	avgStar: number | null;
+	updatedAt: Date;
 }

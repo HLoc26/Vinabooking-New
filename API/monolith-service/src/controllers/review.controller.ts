@@ -3,7 +3,7 @@ import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
 import BadRequestError from "@/errors/BadRequestError";
 import { CreateReviewRequest, GetAccommodationReviewsRequest, GetUserByBookingRequest } from "@/dto/request/review.dto";
-import { ApiResponse } from "@/types/responses";
+import { ApiResponse } from "@/dto/response";
 import { ReviewResponse } from "@/dto/response/review.dto";
 
 class ReviewController {

@@ -10,7 +10,8 @@ import AccommodationService from "./accommodation.service";
 import redisClient from "@/clients/redis.client";
 import { AmenityConfig, Bed, Room } from "@/models/room";
 import type { DynamicPricingSettings, PricableItem, QuoteItemPricing } from "@/types/pricing.types";
-import { CreateRoomDTO, RoomFullDetail, UpdateRoomDTO } from "@/types/room.types";
+import { CreateRoomDTO, UpdateRoomDTO } from "@/dto/request/room.dto";
+import { RoomFullDetail } from "@/dto/response/room.dto";
 import { v4 as uuidv4 } from "uuid";
 
 export class RoomService {

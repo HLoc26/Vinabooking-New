@@ -9,7 +9,7 @@ import {
 	ForgotPasswordRequest,
 	ConfirmForgotPasswordRequest,
 	GoogleCallbackRequest,
-} from "../types/requests";
+} from "../dto/request";
 
 class AuthRouter {
 	constructor(

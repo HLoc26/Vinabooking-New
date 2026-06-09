@@ -1,7 +1,7 @@
 import { EntityType } from "@/models/image";
 import { ImageDto } from "@/dto/response/image.dto";
-import { DeleteImageRequest, GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/types/requests";
-import type { ApiResponse, UploadResponse } from "@/types/responses";
+import { DeleteImageRequest, GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/dto/request";
+import type { ApiResponse, UploadResponse } from "@/dto/response";
 import type { Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
 import type { FileType } from "@/types/image.types";

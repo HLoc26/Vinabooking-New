@@ -1,7 +1,7 @@
 import { EnvironmentNotSetError, IdentityProviderError } from "@/errors";
 import { AuthProvider } from "@/models/auth";
-import { AuthTokens } from "@/types/auth/auth-token";
-import { GoogleOAuthResponse } from "@/types/responses";
+import { AuthTokens } from "@/types/auth.types";
+import { GoogleOAuthResponse } from "@/dto/response";
 import JwtService from "@/utils/jwt";
 import AuthService from "./auth.service";
 import UserService from "./user.service";

@@ -1,6 +1,6 @@
 import { Router, Request, Response } from "express";
 import RoomController from "@/controllers/room.controller";
-import { GetRoomByIdRequest, GetRoomsByAccommodationRequest, GetRoomsByMultipleIdsRequest, FilterAccommodationIdsRequest } from "../types/requests";
+import { GetRoomByIdRequest, GetRoomsByAccommodationRequest, GetRoomsByMultipleIdsRequest, FilterAccommodationIdsRequest } from "../dto/request";
 
 class RoomRouter {
 	constructor(
