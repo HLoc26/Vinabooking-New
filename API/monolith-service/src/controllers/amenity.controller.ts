@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import ResponseHelper from "../utils/response";
-import { AmenityService } from "../services";
+import ResponseHelper from "@/utils/response";
+import { AmenityService } from "@/services";
 
 class AmenityController {
 	readonly #amenityService: AmenityService;

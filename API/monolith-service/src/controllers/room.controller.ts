@@ -8,7 +8,7 @@ import type {
 	UpdateRoomRequest,
 	DeleteRoomRequest,
 	FilterAccommodationIdsRequest,
-} from "../dto/request";
+} from "@/dto/request";
 import ResponseHelper from "@/utils/response";
 
 export class RoomController {

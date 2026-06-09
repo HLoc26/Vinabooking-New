@@ -1,6 +1,6 @@
 import { Request, Response } from "express";
-import AccommodationService from "../services/accommodation.service";
-import ResponseHelper from "../utils/response";
+import { AccommodationService } from "@/services";
+import ResponseHelper from "@/utils/response";
 
 import { AccommodationStatus } from "@/models/accommodation/accommodation.enums";
 import {
