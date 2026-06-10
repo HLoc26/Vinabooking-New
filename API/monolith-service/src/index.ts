@@ -176,7 +176,7 @@ const appRouter = new AppRouter(
 	pricingRouter
 );
 
-const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net"];
+const allowed = ["http://localhost:5173", "https://d3o4csdzy9h0t1.cloudfront.net", "https://vinabooking.hloc26.id.vn"];
 
 app.use(
 	cors({
