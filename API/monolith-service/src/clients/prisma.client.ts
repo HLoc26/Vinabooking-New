@@ -31,10 +31,11 @@ const adapter = new PrismaMariaDb({
 	password: process.env["DB_PWD"],
 
 	database: process.env["DB_NAME"],
-	connectionLimit: 5,
+	connectionLimit: 10,
 
 	allowPublicKeyRetrieval: true,
-	ssl: false,
+	ssl: true,
+	connectTimeout: 10000,
 });
 
 const prismaClient = new PrismaClient({ adapter });
