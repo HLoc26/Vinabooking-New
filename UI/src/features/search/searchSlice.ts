@@ -20,6 +20,14 @@ const initialState: Query = {
 		limit: 20,
 		page: 1,
 	},
+	allowsPets: undefined,
+	allowsSmoking: undefined,
+	allowsParties: undefined,
+	checkInTime: undefined,
+	checkOutTime: undefined,
+	cancellationPolicy: undefined,
+	prepaymentPolicy: undefined,
+	quietHoursStart: undefined,
 };
 
 const searchSlice = createSlice({

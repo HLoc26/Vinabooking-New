@@ -1,3 +1,4 @@
+import crypto from "node:crypto";
 import AccommodationRepository from "@/repositories/accommodation.repository";
 import { NotFoundError, BadRequestError } from "../errors";
 import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
@@ -18,6 +19,7 @@ import {
 	UpdateAddressDTO,
 	UpdateAccommodationPricingDTO,
 	OwnerAccommodationCard,
+	UpdatePolicyDTO,
 } from "@/types/accommodation.types";
 import { ImageFullInfo } from "@/types/image.types";
 import redisClient from "@/clients/redis.client";
@@ -225,6 +227,21 @@ class AccommodationService {
 		data: AccommodationFullInfo[];
 		meta: { page: number; limit: number; total: number; totalPages: number };
 	}> {
+		// Sort query keys to create a deterministic cache key
+		const sortedQuery = Object.keys(query)
+			.sort((a, b) => a.localeCompare(b))
+			.reduce((acc, key) => {
+				acc[key as keyof SearchQuery] = query[key as keyof SearchQuery] as any;
+				return acc;
+			}, {} as Record<string, any>);
+
+		const cacheKey = "search:accommodations:" + crypto.createHash("md5").update(JSON.stringify(sortedQuery)).digest("hex");
+		const cachedResult = await redisClient.get(cacheKey);
+
+		if (cachedResult) {
+			return JSON.parse(cachedResult);
+		}
+
 		const pageNum = Number(query.page || "1");
 		const limitNum = Number(query.limit || "20");
 		const offset = (pageNum - 1) * limitNum;
@@ -232,7 +249,9 @@ class AccommodationService {
 		// 1. Lọc IDs từ phòng trống
 		const filteredIds = await this._getInitialFilteredIds(query);
 		if (filteredIds?.length === 0) {
-			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			const emptyResult = { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			await redisClient.setEx(cacheKey, 300, JSON.stringify(emptyResult));
+			return emptyResult;
 		}
 
 		const searchFilters: SearchFilters = {
@@ -240,6 +259,14 @@ class AccommodationService {
 			type: query.type,
 			ids: filteredIds,
 			facilities: query.facilities ? (Array.isArray(query.facilities) ? query.facilities : [query.facilities]) : undefined,
+			allowsPets: query.allowsPets,
+			allowsSmoking: query.allowsSmoking,
+			allowsParties: query.allowsParties,
+			checkInTime: query.checkInTime,
+			checkOutTime: query.checkOutTime,
+			cancellationPolicy: query.cancellationPolicy,
+			prepaymentPolicy: query.prepaymentPolicy,
+			quietHoursStart: query.quietHoursStart,
 		};
 
 		// 2. Gọi SQL Raw để lấy danh sách phân trang và các chỉ số thống kê
@@ -247,13 +274,15 @@ class AccommodationService {
 		const paginatedIds = statsRows.map((row) => row.id);
 
 		if (total === 0) {
-			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			const emptyResult = { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			await redisClient.setEx(cacheKey, 300, JSON.stringify(emptyResult));
+			return emptyResult;
 		}
 
 		// 3. TRUYỀN STATS ROWS VÀO ĐỂ KHÔNG PHẢI QUERY LẠI (Tối ưu x2 tốc độ)
 		const finalData = await this.getAccommodationsBatch(paginatedIds, statsRows);
 
-		return {
+		const result = {
 			data: finalData,
 			meta: {
 				page: pageNum,
@@ -262,6 +291,9 @@ class AccommodationService {
 				totalPages: Math.ceil(total / limitNum) || 1,
 			},
 		};
+
+		await redisClient.setEx(cacheKey, 300, JSON.stringify(result));
+		return result;
 	}
 
 	public async getOwnerAccommodations(ownerId: string): Promise<OwnerAccommodationCard[]> {
@@ -464,6 +496,10 @@ class AccommodationService {
 			}
 		}
 
+		if (!acc.policy?.checkInTime || !acc.policy?.checkOutTime) {
+			throw new BadRequestError("Cannot publish: Missing operation policies (Check-in/Check-out times).");
+		}
+
 		// ==========================================
 		// PASS VALIDATION
 		// ==========================================
@@ -525,6 +561,29 @@ class AccommodationService {
 
 	public async getCapacityByOwnerId(ownerId: string) {
 		return await this.#accommodationRepository.getRoomsCapacityByOwnerId(ownerId);
+	}
+
+	public async getPolicy(accommodationId: string) {
+		const policy = await this.#accommodationRepository.findPolicyByAccommodationId(accommodationId);
+		if (!policy) throw new NotFoundError("Policy for this accommodation not found");
+		return policy;
+	}
+
+	public async updatePolicy(ownerId: string, id: string, data: UpdatePolicyDTO) {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		const updatedPolicy = await this.#accommodationRepository.upsertPolicy(id, data);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+		
+		// Invalidate search cache
+		const keys = await redisClient.keys("search:accommodations:*");
+		if (keys.length > 0) {
+			await redisClient.del(keys);
+		}
+
+		return updatedPolicy;
 	}
 }
 

@@ -1,6 +1,6 @@
 import { Request } from "express";
 import { type EAccommodationType } from "@/generated/client";
-import { SearchQuery, CreateAccommodationDTO, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateStatusDTO, UpdateAddressDTO } from "@/types/accommodation.types";
+import { SearchQuery, CreateAccommodationDTO, UpdateFacilitiesDTO, UpdateAccommodationDTO, UpdateStatusDTO, UpdateAddressDTO, UpdatePolicyDTO } from "@/types/accommodation.types";
 
 /**
  * GET /accommodations/:id?checkIn=...&checkOut=...
@@ -56,3 +56,7 @@ export type UpdateFacilitiesRequest = Request<{ id: string }, unknown, UpdateFac
 export type UpdateAccommodationRequest = Request<{ id: string }, unknown, UpdateAccommodationDTO>;
 export type UpdateStatusRequest = Request<{ id: string }, unknown, UpdateStatusDTO>;
 export type UpdateAddressRequest = Request<{ id: string }, unknown, UpdateAddressDTO>;
+
+// Policy
+export type GetPolicyRequest = Request<{ id: string }>;
+export type UpdatePolicyRequest = Request<{ id: string }, unknown, UpdatePolicyDTO>;

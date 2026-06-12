@@ -31,6 +31,10 @@ export const editFieldSx = {
 		"&.Mui-focused fieldset": { borderColor: "primary.main" },
 	},
 	"& .MuiInputLabel-root": { fontSize: "0.85rem" },
+	"& input::-webkit-calendar-picker-indicator": {
+		filter: "invert(1)",
+		cursor: "pointer",
+	},
 };
 
 export const getCardSx = (isEditing: boolean) => ({

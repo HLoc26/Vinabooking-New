@@ -61,6 +61,15 @@ export const parseSearchParamsToQuery = (params: URLSearchParams): Query => {
 			page: Number(params.get("page")) || DEFAULT_PAGE,
 			limit: Number(params.get("limit")) || DEFAULT_LIMIT,
 		},
+
+		allowsPets: params.get("allowsPets") === "true" ? true : undefined,
+		allowsSmoking: params.get("allowsSmoking") === "true" ? true : undefined,
+		allowsParties: params.get("allowsParties") === "true" ? true : undefined,
+		checkInTime: params.get("checkInTime") || undefined,
+		checkOutTime: params.get("checkOutTime") || undefined,
+		cancellationPolicy: params.get("cancellationPolicy") || undefined,
+		prepaymentPolicy: params.get("prepaymentPolicy") || undefined,
+		quietHoursStart: params.get("quietHoursStart") || undefined,
 	};
 };
 

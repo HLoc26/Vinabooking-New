@@ -32,4 +32,14 @@ export type Query = {
 	sortBy: SortOption;
 	facilities: string[];
 	pagination: Pagination;
+
+	// Policy Filters
+	allowsPets?: boolean;
+	allowsSmoking?: boolean;
+	allowsParties?: boolean;
+	checkInTime?: string;
+	checkOutTime?: string;
+	cancellationPolicy?: string;
+	prepaymentPolicy?: string;
+	quietHoursStart?: string;
 };

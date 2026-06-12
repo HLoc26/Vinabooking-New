@@ -2,6 +2,7 @@ import { Tabs, Tab, Paper } from "@mui/material";
 import { OverviewTab } from "./tabs/Overview/OverviewTab";
 import { RoomsTab } from "./tabs/Rooms/RoomsTab";
 import { ReviewsTab } from "./tabs/Reviews/ReviewsTab";
+import { PropertyPolicies } from "./PropertyPolicies";
 import type { AccommodationDetail } from "../../types/accommodation.types";
 
 interface Props {
@@ -18,12 +19,14 @@ export const DetailTabs = ({ tabValue, onChange, accommodation }: Props) => {
 					<Tab label="Overview" />
 					<Tab label="Rooms" />
 					<Tab label="Reviews" />
+					<Tab label="Policies" />
 				</Tabs>
 			</Paper>
 
 			{tabValue === 0 && <OverviewTab accommodation={accommodation} />}
 			{tabValue === 1 && <RoomsTab accommodationId={accommodation.id} />}
 			{tabValue === 2 && <ReviewsTab accommodation={accommodation} />}
+			{tabValue === 3 && <PropertyPolicies accommodation={accommodation} />}
 		</>
 	);
 };

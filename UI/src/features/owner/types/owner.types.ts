@@ -143,6 +143,8 @@ export type AccommodationSummary = {
 	avgStar: number | null;
 	reviewCount: number;
 
+	policy: UpdatePolicyDTO | null;
+
 	createdAt: string;
 	updatedAt: string;
 };
@@ -362,6 +364,38 @@ export interface RoomSummary {
 }
 
 /* ────────────────────────────────────────────────────────
+   Policy (Step 7 - New Step 5)
+──────────────────────────────────────────────────────── */
+
+export enum EPrepaymentPolicy {
+	PREPAY_100 = "PREPAY_100",
+	PREPAY_50 = "PREPAY_50",
+	PREPAY_NONE = "PREPAY_NONE",
+}
+
+export enum ECancellationPolicy {
+	CANCEL_24H = "CANCEL_24H",
+	CANCEL_48H = "CANCEL_48H",
+	CANCEL_7D = "CANCEL_7D",
+	CANCEL_14D = "CANCEL_14D",
+	CANCEL_NONE = "CANCEL_NONE",
+}
+
+export interface UpdatePolicyDTO {
+	checkInTime: string;
+	checkOutTime: string;
+	prepaymentPolicy: EPrepaymentPolicy;
+	cancellationPolicy: ECancellationPolicy;
+	cancellationDescription?: string;
+	allowsPets?: boolean;
+	allowsSmoking?: boolean;
+	allowsParties?: boolean;
+	quietHoursStart?: string;
+	quietHoursEnd?: string;
+	additionalRules?: string;
+}
+
+/* ────────────────────────────────────────────────────────
    Images (Step 6)
 ──────────────────────────────────────────────────────── */
 
@@ -403,4 +437,7 @@ export type WizardForm = {
 
 	// Step 6
 	images: ImageItem[];
+
+	// Step 7 (inserted as Step 5 in wizard)
+	policy: UpdatePolicyDTO;
 };
