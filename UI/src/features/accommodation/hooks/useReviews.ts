@@ -1,19 +1,25 @@
 import { useQuery } from "@tanstack/react-query";
 import { getReviewImages } from "../reviewApi";
-import type { Review, ReviewWithImages } from "../../review/types/review.types";
+import type { AccommodationReviewsResponse, Review, ReviewWithImages } from "../../review/types/review.types";
 import reviewApi from "../../review/services/reviewApi";
 
+export interface AccommodationReviewsWithImagesResponse {
+	reviews: ReviewWithImages[];
+	summary: string | null;
+}
+
 export const useReviews = (accommodationId?: string) => {
-	return useQuery<ReviewWithImages[]>({
+	return useQuery<AccommodationReviewsWithImagesResponse>({
 		queryKey: ["accommodation", accommodationId, "reviews"],
 		enabled: !!accommodationId, // 👈 prevents crash
 		queryFn: async () => {
-			if (!accommodationId) return [];
+			if (!accommodationId) return { reviews: [], summary: null };
 
 			const response = await reviewApi.getByAccommodation(accommodationId);
-			const reviews: Review[] = response ?? [];
+			const reviews: Review[] = response?.reviews ?? [];
+			const summary = response?.summary ?? null;
 
-			if (!reviews.length) return [];
+			if (!reviews.length) return { reviews: [], summary };
 
 			const reviewsWithImages: ReviewWithImages[] = await Promise.all(
 				reviews.map(async (review) => {
@@ -33,9 +39,9 @@ export const useReviews = (accommodationId?: string) => {
 				})
 			);
 
-			return reviewsWithImages;
+			return { reviews: reviewsWithImages, summary };
 		},
 		staleTime: 1000 * 60 * 10,
-		placeholderData: [],
+		placeholderData: { reviews: [], summary: null },
 	});
 };

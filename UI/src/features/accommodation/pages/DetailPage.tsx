@@ -42,8 +42,8 @@ export default function DetailPage() {
 		return accommodation?.images.map((img) => img.variants.find((v) => v.variant === "WEBP")?.url).filter((url): url is string => !!url);
 	};
 
-	const { data: rawReviews } = useReviews(accommodation?.id ?? "");
-	const reviews = rawReviews ?? [];
+	const { data: rawReviewsData } = useReviews(accommodation?.id ?? "");
+	const reviews = rawReviewsData?.reviews ?? [];
 	const avgStar = reviews.reduce((sum, a) => sum + (a.star ?? 0), 0) / (reviews.filter((r) => typeof r.star === "number").length || 1);
 
 	const [tabValue, setTabValue] = useState(0);
