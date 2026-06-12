@@ -22,6 +22,13 @@ if (!process.env["DB_NAME"]) {
 	throw new EnvironmentNotSetError("Missing env: DB_NAME");
 }
 const isSecured = process.env["DB_SECURED"] === "true";
+const sslConfig = isSecured && process.env["DB_CA_CERT"]
+    ? {
+        ca: process.env["DB_CA_CERT"],
+        rejectUnauthorized: true
+      }
+	: { rejectUnauthorized: false };
+	
 const adapter = new PrismaMariaDb({
 	// Connection setting
 	host: process.env["DB_HOST"]!,
@@ -34,9 +41,7 @@ const adapter = new PrismaMariaDb({
 	connectionLimit: 10,
 
 	allowPublicKeyRetrieval: true,
-	ssl: isSecured
-		? true
-		: { rejectUnauthorized: false },
+	ssl: sslConfig,
 	connectTimeout: 10000,
 });
 
