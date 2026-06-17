@@ -2,9 +2,8 @@ import { Response } from "express";
 import ResponseHelper from "@/utils/response";
 import { ReviewService } from "@/services";
 import BadRequestError from "@/errors/BadRequestError";
-import { CreateReviewRequest, GetAccommodationReviewsRequest, GetUserByBookingRequest } from "@/dto/request/review.dto";
-import { ApiResponse } from "@/dto/response";
-import { ReviewResponse } from "@/dto/response/review.dto";
+import { CreateReviewRequest, GetAccommodationReviewsRequest, GetUserByBookingRequest } from "@/dto/request";
+import { ApiResponse, ReviewResponse, AccommodationReviewsResponse } from "@/dto/response";
 
 class ReviewController {
 	readonly #reviewService: ReviewService;
@@ -51,16 +50,16 @@ class ReviewController {
 	 * GET /reviews/accommodation/:accommodationId
 	 * Lấy danh sách review của một khách sạn
 	 */
-	public getAccommodationReviews = async (req: GetAccommodationReviewsRequest, res: Response<ApiResponse<ReviewResponse[]>>) => {
+	public getAccommodationReviews = async (req: GetAccommodationReviewsRequest, res: Response<ApiResponse<AccommodationReviewsResponse>>) => {
 		try {
 			const { accommodationId } = req.params;
 			if (!accommodationId) {
 				throw new BadRequestError("Missing accommodationId parameter");
 			}
 
-			const reviews = await this.#reviewService.getReviewsByAccommodation(accommodationId);
+			const data = await this.#reviewService.getReviewsByAccommodation(accommodationId);
 
-			return ResponseHelper.success(res, reviews);
+			return ResponseHelper.success(res, data);
 		} catch (error) {
 			const e = error as Error;
 			return ResponseHelper.error(res, e.message, 400);

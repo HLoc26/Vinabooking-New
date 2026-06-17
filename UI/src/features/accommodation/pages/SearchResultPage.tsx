@@ -5,7 +5,7 @@ import { Container, Grid, Box } from "@mui/material";
 import { SearchFiltersSidebar, ActiveFiltersBar, ResultsHeader, AccommodationCard, ResultsSkeleton, ResultsEmptyState, PaginationBar, type ActiveFilter } from "../components/search";
 
 import { useScrollToTopOnMount } from "../../../hooks/useScrollToTopMount";
-import { PRICE_FILTER_CONFIG } from "../constants/searchFilters";
+import { PRICE_FILTER_CONFIG, CANCELLATION_EN_LABELS, PREPAYMENT_EN_LABELS } from "../constants/searchFilters";
 import { usePushNotificationContext } from "../../../context/PushNotification/hook";
 import SearchBar from "../components/search/SearchBar/SearchBar";
 import { useDispatch, useSelector } from "react-redux";
@@ -14,7 +14,7 @@ import { useSearchAccommodations } from "../hooks/useSearchAccommodation";
 import { syncFromUrl } from "../../search/searchSlice";
 import { parseSearchParamsToQuery } from "../../../utils/search";
 import useFacilityList from "../hooks/useFacilityList";
-import { EAccommodationType } from "../types/accommodation.types";
+import { EAccommodationType, ECancellationPolicy, EPrepaymentPolicy } from "../types/accommodation.types";
 import { AdvancedSearchButton } from "../../search/semantic-search/AdvancedSearchButton";
 import { useCurrency } from "../../../hooks/useCurrency";
 
@@ -80,6 +80,8 @@ export default function SearchResultPage() {
 			} else {
 				params.delete("facilities");
 			}
+		} else {
+			params.delete(filterKey);
 		}
 
 		navigate(`/search?${params.toString()}`);
@@ -106,7 +108,7 @@ export default function SearchResultPage() {
 
 		// Type filter
 		if (criteria.type && criteria.type !== EAccommodationType.ALL) {
-			filters.push({ key: "type", label: "Loại hình", value: criteria.type });
+			filters.push({ key: "type", label: "Accommodation Type", value: criteria.type });
 		}
 
 		// Price filter
@@ -117,7 +119,7 @@ export default function SearchResultPage() {
 		if (!isDefaultPrice) {
 			filters.push({
 				key: "price",
-				label: "Khoảng giá",
+				label: "Price Range",
 				value: `${format(min)} - ${format(max)}`,
 			});
 		}
@@ -126,9 +128,21 @@ export default function SearchResultPage() {
 		if (criteria.facilities && criteria.facilities.length > 0) {
 			criteria.facilities.forEach((facId) => {
 				const facName = facilities.find((f) => f.id === facId)?.name || facId;
-				filters.push({ key: `facility-${facId}`, label: "Tiện ích", value: facName });
+				filters.push({ key: `facility-${facId}`, label: "Facility", value: facName });
 			});
 		}
+
+		// Policy Filters
+		if (criteria.allowsPets) filters.push({ key: "allowsPets", label: "House Rules", value: "Pets allowed" });
+		if (criteria.allowsSmoking) filters.push({ key: "allowsSmoking", label: "House Rules", value: "Smoking allowed" });
+		if (criteria.allowsParties) filters.push({ key: "allowsParties", label: "House Rules", value: "Parties allowed" });
+		if (criteria.cancellationPolicy)
+			filters.push({ key: "cancellationPolicy", label: "Cancellation", value: CANCELLATION_EN_LABELS[criteria.cancellationPolicy as ECancellationPolicy] || criteria.cancellationPolicy });
+		if (criteria.prepaymentPolicy)
+			filters.push({ key: "prepaymentPolicy", label: "Prepayment", value: PREPAYMENT_EN_LABELS[criteria.prepaymentPolicy as EPrepaymentPolicy] || criteria.prepaymentPolicy });
+		if (criteria.checkInTime) filters.push({ key: "checkInTime", label: "Desired Check-in", value: criteria.checkInTime });
+		if (criteria.checkOutTime) filters.push({ key: "checkOutTime", label: "Desired Check-out", value: criteria.checkOutTime });
+		if (criteria.quietHoursStart) filters.push({ key: "quietHoursStart", label: "Quiet Hours", value: criteria.quietHoursStart });
 
 		return filters;
 	}, [criteria, facilities, format]);

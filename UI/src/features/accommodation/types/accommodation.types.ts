@@ -104,6 +104,35 @@ export type FacilityConfig = {
 	description: string;
 };
 
+export const EPrepaymentPolicy = {
+	PREPAY_100: "PREPAY_100",
+	PREPAY_50: "PREPAY_50",
+	PREPAY_NONE: "PREPAY_NONE",
+} as const;
+export type EPrepaymentPolicy = (typeof EPrepaymentPolicy)[keyof typeof EPrepaymentPolicy];
+
+export const ECancellationPolicy = {
+	CANCEL_24H: "CANCEL_24H",
+	CANCEL_48H: "CANCEL_48H",
+	CANCEL_7D: "CANCEL_7D",
+	CANCEL_14D: "CANCEL_14D",
+	CANCEL_NONE: "CANCEL_NONE",
+} as const;
+export type ECancellationPolicy = (typeof ECancellationPolicy)[keyof typeof ECancellationPolicy];
+
+export interface AccommodationPolicy {
+	checkInTime: string;
+	checkOutTime: string;
+	prepaymentPolicy: EPrepaymentPolicy;
+	cancellationPolicy: ECancellationPolicy;
+	cancellationDescription?: string;
+	allowsPets?: boolean;
+	allowsSmoking?: boolean;
+	allowsParties?: boolean;
+	quietHoursStart?: string;
+	quietHoursEnd?: string;
+	additionalRules?: string;
+}
 import type { DynamicPricingSettings, HolidayOptIn } from "../../owner/types/pricing.types";
 
 /**
@@ -124,6 +153,7 @@ export interface AccommodationDetail {
 	thumbnail: string; // url
 	avgStar: number;
 	reviewCount: number;
+	policy?: AccommodationPolicy;
 	dynamicPricingSettings?: DynamicPricingSettings | null;
 	holidayOptIns?: HolidayOptIn[];
 }

@@ -1,7 +1,8 @@
+import crypto from "node:crypto";
 import { publishQueue } from "@/clients/queue.client";
 import redisClient from "@/clients/redis.client";
-import { CreateAccommodationDTO, ESortOption, SearchQuery, UpdateAccommodationDTO, UpdateAccommodationPricingDTO, UpdateAddressDTO, UpdateFacilitiesDTO } from "@/dto/request/accommodation.dto";
-import { AccommodationFullInfo, AccommodationStats, OwnerAccommodationCard } from "@/dto/response/accommodation.dto";
+import { CreateAccommodationDTO, ESortOption, SearchQuery, UpdateAccommodationDTO, UpdateAccommodationPricingDTO, UpdateAddressDTO, UpdateFacilitiesDTO, UpdatePolicyDTO } from "@/dto/request/accommodation.dto";
+import { AccommodationFullInfo, AccommodationStats, OwnerAccommodationCard, AccommodationWithDetails } from "@/dto/response/accommodation.dto";
 import { ImageDto } from "@/dto/response/image.dto";
 import { BadRequestError, NotFoundError } from "@/errors";
 import { AccommodationMapper } from "@/mappers/accommodation.mapper";
@@ -177,14 +178,62 @@ class AccommodationService {
 		return { city: city || null, type: type || null, count };
 	}
 
-	async searchAccommodations(query: SearchQuery): Promise<{ data: AccommodationFullInfo[]; meta: { page: number; limit: number; total: number; totalPages: number }; }> {
+	async writeAccommodationsToCache(accommodation: AccommodationWithDetails[]) {
+		const CACHE_TTL = 86400;
+		const pipeline = redisClient.multi();
+
+		accommodation.forEach((acc) => {
+			pipeline.setEx(`${this.CACHE_PREFIX}${acc.id}`, CACHE_TTL, JSON.stringify(acc));
+		});
+		const log = await pipeline.exec();
+		console.log(log);
+	}
+
+	async getAccommodationsFromCache(ids: string[]): Promise<Map<string, AccommodationWithDetails>> {
+		const accommMap: Map<string, AccommodationWithDetails> = new Map();
+		if (ids.length === 0) return accommMap;
+
+		const accommInCache = await redisClient.mGet(ids.map((id) => `${this.CACHE_PREFIX}${id}`));
+
+		accommInCache.forEach((accommString) => {
+			if (!accommString) return;
+
+			const acc: AccommodationWithDetails = JSON.parse(accommString);
+
+			if (acc && acc.id) {
+				accommMap.set(acc.id, acc);
+			}
+		});
+		return accommMap;
+	}
+
+	async searchAccommodations(query: SearchQuery): Promise<{
+		data: AccommodationFullInfo[];
+		meta: { page: number; limit: number; total: number; totalPages: number };
+	}> {
+		const sortedQuery = Object.keys(query)
+			.sort((a, b) => a.localeCompare(b))
+			.reduce((acc, key) => {
+				acc[key as keyof SearchQuery] = query[key as keyof SearchQuery] as any;
+				return acc;
+			}, {} as Record<string, any>);
+
+		const cacheKey = "search:accommodations:" + crypto.createHash("md5").update(JSON.stringify(sortedQuery)).digest("hex");
+		const cachedResult = await redisClient.get(cacheKey);
+
+		if (cachedResult) {
+			return JSON.parse(cachedResult);
+		}
+
 		const pageNum = Number(query.page || "1");
 		const limitNum = Number(query.limit || "20");
 		const offset = (pageNum - 1) * limitNum;
 
 		const filteredIds = await this._getInitialFilteredIds(query);
 		if (filteredIds?.length === 0) {
-			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			const emptyResult = { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			await redisClient.setEx(cacheKey, 300, JSON.stringify(emptyResult));
+			return emptyResult;
 		}
 
 		const { statsRows, total } = await this.#accommodationRepository.getStatsRows({
@@ -192,17 +241,38 @@ class AccommodationService {
 			type: query.type,
 			ids: filteredIds,
 			facilities: query.facilities ? (Array.isArray(query.facilities) ? query.facilities : [query.facilities]) : undefined,
+			allowsPets: query.allowsPets,
+			allowsSmoking: query.allowsSmoking,
+			allowsParties: query.allowsParties,
+			checkInTime: query.checkInTime,
+			checkOutTime: query.checkOutTime,
+			cancellationPolicy: query.cancellationPolicy,
+			prepaymentPolicy: query.prepaymentPolicy,
+			quietHoursStart: query.quietHoursStart,
 		}, offset, limitNum, query.sortBy);
 
 		const paginatedIds = statsRows.map((row) => row.id);
 
 		if (total === 0) {
-			return { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			const emptyResult = { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
+			await redisClient.setEx(cacheKey, 300, JSON.stringify(emptyResult));
+			return emptyResult;
 		}
 
 		const finalData = await this.getAccommodationsBatch(paginatedIds, statsRows);
 
-		return { data: finalData, meta: { page: pageNum, limit: limitNum, total, totalPages: Math.ceil(total / limitNum) || 1 } };
+		const result = {
+			data: finalData,
+			meta: {
+				page: pageNum,
+				limit: limitNum,
+				total,
+				totalPages: Math.ceil(total / limitNum) || 1,
+			},
+		};
+
+		await redisClient.setEx(cacheKey, 300, JSON.stringify(result));
+		return result;
 	}
 
 	public async getOwnerAccommodations(ownerId: string): Promise<OwnerAccommodationCard[]> {
@@ -420,10 +490,15 @@ class AccommodationService {
 		// _count info and room validity was injected by Repository via Mapper
 		// The domain method will throw errors if constraints are not met.
 		// We injected roomCount and allRoomsValid into the builder inside Mapper.
-		const roomCount = (acc as any).roomCount;
+				const roomCount = (acc as any).roomCount;
 		const allRoomsValid = (acc as any).allRoomsValid;
 
 		acc.publish(roomCount, allRoomsValid);
+
+		const policy = await this.#accommodationRepository.findPolicyByAccommodationId(id);
+		if (!policy || !policy.checkInTime || !policy.checkOutTime) {
+			throw new BadRequestError("Cannot publish: Missing operation policies (Check-in/Check-out times).");
+		}
 
 		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
@@ -490,6 +565,29 @@ class AccommodationService {
 
 	public async getCapacityByOwnerId(ownerId: string) {
 		return await this.#accommodationRepository.getRoomsCapacityByOwnerId(ownerId);
+	}
+
+	public async getPolicy(accommodationId: string) {
+		const policy = await this.#accommodationRepository.findPolicyByAccommodationId(accommodationId);
+		if (!policy) throw new NotFoundError("Policy for this accommodation not found");
+		return policy;
+	}
+
+	public async updatePolicy(ownerId: string, id: string, data: UpdatePolicyDTO) {
+		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
+		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
+
+		const updatedPolicy = await this.#accommodationRepository.upsertPolicy(id, data);
+
+		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+		
+		// Invalidate search cache
+		const keys = await redisClient.keys("search:accommodations:*");
+		if (keys.length > 0) {
+			await redisClient.del(keys);
+		}
+
+		return updatedPolicy;
 	}
 }
 

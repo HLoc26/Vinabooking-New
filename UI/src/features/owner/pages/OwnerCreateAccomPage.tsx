@@ -10,9 +10,10 @@ import StepFacilityBox from "../components/Wizard/Step4/StepFacilityBox";
 import StepRoomsBox from "../components/Wizard/Step5/StepRoomBox";
 import StepImageBox from "../components/Wizard/Step6/StepImageBox";
 import StepPricingBox from "../components/Wizard/StepPricing/StepPricingBox";
+import StepPolicyBox from "../components/Wizard/Step8/StepPolicyBox";
 import StepPreviewBox from "../components/Wizard/Step7/StepPreviewBox";
 
-import { type WizardForm } from "../types/owner.types";
+import { type WizardForm, EPrepaymentPolicy, ECancellationPolicy } from "../types/owner.types";
 import { ERentalType, EAccommodationType } from "../../accommodation/types/accommodation.types";
 import { CreateAccommStepper } from "../components/Wizard/CreateAccommStepper";
 import { STEP_META } from "../const/StepperMetaConst";
@@ -87,7 +88,7 @@ const OwnerCreateAccomPage = () => {
 	const [completed, setCompleted] = useState<Set<number>>(new Set());
 	const [validationError, setValidationError] = useState<string | null>(null);
 
-	// V2 triger for Step 0, 1, 2, 4
+	// V2 triger for Step 0, 1, 2, 4, 5, 6
 	const [triggerSubmit, setTriggerSubmit] = useState(false);
 
 	// V1 trigger for Step 3 (Rooms)
@@ -113,6 +114,19 @@ const OwnerCreateAccomPage = () => {
 		facilities: [],
 		rooms: [],
 		images: [],
+		policy: {
+			checkInTime: "14:00",
+			checkOutTime: "12:00",
+			prepaymentPolicy: EPrepaymentPolicy.PREPAY_NONE,
+			cancellationPolicy: ECancellationPolicy.CANCEL_24H,
+			allowsPets: false,
+			allowsSmoking: false,
+			allowsParties: false,
+			quietHoursStart: "22:00",
+			quietHoursEnd: "06:00",
+			cancellationDescription: "",
+			additionalRules: "",
+		},
 	});
 
 	const { mutateAsync: publishAsync, isPending } = usePublishAccommodation();
@@ -194,13 +208,14 @@ const OwnerCreateAccomPage = () => {
 
 		setValidationError(null);
 
-		// Các bước 0, 1, 2, 4, 5 dùng triggerSubmit chung (5 là Pricing)
-		if (step === 0 || step === 1 || step === 2 || step === 4 || step === 5) {
+		// Các bước 0, 1, 2, 4, 5(Pricing), 6(Policy) dùng triggerSubmit chung
+		if (step === 0 || step === 1 || step === 2 || step === 4 || step === 5 || step === 6) {
 			setTriggerSubmit(true);
 			return;
 		}
 
-		if (step === 6) {
+		// Bước Publish (Step 7)
+		if (step === 7) {
 			if (!form.accommodationId) {
 				pushNotification("Could not find accommodation ID to publish.", "error");
 				return;
@@ -325,6 +340,19 @@ const OwnerCreateAccomPage = () => {
 					/>
 				);
 			case 6:
+				return (
+					<StepPolicyBox
+						form={form}
+						setForm={setForm}
+						triggerSubmit={triggerSubmit}
+						resetTrigger={() => setTriggerSubmit(false)}
+						onSuccess={() => {
+							setCompleted((prev) => new Set(prev).add(6));
+							setStep(7);
+						}}
+					/>
+				);
+			case 7:
 				return <StepPreviewBox form={form} />;
 			default:
 				return null;

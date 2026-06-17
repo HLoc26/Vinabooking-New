@@ -6,3 +6,5 @@ export * from "./payment.dto";
 export * from "./room.dto";
 export * from "./search.dto";
 export * from "./user.dto";
+export * from "./review.dto";
+

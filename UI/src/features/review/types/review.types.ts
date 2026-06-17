@@ -17,6 +17,11 @@ export interface ReviewWithImages extends Review {
 	images: Image[];
 }
 
+export interface AccommodationReviewsResponse {
+	reviews: Review[];
+	summary: string | null;
+}
+
 export interface ReviewDto {
 	comment: string;
 	accommodationId: string;

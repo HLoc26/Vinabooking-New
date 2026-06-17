@@ -1,5 +1,6 @@
 import { Paper, Typography, Box, Rating, Avatar, Divider, Button, Stack, CircularProgress, Pagination } from "@mui/material";
-import { Star } from "@mui/icons-material";
+import { Star, AutoAwesome } from "@mui/icons-material";
+import { alpha } from "@mui/material/styles";
 import useUserBookings from "../../../../../booking/hooks/useUserBookings";
 import useModalContext from "../../../../../../context/ModalContext/hook";
 import ReviewModal from "../../../../../../components/shared/ReviewModal";
@@ -23,7 +24,9 @@ const REVIEWS_PER_PAGE = 5;
 export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 	const [page, setPage] = useState(1);
 	const { data, isLoading: loading, isError: error, refetch } = useReviews(accommodation.id);
-	const reviews = useMemo(() => data ?? [], [data]);
+	const reviews = useMemo(() => data?.reviews ?? [], [data]);
+	const summary = data?.summary;
+
 	const refresh = () => {
 		refetch();
 	};
@@ -150,6 +153,31 @@ export const ReviewsTab = ({ accommodation }: ReviewsTabProps) => {
 					</Typography>
 				</Box>
 			</Box>
+
+			{summary && (
+				<Box
+					sx={{
+						mb: 3,
+						p: 2,
+						bgcolor: (theme) => alpha(theme.palette.primary.main, 0.08),
+						borderRadius: 2,
+						border: "1px solid",
+						borderColor: (theme) => alpha(theme.palette.primary.main, 0.2),
+						position: "relative",
+						overflow: "hidden",
+					}}
+				>
+					<Box sx={{ display: "flex", alignItems: "center", gap: 1, mb: 1 }}>
+						<AutoAwesome sx={{ color: "primary.main", fontSize: 20 }} />
+						<Typography variant="subtitle2" fontWeight="bold" color="primary.dark">
+							Review Summary
+						</Typography>
+					</Box>
+					<Typography variant="body2" sx={{ fontStyle: "italic", color: "text.primary" }}>
+						"{summary}"
+					</Typography>
+				</Box>
+			)}
 
 			<Divider sx={{ mb: 3 }} />
 

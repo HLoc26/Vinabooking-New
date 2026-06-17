@@ -14,6 +14,8 @@ import {
 	UpdateAccommodationRequest,
 	UpdateStatusRequest,
 	UpdateAddressRequest,
+	UpdatePolicyRequest,
+	GetPolicyRequest,
 } from "@/dto/request";
 import type { ApiResponse, AccommodationCardResponse } from "@/dto/response";
 
@@ -247,6 +249,39 @@ class AccommodationController {
 
 		try {
 			const data = await this.#accommodationService.updateAddress(ownerId, id, body);
+			ResponseHelper.success(res, data);
+		} catch (error) {
+			if (error instanceof Error) {
+				ResponseHelper.error(res, error.message, 400);
+			} else {
+				ResponseHelper.error(res, "An unknown error occurred", 500);
+			}
+		}
+	}
+
+	public async getPolicy(req: Request<{ id: string }>, res: Response) {
+		const { id } = req.params;
+		try {
+			const data = await this.#accommodationService.getPolicy(id);
+			ResponseHelper.success(res, data);
+		} catch (error) {
+			if (error instanceof Error) ResponseHelper.error(res, error.message, 404);
+			else ResponseHelper.error(res, "Unknown error", 500);
+		}
+	}
+
+	public async updatePolicy(req: UpdatePolicyRequest, res: Response) {
+		const ownerId = req.userId;
+		const { id } = req.params;
+		const body = req.body;
+
+		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
+		if (!body.checkInTime || !body.checkOutTime) {
+			return ResponseHelper.error(res, "Missing required fields: checkInTime, checkOutTime", 400);
+		}
+
+		try {
+			const data = await this.#accommodationService.updatePolicy(ownerId, id, body);
 			ResponseHelper.success(res, data);
 		} catch (error) {
 			if (error instanceof Error) {

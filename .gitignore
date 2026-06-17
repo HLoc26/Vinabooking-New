@@ -2,6 +2,7 @@
 .env.prod
 *test.*
 
+
 **/generated/*
 
 # Logs

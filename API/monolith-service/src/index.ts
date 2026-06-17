@@ -109,21 +109,19 @@ const oauthService = new OAuthService(
 const imageService = new ImageService(imageRepository, s3Service);
 const uploadService = new UploadService(s3Service, imageRepository);
 const holidayService = new HolidayService(holidayRepository);
-
-
-
 const pricingService = new PricingService(holidayService, roomServiceProxy);
 const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService, accommodationServiceProxy, pricingService);
 roomService = new RoomService(roomRepository, bookingService, imageService, pricingService, accommodationServiceProxy);
 
+const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
 	bookingService: bookingService,
 	imageService: imageService,
 	accommodationService: accommodationServiceProxy,
+	reviewSummaryService: reviewSummaryService,
 });
-const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 const facilityService = new FacilityService(facilityRepository);
 const amenityService = new AmenityService(amenityRepository);
 const ownerService = new OwnerService(ownerRepository, imageService, accommodationServiceProxy, bookingService, userService);

@@ -1,7 +1,7 @@
 import { ImageDto } from "@/dto/response/image.dto";
 import { RoomWithDetails } from "@/dto/response/room.dto";
 import { AccommodationType, RentalType, AccommodationStatus } from "@/models/accommodation/accommodation.enums";
-import { EAccommodationType, EAccommodationStatus } from "@/generated/client";
+import { EAccommodationType, EAccommodationStatus, EPrepaymentPolicy, ECancellationPolicy } from "@/generated/client";
 
 
 export interface FacilityDto {
@@ -40,6 +40,24 @@ export interface AddressDto {
     updatedAt: Date;
 }
 
+export interface PolicyDto {
+    id: string;
+    accommodationId: string;
+    checkInTime: string | null;
+    checkOutTime: string | null;
+    prepaymentPolicy: EPrepaymentPolicy;
+    cancellationPolicy: ECancellationPolicy;
+    cancellationDescription: string | null;
+    allowsPets: boolean;
+    allowsSmoking: boolean;
+    allowsParties: boolean;
+    quietHoursStart: string | null;
+    quietHoursEnd: string | null;
+    additionalRules: string | null;
+    createdAt: Date;
+    updatedAt: Date;
+}
+
 export interface AccommodationWithDetails {
     id: string;
     name: string;
@@ -53,8 +71,10 @@ export interface AccommodationWithDetails {
     createdAt: Date;
     updatedAt: Date;
     address: AddressDto | null;
+    policy: PolicyDto | null;
     facilities: FacilityConfigDto[];
 }
+
 
 export type DraftAccommodation = AccommodationWithDetails & {
     currentWizardStep: number;

@@ -86,6 +86,33 @@ export const useFetchDraftForHydration = (draftId?: string) => {
 					),
 					rooms: mappedRooms,
 					images: mappedImages,
+					policy: draftData.policy
+						? {
+								checkInTime: draftData.policy.checkInTime,
+								checkOutTime: draftData.policy.checkOutTime,
+								prepaymentPolicy: draftData.policy.prepaymentPolicy,
+								cancellationPolicy: draftData.policy.cancellationPolicy,
+								cancellationDescription: draftData.policy.cancellationDescription || "",
+								allowsPets: draftData.policy.allowsPets,
+								allowsSmoking: draftData.policy.allowsSmoking,
+								allowsParties: draftData.policy.allowsParties,
+								quietHoursStart: draftData.policy.quietHoursStart || "22:00",
+								quietHoursEnd: draftData.policy.quietHoursEnd || "06:00",
+								additionalRules: draftData.policy.additionalRules || "",
+							}
+						: {
+								checkInTime: "14:00",
+								checkOutTime: "12:00",
+								prepaymentPolicy: "PREPAY_NONE",
+								cancellationPolicy: "CANCEL_24H",
+								allowsPets: false,
+								allowsSmoking: false,
+								allowsParties: false,
+								quietHoursStart: "22:00",
+								quietHoursEnd: "06:00",
+								cancellationDescription: "",
+								additionalRules: "",
+							},
 				},
 				targetStep: draftData.currentWizardStep,
 			};

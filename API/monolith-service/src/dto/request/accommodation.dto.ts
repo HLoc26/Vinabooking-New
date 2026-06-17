@@ -1,5 +1,6 @@
 import { AccommodationType, RentalType, AccommodationStatus } from "@/models/accommodation/accommodation.enums";
 import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
+import { type EPrepaymentPolicy, type ECancellationPolicy } from "@/generated/client";
 
 import { Request } from "express";
 
@@ -27,6 +28,14 @@ export interface SearchQuery {
     page?: string;
     limit?: string;
     sortBy?: ESortOption;
+    allowsPets?: string;
+    allowsSmoking?: string;
+    allowsParties?: string;
+    checkInTime?: string;
+    checkOutTime?: string;
+    cancellationPolicy?: string;
+    prepaymentPolicy?: string;
+    quietHoursStart?: string;
 }
 
 export interface CreateAccommodationDTO {
@@ -79,6 +88,14 @@ export interface SearchFilters {
     type?: AccommodationType;
     ids?: string[];
     facilities?: string[];
+    allowsPets?: string;
+    allowsSmoking?: string;
+    allowsParties?: string;
+    checkInTime?: string;
+    checkOutTime?: string;
+    cancellationPolicy?: string;
+    prepaymentPolicy?: string;
+    quietHoursStart?: string;
 }
 
 /**
@@ -135,3 +152,22 @@ export type UpdateFacilitiesRequest = Request<{ id: string }, unknown, UpdateFac
 export type UpdateAccommodationRequest = Request<{ id: string }, unknown, UpdateAccommodationDTO>;
 export type UpdateStatusRequest = Request<{ id: string }, unknown, UpdateStatusDTO>;
 export type UpdateAddressRequest = Request<{ id: string }, unknown, UpdateAddressDTO>;
+
+// Policy
+export interface UpdatePolicyDTO {
+	checkInTime: string;
+	checkOutTime: string;
+	prepaymentPolicy: EPrepaymentPolicy;
+	cancellationPolicy: ECancellationPolicy;
+	cancellationDescription?: string;
+	allowsPets?: boolean;
+	allowsSmoking?: boolean;
+	allowsParties?: boolean;
+	quietHoursStart?: string;
+	quietHoursEnd?: string;
+	additionalRules?: string;
+}
+
+export type GetPolicyRequest = Request<{ id: string }>;
+export type UpdatePolicyRequest = Request<{ id: string }, unknown, UpdatePolicyDTO>;
+

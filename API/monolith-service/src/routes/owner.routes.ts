@@ -15,6 +15,8 @@ import {
 	CreateRoomRequest,
 	UpdateRoomRequest,
 	DeleteRoomRequest,
+	GetPolicyRequest,
+	UpdatePolicyRequest,
 } from "@/dto/request";
 
 class OwnerRouter {
@@ -107,6 +109,14 @@ class OwnerRouter {
 
 		this.router.delete("/rooms/:id", onlyOwnerGuard, (req: Request, res: Response) => {
 			return this.roomController.deleteRoom(req as DeleteRoomRequest, res);
+		});
+
+		this.router.get("/accommodations/:id/policy", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.accommodationController.getPolicy(req as GetPolicyRequest, res);
+		});
+
+		this.router.put("/accommodations/:id/policy", onlyOwnerGuard, (req: Request, res: Response) => {
+			return this.accommodationController.updatePolicy(req as UpdatePolicyRequest, res);
 		});
 	}
 }

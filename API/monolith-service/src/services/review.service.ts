@@ -1,13 +1,13 @@
 import { reviewQueue } from "@/clients/queue.client";
 import redisClient from "@/clients/redis.client";
 import { CreateReviewPayload } from "@/dto/request/review.dto";
-import { ReviewResponse } from "@/dto/response/review.dto";
+import { ReviewResponse, AccommodationReviewsResponse } from "@/dto/response/review.dto";
 import { BadRequestError, ForbiddenError, NotFoundError } from "@/errors";
 import { BookingStatus } from "@/models/booking";
 import { EntityType } from "@/models/image";
 import { Review, ReviewBuilder } from "@/models/review";
 import { ReviewRepository } from "@/repositories";
-import { AccommodationService, BookingService, ImageService } from "@/services";
+import { AccommodationService, BookingService, ImageService, ReviewSummaryService } from "@/services";
 import { EReviewJobName } from "@/types/queue.types";
 import UserService from "./user.service";
 
@@ -18,6 +18,7 @@ export interface ReviewServiceConfig {
 	bookingService: BookingService;
 	imageService: ImageService;
 	accommodationService: AccommodationService;
+	reviewSummaryService: ReviewSummaryService;
 }
 
 class ReviewService {
@@ -26,6 +27,7 @@ class ReviewService {
 	readonly #bookingService: BookingService;
 	readonly #imageService: ImageService;
 	readonly #accommodationService: AccommodationService;
+	readonly #reviewSummaryService: ReviewSummaryService;
 
 	constructor(config: ReviewServiceConfig) {
 		this.#reviewRepository = config.reviewRepository;
@@ -33,6 +35,7 @@ class ReviewService {
 		this.#bookingService = config.bookingService;
 		this.#imageService = config.imageService;
 		this.#accommodationService = config.accommodationService;
+		this.#reviewSummaryService = config.reviewSummaryService;
 	}
 
 	/**
@@ -170,9 +173,18 @@ class ReviewService {
 	/**
 	 * Lấy Reviews của Accommodation (Enrich thêm User Info)
 	 */
-	public async getReviewsByAccommodation(accommodationId: string): Promise<ReviewResponse[]> {
-		const rawReviews = await this.#reviewRepository.findByAccommodationId(accommodationId);
-		if (!rawReviews.length) return [];
+	public async getReviewsByAccommodation(accommodationId: string): Promise<AccommodationReviewsResponse> {
+		const [rawReviews, summaryData] = await Promise.all([
+			this.#reviewRepository.findByAccommodationId(accommodationId),
+			this.#reviewSummaryService.getSummaryByAccommodation(accommodationId),
+		]);
+
+		if (!rawReviews.length) {
+			return {
+				reviews: [],
+				summary: summaryData?.getContent() || null,
+			};
+		}
 
 		const reviews = rawReviews.flatMap((r: Review) => [r, ...r.getReplies()]);
 		const userIds = [...new Set(reviews.map((r) => r.getUserId()))];
@@ -207,10 +219,15 @@ class ReviewService {
 
 		const childReviews = reviews.filter((r) => r.getParentId()).map(formatReview);
 
-		return parentReviews.map((parent) => {
+		const reviewsWithChildren = parentReviews.map((parent) => {
 			parent.children = childReviews.filter((child) => reviews.find((r) => r.getId() === child.id)?.getParentId() === parent.id);
 			return parent;
 		});
+
+		return {
+			reviews: reviewsWithChildren,
+			summary: summaryData?.getContent() || null,
+		};
 	}
 	public async getMyReviewByBooking(userId: string, bookingId: string) {
 		return this.#reviewRepository.findByBookingAndUser(bookingId, userId);

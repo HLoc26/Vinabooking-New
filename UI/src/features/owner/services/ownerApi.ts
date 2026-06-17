@@ -15,6 +15,7 @@ import type {
 	UpdateAddressPayload,
 	UpdateFacilitiesPayload,
 	UpdateRoomDTO,
+	UpdatePolicyDTO,
 	RoomSummary,
 	OwnerBookingFilters,
 	OwnerBookingListItem,
@@ -144,6 +145,11 @@ export const uploadAccommodationImages = (accommodationId: string, files: File[]
 export const uploadRoomImages = (roomId: string, files: File[]): Promise<void> => uploadInChunks(`/images/room/${roomId}`, files);
 
 export const deleteImageApi = async (imageId: string): Promise<void> => apiClient.delete(`/images/${imageId}`).then(() => undefined);
+
+// // ─── Step 7: Policy ──────────────────────────────────────────────────────────
+
+export const updatePolicy = async (accommodationId: string, payload: UpdatePolicyDTO): Promise<void> =>
+	apiClient.put(`/owners/accommodations/${accommodationId}/policy`, payload).then(() => undefined);
 
 export const publishAccommodation = async (id: string): Promise<void> =>
 	apiClient.patch<ApiResponse<void>>(`/owners/accommodations/${id}/publish`).then((res) => {
