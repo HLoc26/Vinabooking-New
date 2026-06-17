@@ -8,7 +8,7 @@ import type {
 	UpdateRoomRequest,
 	DeleteRoomRequest,
 	FilterAccommodationIdsRequest,
-} from "../types/requests";
+} from "@/dto/request";
 import ResponseHelper from "@/utils/response";
 
 export class RoomController {
@@ -40,7 +40,7 @@ export class RoomController {
 			return ResponseHelper.success(res, []);
 		}
 		//Chia cai nay ra lam 1 2 3 4
-		const ids = id.split(",").map((i) => i.trim());
+		const ids = (id as string).split(",").map((i: string) => i.trim());
 
 		if (ids.length === 0) {
 			return ResponseHelper.success(res, []);

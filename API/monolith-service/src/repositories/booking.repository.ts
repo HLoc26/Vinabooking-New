@@ -1,8 +1,6 @@
-import { PrismaClient, Prisma, Booking, BookingDetail, PaymentTransfer, User, ECancellationSource } from "@/generated/client";
-
-export type BookingWithDetails = Booking & {
-	details: BookingDetail[];
-};
+import { PrismaClient, Prisma, PaymentTransfer, User } from "@/generated/client";
+import { Booking } from "@/models/booking";
+import BookingMapper from "@/mappers/booking.mapper";
 
 export type OwnerBookingStatus = "PENDING" | "CANCELLED" | "BOOKED" | "COMPLETED";
 export type OwnerBookingSort = "newest" | "oldest" | "price_desc" | "price_asc";
@@ -15,8 +13,8 @@ export type OwnerBookingFilters = {
 	sort?: OwnerBookingSort;
 };
 
-export type OwnerBookingRecord = Booking & {
-	details: BookingDetail[];
+export type OwnerBookingRecord = {
+	booking: Booking;
 	user: Pick<User, "id" | "name" | "email" | "phone">;
 	paymentTransfers: PaymentTransfer[];
 };
@@ -34,6 +32,7 @@ export type OwnerBookingQueryResult = {
 	itemMap: Record<string, OwnerBookingItemMeta>;
 };
 
+
 class BookingRepository {
 	readonly #prismaClient: PrismaClient;
 
@@ -41,83 +40,64 @@ class BookingRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	// ---------- findById ----------
-	public async findById<T extends boolean = false>(id: string, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
-		return this.#findOne({ id }, withDetails);
+	public async findById(id: string): Promise<Booking | null> {
+		const prismaBooking = await this.#prismaClient.booking.findUnique({
+			where: { id },
+			include: { details: true, paymentTransfers: true },
+		});
+		return prismaBooking ? BookingMapper.toDomain(prismaBooking) : null;
 	}
 
-	// ---------- findByUser ----------
-	public async findByUserId<T extends boolean = true>(userId: string, withDetails: boolean = true): Promise<T extends true ? BookingWithDetails[] : Booking[]> {
+	public async findByUserId(userId: string): Promise<Booking[]> {
 		const bookings = await this.#prismaClient.booking.findMany({
 			where: { userId },
-			include: withDetails ? { details: true } : undefined,
+			include: { details: true, paymentTransfers: true },
 		});
-
-		return bookings as T extends true ? BookingWithDetails[] : Booking[];
+		return bookings.map((b) => BookingMapper.toDomain(b));
 	}
 
 	public async findByReferenceNo(referenceNo: number): Promise<Booking | null> {
-		return this.#prismaClient.booking.findUnique({
+		const booking = await this.#prismaClient.booking.findUnique({
 			where: { referenceNo },
 			include: { details: true },
 		});
+		return booking ? BookingMapper.toDomain(booking) : null;
 	}
 
-	public async findByRoomId(roomId: string) {
-		return await this.#prismaClient.booking.findMany({
+	public async findByRoomId(roomId: string): Promise<Booking[]> {
+		const bookings = await this.#prismaClient.booking.findMany({
 			where: { details: { some: { itemId: roomId, itemType: "ROOM" } } },
 			include: { details: true },
 		});
+		return bookings.map((b) => BookingMapper.toDomain(b));
 	}
 
-	public async findByAccommodationId(accommId: string): Promise<BookingWithDetails[]> {
-		// Find all rooms and their beds for the given accommodation
+	public async findByAccommodationId(accommId: string): Promise<Booking[]> {
 		const rooms = await this.#prismaClient.room.findMany({
-			where: {
-				accommodationId: accommId,
-			},
-			select: {
-				id: true,
-				beds: {
-					select: {
-						id: true,
-					},
-				},
-			},
+			where: { accommodationId: accommId },
+			select: { id: true, beds: { select: { id: true } } },
 		});
 
-		if (rooms.length === 0) {
-			return [];
-		}
+		if (rooms.length === 0) return [];
 
 		const roomIds = rooms.map((room) => room.id);
 		const bedIds = rooms.flatMap((room) => room.beds.map((bed) => bed.id));
 
-		return this.#prismaClient.booking.findMany({
+		const bookings = await this.#prismaClient.booking.findMany({
 			where: {
 				details: {
 					some: {
 						OR: [
-							{
-								itemType: "ROOM",
-								itemId: {
-									in: roomIds,
-								},
-							},
-							{
-								itemType: "BED",
-								itemId: {
-									in: bedIds,
-								},
-							},
+							{ itemType: "ROOM", itemId: { in: roomIds } },
+							{ itemType: "BED", itemId: { in: bedIds } },
 						],
 					},
 				},
 			},
-			include: {
-				details: true,
-			},
+			include: { details: true },
 		});
+
+		return bookings.map((b) => BookingMapper.toDomain(b));
 	}
 
 	public async findOwnerBookings(ownerId: string, filters: OwnerBookingFilters): Promise<OwnerBookingQueryResult> {
@@ -127,25 +107,13 @@ class BookingRepository {
 		};
 
 		const rooms = await this.#prismaClient.room.findMany({
-			where: {
-				accommodation: accommodationWhere,
-			},
+			where: { accommodation: accommodationWhere },
 			select: {
 				id: true,
 				name: true,
 				accommodationId: true,
-				accommodation: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
-				beds: {
-					select: {
-						id: true,
-						name: true,
-					},
-				},
+				accommodation: { select: { id: true, name: true } },
+				beds: { select: { id: true, name: true } },
 			},
 		});
 
@@ -188,9 +156,7 @@ class BookingRepository {
 
 		if (filters.fromDay || filters.toDay) {
 			const startDateFilter: Prisma.DateTimeFilter = {};
-			if (filters.fromDay) {
-				startDateFilter.gte = new Date(`${filters.fromDay}T00:00:00.000Z`);
-			}
+			if (filters.fromDay) startDateFilter.gte = new Date(`${filters.fromDay}T00:00:00.000Z`);
 			if (filters.toDay) {
 				const end = new Date(`${filters.toDay}T00:00:00.000Z`);
 				end.setUTCDate(end.getUTCDate() + 1);
@@ -208,25 +174,21 @@ class BookingRepository {
 						? { totalPrice: "asc" }
 						: { startDate: "desc" };
 
-		const bookings = await this.#prismaClient.booking.findMany({
+		const rawBookings = await this.#prismaClient.booking.findMany({
 			where,
 			orderBy,
 			include: {
 				details: true,
-				user: {
-					select: {
-						id: true,
-						name: true,
-						email: true,
-						phone: true,
-					},
-				},
-				paymentTransfers: {
-					orderBy: { createdAt: "desc" },
-					take: 1,
-				},
+				user: { select: { id: true, name: true, email: true, phone: true } },
+				paymentTransfers: { orderBy: { createdAt: "desc" }, take: 1 },
 			},
 		});
+
+		const bookings: OwnerBookingRecord[] = rawBookings.map((b) => ({
+			booking: BookingMapper.toDomain(b),
+			user: b.user,
+			paymentTransfers: b.paymentTransfers,
+		}));
 
 		return { bookings, itemMap };
 	}
@@ -234,14 +196,7 @@ class BookingRepository {
 	public async isOwnedByOwner(bookingId: string, ownerId: string): Promise<boolean> {
 		const booking = await this.#prismaClient.booking.findUnique({
 			where: { id: bookingId },
-			select: {
-				details: {
-					select: {
-						itemId: true,
-						itemType: true,
-					},
-				},
-			},
+			select: { details: { select: { itemId: true, itemType: true } } },
 		});
 
 		if (!booking) return false;
@@ -261,61 +216,66 @@ class BookingRepository {
 		return matchingRooms > 0;
 	}
 
-	async #findOne<T extends boolean>(where: Prisma.BookingWhereUniqueInput, withDetails?: T): Promise<(T extends true ? BookingWithDetails : Booking) | null> {
-		const booking = await this.#prismaClient.booking.findUnique({
-			where,
-			include: withDetails ? { details: true, paymentTransfers: true } : { paymentTransfers: true },
-		});
+	public async create(domainBooking: Booking): Promise<Booking> {
+		const persistenceData = BookingMapper.toPersistence(domainBooking);
+		const persistenceDetails = domainBooking.getDetails().map(BookingMapper.toPersistenceDetail);
 
-		return booking as (T extends true ? BookingWithDetails : Booking) | null;
-	}
-	// ---------- create ----------
-	public async create(data: Prisma.BookingCreateInput): Promise<BookingWithDetails> {
-		return this.#prismaClient.booking.create({
-			data,
-			include: {
-				details: true,
-			},
-		});
-	}
+		const { paymentTransfers, details, ...safeData } = persistenceData;
 
-	// ---------- status updates ----------
-	public async confirm(id: string): Promise<BookingWithDetails> {
-		return this.#prismaClient.booking.update({
-			where: { id },
-			data: { status: "BOOKED" },
-			include: { details: true },
-		});
-	}
-
-	public async cancel(id: string, note?: string, noteBy?: ECancellationSource): Promise<BookingWithDetails> {
-		return this.#prismaClient.booking.update({
-			where: { id },
+		const created = await this.#prismaClient.booking.create({
 			data: {
-				status: "CANCELLED",
-				note: note || null,
-				noteBy: noteBy || null,
+				...safeData,
+				pricingSnapshot: safeData.pricingSnapshot as Prisma.InputJsonValue,
+				details: {
+					create: persistenceDetails.map(d => ({
+						id: d.id,
+						count: d.count,
+						note: d.note,
+						itemId: d.itemId,
+						itemType: d.itemType,
+						createdAt: d.createdAt,
+						updatedAt: d.updatedAt
+					}))
+				}
 			},
 			include: { details: true },
 		});
+
+		return BookingMapper.toDomain(created);
 	}
 
-	public async cancelWithTransaction(id: string): Promise<BookingWithDetails> {
-		const [booking] = await this.#prismaClient.$transaction([
+	public async update(domainBooking: Booking): Promise<Booking> {
+		const persistenceData = BookingMapper.toPersistence(domainBooking);
+		const updated = await this.#prismaClient.booking.update({
+			where: { id: domainBooking.getId() },
+			data: {
+				status: persistenceData.status,
+				totalPrice: persistenceData.totalPrice,
+				pricingSnapshot: persistenceData.pricingSnapshot ?? Prisma.DbNull,
+				note: persistenceData.note,
+				noteBy: persistenceData.noteBy,
+			},
+			include: { details: true },
+		});
+		return BookingMapper.toDomain(updated);
+	}
+
+	public async cancelWithTransaction(domainBooking: Booking): Promise<Booking> {
+		const persistenceData = BookingMapper.toPersistence(domainBooking);
+		const [updatedBooking] = await this.#prismaClient.$transaction([
 			this.#prismaClient.booking.update({
-				where: { id },
-				data: { status: "CANCELLED" },
+				where: { id: domainBooking.getId() },
+				data: { status: "CANCELLED", noteBy: persistenceData.noteBy, note: persistenceData.note },
 				include: { details: true },
 			}),
 			this.#prismaClient.paymentTransfer.updateMany({
-				where: { bookingId: id, status: "PENDING" },
-				data: { status: "FAILED" }
-			})
+				where: { bookingId: domainBooking.getId(), status: "PENDING" },
+				data: { status: "FAILED" },
+			}),
 		]);
-		return booking as BookingWithDetails;
+		return BookingMapper.toDomain(updatedBooking);
 	}
 
-	// ---------- room availability ----------
 	public async checkAvailability(requestedItems: { itemId: string; count: number; itemType: string }[], startDate: Date, endDate: Date): Promise<boolean> {
 		const itemIds = requestedItems.map((item) => item.itemId);
 		const roomIds = requestedItems.filter((item) => item.itemType === "ROOM").map((item) => item.itemId);
@@ -389,14 +349,15 @@ class BookingRepository {
 		return counts;
 	}
 
-	public async getDashboardBookings(roomIds: string[], startOfMonth: Date) {
-		return await this.#prismaClient.booking.findMany({
+	public async getDashboardBookings(roomIds: string[], startOfMonth: Date): Promise<Booking[]> {
+		const rawBookings = await this.#prismaClient.booking.findMany({
 			where: {
 				details: { some: { itemType: "ROOM", itemId: { in: roomIds } } },
 				OR: [{ status: "PENDING" }, { status: { in: ["BOOKED", "COMPLETED"] }, createdAt: { gte: startOfMonth } }],
 			},
 			include: { details: true },
 		});
+		return rawBookings.map((b) => BookingMapper.toDomain(b));
 	}
 }
 

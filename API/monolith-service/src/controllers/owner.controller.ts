@@ -2,9 +2,10 @@ import { type Response, type Request } from "express";
 import ResponseHelper from "@/utils/response";
 import BadRequestError from "@/errors/BadRequestError";
 import { OwnerService } from "@/services";
-import { UpgradeOwnerRequest } from "@/types/requests";
-import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/types/responses";
-import { DraftAccommodation } from "@/types/accommodation.types";
+import { OwnerMapper } from "@/mappers/owner.mapper";
+import { UpgradeOwnerRequest } from "@/dto/request";
+import type { ApiResponse, OwnerProfileResponse, UpgradeOwnerResponse, DashboardStatsResponse } from "@/dto/response";
+import { DraftAccommodation } from "@/dto/response/accommodation.dto";
 import type { OwnerBookingFilters, OwnerBookingSort, OwnerBookingStatus } from "@/repositories/booking.repository";
 
 class OwnerController {
@@ -20,7 +21,7 @@ class OwnerController {
 		if (!userId) throw new BadRequestError("Missing user identity");
 
 		const profile = await this.#ownerService.getOwnerProfile(userId);
-		return ResponseHelper.success<OwnerProfileResponse | null>(res, profile);
+		return ResponseHelper.success<OwnerProfileResponse | null>(res, profile ? OwnerMapper.toResponseDto(profile) : null);
 	}
 
 	public async getDraftAccommodations(req: Request, res: Response<ApiResponse<DraftAccommodation[] | null>>) {
@@ -63,7 +64,7 @@ class OwnerController {
 				email: result.user.email,
 				role: result.user.role,
 			},
-			profile: result.profile,
+			profile: OwnerMapper.toResponseDto(result.profile),
 		});
 	}
 

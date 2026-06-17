@@ -1,5 +1,7 @@
 import { PrismaClient, Prisma } from "@/generated/client";
 import type { HolidayOptIn } from "@/types/pricing.types";
+import { Holiday } from "@/models/holiday";
+import { HolidayMapper } from "@/mappers/holiday.mapper";
 
 class HolidayRepository {
 	readonly #prismaClient: PrismaClient;
@@ -10,19 +12,41 @@ class HolidayRepository {
 
 	// ----- Catalog (read-only, seeded) -----
 
-	public async findAll() {
+	public async findAll(): Promise<Holiday[]> {
 		// Return distinct codes for the catalog, picking the first name and date found
 		// for each code. The UI only needs one row per logical holiday.
 		const holidays = await this.#prismaClient.holiday.findMany({
 			orderBy: [{ date: "asc" }],
 		});
-		
+
 		const uniqueCodes = new Set<string>();
-		return holidays.filter(h => {
+		const uniqueHolidays = holidays.filter(h => {
 			if (uniqueCodes.has(h.code)) return false;
 			uniqueCodes.add(h.code);
 			return true;
 		});
+
+		return uniqueHolidays.map(h => HolidayMapper.toDomain(h));
+	}
+
+	/**
+	 * Find holiday anchors by codes within a padded date range.
+	 * Used by PricingService to build holiday multiplier maps.
+	 */
+	public async findAnchorsByCodes(codes: string[], startDate: Date, endDate: Date): Promise<Holiday[]> {
+		if (codes.length === 0) return [];
+
+		const prismaAnchors = await this.#prismaClient.holiday.findMany({
+			where: {
+				OR: [
+					{ isRecurring: false, date: { gte: startDate, lte: endDate } },
+					{ isRecurring: true }, // recurring (year 2000) we always fetch and match by MM-DD
+				],
+				code: { in: codes },
+			},
+		});
+
+		return prismaAnchors.map(a => HolidayMapper.toDomain(a));
 	}
 
 	// ----- Owner opt-ins -----

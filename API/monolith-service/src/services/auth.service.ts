@@ -1,35 +1,39 @@
-import {
-	AdminDeleteUserCommand,
-	CognitoIdentityProviderClient,
-	ConfirmSignUpCommand,
-	SignUpCommand,
-	AdminInitiateAuthCommand,
-	ResendConfirmationCodeCommand,
-	GlobalSignOutCommand,
-	AdminCreateUserCommand,
-	AdminSetUserPasswordCommand,
-	AdminGetUserCommand,
-	UserNotFoundException,
-	ForgotPasswordCommand,
-	ConfirmForgotPasswordCommand,
-	AuthenticationResultType,
-	AdminRespondToAuthChallengeCommand,
-} from "@aws-sdk/client-cognito-identity-provider";
 import CognitoClient from "@/clients/cognito.client";
-import { AuthTokens } from "@/types/auth/auth-token";
-import IdentityProviderError from "@/errors/IdentityProviderError";
+import { IdentityProviderError } from "@/errors";
+import { AuthProvider, UserAuthProvider } from "@/models/auth";
+import { AuthRepository } from "@/repositories";
+import { AuthTokens } from "@/types/auth.types";
+import {
+	AdminCreateUserCommand,
+	AdminDeleteUserCommand,
+	AdminGetUserCommand,
+	AdminInitiateAuthCommand,
+	AdminRespondToAuthChallengeCommand,
+	AdminSetUserPasswordCommand,
+	AuthenticationResultType,
+	CognitoIdentityProviderClient,
+	ConfirmForgotPasswordCommand,
+	ConfirmSignUpCommand,
+	ForgotPasswordCommand,
+	GlobalSignOutCommand,
+	ResendConfirmationCodeCommand,
+	SignUpCommand,
+	UserNotFoundException,
+} from "@aws-sdk/client-cognito-identity-provider";
 import EmailService from "./email.service";
 
 export interface AuthServiceConfig {
 	cognitoClient: CognitoIdentityProviderClient;
 	googleClientSecret: string;
 	emailService: EmailService;
+	authRepository: AuthRepository;
 }
 
 class AuthService {
 	private readonly cognitoClient: CognitoIdentityProviderClient;
 	private readonly googleClientSecret: string;
 	private readonly emailService: EmailService;
+	private readonly authRepository: AuthRepository;
 
 	private readonly backendAuthSecret = process.env["BACKEND_SECRET_KEY"]!;
 
@@ -37,6 +41,7 @@ class AuthService {
 		this.cognitoClient = config.cognitoClient;
 		this.googleClientSecret = config.googleClientSecret;
 		this.emailService = config.emailService;
+		this.authRepository = config.authRepository;
 	}
 
 	public async signUp(email: string, password: string) {
@@ -137,6 +142,20 @@ class AuthService {
 
 	public async signOut(accessToken: string) {
 		return await this.cognitoClient.send(new GlobalSignOutCommand({ AccessToken: accessToken }));
+	}
+
+	// --- DOMAIN METHODS ---
+	public async createUserProvider(email: string, userId: string, provider: AuthProvider) {
+		const domainModel = UserAuthProvider.builder()
+			.setEmail(email)
+			.setUserId(userId)
+			.setProvider(provider)
+			.build();
+		return await this.authRepository.saveUserProvider(domainModel);
+	}
+
+	public async getUserProviders(email: string): Promise<UserAuthProvider[]> {
+		return await this.authRepository.getUserProviders(email);
 	}
 
 	// --- PASSWORD RESET ---

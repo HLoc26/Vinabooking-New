@@ -12,3 +12,18 @@ export { default as ImageRepository } from "./image.repository";
 export { default as ReviewSummaryRepository } from "./review-summary.repository";
 export { default as PaymentRepository } from "./payment.repository";
 export { default as HolidayRepository } from "./holiday.repository";
+
+export * from "./accommodation.repository";
+export * from "./amenity.repository";
+export * from "./auth.repository";
+export * from "./booking.repository";
+export * from "./facility.repository";
+export * from "./favourite.repository";
+export * from "./review.repository";
+export * from "./room.repository";
+export * from "./user.repository";
+export * from "./owner.repository";
+export * from "./image.repository";
+export * from "./review-summary.repository";
+export * from "./payment.repository";
+export * from "./holiday.repository";

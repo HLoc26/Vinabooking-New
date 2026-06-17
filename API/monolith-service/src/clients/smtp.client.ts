@@ -1,7 +1,7 @@
 import nodemailer, { Transporter } from "nodemailer";
 import { SentMessageInfo } from "nodemailer/lib/smtp-transport";
-import { IMailClient } from "../types/email/IMailClient";
 import EnvironmentNotSetError from "../errors/EnvironmentNotSetError";
+import { IMailClient } from "@/types/email.types";
 
 class SmtpClient implements IMailClient {
 	static #instance: SmtpClient;

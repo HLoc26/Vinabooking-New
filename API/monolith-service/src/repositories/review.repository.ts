@@ -1,5 +1,7 @@
-import { PrismaClient, Prisma, Review } from "@/generated/client";
+import { PrismaClient, Prisma } from "@/generated/client";
 import { SortOrder } from "@/generated/internal/prismaNamespace";
+import { Review } from "@/models/review";
+import { ReviewMapper, PrismaReviewWithReplies } from "@/mappers/review.mapper";
 
 class ReviewRepository {
 	readonly #prisma: PrismaClient;
@@ -9,71 +11,70 @@ class ReviewRepository {
 	}
 
 	// ---------- create ----------
-	public async create(data: Prisma.ReviewUncheckedCreateInput): Promise<Review> {
-		return this.#prisma.review.create({ data });
+	public async create(domainReview: Review): Promise<Review> {
+		const data = ReviewMapper.toPersistence(domainReview);
+		const created = await this.#prisma.review.create({ data });
+		return ReviewMapper.toDomain(created);
 	}
 
 	// ---------- find parent ----------
 	public async findParentById(id: string): Promise<Review | null> {
-		return this.#prisma.review.findFirst({
+		const result = await this.#prisma.review.findFirst({
 			where: {
 				id,
 				parentId: null,
 			},
 		});
+		return result ? ReviewMapper.toDomain(result) : null;
 	}
 
 	// ---------- find by accommodation ----------
-	public async findByAccommodationId(accommodationId: string) {
-		return this.#prisma.review.findMany({
+	public async findByAccommodationId(accommodationId: string): Promise<Review[]> {
+		const results = await this.#prisma.review.findMany({
 			where: {
 				accommodationId,
 				parentId: null, // only main reviews
 			},
 			include: {
-				user: true,
-				replies: {
-					include: {
-						user: true,
-					},
-				},
+				replies: true,
 			},
 			orderBy: { createdAt: "desc" },
 		});
+		return results.map((r) => ReviewMapper.toDomain(r as PrismaReviewWithReplies));
 	}
 
 	// ---------- find by user ----------
 	public async findByUserId(userId: string): Promise<Review[]> {
-		return this.#prisma.review.findMany({
+		const results = await this.#prisma.review.findMany({
 			where: { userId },
 			orderBy: { createdAt: "desc" },
 		});
-	} // I swear I will use them later (never)
+		return results.map((r) => ReviewMapper.toDomain(r));
+	} 
 
 	//------------ find by booking and user ----------
-	public async findByBookingAndUser(bookingId: string, userId: string) {
-		return this.#prisma.review.findFirst({
+	public async findByBookingAndUser(bookingId: string, userId: string): Promise<Review | null> {
+		const result = await this.#prisma.review.findFirst({
 			where: {
 				bookingId,
 				userId,
 			},
-			include: {
-				user: true,
-			},
 		});
+		return result ? ReviewMapper.toDomain(result) : null;
 	}
 
-	public async findRecentParentReviews(accommodationId: string, top: number) {
-		return this.#prisma.review.findMany({
+	public async findRecentParentReviews(accommodationId: string, top: number): Promise<Review[]> {
+		const results = await this.#prisma.review.findMany({
 			where: {
 				accommodationId,
-				parent: null,
+				parentId: null,
 			},
 			orderBy: {
 				createdAt: SortOrder.desc,
 			},
 			take: top,
 		});
+		return results.map((r) => ReviewMapper.toDomain(r));
 	}
 }
 

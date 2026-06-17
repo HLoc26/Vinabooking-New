@@ -1,8 +1,8 @@
 import { Request, Response } from "express";
-import AccommodationService from "../services/accommodation.service";
-import ResponseHelper from "../utils/response";
+import { AccommodationService } from "@/services";
+import ResponseHelper from "@/utils/response";
 
-import { EAccommodationStatus } from "@/types/accommodation.types";
+import { AccommodationStatus } from "@/models/accommodation/accommodation.enums";
 import {
 	GetAccommodationByIdRequest,
 	GetAccommodationByEntityRequest,
@@ -15,8 +15,9 @@ import {
 	UpdateStatusRequest,
 	UpdateAddressRequest,
 	UpdatePolicyRequest,
-} from "@/types/requests";
-import type { ApiResponse, AccommodationCardResponse } from "@/types/responses";
+	GetPolicyRequest,
+} from "@/dto/request";
+import type { ApiResponse, AccommodationCardResponse } from "@/dto/response";
 
 class AccommodationController {
 	readonly #accommodationService: AccommodationService;
@@ -180,7 +181,7 @@ class AccommodationController {
 		const { status } = req.body;
 
 		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
-		if (!status || !Object.values(EAccommodationStatus).includes(status)) {
+		if (!status || !Object.values(AccommodationStatus).includes(status)) {
 			return ResponseHelper.error(res, "Invalid status value", 400);
 		}
 
@@ -217,7 +218,7 @@ class AccommodationController {
 	public async updatePricingSettings(req: Request<{ id: string }>, res: Response) {
 		const ownerId = req.userId;
 		const { id } = req.params;
-		const body = req.body as import("@/types/accommodation.types").UpdateAccommodationPricingDTO;
+		const body = req.body as import("@/dto/request/accommodation.dto").UpdateAccommodationPricingDTO;
 
 		if (!ownerId) return ResponseHelper.error(res, "Unauthorized", 401);
 		if (body.dynamicPricingSettings === undefined && body.holidayOptIns === undefined) {

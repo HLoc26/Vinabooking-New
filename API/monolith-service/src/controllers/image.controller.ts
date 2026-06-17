@@ -1,8 +1,10 @@
-import { DeleteImageRequest, GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/types/requests";
-import type { ApiResponse, UploadResponse } from "@/types/responses";
+import { EntityType } from "@/models/image";
+import { ImageDto } from "@/dto/response/image.dto";
+import { DeleteImageRequest, GetImagesRequest, ImageUploadMapper, type ImageEntityType, type UploadRequest } from "@/dto/request";
+import type { ApiResponse, UploadResponse } from "@/dto/response";
 import type { Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
-import type { FileType, ImageFullInfo } from "@/types/image.types";
+import type { FileType } from "@/types/image.types";
 import UploadService from "@/services/upload.service";
 import { ImageService } from "@/services";
 
@@ -21,19 +23,23 @@ class ImageController {
 
 		if (!files?.length) throw new Error("Empty files");
 
-		const entityType = ImageUploadMapper[type];
-		if (!entityType) throw new Error(`Invalid upload type: ${type}`);
+		const rawEntityType = ImageUploadMapper[type];
+		if (!rawEntityType) throw new Error(`Invalid upload type: ${type}`);
+
+		const entityType = rawEntityType as unknown as EntityType;
 
 		const images = await this.#uploadService.handleUploadByEntity(entityType, id, files);
+		const mappedImages = this.#imageService.mapToDto(images);
 
-		return ResponseHelper.success<UploadResponse>(res, { success: true, images });
+		return ResponseHelper.success<UploadResponse>(res, { success: true, images: mappedImages });
 	}
 
-	public async getImages(req: GetImagesRequest, res: Response<ApiResponse<ImageFullInfo[]>>) {
+	public async getImages(req: GetImagesRequest, res: Response<ApiResponse<ImageDto[]>>) {
 		const type = req.params.type as ImageEntityType;
 		const id = req.params.id;
 
-		const entityType = ImageUploadMapper[type];
+		const rawEntityType = ImageUploadMapper[type];
+		const entityType = rawEntityType as unknown as EntityType;
 
 		const images = await this.#imageService.getImage(entityType, id);
 		return ResponseHelper.success(res, images);

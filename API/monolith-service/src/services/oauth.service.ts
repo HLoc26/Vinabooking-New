@@ -1,12 +1,10 @@
-import { GoogleOAuthResponse } from "@/types/responses";
+import { EnvironmentNotSetError, IdentityProviderError } from "@/errors";
+import { AuthProvider } from "@/models/auth";
+import { AuthTokens } from "@/types/auth.types";
+import { GoogleOAuthResponse } from "@/dto/response";
 import JwtService from "@/utils/jwt";
-import UserService from "./user.service";
 import AuthService from "./auth.service";
-import { EProvider } from "@/generated/enums";
-import { AuthRepository, UserRepository } from "@/repositories";
-import { AuthTokens } from "@/types/auth/auth-token";
-import EnvironmentNotSetError from "@/errors/EnvironmentNotSetError";
-import IdentityProviderError from "@/errors/IdentityProviderError";
+import UserService from "./user.service";
 
 export interface OAuthConfig {
 	googleClientId: string;
@@ -21,23 +19,19 @@ class OAuthService {
 	readonly #redirectUri: string;
 	readonly #userService: UserService;
 	readonly #authService: AuthService;
-	readonly #authRepository: AuthRepository;
-	readonly #userRepository: UserRepository;
+
 
 	constructor(
 		configs: OAuthConfig, //
 		userService: UserService,
-		authService: AuthService,
-		authRepository: AuthRepository,
-		userRepository: UserRepository
+		authService: AuthService
 	) {
 		this.#googleClientId = configs.googleClientId;
 		this.#clientSecret = configs.clientSecret;
 		this.#redirectUri = configs.redirectUri;
 		this.#userService = userService;
 		this.#authService = authService;
-		this.#authRepository = authRepository;
-		this.#userRepository = userRepository;
+
 
 		let clientUrl = process.env["CLIENT_URL"];
 		if (!clientUrl) {
@@ -91,39 +85,44 @@ class OAuthService {
 			}
 
 			// Tạo user mới
-			await this.#userRepository.createUser({
+			await this.#userService.createUser({
 				id: userId,
 				email,
 				name,
 				phone: "",
-				role: "TRAVELLER",
 			});
 		}
 
 		// 5. Liên kết provider (Nếu chưa có)
-		const userProviders = await this.#authRepository.getUserProviders(email);
+		const userProviders = await this.#authService.getUserProviders(email);
 		if (!userProviders) {
-			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
+			await this.#authService.createUserProvider(email, userId, AuthProvider.GOOGLE);
 		}
 		let hasGoogle = false;
 		let hasCredentials = false;
 
-		userProviders.forEach((p) => {
-			if (p.provider === EProvider.Credentials) {
+		userProviders?.forEach((p) => {
+			if (p.getProvider() === AuthProvider.CREDENTIALS) {
 				hasCredentials = true;
-			} else if (p.provider === EProvider.Google) {
+			} else if (p.getProvider() === AuthProvider.GOOGLE) {
 				hasGoogle = true;
 			}
 		});
 
-		const userRole = await this.#userRepository.getRoleById(userId);
+		let userRole;
+		try {
+			const u = await this.#userService.getUser({ id: userId });
+			userRole = u?.role;
+		} catch {
+			userRole = null;
+		}
 
 		if (!hasCredentials && !hasGoogle) {
 			console.log(`[OAuth] Linking Google provider for: ${email}`);
-			await this.#authRepository.createUserProvider(userId, email, EProvider.Google);
+			await this.#authService.createUserProvider(email, userId, AuthProvider.GOOGLE);
 		}
 
-		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name, role: userRole?.role }));
+		const userParams = encodeURIComponent(JSON.stringify({ id: userId, email, name, role: userRole }));
 		const params = new URLSearchParams({
 			accessToken: tokens.accessToken,
 			idToken: tokens.idToken,

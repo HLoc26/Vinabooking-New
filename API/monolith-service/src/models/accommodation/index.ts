@@ -1,0 +1,5 @@
+export * from "./accommodation-holiday.model"
+export * from "./accommodation.enums"
+export * from "./accommodation.model"
+export * from "./address.model"
+export * from "./facility-config.model"

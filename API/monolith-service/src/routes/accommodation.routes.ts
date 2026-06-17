@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import AccommodationController from "../controllers/accommodation.controller";
 
-import { GetAccommodationByIdRequest, GetAccommodationByEntityRequest, GetAccommodationCountRequest, SearchAccommodationRequest, PostAccommodationIdsRequest } from "@/types/requests";
+import { GetAccommodationByIdRequest, GetAccommodationByEntityRequest, GetAccommodationCountRequest, SearchAccommodationRequest, PostAccommodationIdsRequest } from "@/dto/request";
 
 class AccommodationRouter {
 	constructor(

@@ -13,7 +13,7 @@ class UserRouter {
 	private registerRoutes() {
 		// --- BASE USER ROUTES ---
 		this.router.post("/", (req: Request, res: Response) => this.userController.createUser(req, res));
-		this.router.patch("/", authMiddleware, (req: Request, res: Response) => this.userController.updateUser(req, res));
+		this.router.patch("/me", authMiddleware, (req: Request, res: Response) => this.userController.updateUser(req, res));
 		this.router.get("/me", authMiddleware, (req: Request, res: Response) => this.userController.getMe(req, res));
 
 		// GET /user?id=...&withFavourites=true

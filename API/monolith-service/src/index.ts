@@ -6,10 +6,11 @@ import type { Express } from "express";
 import AppRouter from "@/routes/index.routes";
 import AuthRouter from "@/routes/auth.routes";
 import AuthController from "@/controllers/auth.controller";
-import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService } from "@/services";
+import { AuthService, OAuthService, UserService, EmailService, BookingService, ImageService, FavouriteService, OwnerService, SearchService, PaymentService, PayosService, PricingService, OwnerPricingService, FacilityService, AmenityService, HolidayService } from "@/services";
 import { AuthRepository, UserRepository, RoomRepository, BookingRepository, FavouriteRepository, FacilityRepository, OwnerRepository, PaymentRepository, HolidayRepository } from "@/repositories";
 import CognitoClient from "@/clients/cognito.client";
 import prismaClient from "./clients/prisma.client";
+import { createLazyProxy } from "./utils/di.utils";
 
 import cors from "cors";
 import cookieParser from "cookie-parser";
@@ -85,9 +86,17 @@ const authService = new AuthService({
 	cognitoClient: cognitoClient,
 	googleClientSecret: process.env.GOOGLE_CLIENT_SECRET!,
 	emailService: emailService,
+	authRepository: authRepository,
 });
-const userService = new UserService(userRepository);
-const favouriteService = new FavouriteService(favouriteRepository);
+// We need accommodationServiceProxy for FavouriteService, let's declare it first
+// Pre-declare accommodationService and roomService for circular dependencies
+let accommodationService: AccommodationService;
+let roomService: RoomService;
+const accommodationServiceProxy = createLazyProxy<AccommodationService>(() => accommodationService);
+const roomServiceProxy = createLazyProxy<RoomService>(() => roomService);
+
+const favouriteService = new FavouriteService(favouriteRepository, accommodationServiceProxy);
+const userService = new UserService(userRepository, favouriteService);
 const oauthService = new OAuthService(
 	{
 		googleClientId: process.env["GOOGLE_CLIENT_ID"]!,
@@ -95,35 +104,40 @@ const oauthService = new OAuthService(
 		redirectUri: process.env["GOOGLE_REDIRECT_URI"]!,
 	},
 	userService,
-	authService,
-	authRepository,
-	userRepository
+	authService
 );
 const imageService = new ImageService(imageRepository, s3Service);
-const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService);
-const roomService = new RoomService(roomRepository, bookingService, imageService);
 const uploadService = new UploadService(s3Service, imageRepository);
-const accommodationService = new AccommodationService(accommodationRepository, roomService, imageService, s3Service, ownerRepository, holidayRepository);
+const holidayService = new HolidayService(holidayRepository);
+const pricingService = new PricingService(holidayService, roomServiceProxy);
+const bookingService = new BookingService(bookingRepository, roomRepository, userService, emailService, accommodationServiceProxy, pricingService);
+roomService = new RoomService(roomRepository, bookingService, imageService, pricingService, accommodationServiceProxy);
+
 const reviewSummaryService = new ReviewSummaryService(reviewSummaryRepository);
 const reviewService = new ReviewService({
 	reviewRepository: reviewRepository,
 	userService: userService,
 	bookingService: bookingService,
 	imageService: imageService,
-	accommodationService: accommodationService,
+	accommodationService: accommodationServiceProxy,
 	reviewSummaryService: reviewSummaryService,
 });
-bookingService.setAccommodationService(accommodationService);
+const facilityService = new FacilityService(facilityRepository);
+const amenityService = new AmenityService(amenityRepository);
+const ownerService = new OwnerService(ownerRepository, imageService, accommodationServiceProxy, bookingService, userService);
 
-const ownerService = new OwnerService(ownerRepository, imageService, accommodationService, bookingService);
+accommodationService = new AccommodationService(
+	accommodationRepository, 
+	imageService, 
+	s3Service, 
+	ownerService, 
+	roomService
+);
 
 const payosService = new PayosService(process.env.PAYOS_CLIENT_ID! || "none", process.env.PAYOS_API_KEY! || "none", process.env.PAYOS_CHECKSUM_KEY! || "none");
 const paymentService = new PaymentService(paymentRepository, bookingRepository, payosService, bookingService);
 const searchService = new SearchService();
-const pricingService = new PricingService(prismaClient, holidayRepository);
-const ownerPricingService = new OwnerPricingService(ownerRepository, holidayRepository, accommodationRepository, roomRepository);
-roomService.setPricingService(pricingService);
-bookingService.setPricingService(pricingService);
+const ownerPricingService = new OwnerPricingService(ownerRepository, holidayService, accommodationRepository, roomRepository);
 
 // Workers
 const reviewWorkerInstance = new ReviewWorker(reviewSummaryService, reviewService);
@@ -133,19 +147,19 @@ const workerManager = new WorkerManager([reviewWorkerInstance, publishWorkerInst
 workerManager.start();
 
 // Controllers
-const authController = new AuthController(authService, userService, oauthService, authRepository);
+const authController = new AuthController(authService, userService, oauthService);
 const userController = new UserController(userService, favouriteService);
 const roomController = new RoomController(roomService);
 const imageController = new ImageController(uploadService, imageService);
 const accommodationController = new AccommodationController(accommodationService);
-const bookingController = new BookingController(bookingService);
+const bookingController = new BookingController(bookingService, paymentService);
 const reviewController = new ReviewController(reviewService);
-const facilityController = new FacilityController(facilityRepository);
+const facilityController = new FacilityController(facilityService);
 const ownerController = new OwnerController(ownerService);
-const amenityController = new AmenityController(amenityRepository);
+const amenityController = new AmenityController(amenityService);
 const paymentController = new PaymentController(paymentService);
 const searchController = new SearchController(searchService, accommodationService);
-const pricingController = new PricingController(pricingService, ownerPricingService);
+const pricingController = new PricingController(pricingService, ownerPricingService, holidayService);
 
 // Routers
 const authRouter = new AuthRouter(express.Router(), authController);
