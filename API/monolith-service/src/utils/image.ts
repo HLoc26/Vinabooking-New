@@ -1,12 +1,13 @@
+import { ImageDto } from "@/dto/response/image.dto";
 import { EVariantType } from "@/generated/enums";
-import { ImageFullInfo } from "@/types/image.types";
+
 
 class ImageUtils {
 	// helper: pick best image by variant priority
 	static pickBestImage(
-		images: ImageFullInfo[], //
+		images: ImageDto[], //
 		priority: EVariantType[] = [EVariantType.ORIGINAL, EVariantType.OPTIMIZED, EVariantType.WEBP, EVariantType.THUMBNAIL]
-	): ImageFullInfo | undefined {
+	): ImageDto | undefined {
 		if (!images || images.length === 0) return undefined;
 
 		// Iterate through priority list to find the first image that possesses that variant
@@ -21,13 +22,13 @@ class ImageUtils {
 
 	// helper: pick up to `count` images, preferring unique id and variant priority
 	static pickGallery(
-		images: ImageFullInfo[], //
+		images: ImageDto[], //
 		count = 3,
 		priority: EVariantType[] = [EVariantType.ORIGINAL, EVariantType.OPTIMIZED, EVariantType.WEBP, EVariantType.THUMBNAIL]
-	): ImageFullInfo[] {
+	): ImageDto[] {
 		if (!images || images.length === 0) return [];
 
-		const picked: ImageFullInfo[] = [];
+		const picked: ImageDto[] = [];
 		const pickedIds = new Set<string>();
 
 		// 1. Prefer images containing variants in priority order

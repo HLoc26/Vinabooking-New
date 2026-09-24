@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
-import ResponseHelper from "../utils/response";
-import FacilityRepository from "../repositories/facility.repository";
+import ResponseHelper from "@/utils/response";
+import { FacilityService } from "@/services";
 
 class FacilityController {
-	readonly #facilityRepository: FacilityRepository;
-	constructor(facilityRepository: FacilityRepository) {
-		this.#facilityRepository = facilityRepository;
+	readonly #facilityService: FacilityService;
+
+	constructor(facilityService: FacilityService) {
+		this.#facilityService = facilityService;
 	}
+
 	public async getAll(req: Request, res: Response) {
-		const facilities = await this.#facilityRepository.findAll();
+		const facilities = await this.#facilityService.getAllFacilities();
 		ResponseHelper.success(res, facilities);
 	}
 }

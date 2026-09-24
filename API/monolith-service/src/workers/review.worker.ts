@@ -5,7 +5,7 @@ import { aiLimiter } from "@/utils/ai-limiter";
 import { Job } from "bullmq";
 import { ESentiment, IBaseWorker } from "./types";
 import { ReviewService, ReviewSummaryService } from "@/services";
-import { AccommodationReviewSummary, Review } from "@/generated/client";
+import { AccommodationReviewSummary, Review } from "@/models/review";
 import redisClient from "@/clients/redis.client";
 export class ReviewWorker implements IBaseWorker {
 	public readonly queueName = "review-task";
@@ -41,7 +41,7 @@ export class ReviewWorker implements IBaseWorker {
 
 		const summaryInDb: AccommodationReviewSummary | null = await this.#reviewSummaryService.getSummaryByAccommodation(accommodationId);
 
-		if (summaryInDb && this.#isUpdatedWithinLastHour(summaryInDb.updatedAt)) {
+		if (summaryInDb && this.#isUpdatedWithinLastHour(summaryInDb.getUpdatedAt())) {
 			console.log(`[AI Worker] Summary for ${accommodationId} is still fresh. Skipping.`);
 			return;
 		}
@@ -64,13 +64,13 @@ export class ReviewWorker implements IBaseWorker {
 
 		// If already exists summary in Db, only summarize if new review count >= 10
 		if (summaryInDb) {
-			const newReviewCount = reviews.filter((r) => r.updatedAt > summaryInDb.updatedAt).length;
+			const newReviewCount = reviews.filter((r) => r.getUpdatedAt() > summaryInDb.getUpdatedAt()).length;
 			if (newReviewCount < 3) {
 				return;
 			}
 		}
 
-		const reviewsText = reviews.map((r) => `- [${r.star ?? 0} stars]: ${r.comment.substring(0, 300)}`).join("\n");
+		const reviewsText = reviews.map((r) => `- [${r.getStar() ?? 0} stars]: ${r.getComment().substring(0, 300)}`).join("\n");
 
 		const response = await this.#doSummarizeByAI(reviewsText);
 

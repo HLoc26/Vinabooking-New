@@ -2,23 +2,26 @@ import { Request, Response } from "express";
 import { AppError } from "@/errors";
 import OwnerPricingService from "@/services/owner-pricing.service";
 import PricingService from "@/services/pricing.service";
+import HolidayService from "@/services/holiday.service";
 import ResponseHelper from "@/utils/response";
 import type { DynamicPricingSettings, HolidayOptIn, QuoteRequest } from "@/types/pricing.types";
 
 class PricingController {
 	readonly #pricingService: PricingService;
 	readonly #ownerPricingService: OwnerPricingService;
+	readonly #holidayService: HolidayService;
 
-	constructor(pricingService: PricingService, ownerPricingService: OwnerPricingService) {
+	constructor(pricingService: PricingService, ownerPricingService: OwnerPricingService, holidayService: HolidayService) {
 		this.#pricingService = pricingService;
 		this.#ownerPricingService = ownerPricingService;
+		this.#holidayService = holidayService;
 	}
 
 	// ----- Public catalog -----
 
 	public async getHolidayCatalog(_req: Request, res: Response) {
 		try {
-			const data = await this.#ownerPricingService.getHolidayCatalog();
+			const data = await this.#holidayService.getHolidayCatalog();
 			return ResponseHelper.success(res, data);
 		} catch (err) {
 			return this.#handle(err, res);

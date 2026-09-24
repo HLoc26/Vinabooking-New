@@ -1,4 +1,4 @@
-import { AccommodationReviewSummary } from "@/generated/client";
+import { AccommodationReviewSummary, AccommodationReviewSummaryBuilder } from "@/models/review";
 import { ReviewSummaryRepository } from "@/repositories";
 
 class ReviewSummaryService {
@@ -13,7 +13,12 @@ class ReviewSummaryService {
 	}
 
 	public async upsert(accommodationId: string, content: string): Promise<AccommodationReviewSummary> {
-		return await this.#reviewSummaryRepository.upsert(accommodationId, content);
+		const summary = new AccommodationReviewSummaryBuilder()
+			.setAccommodationId(accommodationId)
+			.setContent(content)
+			.build();
+			
+		return await this.#reviewSummaryRepository.upsert(summary);
 	}
 }
 

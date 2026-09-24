@@ -1,112 +1,46 @@
-import crypto from "crypto";
-import { Prisma, PrismaClient } from "@/generated/client";
+import redisClient from "@/clients/redis.client";
 import { BadRequestError, NotFoundError } from "@/errors";
-import HolidayRepository from "@/repositories/holiday.repository";
+import { Decimal } from "@/types/decimal";
 import {
-	DynamicPricingSettings,
-	NightBreakdownEntry,
-	QuoteItemOutput,
-	QuoteItemPricing,
-	QuoteRequest,
-	QuoteResponse,
+    DynamicPricingSettings,
+    NightBreakdownEntry,
+    PricableItem,
+    QuoteItemOutput,
+    QuoteItemPricing,
+    QuoteRequest,
+    QuoteResponse,
 } from "@/types/pricing.types";
+import HolidayService from "./holiday.service";
+import type RoomService from "./room.service";
 
-const HCM_TZ = "Asia/Ho_Chi_Minh";
-const DAY_MS = 24 * 60 * 60 * 1000;
-const ZERO = new Prisma.Decimal(0);
-const ONE = new Prisma.Decimal(1);
-const MAX_DISCOUNT_RATE = new Prisma.Decimal("0.5");
-
-function toHcmYmd(d: Date): string {
-	// en-CA locale formats as YYYY-MM-DD
-	const fmt = new Intl.DateTimeFormat("en-CA", {
-		timeZone: HCM_TZ,
-		year: "numeric",
-		month: "2-digit",
-		day: "2-digit",
-	});
-	return fmt.format(d);
-}
-
-function ymdToHcmMidnightUtc(ymd: string): Date {
-	// HCM is UTC+7 (no DST). Midnight in HCM = 17:00 UTC the previous day.
-	const [y, m, d] = ymd.split("-").map((n) => parseInt(n, 10));
-	return new Date(Date.UTC(y, m - 1, d, -7, 0, 0));
-}
-
-function diffDaysHcm(later: Date, earlier: Date): number {
-	const a = ymdToHcmMidnightUtc(toHcmYmd(later));
-	const b = ymdToHcmMidnightUtc(toHcmYmd(earlier));
-	return Math.floor((a.getTime() - b.getTime()) / DAY_MS);
-}
-
-function enumerateNights(checkIn: Date, checkOut: Date): string[] {
-	const startYmd = toHcmYmd(checkIn);
-	const endYmd = toHcmYmd(checkOut);
-	if (startYmd >= endYmd) {
-		throw new BadRequestError("checkOut must be after checkIn (HCM tz)");
-	}
-	const nights: string[] = [];
-	let cursor = ymdToHcmMidnightUtc(startYmd);
-	const end = ymdToHcmMidnightUtc(endYmd);
-	while (cursor.getTime() < end.getTime()) {
-		nights.push(toHcmYmd(cursor));
-		cursor = new Date(cursor.getTime() + DAY_MS);
-	}
-	return nights;
-}
-
-function ymdMmDd(ymd: string): string {
-	return ymd.slice(5); // MM-DD
-}
-
-function canonicalNumber(value: Prisma.Decimal | number | string): string {
-	return new Prisma.Decimal(value).toFixed(2);
-}
-
-function canonicalize(obj: unknown): string {
-	if (obj === null || typeof obj !== "object") {
-		return JSON.stringify(obj);
-	}
-
-	// Handle objects with toJSON method (Date, Prisma.Decimal, etc.)
-	if (typeof (obj as any).toJSON === "function") {
-		return JSON.stringify((obj as any).toJSON());
-	}
-
-	if (Array.isArray(obj)) {
-		return "[" + obj.map((x) => canonicalize(x)).join(",") + "]";
-	}
-
-	const keys = Object.keys(obj as Record<string, unknown>).sort();
-	return (
-		"{" +
-		keys
-			.map((k) => JSON.stringify(k) + ":" + canonicalize((obj as Record<string, unknown>)[k]))
-			.join(",") +
-		"}"
-	);
-}
-
-export function hashQuote(payload: Omit<QuoteResponse, "quoteHash">): string {
-	return crypto.createHash("sha256").update(canonicalize(payload)).digest("hex");
-}
+import {
+    DAY_MS,
+    diffDaysHcm,
+    enumerateNights,
+    hashQuote,
+    ymdMmDd,
+    ymdToHcmMidnightUtc,
+} from "@/utils/pricing.utils";
 
 type HolidayOptInRow = {
 	holidayCode: string;
-	priceMultiplier: Prisma.Decimal;
+	priceMultiplier: Decimal;
 	preDays: number;
 	postDays: number;
 	enabled: boolean;
 };
 
-class PricingService {
-	readonly #prismaClient: PrismaClient;
-	readonly #holidayRepository: HolidayRepository;
+const ZERO = new Decimal(0);
+const ONE = new Decimal(1);
+const MAX_DISCOUNT_RATE = new Decimal("0.5");
 
-	constructor(prismaClient: PrismaClient, holidayRepository: HolidayRepository) {
-		this.#prismaClient = prismaClient;
-		this.#holidayRepository = holidayRepository;
+class PricingService {
+	readonly #holidayService: HolidayService;
+	readonly #roomService: RoomService;
+
+	constructor(holidayService: HolidayService, roomService: RoomService) {
+		this.#holidayService = holidayService;
+		this.#roomService = roomService;
 	}
 
 	/**
@@ -116,36 +50,53 @@ class PricingService {
 	public async buildHolidayMapForAccommodation(
 		accommodationId: string,
 		nightYmds: string[]
-	): Promise<Map<string, Prisma.Decimal>> {
-		const map = new Map<string, Prisma.Decimal>();
+	): Promise<Map<string, Decimal>> {
+		const map = new Map<string, Decimal>();
 		if (nightYmds.length === 0) return map;
 
-		// 1. Fetch owner/accommodation opt-ins.
-		const optIns = (await this.#holidayRepository.findByAccommodation(accommodationId)) as HolidayOptInRow[];
+		const cacheKeys = nightYmds.map((ymd) => `holiday_map:${accommodationId}:${ymd}`);
+		const cachedVals = await redisClient.mGet(cacheKeys);
+		const missingYmds: string[] = [];
+
+		cachedVals.forEach((val, i) => {
+			if (val) {
+				if (val !== "1") map.set(nightYmds[i], new Decimal(val));
+			} else {
+				missingYmds.push(nightYmds[i]);
+			}
+		});
+
+		if (missingYmds.length === 0) return map;
+
+		// 1. Fetch owner/accommodation opt-ins via HolidayService.
+		const optIns = (await this.#holidayService.getAccommodationHolidayOptIns(accommodationId)) as HolidayOptInRow[];
 		const enabledConfigs = optIns.filter((o) => o.enabled);
-		if (enabledConfigs.length === 0) return map;
+
+		// If no opt-ins, set all missing to 1 and return
+		if (enabledConfigs.length === 0) {
+			const multi = redisClient.multi();
+			missingYmds.forEach(ymd => multi.set(`holiday_map:${accommodationId}:${ymd}`, "1", { EX: 86400 }));
+			await multi.exec();
+			return map;
+		}
 
 		const configByCode = new Map(enabledConfigs.map((c) => [c.holidayCode, c]));
 
-		// 2. Fetch all holiday anchors that could potentially cover our stay.
-		// We need to fetch anchors even slightly outside the range because pre/post windows
-		// might pull them into the stay. Let's fetch anchors within [min - 31, max + 31] for safety.
-		const startMs = ymdToHcmMidnightUtc(nightYmds[0]).getTime();
-		const endMs = ymdToHcmMidnightUtc(nightYmds[nightYmds.length - 1]).getTime();
+		// 2. Fetch all holiday anchors via HolidayService.
+		const startMs = ymdToHcmMidnightUtc(missingYmds[0]).getTime();
+		const endMs = ymdToHcmMidnightUtc(missingYmds[missingYmds.length - 1]).getTime();
 		const pad = 31 * DAY_MS;
 
-		const anchors = await this.#prismaClient.holiday.findMany({
-			where: {
-				OR: [
-					{ isRecurring: false, date: { gte: new Date(startMs - pad), lte: new Date(endMs + pad) } },
-					{ isRecurring: true }, // recurring (year 2000) we always fetch and match by MM-DD
-				],
-				code: { in: Array.from(configByCode.keys()) },
-			},
-		});
+		const anchors = await this.#holidayService.findHolidayAnchorsByCodes(
+			Array.from(configByCode.keys()),
+			new Date(startMs - pad),
+			new Date(endMs + pad)
+		);
 
-		// 3. For each night, check if it falls within ANY expanded holiday window.
-		for (const nightYmd of nightYmds) {
+		const multi = redisClient.multi();
+
+		// 3. For each missing night, check if it falls within ANY expanded holiday window.
+		for (const nightYmd of missingYmds) {
 			const nightMs = ymdToHcmMidnightUtc(nightYmd).getTime();
 			const nightMmDd = ymdMmDd(nightYmd);
 			const nightYear = parseInt(nightYmd.split("-")[0], 10);
@@ -153,35 +104,12 @@ class PricingService {
 			let highestMultiplier = ONE;
 
 			for (const anchor of anchors) {
-				const config = configByCode.get(anchor.code);
+				const config = configByCode.get(anchor.getCode());
 				if (!config) continue;
 
-				if (anchor.isRecurring) {
-					// For recurring holidays, check the anchor in the previous, current, and next years
-					// to ensure pre/post windows are correctly captured across year boundaries.
-					const anchorMmDd = ymdMmDd(toHcmYmd(anchor.date));
-					const candidateYears = [nightYear - 1, nightYear, nightYear + 1];
-
-					for (const yr of candidateYears) {
-						const anchorMs = ymdToHcmMidnightUtc(`${yr}-${anchorMmDd}`).getTime();
-						const startRange = anchorMs - config.preDays * DAY_MS;
-						const endRange = anchorMs + config.postDays * DAY_MS;
-
-						if (nightMs >= startRange && nightMs <= endRange) {
-							if (config.priceMultiplier.greaterThan(highestMultiplier)) {
-								highestMultiplier = config.priceMultiplier;
-							}
-						}
-					}
-				} else {
-					const anchorMs = anchor.date.getTime();
-					const startRange = anchorMs - config.preDays * DAY_MS;
-					const endRange = anchorMs + config.postDays * DAY_MS;
-
-					if (nightMs >= startRange && nightMs <= endRange) {
-						if (config.priceMultiplier.greaterThan(highestMultiplier)) {
-							highestMultiplier = config.priceMultiplier;
-						}
+				if (anchor.coversDate(new Date(nightMs), config.preDays, config.postDays)) {
+					if (config.priceMultiplier.greaterThan(highestMultiplier)) {
+						highestMultiplier = config.priceMultiplier;
 					}
 				}
 			}
@@ -189,25 +117,29 @@ class PricingService {
 			if (highestMultiplier.greaterThan(ONE)) {
 				map.set(nightYmd, highestMultiplier);
 			}
+
+			multi.set(`holiday_map:${accommodationId}:${nightYmd}`, highestMultiplier.toString(), { EX: 86400 });
 		}
+
+		await multi.exec();
 
 		return map;
 	}
 
-	private resolveSettings(raw: Prisma.JsonValue | null | undefined): DynamicPricingSettings {
+	private resolveSettings(raw: DynamicPricingSettings | null | undefined): DynamicPricingSettings {
 		if (!raw || typeof raw !== "object" || Array.isArray(raw)) return {};
 		return raw as DynamicPricingSettings;
 	}
 
 	private computeNight(
-		basePrice: Prisma.Decimal,
-		floorPrice: Prisma.Decimal | null,
-		multiplier: Prisma.Decimal,
-		discountRate: Prisma.Decimal
-	): { pay: Prisma.Decimal; flooredTo: Prisma.Decimal | null } {
+		basePrice: Decimal,
+		floorPrice: Decimal | null,
+		multiplier: Decimal,
+		discountRate: Decimal
+	): { pay: Decimal; flooredTo: Decimal | null } {
 		const oneMinusRate = ONE.minus(discountRate);
 		let pay = basePrice.mul(multiplier).mul(oneMinusRate);
-		let flooredTo: Prisma.Decimal | null = null;
+		let flooredTo: Decimal | null = null;
 		if (floorPrice && pay.lessThan(floorPrice)) {
 			flooredTo = floorPrice;
 			pay = floorPrice;
@@ -216,6 +148,7 @@ class PricingService {
 	}
 
 	public async quote(req: QuoteRequest): Promise<QuoteResponse> {
+		if (!this.#roomService) throw new Error("RoomService not wired in PricingService");
 		if (!req.items || req.items.length === 0) {
 			throw new BadRequestError("quote.items must not be empty");
 		}
@@ -236,32 +169,24 @@ class PricingService {
 
 		const leadDays = Math.max(0, diffDaysHcm(checkIn, bookedAt));
 
-		// Bulk-load rooms and beds for the items.
+		// Bulk-load pricing data via RoomService.
 		const roomItems = req.items.filter((i) => i.itemType === "ROOM");
 		const bedItems = req.items.filter((i) => i.itemType === "BED");
 
-		const rooms = roomItems.length
-			? await this.#prismaClient.room.findMany({
-					where: { id: { in: roomItems.map((i) => i.itemId) } },
-					include: { accommodation: true },
-				})
-			: [];
-		const beds = bedItems.length
-			? await this.#prismaClient.bed.findMany({
-					where: { id: { in: bedItems.map((i) => i.itemId) } },
-					include: { room: { include: { accommodation: true } } },
-				})
-			: [];
+		const roomMap = roomItems.length
+			? await this.#roomService.getPricableRoomData(roomItems.map((i) => i.itemId))
+			: new Map<string, PricableItem>();
 
-		const roomMap = new Map(rooms.map((r) => [r.id, r]));
-		const bedMap = new Map(beds.map((b) => [b.id, b]));
+		const bedMap = bedItems.length
+			? await this.#roomService.getPricableBedData(bedItems.map((i) => i.itemId))
+			: new Map<string, PricableItem>();
 
 		// Collect distinct accommodations involved and prefetch their holiday-multiplier maps.
 		const accIds = new Set<string>();
-		for (const r of rooms) accIds.add(r.accommodationId);
-		for (const b of beds) accIds.add(b.room.accommodationId);
+		for (const [, item] of roomMap) accIds.add(item.accommodationId);
+		for (const [, item] of bedMap) accIds.add(item.accommodationId);
 
-		const holidayMapByAcc = new Map<string, Map<string, Prisma.Decimal>>();
+		const holidayMapByAcc = new Map<string, Map<string, Decimal>>();
 		await Promise.all(
 			Array.from(accIds).map(async (accId) => {
 				const m = await this.buildHolidayMapForAccommodation(accId, nightYmds);
@@ -276,31 +201,22 @@ class PricingService {
 		let anyHoliday = false;
 
 		for (const item of req.items) {
-			let basePrice: Prisma.Decimal;
-			let floorPrice: Prisma.Decimal | null;
-			let name: string;
-			let accommodation: { id: string; dynamicPricingSettings: Prisma.JsonValue | null };
-			let pricingTypePerNight = true;
+			let pricableItem: PricableItem | undefined;
 
 			if (item.itemType === "ROOM") {
-				const room = roomMap.get(item.itemId);
-				if (!room) throw new NotFoundError(`Room ${item.itemId} not found`);
-				basePrice = new Prisma.Decimal(room.basePrice);
-				floorPrice = new Prisma.Decimal(room.floorPrice);
-				name = room.name;
-				accommodation = room.accommodation;
-				pricingTypePerNight = room.pricingType === "PER_NIGHT";
+				pricableItem = roomMap.get(item.itemId);
+				if (!pricableItem) throw new NotFoundError(`Room ${item.itemId} not found`);
 			} else {
-				const bed = bedMap.get(item.itemId);
-				if (!bed || !bed.price) throw new NotFoundError(`Bed ${item.itemId} not found or has no price`);
-				basePrice = new Prisma.Decimal(bed.price);
-				floorPrice = null;
-				name = bed.name;
-				accommodation = bed.room.accommodation;
-				pricingTypePerNight = bed.room.pricingType === "PER_NIGHT";
+				pricableItem = bedMap.get(item.itemId);
+				if (!pricableItem) throw new NotFoundError(`Bed ${item.itemId} not found or has no price`);
 			}
 
-			const settings = this.resolveSettings(accommodation.dynamicPricingSettings);
+			const basePrice = new Decimal(pricableItem.basePrice);
+			const floorPrice = pricableItem.floorPrice !== null ? new Decimal(pricableItem.floorPrice) : null;
+			const name = pricableItem.name;
+			const pricingTypePerNight = pricableItem.pricingTypePerNight;
+
+			const settings = this.resolveSettings(pricableItem.dynamicPricingSettings);
 			const longStay = settings.longStayConfig;
 			const earlyBird = settings.earlyBirdConfig;
 
@@ -321,8 +237,8 @@ class PricingService {
 			if (baseDiscount.greaterThan(MAX_DISCOUNT_RATE)) baseDiscount = MAX_DISCOUNT_RATE;
 
 			const holidayMap = pricingTypePerNight
-				? holidayMapByAcc.get(accommodation.id) ?? new Map<string, Prisma.Decimal>()
-				: new Map<string, Prisma.Decimal>();
+				? holidayMapByAcc.get(pricableItem.accommodationId) ?? new Map<string, Decimal>()
+				: new Map<string, Decimal>();
 
 			// Non PER_NIGHT items fall back to static math (spec §1.2).
 			if (!pricingTypePerNight) {
@@ -426,4 +342,3 @@ class PricingService {
 }
 
 export default PricingService;
-export { canonicalize };

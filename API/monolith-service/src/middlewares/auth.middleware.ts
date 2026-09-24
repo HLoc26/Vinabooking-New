@@ -1,7 +1,11 @@
-import { AuthPayload } from "@/types/auth/auth-payload";
 import JwtService from "@/utils/jwt";
 import ResponseHelper from "@/utils/response";
 import { NextFunction, Request, Response } from "express";
+
+type AuthPayload = {
+	id: string;
+};
+
 
 export const authMiddleware = async (req: Request, res: Response, next: NextFunction): Promise<void> => {
 	try {

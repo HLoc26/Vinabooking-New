@@ -1,6 +1,6 @@
 import type { Request, Response } from "express";
 import { PaymentService } from "@/services";
-import { PayosWebhookRequest, CreatePaymentLinkRequest } from "@/types/requests/payment.requests";
+import { PayosWebhookRequest, CreatePaymentLinkRequest } from "@/dto/request/payment.dto";
 import ResponseHelper from "@/utils/response";
 
 /**

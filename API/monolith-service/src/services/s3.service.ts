@@ -1,7 +1,7 @@
-import { PutObjectCommand, DeleteObjectsCommand } from "@aws-sdk/client-s3";
-import { EEntityType, EVariantType } from "@/generated/enums";
 import S3ClientSingleton from "@/clients/s3.client";
+import { EEntityType, EVariantType } from "@/generated/enums";
 import { type ImageProcessingResultKey, type UploadResult, type UploadResultProperties } from "@/types/image.types";
+import { DeleteObjectsCommand, PutObjectCommand } from "@aws-sdk/client-s3";
 import { v4 as uuidv4 } from "uuid";
 
 export default class S3Service {

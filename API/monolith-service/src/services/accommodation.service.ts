@@ -1,137 +1,143 @@
 import crypto from "node:crypto";
-import AccommodationRepository from "@/repositories/accommodation.repository";
-import { NotFoundError, BadRequestError } from "../errors";
-import { RoomService, ImageService, S3Service } from "@/services"; //Double check path
-import HolidayRepository from "@/repositories/holiday.repository";
-import OwnerRepository from "@/repositories/owner.repository";
-import prismaClient from "@/clients/prisma.client";
-import { EEntityType, Prisma, type EAccommodationType, type EAccommodationStatus } from "@/generated/client";
-import {
-	SearchQuery,
-	ESortOption,
-	AccommodationFullInfo,
-	SearchFilters,
-	AccommodationWithDetails,
-	AccommodationStats,
-	CreateAccommodationDTO,
-	UpdateFacilitiesDTO,
-	UpdateAccommodationDTO,
-	UpdateAddressDTO,
-	UpdateAccommodationPricingDTO,
-	OwnerAccommodationCard,
-	UpdatePolicyDTO,
-} from "@/types/accommodation.types";
-import { ImageFullInfo } from "@/types/image.types";
-import redisClient from "@/clients/redis.client";
-import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
-import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
-
 import { publishQueue } from "@/clients/queue.client";
+import redisClient from "@/clients/redis.client";
+import { CreateAccommodationDTO, ESortOption, SearchQuery, UpdateAccommodationDTO, UpdateAccommodationPricingDTO, UpdateAddressDTO, UpdateFacilitiesDTO, UpdatePolicyDTO } from "@/dto/request/accommodation.dto";
+import { AccommodationFullInfo, AccommodationStats, OwnerAccommodationCard, AccommodationWithDetails } from "@/dto/response/accommodation.dto";
+import { ImageDto } from "@/dto/response/image.dto";
+import { BadRequestError, NotFoundError } from "@/errors";
+import { AccommodationMapper } from "@/mappers/accommodation.mapper";
+import { Accommodation, AccommodationHoliday, AccommodationStatus, AccommodationType, Address, FacilityConfig } from "@/models/accommodation";
+import { Facility } from "@/models/facility";
+import { EntityType } from "@/models/image";
+import { AccommodationRepository } from "@/repositories";
+import { ImageService, OwnerService, RoomService, S3Service } from "@/services";
+import type { DynamicPricingSettings, HolidayOptIn } from "@/types/pricing.types";
 import { PUBLISH_ACCOMMODATION_JOB, type PublishJobData } from "@/types/queue.types";
+import { validateDynamicPricingSettings, validateHolidayOptIns } from "@/utils/pricing-validation";
 
 class AccommodationService {
 	readonly #accommodationRepository: AccommodationRepository;
-	readonly #roomService: RoomService;
 	readonly #imageService: ImageService;
 	readonly #s3Service: S3Service;
-	readonly #ownerRepository: OwnerRepository;
-	readonly #holidayRepository: HolidayRepository;
+	readonly #ownerService: OwnerService;
+	readonly #roomService: RoomService;
 	readonly CACHE_PREFIX = "acc:detail:";
 
 	constructor(
 		accommodationRepository: AccommodationRepository,
-		roomService: RoomService,
 		imageService: ImageService,
 		s3Service: S3Service,
-		ownerRepository: OwnerRepository,
-		holidayRepository: HolidayRepository
+		ownerService: OwnerService,
+		roomService: RoomService,
 	) {
 		this.#accommodationRepository = accommodationRepository;
-		this.#roomService = roomService;
 		this.#imageService = imageService;
 		this.#s3Service = s3Service;
-		this.#ownerRepository = ownerRepository;
-		this.#holidayRepository = holidayRepository;
+		this.#ownerService = ownerService;
+		this.#roomService = roomService;
 	}
 
-	private async _getBaseAccommodations(ids: string[]): Promise<Map<string, AccommodationWithDetails>> {
-		const allAccommodationsData = new Map<string, AccommodationWithDetails>();
+	private async _getBaseAccommodations(ids: string[]): Promise<Map<string, Accommodation>> {
+		const allAccommodationsData = new Map<string, Accommodation>();
 		if (ids.length === 0) return allAccommodationsData;
 
-		const cachedData = await this.getAccommodationsFromCache(ids);
-		const missingIds = ids.filter((id) => !cachedData.get(id));
+		// 1. Fetch from Redis
+		const keys = ids.map((id) => `${this.CACHE_PREFIX}${id}`);
+		const cachedValues = await redisClient.mGet(keys);
+		const missingIds: string[] = [];
 
-		cachedData.forEach((acc, id) => allAccommodationsData.set(id, acc));
+		cachedValues.forEach((val, index) => {
+			if (val) {
+				try {
+					const domainModel = AccommodationMapper.fromJson(val);
+					allAccommodationsData.set(ids[index], domainModel);
+				} catch (err) {
+					console.error(`Failed to parse cached accommodation ${ids[index]}`, err);
+					missingIds.push(ids[index]);
+				}
+			} else {
+				missingIds.push(ids[index]);
+			}
+		});
 
+		// 2. Fetch missing from DB
 		if (missingIds.length > 0) {
 			const dbData = await this.#accommodationRepository.findByIdBatch(missingIds);
-			await this.writeAccommodationsToCache(dbData);
-			dbData.forEach((acc) => allAccommodationsData.set(acc.id, acc));
+
+			// 3. Save to Redis and Map
+			const multi = redisClient.multi();
+			dbData.forEach((acc) => {
+				allAccommodationsData.set(acc.getId(), acc);
+				multi.set(`${this.CACHE_PREFIX}${acc.getId()}`, AccommodationMapper.toJson(acc), { EX: 86400 }); // 24h
+			});
+			await multi.exec();
 		}
 
 		return allAccommodationsData;
 	}
 
-	/**
-	 * Hàm gom data chính.
-	 * @param preFetchedStats: Truyền vào nếu đã lấy stats từ Search (để tránh query DB 2 lần)
-	 */
 	async getAccommodationsBatch(ids: string[], preFetchedStats?: AccommodationStats[]): Promise<AccommodationFullInfo[]> {
 		if (ids.length === 0) return [];
 
-		// 1. Lấy dữ liệu cơ bản (Tận dụng Cache)
 		const baseDataMap = await this._getBaseAccommodations(ids);
 
-		// 2. Xử lý Stats (Nếu search chưa truyền vào thì tự đi lấy)
 		let statsRows = preFetchedStats;
 		if (!statsRows) {
-			// Gọi hàm repo, truyền đủ tham số: filters, offset=0, limit=ids.length
 			const result = await this.#accommodationRepository.getStatsRows({ ids }, 0, ids.length);
 			statsRows = result.statsRows;
 		}
 
-		// 3. Lấy toàn bộ hình ảnh
-		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
-		const imageMap: Record<string, ImageFullInfo[]> = {};
+		const imagesBatch = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, ids);
+		const imageMap: Record<string, ImageDto[]> = {};
 		imagesBatch.forEach((img) => {
 			const entityId = img.references[0].entityId;
 			if (!imageMap[entityId]) imageMap[entityId] = [];
 			imageMap[entityId].push(img);
 		});
 
-		// 4. Merge Data & Chuẩn hóa Facilities
 		const finalData = ids.map((id) => {
-			const acc = baseDataMap.get(id)!;
-			const stats = statsRows!.find((s: AccommodationStats) => s.id === id); // Fix undefined potential
+			const acc = baseDataMap.get(id);
+			if (!acc) return null;
+
+			const stats = statsRows!.find((s: AccommodationStats) => s.id === id);
 			const accImages = imageMap[id] || [];
 			const thumbnail = accImages.length > 0 ? this.#s3Service.getS3Url(accImages[0].s3Key) : null;
 
+			// Map Domain Model to DTO
 			return {
-				...acc,
+				id: acc.getId(),
+				name: acc.getName(),
+				description: acc.getDescription(),
+				type: acc.getType(),
+				rentalType: acc.getRentalType(),
+				status: acc.getStatus(),
+				ownerId: acc.getOwnerId(),
+				dynamicPricingSettings: acc.getDynamicPricingSettings(),
+				createdAt: acc.getCreatedAt(),
+				updatedAt: acc.getUpdatedAt(),
+				address: acc.getAddress() ? AccommodationMapper.toAddressPersistence(acc.getAddress()!) : null,
+				facilities: acc.getFacilities()
+					.filter(f => f.getIsAvailable())
+					.map(f => ({
+						id: f.getId(),
+						name: f.getFacility().getName(),
+						type: f.getFacility().getType(),
+						description: f.getFacility().getDescription(),
+						fee: Number(f.getFee()),
+						note: f.getNote(),
+					})),
 				thumbnail,
 				images: accImages,
-				// Lấy data từ stats (nếu có)
 				minPrice: stats?.minPrice ? Number(stats.minPrice) : undefined,
 				avgStar: stats?.avgStar ? Number(stats.avgStar) : null,
 				reviewCount: Number(stats?.reviewCount || 0),
-				// Chuẩn hóa facilities thống nhất cho cả app
-				facilities: acc.facilities
-					.filter((f) => f.isAvailable) // Đồng bộ logic filter
-					.map((f) => ({
-						id: f.id,
-						name: f.facility.name,
-						type: f.facility.type,
-						description: f.facility.description,
-						fee: Number(f.fee),
-						note: f.note,
-					})),
 			} as unknown as AccommodationFullInfo;
-		});
+		}).filter(Boolean) as AccommodationFullInfo[];
 
 		return finalData;
 	}
 
-	async getDraftAccommodationsByOwner(ownerId: string): Promise<AccommodationWithDetails[]> {
+	async getDraftAccommodationsByOwner(ownerId: string): Promise<any[]> {
 		return this.#accommodationRepository.findDraftByOwnerId(ownerId);
 	}
 
@@ -140,51 +146,36 @@ class AccommodationService {
 	}
 
 	async getAccommodationById(id: string): Promise<AccommodationFullInfo> {
-		// Gọi qua batch để TẬN DỤNG CACHE và tự động map hình ảnh, stats, facilities!
 		const results = await this.getAccommodationsBatch([id]);
-
 		if (!results || results.length === 0) {
 			throw new NotFoundError(`Accommodation with ID ${id} not found`);
 		}
-
 		return results[0];
 	}
 
+	async getAccommodationDomainModel(id: string): Promise<Accommodation> {
+		const baseDataMap = await this._getBaseAccommodations([id]);
+		const acc = baseDataMap.get(id);
+		if (!acc) throw new NotFoundError(`Accommodation with ID ${id} not found`);
+		return acc;
+	}
+
 	async getAccommodationByRoomId(roomId: string): Promise<AccommodationFullInfo> {
-		const accommodationId = (await this.#roomService.getRoomById(roomId)).accommodationId;
+		const accommodationId = (await this.#roomService.getRoomDomainModel(roomId)).getAccommodationId();
 		return this.getAccommodationById(accommodationId);
 	}
 
 	async getHomepageStats() {
 		const [byType, byCity] = await Promise.all([this.#accommodationRepository.countByType(), this.#accommodationRepository.countByCity()]);
-
-		const formattedTypes = byType.map((item) => ({
-			type: item.type,
-			count: item._count.id,
-		}));
-
-		const formattedCities = byCity.map((item) => ({
-			city: item.city,
-			count: item._count.id,
-		}));
-
 		return {
-			types: formattedTypes,
-			cities: formattedCities,
+			types: byType.map((item) => ({ type: item.type, count: item._count.id })),
+			cities: byCity.map((item) => ({ city: item.city, count: item._count.id })),
 		};
 	}
 
 	async getCount(city?: string, type?: string) {
-		const count = await this.#accommodationRepository.count({
-			city: city,
-			type: type as EAccommodationType,
-		});
-
-		return {
-			city: city || null,
-			type: type || null,
-			count: count,
-		};
+		const count = await this.#accommodationRepository.count({ city, type: type as AccommodationType });
+		return { city: city || null, type: type || null, count };
 	}
 
 	async writeAccommodationsToCache(accommodation: AccommodationWithDetails[]) {
@@ -204,15 +195,11 @@ class AccommodationService {
 
 		const accommInCache = await redisClient.mGet(ids.map((id) => `${this.CACHE_PREFIX}${id}`));
 
-		// const cacheHits = accommInCache.filter((item) => item !== null).length;
-		// console.log(`Cache request: ${ids.length} | Actual Cache hits: ${cacheHits}`);
-
 		accommInCache.forEach((accommString) => {
 			if (!accommString) return;
 
 			const acc: AccommodationWithDetails = JSON.parse(accommString);
 
-			// Make sure object is valid and have an id
 			if (acc && acc.id) {
 				accommMap.set(acc.id, acc);
 			}
@@ -220,14 +207,10 @@ class AccommodationService {
 		return accommMap;
 	}
 
-	/**
-	 * SEARCH API (Full Flow)
-	 */
 	async searchAccommodations(query: SearchQuery): Promise<{
 		data: AccommodationFullInfo[];
 		meta: { page: number; limit: number; total: number; totalPages: number };
 	}> {
-		// Sort query keys to create a deterministic cache key
 		const sortedQuery = Object.keys(query)
 			.sort((a, b) => a.localeCompare(b))
 			.reduce((acc, key) => {
@@ -246,7 +229,6 @@ class AccommodationService {
 		const limitNum = Number(query.limit || "20");
 		const offset = (pageNum - 1) * limitNum;
 
-		// 1. Lọc IDs từ phòng trống
 		const filteredIds = await this._getInitialFilteredIds(query);
 		if (filteredIds?.length === 0) {
 			const emptyResult = { data: [], meta: { page: pageNum, limit: limitNum, total: 0, totalPages: 0 } };
@@ -254,7 +236,7 @@ class AccommodationService {
 			return emptyResult;
 		}
 
-		const searchFilters: SearchFilters = {
+		const { statsRows, total } = await this.#accommodationRepository.getStatsRows({
 			keyword: query.keyword,
 			type: query.type,
 			ids: filteredIds,
@@ -267,10 +249,8 @@ class AccommodationService {
 			cancellationPolicy: query.cancellationPolicy,
 			prepaymentPolicy: query.prepaymentPolicy,
 			quietHoursStart: query.quietHoursStart,
-		};
+		}, offset, limitNum, query.sortBy);
 
-		// 2. Gọi SQL Raw để lấy danh sách phân trang và các chỉ số thống kê
-		const { statsRows, total } = await this.#accommodationRepository.getStatsRows(searchFilters, offset, limitNum, query.sortBy);
 		const paginatedIds = statsRows.map((row) => row.id);
 
 		if (total === 0) {
@@ -279,7 +259,6 @@ class AccommodationService {
 			return emptyResult;
 		}
 
-		// 3. TRUYỀN STATS ROWS VÀO ĐỂ KHÔNG PHẢI QUERY LẠI (Tối ưu x2 tốc độ)
 		const finalData = await this.getAccommodationsBatch(paginatedIds, statsRows);
 
 		const result = {
@@ -298,20 +277,14 @@ class AccommodationService {
 
 	public async getOwnerAccommodations(ownerId: string): Promise<OwnerAccommodationCard[]> {
 		const rawAccommodations = await this.#accommodationRepository.getDashboardCardsByOwnerId(ownerId);
+		if (!rawAccommodations || rawAccommodations.length === 0) return [];
 
-		if (!rawAccommodations || rawAccommodations.length === 0) {
-			return [];
-		}
-
-		const ids = rawAccommodations.map((acc) => acc.id);
-
-		// Get thubnail
-		const imagesBatch = await this.#imageService.getImagesBatch(EEntityType.ACCOMMODATION, ids);
+		const ids = rawAccommodations.map((acc: any) => acc.id);
+		const imagesBatch = await this.#imageService.getImagesBatch(EntityType.ACCOMMODATION, ids);
 		const imageMap: Record<string, string> = {};
 
-		ids.forEach((id) => {
+		ids.forEach((id: string) => {
 			const accImages = imagesBatch.filter((img) => img.references.some((ref) => ref.entityId === id));
-
 			if (accImages.length > 0) {
 				const bestImage = accImages.find((img) => img.references.some((ref) => ref.entityId === id && ref.isPrimary)) ?? accImages[0];
 				const thumbnailVariant = bestImage.variants.find((v) => v.variant === "THUMBNAIL");
@@ -319,10 +292,9 @@ class AccommodationService {
 			}
 		});
 
-		return rawAccommodations.map((acc) => {
-			// Tính sao trung bình in-memory
-			const validStars = acc.reviews.filter((r) => r.star !== null).map((r) => r.star as number);
-			const avgStar = validStars.length > 0 ? Number((validStars.reduce((a, b) => a + b, 0) / validStars.length).toFixed(1)) : null;
+		return rawAccommodations.map((acc: any) => {
+			const validStars = acc.reviews.filter((r: any) => r.star !== null).map((r: any) => r.star as number);
+			const avgStar = validStars.length > 0 ? Number((validStars.reduce((a: number, b: number) => a + b, 0) / validStars.length).toFixed(1)) : null;
 
 			return {
 				id: acc.id,
@@ -333,24 +305,19 @@ class AccommodationService {
 				address: acc.address?.fullAddress ?? null,
 				roomCount: acc._count.rooms,
 				reviewCount: acc._count.reviews,
-				avgStar: avgStar,
+				avgStar,
 				updatedAt: acc.updatedAt,
 			};
 		});
 	}
 
 	async createAccommodation(userId: string, data: CreateAccommodationDTO): Promise<AccommodationFullInfo> {
-		// Resolve owner profile (needed for dynamic-pricing inheritance).
-		const ownerProfile = await this.#ownerRepository.findProfileByUserId(userId);
+		const ownerProfile = await this.#ownerService!.getOwnerProfile(userId);
 		if (!ownerProfile) throw new BadRequestError("Owner profile not found");
 
-		// Tri-state dynamicPricingSettings:
-		//   undefined → inherit owner defaults
-		//   null      → opt-out (no dynamic pricing)
-		//   object    → validate + use
 		let resolvedSettings: DynamicPricingSettings | null;
 		if (data.dynamicPricingSettings === undefined) {
-			resolvedSettings = (ownerProfile.dynamicPricingSettings as DynamicPricingSettings | null) ?? null;
+			resolvedSettings = (ownerProfile.getDynamicPricingSettings() as DynamicPricingSettings | null) ?? null;
 		} else if (data.dynamicPricingSettings === null) {
 			resolvedSettings = null;
 		} else {
@@ -358,65 +325,100 @@ class AccommodationService {
 			resolvedSettings = data.dynamicPricingSettings;
 		}
 
-		// Tri-state holiday opt-ins:
-		//   undefined → snapshot OwnerHoliday rows
-		//   null      → opt-out (no holiday markups)
-		//   array     → validate + use
-		const holidayMode: "inherit" | "none" | "explicit" =
-			data.holidayOptIns === undefined ? "inherit" : data.holidayOptIns === null ? "none" : "explicit";
+		const holidayMode: "inherit" | "none" | "explicit" = data.holidayOptIns === undefined ? "inherit" : data.holidayOptIns === null ? "none" : "explicit";
 		if (holidayMode === "explicit") validateHolidayOptIns(data.holidayOptIns as HolidayOptIn[]);
 
-		const newAccommodationId = await prismaClient.$transaction(async (tx) => {
-			const settingsValue: Prisma.NullableJsonNullValueInput | Prisma.InputJsonValue =
-				resolvedSettings === null ? Prisma.JsonNull : (resolvedSettings as Prisma.InputJsonValue);
+		const id = require('crypto').randomUUID();
 
-			const created = await tx.accommodation.create({
-				data: {
-					name: data.name,
-					description: data.description,
-					type: data.type,
-					rentalType: data.rentalType,
-					status: "DRAFT",
-					dynamicPricingSettings: settingsValue,
-					owner: { connect: { id: userId } },
-				},
-				select: { id: true },
-			});
+		let holidays: AccommodationHoliday[] = [];
+		if (holidayMode === "inherit") {
+			holidays = ownerProfile.getOwnerHolidays().map(h =>
+				AccommodationHoliday.builder()
+					.setId(require('crypto').randomUUID())
+					.setAccommodationId(id)
+					.setHolidayCode(h.getHolidayCode())
+					.setPriceMultiplier(h.getPriceMultiplier())
+					.setPreDays(h.getPreDays())
+					.setPostDays(h.getPostDays())
+					.setEnabled(h.getEnabled())
+					.build()
+			);
+		} else if (holidayMode === "explicit" && data.holidayOptIns) {
+			holidays = data.holidayOptIns.map(h =>
+				AccommodationHoliday.builder()
+					.setId(require('crypto').randomUUID())
+					.setAccommodationId(id)
+					.setHolidayCode(h.holidayCode)
+					.setPriceMultiplier(h.priceMultiplier)
+					.setPreDays(h.preDays || 0)
+					.setPostDays(h.postDays || 0)
+					.setEnabled(h.enabled !== false)
+					.build()
+			);
+		}
 
-			if (holidayMode === "inherit") {
-				await this.#holidayRepository.snapshotOwnerToAccommodation(ownerProfile.id, created.id, tx);
-			} else if (holidayMode === "explicit") {
-				await this.#holidayRepository.replaceForAccommodation(created.id, data.holidayOptIns as HolidayOptIn[], tx);
-			}
+		const acc = Accommodation.builder()
+			.setId(id)
+			.setName(data.name)
+			.setDescription(data.description || null)
+			.setType(data.type)
+			.setRentalType(data.rentalType)
+			.setStatus(AccommodationStatus.DRAFT)
+			.setOwnerId(userId)
+			.setDynamicPricingSettings(resolvedSettings)
+			.setHolidayOptIns(holidays)
+			.build();
 
-			return created.id;
-		});
+		await this.#accommodationRepository.save(acc);
+		await redisClient.del(`owner:dashboard:${userId}`);
 
-		return await this.getAccommodationById(newAccommodationId);
+		return await this.getAccommodationById(acc.getId());
 	}
 
 	async updatePricingSettings(userId: string, id: string, data: UpdateAccommodationPricingDTO): Promise<AccommodationFullInfo> {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, userId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
+		const acc = await this.#accommodationRepository.findById(id);
+		if (!acc) throw new NotFoundError("Accommodation not found");
+
 		if (data.dynamicPricingSettings !== undefined) {
 			validateDynamicPricingSettings(data.dynamicPricingSettings);
-			await this.#accommodationRepository.updatePricingSettings(id, data.dynamicPricingSettings ?? null);
+			acc.updateDynamicPricingSettings(data.dynamicPricingSettings ?? null);
 		}
 
 		if (data.holidayOptIns !== undefined) {
 			if (data.holidayOptIns === null) {
-				await this.#holidayRepository.replaceForAccommodation(id, []);
+				acc.setHolidayOptIns([]);
 			} else {
 				validateHolidayOptIns(data.holidayOptIns);
-				await this.#holidayRepository.replaceForAccommodation(id, data.holidayOptIns);
+				const holidays = data.holidayOptIns.map(h =>
+					AccommodationHoliday.builder()
+						.setId(require('crypto').randomUUID())
+						.setAccommodationId(id)
+						.setHolidayCode(h.holidayCode)
+						.setPriceMultiplier(h.priceMultiplier)
+						.setPreDays(h.preDays || 0)
+						.setPostDays(h.postDays || 0)
+						.setEnabled(h.enabled !== false)
+						.build()
+				);
+				acc.setHolidayOptIns(holidays);
 			}
 		}
 
-		// Spec §2.4 mentions `room:{id}` cache keys, but no code writes them today.
-		// Bust the accommodation-detail cache only — re-add per-room invalidation
-		// at the same site if/when a room-level cache is introduced.
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
+
+		// Flush holiday maps
+		try {
+			const keys = await redisClient.keys(`holiday_map:${id}:*`);
+			if (keys.length > 0) {
+				await redisClient.del(keys);
+			}
+		} catch (err) {
+			console.error(`Failed to flush holiday_map for ${id}`, err);
+		}
 
 		return await this.getAccommodationById(id);
 	}
@@ -425,8 +427,24 @@ class AccommodationService {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
-		await this.#accommodationRepository.syncFacilities(id, data.facilities);
+		const acc = await this.#accommodationRepository.findById(id);
+		if (!acc) throw new NotFoundError("Accommodation not found");
 
+		// Assuming Facility models can just be created with random placeholders or we need to query them.
+		// For now, we will create dummy Facility domain models because the repo just extracts IDs.
+		const facilities = data.facilities.map(f => {
+			const mockFacility = new Facility(f.facilityId, "", null as any, null, new Date(), new Date());
+			return FacilityConfig.builder()
+				.setId(require('crypto').randomUUID())
+				.setFee(f.fee || 0)
+				.setNote(f.note || null)
+				.setIsAvailable(f.isAvailable !== false)
+				.setFacility(mockFacility)
+				.build();
+		});
+
+		acc.setFacilities(facilities);
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
 		return await this.getAccommodationById(id);
@@ -436,86 +454,63 @@ class AccommodationService {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
-		await this.#accommodationRepository.updateBasicInfo(id, data);
+		const acc = await this.#accommodationRepository.findById(id);
+		if (!acc) throw new NotFoundError("Accommodation not found");
 
+		acc.updateBasicInfo(data.name || acc.getName(), data.description || acc.getDescription(), data.type || acc.getType());
+
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
 		return await this.getAccommodationById(id);
 	}
 
-	async updateStatus(ownerId: string, id: string, status: EAccommodationStatus): Promise<AccommodationFullInfo> {
+	async updateStatus(ownerId: string, id: string, status: AccommodationStatus): Promise<AccommodationFullInfo> {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
-		await this.#accommodationRepository.updateStatus(id, status);
+		const acc = await this.#accommodationRepository.findById(id);
+		if (!acc) throw new NotFoundError("Accommodation not found");
 
+		acc.changeStatus(status);
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
 		return await this.getAccommodationById(id);
 	}
 
 	async publishAccommodation(ownerId: string, id: string): Promise<AccommodationFullInfo> {
-		// Lấy raw data từ DB kèm theo các bảng con
 		const acc = await this.#accommodationRepository.getForPublishValidation(id, ownerId);
 
 		if (!acc) {
 			throw new NotFoundError("Accommodation not found or unauthorized");
 		}
 
-		if (acc.status === "PUBLISHED") {
-			throw new BadRequestError("This accommodation is already published");
-		}
+		// Domain Model encapsulates validation
+		// _count info and room validity was injected by Repository via Mapper
+		// The domain method will throw errors if constraints are not met.
+		// We injected roomCount and allRoomsValid into the builder inside Mapper.
+				const roomCount = (acc as any).roomCount;
+		const allRoomsValid = (acc as any).allRoomsValid;
 
-		// ==========================================
-		// VALIDATION RULES
-		// ==========================================
+		acc.publish(roomCount, allRoomsValid);
 
-		// 1. Phải có địa chỉ
-		if (!acc.address) {
-			throw new BadRequestError("Cannot publish: Missing address information.");
-		}
-
-		// 2. Phải có ít nhất 1 phòng
-		if (!acc.rooms || acc.rooms.length === 0) {
-			throw new BadRequestError("Cannot publish: You must add at least one room.");
-		}
-
-		// 3. Quét từng phòng để đảm bảo tính toàn vẹn dữ liệu
-		for (const room of acc.rooms) {
-			if (!room.basePrice || Number(room.basePrice) <= 0) {
-				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid base price greater than 0.`);
-			}
-			if (Number(room.floorPrice) > Number(room.basePrice)) {
-				throw new BadRequestError(`Cannot publish: Room '${room.name}' floor price must be ≤ base price.`);
-			}
-			if (!room.quantity || room.quantity <= 0) {
-				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have a valid quantity.`);
-			}
-			if (!room.beds || room.beds.length === 0) {
-				throw new BadRequestError(`Cannot publish: Room '${room.name}' must have at least one bed.`);
-			}
-		}
-
-		if (!acc.policy?.checkInTime || !acc.policy?.checkOutTime) {
+		const policy = await this.#accommodationRepository.findPolicyByAccommodationId(id);
+		if (!policy || !policy.checkInTime || !policy.checkOutTime) {
 			throw new BadRequestError("Cannot publish: Missing operation policies (Check-in/Check-out times).");
 		}
 
-		// ==========================================
-		// PASS VALIDATION
-		// ==========================================
-
-		await this.#accommodationRepository.updateStatus(id, "PUBLISHED");
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
-		// Trigger indexing onto Pinecone for semantic search
 		await publishQueue.add(PUBLISH_ACCOMMODATION_JOB, {
 			accommodationId: id,
-			name: acc.name,
-			type: acc.type,
-			lat: Number(acc.address.latitude),
-			lon: Number(acc.address.longitude),
-			description: acc.description || "",
-			facilities: acc.facilities.map((f) => f.facility.name),
+			name: acc.getName(),
+			type: acc.getType(),
+			lat: Number(acc.getAddress()?.getLatitude()),
+			lon: Number(acc.getAddress()?.getLongitude()),
+			description: acc.getDescription() || "",
+			facilities: acc.getFacilities().map((f) => f.getFacility().getName()),
 		} as PublishJobData);
 
 		return await this.getAccommodationById(id);
@@ -525,27 +520,36 @@ class AccommodationService {
 		const isOwner = await this.#accommodationRepository.checkOwnership(id, ownerId);
 		if (!isOwner) throw new BadRequestError("Accommodation not found or unauthorized");
 
-		await this.#accommodationRepository.updateAddress(id, addressData);
+		const acc = await this.#accommodationRepository.findById(id);
+		if (!acc) throw new NotFoundError("Accommodation not found");
 
+		const addr = Address.builder()
+			.setId(acc.getAddress()?.getId() || require('crypto').randomUUID())
+			.setStreet(addressData.street)
+			.setCity(addressData.city)
+			.setCountry(addressData.country)
+			.setCountryCode(addressData.countryCode)
+			.setPostalCode(addressData.postalCode || null)
+			.setLatitude(addressData.latitude || null)
+			.setLongitude(addressData.longitude || null)
+			.setFullAddress(addressData.fullAddress)
+			.setPlaceId(addressData.placeId || null)
+			.build();
+
+		acc.setAddress(addr);
+		await this.#accommodationRepository.save(acc);
 		await redisClient.del(`${this.CACHE_PREFIX}${id}`);
 
 		return await this.getAccommodationById(id);
 	}
 
-	// =================================================================
-	// PRIVATE HELPER METHODS FOR SEARCH
-	// =================================================================
-
-	/**
-	 * If room-related filters are present, call Room service to get a pre-filtered list of accommodation IDs.
-	 */
 	private async _getInitialFilteredIds(query: SearchQuery): Promise<string[] | undefined> {
 		const { minPrice, maxPrice, adults, children, sortBy, rooms } = query;
 		const needsRoomSort =
 			sortBy === ESortOption.PRICE_ASC || sortBy === ESortOption.PRICE_DESC || sortBy === ESortOption.NAME_ASC || sortBy === ESortOption.NAME_DESC || sortBy === ESortOption.RECOMMENDED;
 
 		if (!minPrice && !maxPrice && !adults && !children && !needsRoomSort) {
-			return undefined; // No room-related filters, no need to call Room service yet.
+			return undefined;
 		}
 
 		const requiredRooms = rooms ? Number(rooms) : 1;

@@ -1,14 +1,18 @@
 import type { Request, Response } from "express";
 import ResponseHelper from "@/utils/response";
-import type { ApiResponse } from "@/types/responses";
-import { BookingService } from "@/services";
-import { BookingPayload, BookingRequest, ConfirmRequest } from "@/types/requests";
-import { Booking } from "@/generated/client";
+import type { ApiResponse } from "@/dto/response";
+import { BookingService, PaymentService } from "@/services";
+import { BookingPayload, BookingRequest, ConfirmRequest } from "@/dto/request/booking.dto";
+import { BookingDto, toBookingDto } from "@/dto/response/booking.dto";
+import { Booking as DomainBooking } from "@/models/booking";
 
 export default class BookingController {
-	constructor(private readonly bookingService: BookingService) {}
+	constructor(
+		private readonly bookingService: BookingService,
+		private readonly paymentService: PaymentService
+	) {}
 
-	public async getBookings(req: Request, res: Response<ApiResponse<Booking | Booking[]>>) {
+	public async getBookings(req: Request, res: Response<ApiResponse<BookingDto | BookingDto[]>>) {
 		const { entity, id } = req.query;
 
 		try {
@@ -16,32 +20,43 @@ export default class BookingController {
 				return ResponseHelper.error(res, "Missing 'entity' or 'id' query parameter");
 			}
 
-			let bookings: Booking | Booking[];
+			let domainBookings: DomainBooking | DomainBooking[];
 
 			switch (entity) {
 				case "accommodation":
-					bookings = await this.bookingService.getBookingsByAccommodationId(String(id));
+					domainBookings = await this.bookingService.getBookingsByAccommodationId(String(id));
 					break;
 				case "user":
-					bookings = await this.bookingService.getBookingsByUserId(String(id));
+					domainBookings = await this.bookingService.getBookingsByUserId(String(id));
 					break;
 				case "room":
-					bookings = await this.bookingService.getBookingsByRoomId(String(id));
+					domainBookings = await this.bookingService.getBookingsByRoomId(String(id));
 					break;
 				case "booking":
 				case "id":
-					bookings = await this.bookingService.getBookingById(String(id));
+					domainBookings = await this.bookingService.getBookingById(String(id));
 					break;
 				default:
 					return ResponseHelper.error(res, `Invalid entity type: ${entity}`);
 			}
-			return ResponseHelper.success<Booking | Booking[]>(res, bookings);
+			
+			if (Array.isArray(domainBookings)) {
+				const bookings = await Promise.all(domainBookings.map(async b => {
+					const transfers = await this.paymentService.getTransfersByBookingId(b.getId());
+					return toBookingDto(b, transfers);
+				}));
+				return ResponseHelper.success<BookingDto | BookingDto[]>(res, bookings);
+			} else {
+				const transfers = await this.paymentService.getTransfersByBookingId(domainBookings.getId());
+				const dto = toBookingDto(domainBookings, transfers);
+				return ResponseHelper.success<BookingDto | BookingDto[]>(res, dto);
+			}
 		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);
 		}
 	}
-	public async createBooking(req: BookingRequest, res: Response<ApiResponse<Booking>>) {
+	public async createBooking(req: BookingRequest, res: Response<ApiResponse<BookingDto>>) {
 		try {
 			const userId = req.userId; // comes from middleware
 			if (!userId) {
@@ -50,14 +65,15 @@ export default class BookingController {
 
 			const data: BookingPayload = req.body;
 			const newBooking = await this.bookingService.createBooking(userId, data);
+			const dto = toBookingDto(newBooking);
 
-			return ResponseHelper.success(res, newBooking, 201);
+			return ResponseHelper.success(res, dto, 201);
 		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);
 		}
 	}
-	public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<Booking>>) {
+	public async createDraftBooking(req: BookingRequest, res: Response<ApiResponse<BookingDto>>) {
 		try {
 			const userId = req.userId; // comes from middleware
 			if (!userId) {
@@ -66,22 +82,24 @@ export default class BookingController {
 
 			const data: BookingPayload = req.body;
 			const newBooking = await this.bookingService.createDraftBooking(userId, data);
+			const dto = toBookingDto(newBooking);
 
-			return ResponseHelper.success<Booking>(res, newBooking, 201);
+			return ResponseHelper.success<BookingDto>(res, dto, 201);
 		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);
 		}
 	}
 
-	public async confirmBooking(req: ConfirmRequest, res: Response<ApiResponse<Booking>>) {
+	public async confirmBooking(req: ConfirmRequest, res: Response<ApiResponse<BookingDto>>) {
 		try {
 			const { id } = req.body;
 			if (!id) return ResponseHelper.error(res, "Missing booking ID in request body");
 
 			const booking = await this.bookingService.confirmBooking(id);
+			const dto = toBookingDto(booking);
 
-			return ResponseHelper.success(res, booking);
+			return ResponseHelper.success(res, dto);
 		} catch (err: unknown) {
 			const e = err as Error;
 			return ResponseHelper.error(res, e.message);

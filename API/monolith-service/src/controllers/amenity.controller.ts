@@ -1,14 +1,16 @@
 import { Request, Response } from "express";
-import ResponseHelper from "../utils/response";
-import AmenityRepository from "../repositories/amenity.repository";
+import ResponseHelper from "@/utils/response";
+import { AmenityService } from "@/services";
 
 class AmenityController {
-	readonly #amenityRepository: AmenityRepository;
-	constructor(amenityRepository: AmenityRepository) {
-		this.#amenityRepository = amenityRepository;
+	readonly #amenityService: AmenityService;
+
+	constructor(amenityService: AmenityService) {
+		this.#amenityService = amenityService;
 	}
-	public async getAll(req: Request, res: Response) {
-		const amenities = await this.#amenityRepository.findAll();
+
+	public async getAll(_req: Request, res: Response) {
+		const amenities = await this.#amenityService.getAllAmenities();
 		ResponseHelper.success(res, amenities);
 	}
 }

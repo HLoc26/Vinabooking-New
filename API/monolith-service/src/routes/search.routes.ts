@@ -1,7 +1,7 @@
 import { Router, Request, Response } from "express";
 import RoomController from "@/controllers/room.controller";
 import SearchController from "@/controllers/search.controller";
-import { SemanticSearchRequest } from "@/types/requests/search.requests";
+import { SemanticSearchRequest } from "@/dto/request/search.dto";
 
 /**
  * Base: /api/search

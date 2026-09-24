@@ -27,6 +27,19 @@ export interface HolidayOptIn {
 	enabled?: boolean;
 }
 
+/**
+ * Data shape PricingService needs from RoomService for pricing calculations.
+ * Decouples PricingService from Prisma/repository layer.
+ */
+export interface PricableItem {
+	basePrice: number;
+	floorPrice: number | null;
+	name: string;
+	accommodationId: string;
+	dynamicPricingSettings: DynamicPricingSettings | null;
+	pricingTypePerNight: boolean;
+}
+
 // ----- Quote request / response -----
 
 export interface QuoteItemInput {

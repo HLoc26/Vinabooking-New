@@ -1,4 +1,6 @@
-import { PrismaClient, type EProvider, UserAuthProvider } from "@/generated/client";
+import { PrismaClient } from "@/generated/client";
+import { UserAuthProvider } from "@/models/auth";
+import { AuthMapper } from "@/mappers/auth.mapper";
 
 class AuthRepository {
 	readonly #prismaClient: PrismaClient;
@@ -7,12 +9,15 @@ class AuthRepository {
 		this.#prismaClient = prismaClient;
 	}
 
-	public async createUserProvider(userId: string, email: string, provider: EProvider): Promise<UserAuthProvider> {
-		return await this.#prismaClient.userAuthProvider.create({ data: { userId: userId, email: email, provider: provider } });
+	public async saveUserProvider(userAuthProvider: UserAuthProvider): Promise<UserAuthProvider> {
+		const data = AuthMapper.toPersistence(userAuthProvider);
+		const saved = await this.#prismaClient.userAuthProvider.create({ data });
+		return AuthMapper.toDomain(saved);
 	}
 
 	public async getUserProviders(email: string): Promise<UserAuthProvider[]> {
-		return await this.#prismaClient.userAuthProvider.findMany({ where: { email: email } });
+		const providers = await this.#prismaClient.userAuthProvider.findMany({ where: { email } });
+		return providers.map(p => AuthMapper.toDomain(p));
 	}
 }
 

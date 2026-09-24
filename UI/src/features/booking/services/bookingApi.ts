@@ -178,4 +178,9 @@ export const bookingApi = {
 		);
 		return res.data;
 	},
+
+	async verifyPayment(referenceNo: number) {
+		const res = await axioInstance.get(`${PAYMENT_ENDPOINT}/verify`, { params: { referenceNo } });
+		return res.data;
+	},
 };

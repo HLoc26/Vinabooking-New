@@ -33,8 +33,15 @@ const ManageBookingDetailPage = () => {
 		ELEMENT_ID: "payos-embedded-container",
 		CHECKOUT_URL: checkoutUrl,
 		embedded: true,
-		onSuccess: () => {
+		onSuccess: async () => {
 			setIsPaymentOpen(false);
+			if (booking?.referenceNo) {
+				try {
+					await bookingApi.verifyPayment(booking.referenceNo);
+				} catch (e) {
+					console.error("Failed to verify payment proactively", e);
+				}
+			}
 			pushNotification("Payment successful! Booking confirmed.", "success");
 			window.location.reload();
 		},

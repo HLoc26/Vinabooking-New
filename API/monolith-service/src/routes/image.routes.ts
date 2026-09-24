@@ -1,6 +1,6 @@
 import { Router, type Request, type Response } from "express";
 import ImageController from "@/controllers/image.controller";
-import type { DeleteImageRequest, GetImagesRequest, UploadRequest } from "../types/requests";
+import type { DeleteImageRequest, GetImagesRequest, UploadRequest } from "../dto/request";
 import multer from "multer";
 import { authMiddleware } from "@/middlewares/auth.middleware";
 

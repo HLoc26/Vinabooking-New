@@ -1,9 +1,11 @@
+import { BadRequestError, NotFoundError } from "@/errors";
+import { BookingStatus } from "@/models/booking";
+import { PaymentTransferBuilder, PaymentTransferStatus } from "@/models/payment";
 import { BookingRepository, PaymentRepository } from "@/repositories";
-import { NotFoundError, BadRequestError } from "@/errors";
-import { Prisma } from "@/generated/client";
-import { PayosWebhookData } from "@/types/requests/payment.requests";
-import PayosService from "./payos.service";
+import { PayosWebhookData } from "@/dto/request/payment.dto";
+import { randomUUID } from "crypto";
 import BookingService from "./booking.service";
+import PayosService from "./payos.service";
 
 export default class PaymentService {
 	readonly #paymentRepository: PaymentRepository;
@@ -18,10 +20,14 @@ export default class PaymentService {
 		this.#bookingService = bookingService;
 	}
 
+	public async getTransfersByBookingId(bookingId: string) {
+		return await this.#paymentRepository.findAllByBookingId(bookingId);
+	}
+
 	public async createPaymentLink(bookingId: string, returnUrl: string, cancelUrl: string) {
 		// 1. Logic: Cleanup old attempts via Repo
 		const latest = await this.#paymentRepository.findLatestByBookingId(bookingId);
-		if (latest && latest.status === "PENDING") {
+		if (latest && latest.getStatus() === PaymentTransferStatus.PENDING) {
 			await this.#paymentRepository.deletePendingByBookingId(bookingId);
 		}
 		const booking = await this.#bookingRepository.findById(bookingId);
@@ -29,20 +35,20 @@ export default class PaymentService {
 			throw new NotFoundError(`Booking with ID ${bookingId} not found`);
 		}
 
-		if (booking.status === "BOOKED" || booking.status === "COMPLETED") {
+		if (booking.getStatus() === BookingStatus.BOOKED || booking.getStatus() === BookingStatus.COMPLETED) {
 			throw new BadRequestError("Booking is already paid");
 		}
 
 		// 2. Logic: Prepare PayOS-specific data
 		const attemptSuffix = Math.floor(1000 + Math.random() * 9000);
-		const orderCode = Number(`${booking.referenceNo}${attemptSuffix}`);
-		const amount = Math.round(Number(booking.totalPrice));
+		const orderCode = Number(`${booking.getReferenceNo()}${attemptSuffix}`);
+		const amount = Math.round(Number(booking.getTotalPrice()));
 
 		if (isNaN(amount) || amount <= 0) {
-			throw new BadRequestError(`Invalid booking amount: ${booking.totalPrice}`);
+			throw new BadRequestError(`Invalid booking amount: ${booking.getTotalPrice()}`);
 		}
 
-		const description = `BK${booking.referenceNo}`.slice(0, 25);
+		const description = `BK${booking.getReferenceNo()}`.slice(0, 25);
 
 		// 3. Orchestration: Call External Provider
 		const paymentLinkRes = await this.#payosService.createPaymentLink({
@@ -53,36 +59,43 @@ export default class PaymentService {
 			returnUrl,
 		});
 
-		// 4. Logic: Save state via Repo (Passing plain objects)
-		await this.#paymentRepository.createPendingRecord({
-			bookingId,
-			amount,
-			description,
-			paymentLinkId: paymentLinkRes.paymentLinkId,
-		});
+		// 4. Logic: Save state via Repo using Domain Model
+		const payment = new PaymentTransferBuilder()
+			.setId(randomUUID())
+			.setBookingId(bookingId)
+			.setAmount(amount)
+			.setTransferContent(description)
+			.setPaymentLinkId(paymentLinkRes.paymentLinkId)
+			.build();
+			
+		await this.#paymentRepository.save(payment);
 
 		return paymentLinkRes;
 	}
+
 	public async verifyPaymentByBookingReference(referenceNo: number) {
 		const booking = await this.#bookingRepository.findByReferenceNo(referenceNo);
 		if (!booking) {
 			throw new NotFoundError(`Booking with reference ${referenceNo} not found`);
 		}
 
-		if (booking.status === "BOOKED" || booking.status === "COMPLETED") {
-			return { bookingId: booking.id, status: "ALREADY_PAID" };
+		if (booking.getStatus() === BookingStatus.BOOKED || booking.getStatus() === BookingStatus.COMPLETED) {
+			return { bookingId: booking.getId(), status: "ALREADY_PAID" };
 		}
 
 		try {
-			// Fix: We can't search PayOS by referenceNo directly anymore since we mutated the orderCode.
-			// Retrieve the specific PayOS link ID from our database instead.
-			const latestPayment = await this.#paymentRepository.findLatestByBookingId(booking.id);
+			const latestPayment = await this.#paymentRepository.findLatestByBookingId(booking.getId());
 
-			if (!latestPayment || !latestPayment.paymentLinkId) {
-				return { bookingId: booking.id, status: "NOT_FOUND" };
+			if (!latestPayment || !latestPayment.getPaymentLinkId()) {
+				return { bookingId: booking.getId(), status: "NOT_FOUND" };
 			}
 
-			const paymentInfo = await this.#payosService.getPaymentLinkInformation(latestPayment.paymentLinkId);
+			const paymentLinkId = latestPayment.getPaymentLinkId();
+			if (!paymentLinkId) {
+				return { bookingId: booking.getId(), status: "NOT_FOUND" };
+			}
+
+			const paymentInfo = await this.#payosService.getPaymentLinkInformation(paymentLinkId);
 
 			if (paymentInfo.status === "PAID") {
 				const transactions = (paymentInfo as any).transactions;
@@ -99,19 +112,18 @@ export default class PaymentService {
 							currency: (paymentInfo as any).currency || "VND",
 							paymentLinkId: (paymentInfo as any).id,
 						} as unknown as PayosWebhookData,
-						booking.id
+						booking.getId()
 					);
 				}
 			}
 
-			return { bookingId: booking.id, status: paymentInfo.status };
+			return { bookingId: booking.getId(), status: paymentInfo.status };
 		} catch (error) {
 			console.error("Verify Payment Error:", error);
-			return { bookingId: booking.id, status: "NOT_FOUND" };
+			return { bookingId: booking.getId(), status: "NOT_FOUND" };
 		}
 	}
 
-	// services/payment.service.ts
 	public async processWebhook(payload: any) {
 		const verifiedData = await this.#payosService.verifyPaymentWebhookData(payload);
 
@@ -125,57 +137,54 @@ export default class PaymentService {
 		const booking = await this.#bookingRepository.findByReferenceNo(originalRefNo);
 		if (!booking) throw new Error(`Booking not found for referenceNo: ${originalRefNo}`);
 
-		if (booking.status === "BOOKED" || booking.status === "COMPLETED") {
-			console.log(`[PaymentService] Booking ${booking.id} already confirmed, skipping.`);
+		if (booking.getStatus() === BookingStatus.BOOKED || booking.getStatus() === BookingStatus.COMPLETED) {
+			console.log(`[PaymentService] Booking ${booking.getId()} already confirmed, skipping.`);
 			return { success: true };
 		}
 
-		await this.#paymentRepository.updateByPaymentLinkId(verifiedData.paymentLinkId, verifiedData);
+		const payment = await this.#paymentRepository.findByPaymentLinkId(verifiedData.paymentLinkId);
+		if (payment) {
+			payment.completePayment(verifiedData.reference, new Date(verifiedData.transactionDateTime));
+			await this.#paymentRepository.save(payment);
+		}
 
 		return { success: true };
 	}
 
 	private async processPayosPayment(data: PayosWebhookData, bookingId: string) {
-		// ... (This function remains entirely unchanged)
 		const transferReference = data.reference;
 
 		const existing = await this.#paymentRepository.findByTransferReference(transferReference);
-		if (existing && existing.status === "COMPLETED") {
+		if (existing && existing.getStatus() === PaymentTransferStatus.COMPLETED) {
 			return {
-				bookingId: existing.bookingId,
-				transferId: existing.id,
-				status: existing.status,
+				bookingId: existing.getBookingId(),
+				transferId: existing.getId(),
+				status: existing.getStatus(),
 			};
 		}
 
-		const pendingRecord = await this.#paymentRepository.findByPaymentLinkId(data.paymentLinkId);
+		let payment = await this.#paymentRepository.findByPaymentLinkId(data.paymentLinkId);
 
-		if (pendingRecord) {
-			await this.#paymentRepository.update(pendingRecord.id, {
-				transferReference,
-				receivedAt: new Date(data.transactionDateTime),
-				completedAt: new Date(),
-				status: "COMPLETED",
-			});
+		if (payment) {
+			payment.completePayment(transferReference, new Date(data.transactionDateTime));
 		} else {
-			await this.#paymentRepository.create({
-				Booking: { connect: { id: bookingId } },
-				transferReference,
-				amount: new Prisma.Decimal(data.amount),
-				currency: data.currency || "VND",
-				transferContent: data.description,
-				paymentLinkId: data.paymentLinkId,
-				receivedAt: new Date(data.transactionDateTime),
-				completedAt: new Date(),
-				status: "COMPLETED",
-			});
+			payment = new PaymentTransferBuilder()
+				.setId(randomUUID())
+				.setBookingId(bookingId)
+				.setAmount(data.amount)
+				.setTransferContent(data.description)
+				.setPaymentLinkId(data.paymentLinkId)
+				.build();
+			payment.completePayment(transferReference, new Date(data.transactionDateTime));
 		}
+
+		await this.#paymentRepository.save(payment);
 
 		await this.#bookingService.confirmBooking(bookingId);
 
 		return {
 			bookingId,
-			transferId: pendingRecord?.id || "new-record",
+			transferId: payment.getId(),
 			status: "COMPLETED",
 		};
 	}

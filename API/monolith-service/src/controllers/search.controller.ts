@@ -1,7 +1,7 @@
 import { AccommodationService, SearchService } from "@/services";
-import { SemanticSearchRequest } from "@/types/requests/search.requests";
-import { ApiResponse } from "@/types/responses";
-import { SemanticSearchResponse } from "@/types/responses/search.response";
+import { SemanticSearchRequest } from "@/dto/request/search.dto";
+import { ApiResponse } from "@/dto/response";
+import { SemanticSearchResponse } from "@/dto/response/search.dto";
 import ResponseHelper from "@/utils/response";
 import { Request, Response } from "express";
 

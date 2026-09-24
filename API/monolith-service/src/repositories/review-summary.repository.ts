@@ -1,4 +1,6 @@
-import { AccommodationReviewSummary, PrismaClient } from "@/generated/client";
+import { PrismaClient } from "@/generated/client";
+import { AccommodationReviewSummary } from "@/models/review";
+import { AccommodationReviewSummaryMapper } from "@/mappers/review.mapper";
 
 class ReviewSummaryRepository {
 	readonly #prisma: PrismaClient;
@@ -8,17 +10,20 @@ class ReviewSummaryRepository {
 	}
 
 	async getSummaryByAccommodation(accommodationId: string): Promise<AccommodationReviewSummary | null> {
-		return await this.#prisma.accommodationReviewSummary.findUnique({
+		const result = await this.#prisma.accommodationReviewSummary.findUnique({
 			where: { accommodationId },
 		});
+		return result ? AccommodationReviewSummaryMapper.toDomain(result) : null;
 	}
 
-	async upsert(accommodationId: string, content: string): Promise<AccommodationReviewSummary> {
-		return await this.#prisma.accommodationReviewSummary.upsert({
-			where: { accommodationId },
-			update: { content },
-			create: { accommodationId, content },
+	async upsert(domainSummary: AccommodationReviewSummary): Promise<AccommodationReviewSummary> {
+		const data = AccommodationReviewSummaryMapper.toPersistence(domainSummary);
+		const result = await this.#prisma.accommodationReviewSummary.upsert({
+			where: { accommodationId: data.accommodationId },
+			update: { content: data.content },
+			create: { accommodationId: data.accommodationId, content: data.content, id: data.id },
 		});
+		return AccommodationReviewSummaryMapper.toDomain(result);
 	}
 }
 
