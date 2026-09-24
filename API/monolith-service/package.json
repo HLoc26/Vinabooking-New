@@ -4,6 +4,7 @@
 	"description": "",
 	"main": "index.js",
 	"scripts": {
+		"please": "echo Listening on port 3000",
 		"dev": "npx nodemon --legacy-watch --exec \"npx ts-node -r tsconfig-paths/register ./src/index.ts\"",
 		"build": "npx prisma generate && npx tsc && npx tsc-alias",
 		"start": "node dist/src/index.js",
